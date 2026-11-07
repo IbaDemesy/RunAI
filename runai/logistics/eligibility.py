@@ -21,6 +21,8 @@ AMBITIOUS_MARGIN = 0.10
 RIEGEL_EXPONENT = 1.06
 _ORDER = {Light.green: 0, Light.orange: 1, Light.red: 2}
 
+ELIGIBILITY_FIELDS = ("race_date", "time_limit")
+
 
 def eligibility(
     rules: RaceRules,
@@ -73,6 +75,16 @@ def eligibility(
         )
     if goal:
         reasons += _realism_reasons(rules, goal)
+    unknown = [field for field in ELIGIBILITY_FIELDS if field in rules.missing_fields]
+    if unknown:
+        reasons.append(
+            Reason(
+                level=Light.orange,
+                code="rules_incomplete",
+                message="Non trouvé dans le règlement : " + ", ".join(unknown) + ". À confirmer avant de s'inscrire.",
+                source_url=str(rules.regulation_url) if rules.regulation_url else None,
+            )
+        )
 
     light = max((reason.level for reason in reasons), key=_ORDER.__getitem__, default=Light.orange)
     return Eligibility(
