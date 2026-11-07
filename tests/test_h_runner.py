@@ -407,3 +407,25 @@ def test_pool_tie_prefers_least_loaded_org(tmp_path):
     first, second = FakeSessions(quotas=[2]), FakeSessions(quotas=[3])
     asyncio.run(make_accounts(tmp_path, first, second, cap=1).run(StepKind.search, "x"))
     assert (len(first.created), len(second.created)) == (0, 1)
+
+
+def test_trace_failure_while_following_releases_slot(tmp_path):
+    class FlakyTrace:
+        writes = 0
+
+        def write(self, event):
+            self.writes += 1
+            if self.writes > 1:
+                raise OSError("disk full")
+
+    sessions = FakeSessions()
+    runner = make_runner(tmp_path, sessions)
+
+    async def scenario():
+        run = await runner.start(StepKind.search, "x", trace=FlakyTrace())
+        with pytest.raises(OSError):
+            await run.wait()
+
+    asyncio.run(scenario())
+    assert ("cancel", "s1") in sessions.calls
+    assert runner.accounts[0].active == 0

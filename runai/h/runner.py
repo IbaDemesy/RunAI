@@ -344,8 +344,12 @@ class HRun:
         return result
 
     async def _abandon(self) -> None:
-        await self._safe_cancel()
-        self._release()
+        try:
+            await self._safe_cancel()
+        except Exception:  # noqa: BLE001, S110 - trace illisible : le slot doit quand même être libéré
+            pass
+        finally:
+            self._release()
 
     async def _safe_cancel(self) -> None:
         if self.status in TERMINAL_STATUSES:
