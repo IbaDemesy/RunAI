@@ -156,6 +156,43 @@ Test avec l'agent **`h/web-surfer-pro`**, un **faux profil** et **5 sessions en 
 - **Si un site exige un compte, l'utilisateur crée son compte lui-même**, puis l'agent reprend (décision de l'équipe).
 - **Point à surveiller : le temps.** 40 à 64 étapes par session, environ 10 à 15 min chacune. Pistes : agents en parallèle, consignes ciblées, sessions préchauffées / démo préparée.
 
+## Linkup et Gladia : ce qu'on a appris
+
+### Linkup prépare, H exécute
+
+Test Booking avec le même faux profil et les mêmes règles d'arrêt avant paiement :
+
+| Mesure | H seul (test initial) | Linkup + H |
+| --- | --- | --- |
+| Étapes H | 48 | 22 |
+| Exécution H (démarrage → fin) | 4 min 23 | 1 min 56 |
+| Total (file comprise, avec environ 5 s de Linkup) | 5 min 32 | Environ 2 min 7 |
+
+**Un seul essai par variante, avec une cible différente** : Praça do Comércio au départ, puis le pont du 25-Avril. Le gain observé n'est donc pas une preuve causale ni une garantie de temps.
+
+- **« Linkup prépare, H exécute »** : la préparation est une recherche structurée Linkup et une URL de départ directe. L'agent H n'a jamais appelé l'outil `recherche_web` mis à sa disposition ; **un seul appel Linkup au total**.
+- L'URL Booking fournie par Linkup était trop générique : **on construit l'URL depuis les coordonnées** retournées, avec les dates et le nombre de voyageurs.
+- Linkup a trouvé la vraie date de la course : **7 mars 2027**, alors que les nuits demandées étaient du 20 au 22 mars. **Vérifier les dates avant de réserver** devient un moment de démo : détecter l'incohérence et demander confirmation.
+- Intégration H : `tools=[recherche_web]`, avec une fonction Python exécutée dans **notre backend** pendant que le SDK attend la session. **Pas de branchement MCP entrant documenté pour les agents H** ; le MCP H expose H à d'autres clients, pas l'inverse.
+- Coût Linkup : environ **0,006 $/appel** en `depth="standard"`, avec `output_type="structured"` ou `"sourcedAnswer"`.
+
+Docs : [recherche, formats et tarifs Linkup](https://docs.linkup.so/pages/documentation/endpoints/search/overview), [SDK Python](https://docs.linkup.so/pages/sdk/python/python), [outils personnalisés H](https://hub.hcompany.ai/agents-api/custom-tools), [MCP H](https://hub.hcompany.ai/agents-api/mcp). Détails d'intégration dans [LINKUP.md](LINKUP.md).
+
+### Gladia pour piloter et superviser à la voix
+
+- **Transcription live en français avec `solaria-1`** : `language_config.languages=["fr"]`. Afficher les transcriptions partielles à l'écran (`messages_config.receive_partial_transcripts=true`), puis remplacer par le résultat final du même énoncé.
+- **Vocabulaire personnalisé** : Njuko, Klikego, PPS, semi… via `realtime_processing.custom_vocabulary` et `custom_vocabulary_config`. La reconnaissance d'entités en temps réel (`realtime_processing.named_entity_recognition=true`) peut aider à repérer lieux, dates et montants.
+- **Correction vocale** : transmettre la consigne transcrite à `session.send_message(...)` ; H la prend en compte **à l'étape suivante**. `pause()` / `cancel()` pour la pause ou l'arrêt vocal : c'est du **contrôle utilisateur et de la supervision**, pas seulement une entrée micro.
+- **Pas de TTS Gladia trouvé dans la documentation consultée** : prévoir la synthèse vocale du navigateur ou des réponses à l'écran.
+
+Docs : [démarrage live Gladia](https://docs.gladia.io/chapters/live-stt/quickstart), [transcriptions partielles](https://docs.gladia.io/chapters/live-stt/features/partial-transcripts), [vocabulaire personnalisé](https://docs.gladia.io/chapters/audio-intelligence/custom-vocabulary), [entités nommées](https://docs.gladia.io/chapters/audio-intelligence/named-entity-recognition), [pilotage des sessions H](https://hub.hcompany.ai/agents-api/observe-and-steer).
+
+### Pipeline cible
+
+**Voix → Gladia → intention → Linkup structuré → 3 agents H en parallèle sur la bonne URL → correction/stop vocal → récap → « oui » vocal → arrêt avant paiement.**
+
+Le « oui » valide la préparation, jamais un paiement ni une réservation finale.
+
 ## Projets déjà faits (H Showcase)
 
 Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents construits sur l'API H Agents. On y trouve des démos officielles de H et les projets du hackathon de San Francisco.
