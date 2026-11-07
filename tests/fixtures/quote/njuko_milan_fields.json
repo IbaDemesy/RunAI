@@ -1,0 +1,2092 @@
+[
+ {
+  "_id": "69ddef40f048add4ec1e05af",
+  "name": [
+   {
+    "language": "en",
+    "translation": "Privacy",
+    "locale": "en_GB"
+   },
+   {
+    "language": "it",
+    "translation": "Privacy",
+    "locale": "it_IT"
+   }
+  ],
+  "type": "",
+  "role": "",
+  "fields": []
+ },
+ {
+  "_id": "69ddef40f048add4ec1e05ad",
+  "name": [
+   {
+    "language": "fr_FR",
+    "translation": "Individual Form",
+    "locale": "fr_FR"
+   }
+  ],
+  "type": "INDIVIDUAL",
+  "role": "registration",
+  "fields": []
+ },
+ {
+  "_id": "69ddef40f048add4ec1e05b1",
+  "name": [
+   {
+    "language": "en",
+    "translation": "Participation requirements",
+    "locale": "en_GB"
+   },
+   {
+    "language": "it",
+    "translation": "Requisiti di partecipazione",
+    "locale": "it_IT"
+   }
+  ],
+  "type": "",
+  "role": "",
+  "fields": [
+   {
+    "_id": "69ddef41f048add4ec1e0774",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Acceptance of conditions & insurance for sport tourism participation ",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Acceptation des conditions & assurance pour la participation au tourisme sportif",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Acceptance of conditions & insurance for sport tourism participation ",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Yes",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Oui",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Sì",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 5,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "661ea5c91b2ee547b46cea35"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "No",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Non",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "No",
+         "locale": "it_IT"
+        }
+       ],
+       "price": null,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": false,
+       "_id": "690b3285cb7e30e66c108136"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "_id": "69ddef40f048add4ec1e05b3",
+  "name": [
+   {
+    "language": "en_GB",
+    "translation": "Services",
+    "locale": "en_GB"
+   }
+  ],
+  "type": "",
+  "role": "",
+  "fields": [
+   {
+    "_id": "69ddef40f048add4ec1e05f0",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to book your spots now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous réserver vos places dès maintenant?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi prenotare i tuoi posti ora?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 40,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "69ddef40f048add4ec1e05f6",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your engraving now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander votre gravure dès maintenant ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi prenotare la tua incisione personalizzata adesso?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Yes",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Oui",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Sì",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 10,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "66229a2f877bcedbed28383b"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "No, thanks",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Non",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "No, grazie",
+         "locale": "it_IT"
+        }
+       ],
+       "price": null,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "66229a2f877bcedbed28383c"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6a4e49441eb72451b6006adc",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Choose a unique design for your race bib!",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Choisissez un design unique pour votre dossard !",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Scegli un design unico per il tuo pettorale!",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "We Celebrate Energy",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "We Celebrate Energy",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "We Celebrate Energy",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 5,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6a4e49441eb72451b6006ade"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "We Celebrate Italy",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "We Celebrate Italy",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "We Celebrate Italy",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 5,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6a550a6a4cd542d263863cc1"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "We Celebrate Milano",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "We Celebrate Milano",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "We Celebrate Milano",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 5,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6a4e4c26c1916787942802ed"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "We Celebrate Architecture",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "We Celebrate Architecture",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "We Celebrate Architecture",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 5,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6a4e4c26c1916787942802ee"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "We Celebrate Fashion",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "We Celebrate Fashion",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "We Celebrate Fashion",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 5,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6a4e4c26c1916787942802ef"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Standard design",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Standard design",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Standard design",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 0,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6a4e49441eb72451b6006adf"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac504fa680df463f8b520e5",
+    "type": "select",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your white t-shirt now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre t-shirt blanc ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tua t-shirt bianca?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XS",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XS",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XS",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac5022b77a58b502db09166"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "S",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "S",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "S",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac508205868cbca872fde16"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "M",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "M",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "M",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac508205868cbca872fde17"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "L",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "L",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "L",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac508205868cbca872fde18"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XL",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XL",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XL",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac508205868cbca872fde19"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac50828a279ff8cdb3d0e66",
+    "type": "select",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your blue t-shirt now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre t-shirt bleau ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tua t-shirt blu?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XS",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XS",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XS",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50828a279ff8cdb3d0e69"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "S",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "S",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "S",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50828a279ff8cdb3d0e6a"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "M",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "M",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "M",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50828a279ff8cdb3d0e6b"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "L",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "L",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "L",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50828a279ff8cdb3d0e6c"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XL",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XL",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XL",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 25,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50828a279ff8cdb3d0e6d"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac509485751aeded313f21f",
+    "type": "select",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your blue hoodie now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre sweat bleu ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tua felpa blu?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XS",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XS",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XS",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac509485751aeded313f222"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "S",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "S",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "S",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac509485751aeded313f223"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "M",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "M",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "M",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac509485751aeded313f224"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "L",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "L",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "L",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac509485751aeded313f225"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XL",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XL",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XL",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac509485751aeded313f226"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac50b415a67b45d1c55aad7",
+    "type": "select",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your windbreaker now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre veste coupe-vent ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tua giacca a vento?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XS",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XS",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XS",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50b415a67b45d1c55aada"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "S",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "S",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "S",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50b415a67b45d1c55aadb"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "M",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "M",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "M",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50b415a67b45d1c55aadc"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "L",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "L",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "L",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50b415a67b45d1c55aadd"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XL",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XL",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XL",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 45,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac50b415a67b45d1c55aade"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac61560cc2f3f58e9e7c043",
+    "type": "select",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your tecnhinal t-shirt now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre t-shirt technique ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tua t-shirt tecnica?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XS",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XS",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XS",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 30,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac61560cc2f3f58e9e7c046"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "S",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "S",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "S",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 30,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac61560cc2f3f58e9e7c047"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "M",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "M",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "M",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 30,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac61560cc2f3f58e9e7c048"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "L",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "L",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "L",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 30,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac61560cc2f3f58e9e7c049"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "XL",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "XL",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "XL",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 30,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac61560cc2f3f58e9e7c04a"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac61ee164b61a7350780176",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your cap now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre casquette ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il tuo cappellino?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 15,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac618303e8c1c7e804cafbe",
+    "type": "select",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your socks now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant vos chaussettes ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso i tuoi calzini?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "36-39 (EU)",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "36-39 (EU)",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "36-39 (EU)",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 15,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac618303e8c1c7e804cafc1"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "40 – 43 (EU)",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "40 – 43 (EU)",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "40 – 43 (EU)",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 15,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac618303e8c1c7e804cafc2"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "44 – 46 (EU)",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "44 – 46 (EU)",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "44 – 46 (EU)",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 15,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6ac618303e8c1c7e804cafc3"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac62040286ab3d8ffc7c92e",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your neck warmer now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre tour de cou ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il tuo scaldacollo?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 12,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac636f588eba70ea82be2b1",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your arm sleeves now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant vos manchettes ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso i manicotti?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 15,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac61b91225a60f239bf5334",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your Roll-Top backpack now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre sac à dos Roll-Top ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso  il tuo Roll-Top zaino?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 30,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac510302d9b666309b3f076",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your Milano Tote Bag now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre Milano Tote Bag ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tua Milano Tote Bag?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 15,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6aa9141fba4fbcc6bf9195f7",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your Ambrogio plush now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander la peluche Ambrogio dès maintenant ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il peluche di Ambrogio? ",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Yes",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Oui",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Sì",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 22,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6aa9141fba4fbcc6bf919da9"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "No, thanks",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Non",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "No, grazie",
+         "locale": "it_IT"
+        }
+       ],
+       "price": null,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "6aa9141fba4fbcc6bf919daa"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6ac63a359768ab4354c9cc7f",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your Ambrogio Mascot Keychain now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre Ambrogio Mascot Keychain ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il tuo portachiavi Mascotte Ambrogio?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 6,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac63ccfceccaff16851e9c5",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your Milano Commemorative Keychain now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre porte-clés commémoratif Milano ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il portachiavi celebrativo Milano?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 8,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "69ddef40f048add4ec1e0604",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your magnets now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander vos magnets dès maintenant ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare i tuoi magneti adesso? ",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Yes",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Oui",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Sì",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 12,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "69246b722b7fd98303c09364"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "No, thanks",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Non",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "No, grazie",
+         "locale": "it_IT"
+        }
+       ],
+       "price": null,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "69246b722b7fd98303c09365"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "6adf27c5774c85347673a14c",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your Stainless Steel Water Bottle now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre Gourde en acier inoxydable ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la borraccia in acciaio?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 17,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac63f38f2f263fb67d49d10",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your reusable cup now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre gobelet réutilisable ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il bicchiere riutilizzabile?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 8,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac640369e698f9b0f7fa5a9",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your mug now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre mug ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso la tazza?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 10,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "6ac6426691cde58fa46c4e84",
+    "type": "custom",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Do you want to order your mouse pad now?",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander dès maintenant votre tapis de souris ?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi ordinare adesso il tappetino per il mouse ?",
+      "locale": "it_IT"
+     }
+    ],
+    "price": 8,
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    }
+   },
+   {
+    "_id": "69ddef40f048add4ec1e05f8",
+    "type": "content",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Assicurazione",
+      "locale": "en_GB"
+     },
+     {
+      "language": "it",
+      "translation": "Contenu",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "html": [
+     {
+      "language": "en",
+      "translation": "<p><strong>INSURANCE FOR CANCELLATION OF PARTICIPATION</strong></p><p><strong>An insurance for the cancellation of participation is available at the cost of only 10 Euros</strong>. If the cancellation will be notified by January 31, 2027 the registration fee will be refunded at 100%, otherwise at 75%. Refunds will be processed within April 30, 2027. If it is not possible to make the refund on the same credit card used by the user to register, making it necessary to make a bank transfer, the refund time will be extended until September 30, 2027.</p><p>I: you do not need to provide any proof of the justification of the impossibility to participate (eg medical certificate), but reimbursement must be <strong>requested by sending an e-mail to info@milanomarathon.it.&nbsp;</strong>The request must be submitted no later than March 23, 2027. In case of a refund request, bib and race pack should NOT be collected.</p><p>Reimbursement is not applicable to:</p><ul style=\"padding:0px 40px; color:rgb(51, 51, 51); font-size:13px; font-style:normal; font-weight:400; letter-spacing:normal; text-align:start; text-transform:none;\"><li>the cost&nbsp;of the insurance itself&nbsp;(10 Euros)</li><li>the cost of online registration service (5 Euros)&nbsp;</li><li>the cost of other paid options</li></ul><p>It is not possible to purchase insurance or obtain a refund of the entry fee in three cases:</p><ul><li>registration using &ldquo;fast runners&rdquo; discount codes;</li><li>registration through promotional packages for groups or clubs;</li><li>athlete error in selecting the competition.</li></ul>",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "<p><strong>ASSURANCE D&rsquo;ANNULATION DE PARTICIPATION</strong></p><p><strong>Une assurance d&rsquo;annulation de participation est disponible au prix de seulement 10 euros</strong>. Si l&rsquo;annulation est notifi&eacute;e avant le 31 janvier 2027, les frais d&rsquo;inscription seront rembours&eacute;s &agrave; 100 %, sinon &agrave; 75 %. Les remboursements seront effectu&eacute;s avant le 30 avril 2027. S&rsquo;il n&rsquo;est pas possible d&rsquo;effectuer le remboursement sur la m&ecirc;me carte de cr&eacute;dit utilis&eacute;e lors de l&rsquo;inscription et qu&rsquo;un virement bancaire est n&eacute;cessaire, le d&eacute;lai de remboursement sera prolong&eacute; jusqu&rsquo;au 30 septembre 2027.</p><p>Il n&rsquo;est pas n&eacute;cessaire de fournir une preuve justifiant l&rsquo;impossibilit&eacute; de participer (par exemple un certificat m&eacute;dical), mais la demande de remboursement doit &ecirc;tre <strong>envoy&eacute;e par e-mail &agrave; <a rel=\"noopener\">info@milanomarathon.it</a>.</strong> La demande doit &ecirc;tre soumise au plus tard le 23 mars 2027. En cas de demande de remboursement, le dossard et le pack course ne doivent PAS &ecirc;tre retir&eacute;s.</p><p>Le remboursement ne s&rsquo;applique pas &agrave;:</p><ul><li>le co&ucirc;t de l&rsquo;assurance elle-m&ecirc;me (10 euros)</li><li>les frais de service d&rsquo;inscription en ligne (5 euros)</li><li>le co&ucirc;t des autres options payantes</li></ul><p>Il n&rsquo;est pas possible de souscrire une assurance ni d&rsquo;obtenir le remboursement des frais d&rsquo;inscription dans trois cas:</p><ul><li>inscription avec des codes de r&eacute;duction &laquo;fast runners&raquo;;</li><li>inscription via des forfaits promotionnels pour des groupes ou des clubs;</li><li>erreur de l&rsquo;athl&egrave;te dans le choix de la comp&eacute;tition.</li></ul>",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "<p><strong>ASSICURAZIONE SULLA MANCATA PARTECIPAZIONE</strong></p><p><strong>&Egrave; possibile stipulare un&#39;assicurazione, del costo di 10 euro, che consentir&agrave; di ottenere il rimborso della quota d&#39;iscrizione.&nbsp;</strong>Se l&rsquo;annullamento sar&agrave; comunicato entro il 31 gennaio 2027 la quota d&rsquo;iscrizione sar&agrave; rimborsata al 100%, altrimenti al 75%. Il rimborso sar&agrave; effettuato entro il 30 aprile 2027. Qualora non fosse possibile effettuare il rimborso sulla stessa carta di credito usata dall&#39;utente per iscriversi, rendendo necessaria l&#39;effettuazione di un bonifico, il tempo di rimborso si allungher&agrave; fino al 30 settembre 2027.</p><p><strong>Nota bene</strong>: non &egrave; necessario fornire alcuna prova della motivazione dell&#39;impossibilit&agrave; a partecipare (esempio certificato medico), ma il rimborso dovr&agrave; essere richiesto inviando un&rsquo;e-mail a info@milanomarathon.it. La richiesta dovr&agrave; essere presentata al massimo entro il 22 marzo 2027. In caso di richiesta di rimborso NON si dovranno ritirare pettorale e pacco gara.</p><p>Sono esclusi dalla quota rimborsabile:</p><ul style=\"padding:0px 40px; color:rgb(51, 51, 51); font-size:13px; font-style:normal; font-weight:400; letter-spacing:normal; text-align:start; text-transform:none;\"><li>il costo dell&#39;assicurazione stessa (10 euro)</li><li>il costo del servizio di iscrizione online (5 euro)&nbsp;</li><li>il costo di altre opzioni a pagamento</li></ul><p>Non &egrave; possibile acquistare l&rsquo;assicurazione n&eacute; ottenere il rimborso della quota in tre casi:</p><ul><li>iscrizione con codici sconto &ldquo;fast runners&rdquo;;</li><li>iscrizione tramite pacchetti promozionali per gruppi o societ&agrave;;</li><li>errore dell&rsquo;atleta nella scelta della competizione.</li></ul>",
+      "locale": "it_IT"
+     }
+    ]
+   },
+   {
+    "_id": "69ddef40f048add4ec1e05fc",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "Would you like to buy the cancellation insurance for participation? ",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous acheter l’assurance d’annulation de participation?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi sottoscrivere l'assicurazione sull'annullamento della partecipazione?",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Yes",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Oui",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Sì",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 10,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "662630168d5a7c67d4ce8bb8"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "No",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Non",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "No",
+         "locale": "it_IT"
+        }
+       ],
+       "price": null,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "662630168d5a7c67d4ce8bb9"
+      }
+     ]
+    }
+   },
+   {
+    "_id": "69df8ca2aa5b5bcc8e1c0509",
+    "type": "radio",
+    "label": [
+     {
+      "language": "en",
+      "translation": "OLD",
+      "locale": "en_GB"
+     },
+     {
+      "language": "fr",
+      "translation": "Souhaitez-vous commander maintenant?",
+      "locale": "fr_FR"
+     },
+     {
+      "language": "it",
+      "translation": "Vuoi prenotare adesso? ",
+      "locale": "it_IT"
+     }
+    ],
+    "validateOptionsFormGroup": {
+     "required": false,
+     "visible": true,
+     "organiserOnly": false,
+     "unique": false,
+     "editable": true
+    },
+    "data": {
+     "values": [
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "Yes",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Oui",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "Sì",
+         "locale": "it_IT"
+        }
+       ],
+       "price": 190,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "69246b722b7fd98303c09364"
+      },
+      {
+       "text": [
+        {
+         "language": "en",
+         "translation": "No",
+         "locale": "en_GB"
+        },
+        {
+         "language": "fr",
+         "translation": "Non",
+         "locale": "fr_FR"
+        },
+        {
+         "language": "it",
+         "translation": "No",
+         "locale": "it_IT"
+        }
+       ],
+       "price": null,
+       "displayOnCompetitions": [
+        "69ddef3af048add4ec1dfb15",
+        "69ddef3af048add4ec1dfb20"
+       ],
+       "visible": true,
+       "_id": "69246b722b7fd98303c09365"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "_id": "69ddef40f048add4ec1e05b5",
+  "name": [
+   {
+    "language": "en_GB",
+    "translation": "Group Form",
+    "locale": "en_GB"
+   }
+  ],
+  "type": "GROUP",
+  "role": "group",
+  "fields": []
+ },
+ {
+  "_id": "69ddef40f048add4ec1e05b7",
+  "name": [
+   {
+    "language": "en_GB",
+    "translation": "Group leader",
+    "locale": "en_GB"
+   }
+  ],
+  "type": "GROUP_LEADER",
+  "role": "group_leader",
+  "fields": []
+ }
+]

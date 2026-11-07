@@ -1,0 +1,79 @@
+{
+ "_id": "69ddef3af048add4ec1dfb0c",
+ "name": [
+  {
+   "language": "en",
+   "translation": "Wizz Air Milano Marathon 2027",
+   "locale": "en_GB"
+  },
+  {
+   "language": "fr",
+   "translation": "Wizz Air Milano Marathon 2027",
+   "locale": "fr_FR"
+  },
+  {
+   "language": "it",
+   "translation": "Wizz Air Milano Marathon 2027",
+   "locale": "it_IT"
+  }
+ ],
+ "timezone": "W. Europe Standard Time",
+ "currency": "EUR",
+ "showPriceEndDate": false,
+ "url": "wizz-air-milano-marathon-20271776152378557",
+ "status": "OPEN",
+ "competitions": [
+  {
+   "_id": "69ddef3af048add4ec1dfb15",
+   "name": [
+    {
+     "language": "en",
+     "translation": "Foreign athletes residing abroad who intend to participate as non-competitive runners",
+     "locale": "en_GB"
+    },
+    {
+     "language": "fr",
+     "translation": "Athlètes étrangers résidant à l’étranger qui souhaitent participer en tant que coureurs non compétitifs",
+     "locale": "fr_FR"
+    },
+    {
+     "language": "it",
+     "translation": "Atleti stranieri residenti all'estero che intendono partecipare come corridori non competitivi",
+     "locale": "it_IT"
+    }
+   ],
+   "startDate": "2027-04-04T06:00:00.000Z",
+   "endDateRegistrations": "2027-03-31T21:59:00.000Z",
+   "hideOnFront": false,
+   "position": 0,
+   "placeLimit": true,
+   "startDateRegistrations": "2026-04-01T10:00:00.000Z"
+  },
+  {
+   "_id": "69ddef3af048add4ec1dfb20",
+   "name": [
+    {
+     "language": "en",
+     "translation": "Italian and Foreign athletes registered with FIDAL, RUNCARD or foreign Athletics Federation affiliated to World Athletics",
+     "locale": "en_GB"
+    },
+    {
+     "language": "fr",
+     "translation": "Athlètes italiens et étrangers inscrits auprès de la FIDAL, RUNCARD ou d’une fédération d’athlétisme étrangère affiliée à World Athletics",
+     "locale": "fr_FR"
+    },
+    {
+     "language": "it",
+     "translation": "Atleti Italiani e Stranieri tesserati FIDAL, RUNCARD o per Federazioni straniere affiliate alla World Athletics",
+     "locale": "it_IT"
+    }
+   ],
+   "startDate": "2027-04-04T06:00:00.000Z",
+   "endDateRegistrations": "2027-03-31T21:59:00.000Z",
+   "hideOnFront": false,
+   "position": 1,
+   "placeLimit": true,
+   "startDateRegistrations": "2026-04-01T10:00:00.000Z"
+  }
+ ]
+}
