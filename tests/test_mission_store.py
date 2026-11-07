@@ -12,7 +12,7 @@ from runai.app.store import MissionStore
 from runai.app.tasks import TripBrief
 from runai.contracts.framing import FramingSummary, FramingTurn
 from runai.framing.launch import LaunchPlan, StepPlan
-from runai.models import Race, StepKind
+from runai.models import AgentQuestion, Race, StepKind
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 
@@ -201,3 +201,33 @@ def test_store_redacts_all_fields_on_write_and_read(tmp_path, monkeypatch):
     restored = MissionStore(tmp_path).load()[0]
     assert secret not in restored.model_dump_json()
     assert restored.plan.brief.preferences == "[REDACTED]"
+
+
+def test_eligibility_answer_after_completion_survives_restart(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    service = build_demo_service(delay=0)
+    with TestClient(create_app(service)) as client:
+        mission = start_mission(client, service)
+        finish_mission(client, mission.id)
+        question = AgentQuestion(id=f"eligibility-{mission.id}-group", kind=StepKind.registration,
+                                 question="Which start group should you review?", options=["Standard", "Fast"])
+
+        def open_question():
+            wrapped = service.questions.open(question, mission.id, mission.plan.revision)
+            service._emit(mission, "question_opened", wrapped.model_dump(mode="json"))
+            service._publish_state(mission)
+
+        client.portal.call(open_question)
+        route = f"/api/missions/{mission.id}"
+        response = client.post(f"{route}/questions/{question.id}/answer", json={
+            "answer": "Standard", "revision": 1, "idempotency_key": "persist-eligibility-answer",
+        })
+        assert response.status_code == 200
+        answered = next(item for item in response.json()["questions"] if item["question_id"] == question.id)
+        assert answered["status"] == "answered"
+        events = client.get(f"{route}/events").text
+
+    with TestClient(create_app(build_demo_service(delay=0))) as client:
+        restored = next(item for item in client.get(route).json()["questions"] if item["question_id"] == question.id)
+        assert restored["status"] == "answered" and restored["answer"] == "Standard"
+        assert client.get(f"{route}/events").text == events

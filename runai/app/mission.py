@@ -476,6 +476,7 @@ class MissionService:
         result = self.questions.answer(question_id, mission_id, answer)
         if (result.reason or "").startswith("eligibility:") or question_id.startswith("eligibility-"):
             self._emit(mission, "question_resolved", result.model_dump(mode="json"))
+        self._save_mission(mission)
         return result
 
     async def pause(self, mission_id: str, kind: StepKind) -> None:
