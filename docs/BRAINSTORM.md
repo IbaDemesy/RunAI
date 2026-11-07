@@ -166,6 +166,9 @@ Bonnes idées à reprendre : lire le plan à voix haute avant d'agir, et prépar
 
 Le sport reste donc quasiment libre dans le showcase : ce projet fait de la planification d'itinéraire, pas de l'inscription ni de la logistique de course.
 
+**Zoom sur [Workfleet](https://github.com/WillVo1/WorkFleet)** (Hackathon SF) : un agent de computer use prend le contrôle du curseur, donc une appli desktop comme SAP ne peut accueillir qu'un agent à la fois, et l'utilisateur ne peut plus se servir de sa machine. Workfleet crée des clones de l'ordinateur, chacun synchronisé avec les fichiers et les applis de l'utilisateur. Plusieurs agents travaillent ainsi en parallèle pendant qu'il continue sur son propre portable. Backend FastAPI, avec des machines virtuelles sur GCP.
+*À reprendre pour RunAI* : notre parallélisme (course, hôtel, transport) est plus simple, puisque chaque agent H a déjà son propre navigateur cloud. Pas besoin de cloner une machine. En revanche, l'argument est le même pour le pitch : **le coureur garde la main pendant que les agents travaillent**, et il les suit dans la vue live.
+
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
