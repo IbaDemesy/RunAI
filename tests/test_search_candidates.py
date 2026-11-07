@@ -76,6 +76,8 @@ def test_only_known_slots_and_no_location():
     asyncio.run(LinkupCandidateSearch(client).find_candidates(unknown))
     assert "invented" not in client.calls[0][0]["query"]
     assert "Paris" not in client.calls[0][0]["query"]
+    assert client.calls[0][0]["include_sources"] is True
+    assert "marathon" not in client.calls[0][0]["query"].lower()
     result = asyncio.run(LinkupCandidateSearch().search({}))
     assert result.candidates == []
     assert result.limitations[0].code == "no_candidate_found"

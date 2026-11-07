@@ -165,7 +165,8 @@ class LinkupCandidateSearch:
         if self._client is None:
             self._client = default_client()
         return self._client.search(query=prompt, depth="standard", output_type="structured",
-                                   structured_output_schema=_Candidates, exclude_domains=EXCLUDED_DOMAINS)
+                                   structured_output_schema=_Candidates, include_sources=True,
+                                   exclude_domains=EXCLUDED_DOMAINS)
 
     @staticmethod
     def _result(candidates: list[RaceCandidate]) -> CandidateSearchResult:
