@@ -1,6 +1,7 @@
 """Orchestration d'une mission : recherche, trois agents en parallèle, portail avant engagement."""
 
 import asyncio
+import logging
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -23,6 +24,8 @@ from runai.models import (
 )
 from runai.safety import detect_stop_point, guard_task
 from runai.tracing import TraceWriter
+
+logger = logging.getLogger(__name__)
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
@@ -248,7 +251,10 @@ class MissionService:
             self._loop.call_soon_threadsafe(self._record, mission, event)
             return
         mission.events.append(event)
-        self._writers[mission.id].write(event)
+        try:
+            self._writers[mission.id].write(event)
+        except OSError:
+            logger.exception("Trace non écrite pour la mission %s", mission.id)
         step_name = event.data.get("step")
         if step_name in StepKind._value2member_map_ and event.source.startswith(
             "agent"

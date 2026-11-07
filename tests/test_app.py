@@ -212,6 +212,19 @@ async def test_partial_failure_without_stop_fails_mission(tmp_path):
 
 
 @pytest.mark.anyio
+async def test_trace_write_failure_does_not_strand_mission(tmp_path, monkeypatch):
+    service = make_service(tmp_path)
+    mission = await service.create("Milan")
+
+    def broken_write(self, event):
+        raise OSError("disque plein")
+
+    monkeypatch.setattr(TraceWriter, "write", broken_write)
+    mission = await service.wait(mission.id)
+    assert mission.status is MissionStatus.awaiting_human
+
+
+@pytest.mark.anyio
 async def test_failed_search_fails_mission(tmp_path):
     class BrokenSearch:
         async def find_race(self, query):
