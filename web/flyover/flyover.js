@@ -371,7 +371,7 @@
   }
 
   function seek(distance, options) {
-    if (!state.track) return;
+    if (!state.track || !Number.isFinite(distance)) return;
     state.distance = Math.max(0, Math.min(state.track.totalM, distance));
     if (options && options.follow) {
       if (!state.playing) map.jumpTo({ pitch: FOLLOW_PITCH, zoom: Math.max(map.getZoom(), FOLLOW_ZOOM - 1) });
