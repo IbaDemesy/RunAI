@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>RunAI · L'agent remplit, tu signes</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #0f1115; color: #e8e8e8; }
+  header { padding: 14px 24px; background: #171a21; display: flex; gap: 24px; align-items: baseline; }
+  header h1 { font-size: 18px; margin: 0; }
+  .muted { color: #8a8f98; font-size: 13px; }
+  main { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; padding: 20px 24px; }
+  .card { background: #171a21; border-radius: 10px; padding: 16px; }
+  .pending { border: 2px solid #f5a524; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; background: #2a2f3a; font-size: 12px; margin-right: 6px; }
+  .tag.oblig { background: #5a2a2a; }
+  img { max-width: 100%; border-radius: 6px; border: 1px solid #2a2f3a; }
+  blockquote { margin: 10px 0; padding: 10px 12px; background: #0f1115; border-left: 3px solid #f5a524; white-space: pre-wrap; font-size: 14px; }
+  button { font-size: 16px; padding: 10px 20px; border-radius: 8px; border: 0; cursor: pointer; margin-right: 10px; }
+  #ok { background: #17c964; color: #fff; } #ko { background: #f31260; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td, th { padding: 6px; border-bottom: 1px solid #2a2f3a; text-align: left; vertical-align: top; }
+  .APPROUVE { color: #17c964; } .REFUSE { color: #f31260; }
+  a { color: #7aa2f7; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RunAI · l'agent remplit, tu signes</h1>
+  <span class="muted" id="meta">…</span>
+</header>
+<main>
+  <section>
+    <div class="card" id="pending"><span class="muted">Aucune case sensible en attente. L'agent travaille…</span></div>
+    <div class="card" style="margin-top:16px"><b>Dernière pensée de l'agent</b><div class="muted" id="thought"></div></div>
+    <div class="card" style="margin-top:16px" id="answer"></div>
+  </section>
+  <section class="card">
+    <b>Historique des signatures</b>
+    <table><thead><tr><th>Case</th><th>Décision</th><th>Attente humain</th><th>Reprise (état running)</th><th>1re action après signature</th></tr></thead>
+    <tbody id="hist"></tbody></table>
+  </section>
+</main>
+<script>
+let shown = null;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+async function decide(id, decision) {
+  document.querySelectorAll("button").forEach(b => b.disabled = true);
+  const comment = document.getElementById("comment")?.value || "";
+  await fetch("/api/decide", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({id, decision, comment})});
+  shown = null; tick();
+}
+async function tick() {
+  const s = await (await fetch("/api/state")).json();
+  document.getElementById("meta").innerHTML =
+    `mécanisme <b>${esc(s.mode)}</b> · session <code>${esc(s.session_id)}</code> · statut <b>${esc(s.status)}</b>` +
+    (s.live_view_url ? ` · <a href="${esc(s.live_view_url)}" target="_blank">vue live H</a>` : "");
+  document.getElementById("thought").textContent = s.last_thought || "";
+  const p = s.pending, box = document.getElementById("pending");
+  if (p && shown !== p.id) {
+    shown = p.id;
+    box.className = "card pending";
+    box.innerHTML = `<div><span class="tag">${esc(p.categorie)}</span>` +
+      (p.obligatoire ? `<span class="tag oblig">obligatoire</span>` : `<span class="tag">optionnelle</span>`) +
+      `<span class="muted">${esc(p.page_url)}</span></div>
+      <h2 style="margin:8px 0">${esc(p.champ)}</h2>
+      <blockquote>${esc(p.texte)}</blockquote>
+      ${p.has_screenshot ? `<img src="/api/screenshot/${p.id}">` : `<p class="muted">(pas de capture)</p>`}
+      <p><input id="comment" placeholder="commentaire (optionnel)" style="width:60%;padding:8px"></p>
+      <button id="ok" onclick="decide('${p.id}','approve')">Je valide</button>
+      <button id="ko" onclick="decide('${p.id}','refuse')">Je refuse</button>`;
+  } else if (!p && shown !== "none") {
+    shown = "none";
+    box.className = "card";
+    box.innerHTML = `<span class="muted">Aucune case sensible en attente. L'agent travaille…</span>`;
+  }
+  document.getElementById("hist").innerHTML = s.history.map(h =>
+    `<tr><td><span class="tag">${esc(h.categorie)}</span>${esc(h.champ)}</td>
+     <td class="${h.decision}">${h.decision} <span class="muted">(${esc(h.decided_by)})</span></td>
+     <td>${h.human_wait_s} s</td><td>${h.resume_seen_s ?? "…"} s</td><td>${h.next_policy_s ?? "…"} s</td></tr>`).join("");
+  document.getElementById("answer").innerHTML = s.answer
+    ? `<b>Réponse finale de l'agent</b><blockquote>${esc(s.answer)}</blockquote>` : "";
+}
+setInterval(tick, 1500); tick();
+</script>
+</body>
+</html>
