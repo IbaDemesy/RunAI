@@ -169,6 +169,8 @@ Le sport reste donc quasiment libre dans le showcase : ce projet fait de la plan
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
+  - [A-Test](https://github.com/dzianisv/a-test) (Hackathon SF) : des cas de test écrits en langage courant, tirés des cas d'usage du cahier des charges, sont exécutés par un agent de computer use (modèles Holo 3.1) dans la CI. Une GitHub Action réutilisable bloque toute PR qui casse l'appli. Ça marche sur les applis web Chrome, les extensions, les émulateurs Android et iOS et les applis en terminal. Leur argument : les agents de code ont besoin d'un vrai retour, pas d'être surveillés en permanence.
+    *À reprendre pour RunAI* : écrire en langage courant les **scénarios de la démo** (« inscris-moi au semi de Paris en 21 km », « change la taille de t-shirt »…) et les faire rejouer automatiquement sur notre faux site d'inscription à chaque PR. Devin, qui code le projet, recevrait ainsi un vrai retour. C'est aussi une piste pour le prix « Best Use of Devin ».
   - [Houston](https://github.com/nossa-y/houston-hackathon) (Hackathon SF) : une « tour de contrôle » qui ne croit jamais un agent sur parole quand il dit avoir fini. Chaque mission suit quatre étapes :
     1. **Exécution** : une session H réalise la tâche, demandée à la voix ou par écrit.
     2. **Audit** : une seconde session H, indépendante, refait la vérification sur le site en ligne et renvoie un verdict typé.
