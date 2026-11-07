@@ -10,5 +10,5 @@ SAMPLE_AUDIO = "https://media.githubusercontent.com/media/gladiaio/gladia-sample
 
 audio = sys.argv[1] if len(sys.argv) > 1 else SAMPLE_AUDIO
 client = GladiaClient().prerecorded()
-response = client.transcribe(audio, {"language_config": {"languages": ["en", "fr"]}})
+response = client.transcribe(audio)
 print(response.status, response.result.transcription.full_transcript)
