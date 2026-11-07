@@ -20,9 +20,9 @@ class StepAnswer(BaseModel):
 class RegistrationAnswer(StepAnswer):
     race: str | None = Field(default=None, description="Race name.")
     distance_km: float | None = Field(default=None, description="Race distance in kilometers.")
-    price: float | None = Field(default=None, description="Displayed registration price.")
+    price: float | None = Field(default=None, description="Displayed registration price excluding fees")
     currency: str | None = Field(default=None, description="Displayed currency code.")
-    fees: float | None = Field(default=None, description="Displayed registration fees.")
+    fees: float | None = Field(default=None, description="Displayed fees not already included in price")
     missing_fields: list[str] = Field(default_factory=list, description="Missing required fields.")
 
 
