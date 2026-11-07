@@ -223,3 +223,16 @@ def test_tasks_module_has_no_v1_hardcoded_values():
 
     source = Path(tasks.__file__).read_text(encoding="utf-8")
     assert not [word for word in HARDCODED_V1 if word in source]
+
+
+def test_zero_nights_skips_accommodation_instead_of_failing():
+    session = confirmed()
+    day = session.summary.race.race_date
+    session.summary = session.summary.model_copy(
+        update={"nights": 0, "date_range": (day, day)}
+    )
+    session.slots[SlotName.nights].value = 0
+    plan = plan_launch(session)
+    assert plan.steps[StepKind.accommodation].automation is Automation.not_covered
+    assert plan.steps[StepKind.accommodation].task is None
+    assert any(lim.code == "no_accommodation_requested" for lim in plan.limitations)

@@ -79,7 +79,7 @@ def extract_slots(text: str) -> dict[SlotName, object]:
     for pattern, mode in (
         (r"train", "train"),
         (r"avion|flight|plane", "flight"),
-        (r"voiture|car", "car"),
+        (r"voiture|by car|rental car|drive", "car"),
         (r"bus", "bus"),
     ):
         if re.search(r"\b(?:" + pattern + r")\b", text, re.IGNORECASE):

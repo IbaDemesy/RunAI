@@ -11,6 +11,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from runai.app.providers import (
+    StepCoverage,
     accommodation_coverage,
     normalize_transport_mode,
     registration_coverage,
@@ -118,7 +119,7 @@ def _race(session: FramingSession, candidate: RaceCandidate | None) -> Race:
 def _brief(session: FramingSession, race: Race) -> TripBrief:
     summary = session.summary
     arrival, departure = summary.date_range
-    if departure <= arrival:
+    if departure < arrival or (departure == arrival and summary.nights):
         raise FramingError(
             "Fenêtre de séjour incohérente : départ avant ou égal à l'arrivée"
         )
@@ -170,7 +171,19 @@ def plan_launch(
     )
     coverages = {
         StepKind.registration: registration_coverage(race, official_url),
-        StepKind.accommodation: accommodation_coverage(),
+        StepKind.accommodation: accommodation_coverage()
+        if brief.nights
+        else StepCoverage(
+            StepKind.accommodation,
+            Automation.not_covered,
+            limitations=[
+                Limitation(
+                    code="no_accommodation_requested",
+                    message="0 nuit confirmée : aucun hébergement à rechercher.",
+                    step=StepKind.accommodation.value,
+                )
+            ],
+        ),
         StepKind.transport: transport_coverage(brief.transport_mode, race.country),
     }
     reg, acc, tra = (coverages[k].platform for k in AGENT_STEPS)

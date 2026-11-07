@@ -267,3 +267,10 @@ def test_candidate_rejection_and_correction_preserve_known_answers():
         assert selected.slots[SlotName.origin].value == "Lyon"
 
     asyncio.run(run())
+
+
+def test_french_conjunction_car_is_not_a_transport_mode():
+    assert SlotName.transport_mode not in extract_slots(
+        "je viens car je veux courir à Tokyo"
+    )
+    assert extract_slots("j'y vais en voiture")[SlotName.transport_mode] == "car"
