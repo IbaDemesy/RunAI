@@ -174,7 +174,8 @@ def parse_command(text: str) -> VoiceCommand | None:
     negated = any(
         p.search(norm) and not _affirmed(p, norm) for p in (_CANCEL, _CORRECTION, _NEW_MISSION, _RESUME, _PAUSE)
     )
-    implicit = race and race.city and (race.distance_km or race.name) and not (negated or resume or pause)
+    leading_resume = _affirmed(_RESUME, " ".join(norm.split()[:_PAUSE_WINDOW_WORDS]))
+    implicit = race and race.city and (race.distance_km or race.name) and not (negated or leading_resume or pause)
     if mission or implicit:
         return VoiceCommand(kind=CommandKind.new_mission, race=race, detail=text.strip())
 
