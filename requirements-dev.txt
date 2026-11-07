@@ -1,0 +1,3 @@
+# Dev/CI-only tools; Render installs requirements.txt only.
+ruff==0.17.4
+pytest==9.2.0

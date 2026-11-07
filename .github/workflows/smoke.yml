@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       run_h:
-        description: "Exécuter le smoke test H (consomme des crédits)"
+        description: "Run the H smoke test (consumes credits)"
         type: boolean
         required: false
         default: false

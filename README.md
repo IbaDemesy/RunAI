@@ -79,7 +79,7 @@ Depuis la racine du dépôt, avec Python installé :
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt ruff pytest
+pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env
 ```
 
@@ -165,7 +165,7 @@ Le workflow `smoke.yml` lance les tests réels Linkup et Gladia lors d’un push
 
 Secrets de dépôt requis : `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY`.
 
-Les workflows installent les dépendances avec `uv` ; en local, utilisez `uv venv && uv pip install -r requirements.txt ruff pytest`.
+Les workflows installent les dépendances avec `uv` ; en local, utilisez `uv venv && uv pip install -r requirements.txt -r requirements-dev.txt`.
 
 Le déploiement continu vers Render sera ajouté avec le backend.
 
