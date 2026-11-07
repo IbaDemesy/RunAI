@@ -53,12 +53,14 @@ _LOCATION_REQUEST = re.compile(
     r"(?:\s+[A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*){0,2})"
 )
 _DATE_WORDS = frozenset(
-    """
-    janvier février mars avril mai juin juillet août aout septembre octobre
-    novembre décembre decembre january february march april may june july august
-    september october november december lundi mardi mercredi jeudi vendredi
-    samedi dimanche monday tuesday wednesday thursday friday saturday sunday
-    """.split()
+    [
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
+        "aout", "septembre", "octobre", "novembre", "décembre", "decembre",
+        "january", "february", "march", "april", "may", "june", "july", "august",
+        "september", "october", "november", "december", "lundi", "mardi",
+        "mercredi", "jeudi", "vendredi", "samedi", "dimanche", "monday",
+        "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    ]
 )
 
 
