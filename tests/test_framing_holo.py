@@ -130,3 +130,22 @@ async def test_engine_fills_only_unknown_slots_from_holo():
     assert session.slots["distance_km"].value == 42.195
     assert not session.slots["nights"].is_known
     assert not any("ville" in q.text.lower() and "partez" not in q.text.lower() for q in session.open_questions)
+
+
+class TwoCandidates:
+    async def find_candidates(self, slots):
+        from runai.app.candidates import FixtureCandidateSearch
+        from runai.app.fakes import DEMO_RACES
+        return (await FixtureCandidateSearch(DEMO_RACES, DataMode.demo).find_candidates(slots))[:2]
+
+
+@pytest.mark.anyio
+async def test_candidate_question_is_announced_plainly_not_rephrased():
+    phraser = Recorder()
+    engine = FramingEngine(TwoCandidates(), DataMode.demo, phraser=phraser)
+    session = await engine.create(FramingCreate(text="une course à Milan", channel="text"))
+    if not session.candidates:
+        pytest.skip("aucun candidat de démonstration pour Milan")
+    assert session.turns[-1].role == "assistant"
+    assert "trouvé" in session.turns[-1].text and "ci-dessous" in session.turns[-1].text
+    assert phraser.calls == []

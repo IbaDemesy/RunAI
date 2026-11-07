@@ -273,7 +273,16 @@ class FramingEngine:
             for name, slot in session.slots.items()
             if slot.is_known and slot.value is not None
         }
-        text = await self.phraser.phrase(session.turns, question.text, known)
+        candidates = [c for c in question.choices if c.candidate_id]
+        if candidates:
+            count = len(candidates)
+            text = (
+                "J'ai trouvé une course qui correspond. Vérifiez-la ci-dessous et choisissez-la, ou dites-moi si ce n'est pas la bonne."
+                if count == 1
+                else f"J'ai trouvé {count} courses qui correspondent. Choisissez celle qui vous intéresse ci-dessous, ou dites-moi si aucune ne convient."
+            )
+        else:
+            text = await self.phraser.phrase(session.turns, question.text, known)
         session.turns.append(
             FramingTurn(role="assistant", text=text, revision=session.revision)
         )
