@@ -24,7 +24,12 @@ from runai.app.tasks import (
 from runai.contracts.common import DataMode, Limitation
 from runai.contracts.framing import FramingError, FramingSummary, FramingTurn
 from runai.contracts.journey import JourneyPlan
-from runai.contracts.mission import EventEnvelope, HumanAnswer, MissionSnapshot
+from runai.contracts.mission import (
+    EventEnvelope,
+    HumanAnswer,
+    MissionSnapshot,
+    QuestionStatus,
+)
 from runai.framing.holo import Phraser
 from runai.framing.launch import LaunchPlan, plan_launch
 from runai.h.human_questions import HumanQuestionRegistry
@@ -242,6 +247,10 @@ class MissionService:
                 mission.status = MissionStatus.failed
                 mission.error = message
                 mission.limitations.append(Limitation(code="server_restarted", message=message))
+                for question in snapshot.questions:
+                    if question.status is QuestionStatus.open:
+                        question.status = QuestionStatus.cancelled
+                        self._emit(mission, "question_resolved", question.model_dump(mode="json"))
                 for step in mission.steps.values():
                     if step.status in {StepStatus.pending, StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user}:
                         step.status = StepStatus.failed

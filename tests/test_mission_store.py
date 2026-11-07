@@ -92,12 +92,18 @@ def test_interrupted_mission_fails_on_restart_without_resuming_agents(tmp_path, 
     with TestClient(create_app(original)) as client:
         mission = start_mission(client, original)
         route = f"/api/missions/{mission.id}"
+        deadline = time.monotonic() + 2
+        path = tmp_path / "missions" / f"{mission.id}.json"
+        while not json.loads(path.read_text())["snapshot"]["questions"] and time.monotonic() < deadline:
+            time.sleep(.01)
+        assert any(item["status"] == "open" for item in json.loads(path.read_text())["snapshot"]["questions"])
         restarted = build_demo_service(delay=0)
         with TestClient(create_app(restarted)) as recovered:
             snapshot = recovered.get(route)
             assert snapshot.status_code == 200
             snapshot = snapshot.json()
             assert snapshot["status"] == "failed"
+            assert snapshot["questions"] and all(item["status"] == "cancelled" for item in snapshot["questions"])
             assert any(item["code"] == "server_restarted" for item in snapshot["limitations"])
             assert all(step["status"] not in {"running", "paused", "pending", "waiting_for_user"}
                        for step in snapshot["steps"])
