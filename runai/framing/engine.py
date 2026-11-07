@@ -26,6 +26,7 @@ from runai.contracts.framing import (
 )
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.interpret import extract_slots
+from runai.journey import public_origin
 from runai.models import Race
 from runai.redaction import redact_secrets
 from runai.search.candidates import CandidateSearchError
@@ -139,6 +140,11 @@ class FramingEngine:
             if not values and choice is None and session.turns:
                 raise FramingError("Précisez une réponse ou une correction explicite")
             self._validate(values)
+            turn_text = reply.text or reply.choice_id or str(reply.corrections)
+            if isinstance(origin := values.get(SlotName.origin), str):
+                public = public_origin(origin)
+                values[SlotName.origin] = None if public == "Origine non précisée" else public
+                turn_text = turn_text.replace(origin, public)
             session.revision += 1
             session.summary = None
             session.confirm_key = session.confirmed_revision = None
@@ -211,7 +217,7 @@ class FramingEngine:
             session.turns.append(
                 FramingTurn(
                     role="user",
-                    text=reply.text or reply.choice_id or str(reply.corrections),
+                    text=turn_text,
                     channel=reply.channel,
                     revision=session.revision,
                 )
@@ -336,7 +342,7 @@ class FramingEngine:
             revision=session.revision,
             race=race,
             candidate_id=session.selected_candidate_id,
-            origin_public=value(SlotName.origin),
+            origin_public=public_origin(value(SlotName.origin)),
             date_range=dates,
             nights=nights,
             budget_eur=value(SlotName.budget),

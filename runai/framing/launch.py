@@ -27,6 +27,7 @@ from runai.contracts.framing import (
     SlotName,
     missing_slots,
 )
+from runai.journey import public_origin
 from runai.models import Race, RunnerProfile, StepKind
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
@@ -140,7 +141,7 @@ def _brief(session: FramingSession, race: Race) -> TripBrief:
         arrival=arrival,
         departure=departure,
         nights=summary.nights,
-        origin=summary.origin_public,
+        origin=public_origin(summary.origin_public),
         budget_total_eur=summary.budget_eur,
         transport_mode=normalize_transport_mode(summary.transport_mode)
         or summary.transport_mode,
