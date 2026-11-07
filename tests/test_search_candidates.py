@@ -135,6 +135,21 @@ def test_request_text_lowercase_month_does_not_trigger_search():
     assert client.calls == []
 
 
+@pytest.mark.parametrize(
+    "request_text",
+    [
+        "un semi en Mars",
+        "un semi en MARS",
+        "un semi in January",
+        "un semi in JANUARY",
+        "un semi en Lundi",
+        "un semi in Wednesday",
+    ],
+)
+def test_location_hint_excludes_months_and_weekdays(request_text):
+    assert module.location_hint(request_text) is None
+
+
 def test_empty_and_errors(monkeypatch):
     result = asyncio.run(LinkupCandidateSearch(FakeClient()).search(slots(city="Tokyo")))
     assert not result.candidates

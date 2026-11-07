@@ -52,13 +52,26 @@ _LOCATION_REQUEST = re.compile(
     r"([A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*"
     r"(?:\s+[A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*){0,2})"
 )
+_DATE_WORDS = frozenset(
+    """
+    janvier février mars avril mai juin juillet août aout septembre octobre
+    novembre décembre decembre january february march april may june july august
+    september october november december lundi mardi mercredi jeudi vendredi
+    samedi dimanche monday tuesday wednesday thursday friday saturday sunday
+    """.split()
+)
 
 
 def location_hint(text: str | None) -> str | None:
     if not text:
         return None
     match = _LOCATION_REQUEST.search(text)
-    return match.group(1) if match else None
+    if not match:
+        return None
+    hint = match.group(1)
+    if any(word.casefold() in _DATE_WORDS for word in re.findall(r"[^\W\d_]+", hint)):
+        return None
+    return hint
 
 
 SEARCH_SLOTS = (
