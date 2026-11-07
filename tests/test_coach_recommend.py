@@ -203,3 +203,13 @@ def test_live_linkup_search(camille, tmp_path, monkeypatch):
     prefs = RacePreferences(origin_city="Paris", distance_km=10, zone_hint="en Ile-de-France", max_travel_h=1.5)
     result = recommend_races(camille, prefs, mode="live", cache=DiscoveryCache(tmp_path, fallbacks=()))
     assert result.races
+
+
+def test_same_day_races_in_different_cities_are_kept(camille):
+    q = _query(travel_mode="flight")
+    cands = [
+        CandidateRace(name=f"Semi {city}", race_date=date(2027, 4, 4), city=city, distance_km=21.1, status=S.ouvert, travel_h_est=1.0)
+        for city in ("Lille", "Roubaix", "Lillé")
+    ]
+    names = [r.name for r in rank_races(camille, DiscoveryResult(query=q, candidates=cands), TODAY).races]
+    assert names[:2] == ["Semi Lille", "Semi Roubaix"] or set(names) == {"Semi Lille", "Semi Roubaix"}

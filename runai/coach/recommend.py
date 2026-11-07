@@ -1,6 +1,7 @@
 """Choix de 3 à 5 courses adaptées au niveau, à partir des résultats du finder (live ou cache)."""
 
 import re
+import unicodedata
 from datetime import date, timedelta
 from typing import Literal
 
@@ -225,11 +226,14 @@ def _rank_one(
 
 def _same_event(a: RaceRecommendation, b: RaceRecommendation) -> bool:
     """Même date et même lieu : Linkup renvoie souvent la même course sous plusieurs noms/langues."""
-    if a.race_date is None or a.race_date != b.race_date:
+    if a.race_date is None or a.race_date != b.race_date or not (a.city and b.city):
         return False
-    if a.travel_h_est is not None and b.travel_h_est is not None:
-        return abs(a.travel_h_est - b.travel_h_est) < 0.05
-    return bool(a.city and b.city and norm_name(a.city) == norm_name(b.city))
+    return _city_key(a.city) == _city_key(b.city)
+
+
+def _city_key(city: str) -> str:
+    plain = unicodedata.normalize("NFKD", city).encode("ascii", "ignore").decode()
+    return norm_name(plain)
 
 
 def rank_races(
