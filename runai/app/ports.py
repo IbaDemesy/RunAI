@@ -48,6 +48,7 @@ class BrowserAgents(Protocol):
         on_event: EventSink,
         ask_user: AskUser,
         mission_id: str | None = None,
+        query: str = "",
     ) -> AgentRun: ...
 
 

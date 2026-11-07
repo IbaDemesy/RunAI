@@ -46,7 +46,10 @@ def make_service(tmp_path, agents=None, search=None, delay=0.0):
 
 
 async def answer_fake_questions(service, mission):
-    while len(mission.questions) < 4 or any(
+    expected_questions = 4 - (
+        extract_budget_per_night(mission.query, require_context=True) is not None
+    )
+    while len(mission.questions) < expected_questions or any(
         question.answer is None for question in mission.questions
     ):
         for question in mission.questions:
@@ -84,7 +87,9 @@ class ScriptedAgents:
     def __init__(self, results):
         self.results = results
 
-    async def start(self, kind, task, race, profile, on_event, ask_user, mission_id=None):
+    async def start(
+        self, kind, task, race, profile, on_event, ask_user, mission_id=None, query=""
+    ):
         outcome = self.results[kind]
         if isinstance(outcome, Exception):
             return ScriptedRun(kind, error=outcome)
@@ -195,6 +200,9 @@ async def test_full_fake_mission_stops_before_commitment(tmp_path):
 
     assert mission.status is MissionStatus.awaiting_human
     assert mission.race.city == "Milan"
+    assert any(
+        question.question == "Budget max par nuit ?" for question in mission.questions
+    )
     snapshot = mission.snapshot()
     assert [step["kind"] for step in snapshot["steps"]] == [
         kind.value for kind in AGENT_KINDS
@@ -309,6 +317,21 @@ async def test_agent_question_waits_for_answer_and_resumes(tmp_path):
     trace = TraceWriter(mission.id, traces_dir=tmp_path).read()
     assert any(event.type == "question" for event in trace)
     assert any(event.type == "answer" for event in trace)
+
+
+@pytest.mark.anyio
+async def test_fake_mission_uses_query_hotel_budget_without_asking_again(tmp_path):
+    service = make_service(tmp_path, agents=FakeBrowserAgents(delay=0))
+    mission = await service.create("marathon de Milan, hôtel 120 € par nuit")
+    await answer_fake_questions(service, mission)
+    mission = await service.wait(mission.id)
+
+    assert not any(
+        question.kind is StepKind.accommodation for question in mission.questions
+    )
+    result = mission.steps[StepKind.accommodation]
+    assert result.data["budget_max_per_night_eur"] == 120
+    assert result.data["budget_max_total_eur"] == 240
 
 
 @pytest.mark.anyio
@@ -517,7 +540,15 @@ async def test_failed_search_fails_mission(tmp_path):
 async def test_events_from_another_thread_are_recorded(tmp_path):
     class ThreadedAgents(FakeBrowserAgents):
         async def start(
-            self, kind, task, race, profile, on_event, ask_user, mission_id=None
+            self,
+            kind,
+            task,
+            race,
+            profile,
+            on_event,
+            ask_user,
+            mission_id=None,
+            query="",
         ):
             thread = threading.Thread(
                 target=on_event,
@@ -532,7 +563,7 @@ async def test_events_from_another_thread_are_recorded(tmp_path):
             thread.start()
             thread.join()
             return await super().start(
-                kind, task, race, profile, on_event, ask_user, mission_id
+                kind, task, race, profile, on_event, ask_user, mission_id, query=query
             )
 
     service = make_service(tmp_path, agents=ThreadedAgents(delay=0))

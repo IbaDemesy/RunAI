@@ -131,6 +131,7 @@ class RealBrowserAgents:
         on_event: EventSink,
         ask_user: AskUser,
         mission_id: str | None = None,
+        query: str = "",
     ) -> RealAgentRun:
         start_url = None
         if kind is StepKind.registration:

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from runai.app.ports import AskUser, EventSink
+from runai.app.tasks import extract_budget_per_night
 from runai.models import (
     Race,
     RunnerProfile,
@@ -170,9 +171,11 @@ class FakeAgentRun:
         on_event: EventSink,
         ask_user: AskUser,
         delay: float,
+        query: str = "",
     ):
         self.kind = kind
         self.task = task
+        self.query = query
         self.session_id = f"fake-{kind.value}-{uuid.uuid4().hex[:8]}"
         self.live_view_url = f"/demo/live?session={self.session_id}"
         self._on_event = on_event
@@ -214,9 +217,15 @@ class FakeAgentRun:
 
     async def _run(self) -> StepResult:
         script = SCRIPTS[self.kind]
+        questions = QUESTIONS[self.kind]
+        if (
+            self.kind is StepKind.accommodation
+            and extract_budget_per_night(self.query, require_context=True) is not None
+        ):
+            questions = []
         answers = [
             await self._ask_user(question, options)
-            for question, options in QUESTIONS[self.kind]
+            for question, options in questions
         ]
         for message, url in script.actions:
             await asyncio.sleep(self._delay)
@@ -253,8 +262,9 @@ class FakeBrowserAgents:
         on_event: EventSink,
         ask_user: AskUser,
         mission_id: str | None = None,
+        query: str = "",
     ) -> FakeAgentRun:
-        run = FakeAgentRun(kind, task, on_event, ask_user, self.delay)
+        run = FakeAgentRun(kind, task, on_event, ask_user, self.delay, query=query)
         self.runs.append(run)
         return run
 

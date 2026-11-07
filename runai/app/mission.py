@@ -460,6 +460,7 @@ class MissionService:
                     on_event,
                     ask_user=ask_user,
                     mission_id=mission.id,
+                    query=mission.query,
                 )
                 self._runs[(mission.id, kind)] = run
                 step.h_session_id = run.session_id
