@@ -274,3 +274,20 @@ def test_aggregator_link_on_official_page_is_never_trusted():
     sheet.registration_url = "https://www.ahotu.com/event/milano-marathon"
     sheet.registration_verified = True
     assert "registration_url" in _fields(check_sheet(sheet, today=TODAY), IssueLevel.error)
+
+
+def test_official_site_registration_page_can_replace_a_bad_url():
+    data = {**MILAN, "registration_url": "https://cheap-bibs.example.com/milan"}
+    page = "[Home](https://www.milanomarathon.it/en/) [Register](https://www.milanomarathon.it/en/marathon/register/)"
+    client = FakeLinkup([_response(data)], pages={MILAN["official_url"]: page})
+    sheet = search_race("marathon de Milan 2027", client=client, follow_up=False, today=TODAY)
+    assert str(sheet.registration_url) == "https://www.milanomarathon.it/en/marathon/register/"
+    assert sheet.is_reliable
+
+
+def test_known_platform_link_is_preferred_over_official_site_page():
+    data = {**MILAN, "registration_url": "https://cheap-bibs.example.com/milan"}
+    page = "[Register](https://www.milanomarathon.it/en/marathon/register/) [Njuko](https://in.njuko.com/milan-2027)"
+    client = FakeLinkup([_response(data)], pages={MILAN["official_url"]: page})
+    sheet = search_race("marathon de Milan 2027", client=client, follow_up=False, today=TODAY)
+    assert str(sheet.registration_url) == "https://in.njuko.com/milan-2027"
