@@ -32,9 +32,11 @@ from runai.models import (
     StepResult,
     StepStatus,
     StopPoint,
+    TraceEvent,
 )
 from runai.safety import guard_task
-from runai.search.linkup_search import search_race
+from runai.search.answers import answer_official, format_for_agent, official_domains
+from runai.search.linkup_search import SearchClient, default_client, search_race
 from runai.search.models import RaceSheet
 from runai.voice.audio import load_pcm, pcm_chunks
 from runai.voice.live import stream_voice_events
@@ -69,6 +71,48 @@ def ask_user_tool(ask_user: AskUser) -> Tool:
         ask_user_callback,
         name="ask_user",
         description="Ask the user to choose or provide missing information before proceeding.",
+    )
+
+
+LOOKUP_OFFICIAL_INFO_DESCRIPTION = (
+    "Look up race rules on the official site (medical certificate, bib pick-up, cut-off times, fees) "
+    "before asking the user. Returns a short cited answer from the race's official pages only."
+)
+_NO_OFFICIAL_SITE = "No official race website is known; ask the user with ask_user instead."
+
+
+def lookup_official_info_tool(
+    race: Race,
+    on_event: EventSink,
+    client: Callable[[], SearchClient] = default_client,
+) -> Tool:
+    async def lookup_official_info(question: str) -> str:
+        """Look up race rules on the official site before asking the user."""
+        domains = official_domains(race)
+        if not domains:
+            return _NO_OFFICIAL_SITE
+        try:
+            answer = await asyncio.to_thread(
+                answer_official, question, domains, client(), race=race
+            )
+        except Exception as error:  # noqa: BLE001 - a failed lookup must never crash the H session
+            return f"Official lookup failed ({type(error).__name__}); ask the user with ask_user instead."
+        if answer is None:
+            return _NO_OFFICIAL_SITE
+        on_event(
+            TraceEvent(
+                source="linkup",
+                type="linkup_answer",
+                message=question,
+                data=answer.model_dump(mode="json"),
+            )
+        )
+        return format_for_agent(answer)
+
+    return tool(
+        lookup_official_info,
+        name="lookup_official_info",
+        description=LOOKUP_OFFICIAL_INFO_DESCRIPTION,
     )
 
 
@@ -232,8 +276,10 @@ class RealBrowserAgents:
         traces_dir: Path | None = None,
         max_steps: int | None = None,
         max_time_s: float | None = None,
+        answer_client: Callable[[], SearchClient] = default_client,
     ):
         self.runner = runner or HRunner(traces_dir=traces_dir)
+        self.answer_client = answer_client
         self.max_steps = max_steps or int(os.getenv("RUNAI_H_MAX_STEPS", "60"))
         self.max_time_s = max_time_s or float(os.getenv("RUNAI_H_MAX_TIME_S", "900"))
         self.lifecycle = HLifecycle(self.runner)
@@ -277,7 +323,10 @@ class RealBrowserAgents:
             allowed_hosts=allowed_hosts,
             max_steps=self.max_steps,
             max_time_s=self.max_time_s,
-            tools=[ask_user_tool(ask_user)],
+            tools=[
+                ask_user_tool(ask_user),
+                lookup_official_info_tool(race, on_event, self.answer_client),
+            ],
             timeout_s=self.max_time_s + 30,
             result_wrapper=lambda run: RealAgentRun(run, kind, on_event, self.max_time_s + 30),
         )
