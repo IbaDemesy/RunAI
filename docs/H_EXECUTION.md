@@ -49,7 +49,8 @@ Le script affiche le quota de chaque clé, vérifie qu'un slot est libre, lance 
 ## Public share link
 
 Each new session requests a public link through `sessions.share_session()`. Relative share paths
-are prefixed with `https://agp.eu.hcompany.ai`; absolute URLs are preserved. `run.share_url`
+use the owning client's base URL origin (scheme and host), falling back to
+`https://agp.eu.hcompany.ai` when unavailable; absolute URLs are preserved. `run.share_url`
 and `StepResult.data['share_url']` expose the link. Without a `LiveViewUrlEvent`,
 `live_view_url` uses this public link; an explicit live-view event takes precedence.
 Sharing failures produce a warning trace without interrupting the session. The private

@@ -634,9 +634,16 @@ class HRunner:
             try:
                 share = await account.client.sessions.share_session(session.id)
                 if share.share_url:
+                    wrapper = getattr(account.client, "_client_wrapper", None)
+                    base = wrapper.get_base_url() if callable(getattr(wrapper, "get_base_url", None)) else None
+                    origin = urlsplit(base or "")
+                    share_origin = (
+                        f"{origin.scheme}://{origin.netloc}"
+                        if origin.scheme and origin.netloc else "https://agp.eu.hcompany.ai"
+                    )
                     run.share_url = (
                         share.share_url if urlsplit(share.share_url).scheme
-                        else f"https://agp.eu.hcompany.ai/{share.share_url.lstrip('/')}"
+                        else f"{share_origin}/{share.share_url.lstrip('/')}"
                     )
                     run.live_view_url = run.share_url
             except Exception as exc:  # noqa: BLE001

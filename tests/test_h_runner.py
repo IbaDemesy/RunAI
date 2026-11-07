@@ -151,6 +151,19 @@ def test_share_link_absolute_or_empty(tmp_path, share_url):
     assert (str(result.live_view_url) if result.live_view_url else None) == share_url
 
 
+@pytest.mark.parametrize("base_url", ["https://agp.hcompany.ai", "https://agp.hcompany.ai/api/v1/"])
+def test_share_link_uses_client_origin(tmp_path, base_url):
+    client = SimpleNamespace(
+        sessions=FakeSessions(events=[]),
+        _client_wrapper=SimpleNamespace(get_base_url=lambda: base_url),
+    )
+    runner = HRunner(client, traces_dir=tmp_path, quota_poll_s=0)
+    result = asyncio.run(runner.run(StepKind.search, "Read the title"))
+    expected = "https://agp.hcompany.ai/share/api/v1/trajectories/s1"
+    assert result.data["share_url"] == expected
+    assert str(result.live_view_url) == expected
+
+
 def test_share_failure_is_nonfatal_and_logged(tmp_path):
     class Sessions(FakeSessions):
         async def share_session(self, session_id):
