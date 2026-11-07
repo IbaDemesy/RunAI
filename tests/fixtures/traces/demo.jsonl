@@ -1,0 +1,2 @@
+{"at":"2026-11-07T01:00:00Z","source":"h","type":"session_created","data":{"h_session_id":"s-demo","step":"accommodation","start_url":"https://all.accor.com/hotel"}}
+{"at":"2026-11-07T01:00:08Z","source":"h","type":"result","data":{"h_session_id":"s-demo","step":"accommodation","result":{"kind":"accommodation","status":"stopped_before_commitment","stop_point":"payment","url":"https://all.accor.com/hotel","h_session_id":"s-demo","data":{"h_status":"completed","outcome":null,"steps":null,"total_cost":null,"provenance":{"mode":"demo"}}}}}

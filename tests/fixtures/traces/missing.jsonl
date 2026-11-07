@@ -1,0 +1,5 @@
+not json
+[]
+{"source":"app","data":{"step":"search"}}
+{"at":"bad","source":"h","data":{"h_session_id":"s-missing","step":[],"steps":"bad","total_cost":{},"last_url":"http://["}}
+{"data":[]}

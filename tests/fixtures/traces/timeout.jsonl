@@ -1,0 +1,2 @@
+{"at":"2026-11-07T01:00:00Z","source":"h","type":"session_created","data":{"h_session_id":"s-timeout","step":"transport","start_url":"https://trenitalia.com/train"}}
+{"at":"2026-11-07T01:01:00Z","source":"h","type":"result","data":{"h_session_id":"s-timeout","step":"transport","result":{"kind":"transport","status":"failed","stop_point":null,"url":"https://trenitalia.com/train","h_session_id":"s-timeout","data":{"h_status":"timed_out","outcome":null,"steps":7,"total_cost":0.03,"provenance":{"mode":"live"}}}}}
