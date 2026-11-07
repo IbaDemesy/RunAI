@@ -190,6 +190,28 @@ async def test_summary_mentioning_payment_is_treated_as_stop(tmp_path):
 
 
 @pytest.mark.anyio
+async def test_partial_failure_without_stop_fails_mission(tmp_path):
+    agents = ScriptedAgents(
+        {
+            StepKind.registration: StepResult(
+                kind=StepKind.registration,
+                status=StepStatus.completed,
+                summary="Infos relevées",
+            ),
+            StepKind.accommodation: RuntimeError("H indisponible"),
+            StepKind.transport: StepResult(
+                kind=StepKind.transport,
+                status=StepStatus.completed,
+                summary="Horaires relevés",
+            ),
+        }
+    )
+    service = make_service(tmp_path, agents=agents)
+    mission = await service.wait((await service.create("Milan")).id)
+    assert mission.status is MissionStatus.failed
+
+
+@pytest.mark.anyio
 async def test_failed_search_fails_mission(tmp_path):
     class BrokenSearch:
         async def find_race(self, query):

@@ -294,7 +294,7 @@ class MissionService:
         statuses = {step.status for step in mission.steps.values()}
         if StepStatus.stopped_before_commitment in statuses:
             mission.status = MissionStatus.awaiting_human
-        elif statuses == {StepStatus.failed}:
+        elif StepStatus.failed in statuses:
             mission.status = MissionStatus.failed
         else:
             mission.status = MissionStatus.completed
