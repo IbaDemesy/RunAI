@@ -1,6 +1,6 @@
-"""Démo en ligne de commande : `python -m runai.voice --file audio.wav`, `--mic` ou `--keyboard`.
+"""Voice demo: `python -m runai.voice --file audio.wav`, `--mic` or `--keyboard`.
 
-Affiche un événement JSON par ligne ; `--mission-id` les journalise aussi dans `traces/`.
+Print one JSON event per line; `--mission-id` also logs commands in `traces/`.
 """
 
 import argparse
@@ -10,9 +10,9 @@ import sys
 
 from runai.tracing import TraceWriter
 from runai.voice.audio import file_stream, microphone_stream
-from runai.voice.commands import command_from_text
-from runai.voice.live import stream_events
-from runai.voice.models import CommandEvent, VoiceEvent
+from runai.voice.commands import CommandDetector, command_from_text
+from runai.voice.live import stream_voice_events
+from runai.voice.models import CommandEvent, TranscriptEvent, VoiceEvent
 
 
 def _emit(event: VoiceEvent, writer: TraceWriter | None, show_partials: bool) -> None:
@@ -24,12 +24,16 @@ def _emit(event: VoiceEvent, writer: TraceWriter | None, show_partials: bool) ->
 
 async def _run_audio(args: argparse.Namespace, writer: TraceWriter | None) -> None:
     audio = microphone_stream() if args.mic else file_stream(args.file)
-    async for event in stream_events(audio):
+    detector = CommandDetector()
+    async for event in stream_voice_events(audio.chunks, sample_rate=audio.sample_rate):
         _emit(event, writer, args.partials)
+        if isinstance(event, TranscriptEvent):
+            for command in detector.feed(event):
+                _emit(command, writer, args.partials)
 
 
 def _run_keyboard(writer: TraceWriter | None) -> None:
-    print("Tapez une commande (Ctrl+D pour quitter).", file=sys.stderr)
+    print("Type a command (Ctrl+D to quit).", file=sys.stderr)
     for line in sys.stdin:
         event = command_from_text(line)
         if event is None:
@@ -41,11 +45,11 @@ def _run_keyboard(writer: TraceWriter | None) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="python -m runai.voice", description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
-    source.add_argument("--file", help="Fichier audio local ou URL")
-    source.add_argument("--mic", action="store_true", help="Micro local (sounddevice requis)")
-    source.add_argument("--keyboard", action="store_true", help="Repli clavier, sans Gladia")
-    parser.add_argument("--partials", action="store_true", help="Afficher aussi les transcriptions partielles")
-    parser.add_argument("--mission-id", help="Journaliser les commandes dans traces/<mission-id>.jsonl")
+    source.add_argument("--file", help="Local audio file or URL")
+    source.add_argument("--mic", action="store_true", help="Local microphone (requires sounddevice)")
+    source.add_argument("--keyboard", action="store_true", help="Keyboard fallback, without Gladia")
+    parser.add_argument("--partials", action="store_true", help="Also show partial transcripts")
+    parser.add_argument("--mission-id", help="Log commands in traces/<mission-id>.jsonl")
     args = parser.parse_args(argv)
 
     writer = TraceWriter(args.mission_id) if args.mission_id else None
