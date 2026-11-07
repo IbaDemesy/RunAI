@@ -113,6 +113,11 @@ def test_provider_diagnostics_are_redacted_at_all_output_boundaries(surface, mon
             assert response.status_code == expected, response.text
             output = response.text
     assert SENTINEL not in output, surface
-    assert "[REDACTED]" in output, surface
+    if surface == "transcription_error":
+        assert json.loads(output) == {"detail": "Audio transcription is temporarily unavailable."}
+        assert "RuntimeError" not in output
+        assert "Traceback" not in output
+    else:
+        assert "[REDACTED]" in output, surface
     if surface in {"step", "snapshot", "snapshot_api", "journey", "live"}:
         json.loads(output)
