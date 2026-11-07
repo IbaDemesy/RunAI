@@ -9,7 +9,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from hai_agents.tools import Tool, tool
-from pydantic import BaseModel, HttpUrl, TypeAdapter, ValidationError
+from pydantic import BaseModel
 
 from runai.app.ports import AskUser, EventSink
 from runai.app.providers import (
@@ -21,7 +21,7 @@ from runai.app.providers import (
 )
 from runai.app.tasks import extract_budget_per_night
 from runai.contracts.common import DataMode, ProvenanceKind
-from runai.h.answers import answer_schema_for, parse_answer
+from runai.h.answers import answer_schema_for, apply_answer, parse_answer
 from runai.h.events import to_trace_event
 from runai.h.lifecycle import HLifecycle
 from runai.h.runner import HRun, HRunner
@@ -31,7 +31,6 @@ from runai.models import (
     StepKind,
     StepResult,
     StepStatus,
-    StopPoint,
     TraceEvent,
 )
 from runai.safety import guard_task
@@ -154,39 +153,7 @@ class RealAgentRun:
         result = await self.run.wait(on_event=forward, timeout_s=self.timeout_s)
         answer = parse_answer(self.kind, result.data.get("answer"))
         if answer is not None:
-            typed = answer.model_dump()
-            result.data["answer_typed"] = typed
-            result.data["options"] = typed.get("options", [])
-            result.price_eur = None
-            if typed.get("currency") == "EUR":
-                result.price_eur = typed.get("total_price", typed.get("price"))
-                if self.kind is StepKind.registration and result.price_eur is not None:
-                    result.price_eur += typed.get("fees") or 0
-            else:
-                result.data["price_currency"] = typed.get("currency")
-            if answer.final_url:
-                try:
-                    result.url = TypeAdapter(HttpUrl).validate_python(answer.final_url)
-                except ValidationError:
-                    pass
-            result.summary = answer.summary
-            result.stop_point = None
-            if answer.stop_screen == "blocked":
-                result.status = StepStatus.failed
-                result.error = "Blocked by the site"
-                if answer.blocker:
-                    result.error += f": {answer.blocker}"
-                    if re.search(r"captcha|anti[- ]?bot", answer.blocker, re.IGNORECASE):
-                        result.error += " (captcha/anti-bot)"
-            elif answer.stop_screen == "none":
-                result.status = StepStatus.completed
-            else:
-                result.stop_point = StopPoint({
-                    "account": "account_creation",
-                    "health": "health_declaration",
-                }.get(answer.stop_screen, answer.stop_screen))
-                if result.status is not StepStatus.failed:
-                    result.status = StepStatus.stopped_before_commitment
+            result = apply_answer(result, answer)
         if (
             result.data.get("error_code") == "answer_validation"
             or (not result.data.get("error_code") and "answer_validation" in (result.error or ""))
@@ -314,10 +281,11 @@ class RealBrowserAgents:
             )
         if start_url and (host := urlsplit(start_url).hostname):
             allowed_hosts = tuple(dict.fromkeys((*allowed_hosts, host.lower())))
+        typed_enabled = os.getenv("RUNAI_H_TYPED_ANSWERS", "1") != "0"
         job = self.lifecycle.submit(
             kind,
-            guard_task(task + "\nAnswer using the requested JSON fields."),
-            answer_schema=answer_schema_for(kind),
+            guard_task(task + ("\nAnswer using the requested JSON fields." if typed_enabled else "")),
+            answer_schema=answer_schema_for(kind) if typed_enabled else None,
             mission_id=mission_id,
             start_url=start_url,
             allowed_hosts=allowed_hosts,

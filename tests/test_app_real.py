@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 import wave
 from datetime import date
 from types import SimpleNamespace
@@ -22,7 +23,7 @@ from runai.app.real import (
     lookup_official_info_tool,
 )
 from runai.app.server import build_service, create_app
-from runai.h.answers import RegistrationAnswer
+from runai.h.answers import AccommodationAnswer, RegistrationAnswer
 from runai.h.lifecycle import HAntiBotBlocked, HJob, HLifecycle, JobState
 from runai.models import Race, RunnerProfile, Source, StepKind, StepResult, StepStatus
 from runai.search.models import RaceSheet
@@ -50,7 +51,9 @@ def test_real_race_search_adapts_linkup_sheet():
     assert race.sources[0].title == "Official"
 
 
-def test_real_browser_agent_passes_registration_url_and_ask_tool():
+@pytest.mark.parametrize("typed_enabled", [True, False])
+def test_real_browser_agent_passes_registration_url_and_ask_tool(monkeypatch, typed_enabled):
+    monkeypatch.setenv("RUNAI_H_TYPED_ANSWERS", "1" if typed_enabled else "0")
     class FakeHRun:
         id = "h-session-1"
         agent_view_url = "https://platform.hcompany.ai/sessions/h-session-1"
@@ -113,7 +116,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert params["mission_id"] == "mission-1"
     assert params["max_steps"] == 12
     assert params["max_time_s"] == 60
-    assert params["answer_schema"] is RegistrationAnswer
+    assert params["answer_schema"] is (RegistrationAnswer if typed_enabled else None)
     assert params["tools"][0].name == "ask_user"
     assert [tool.name for tool in params["tools"]] == ["ask_user", "lookup_official_info"]
     assert "official site" in params["tools"][1].description
@@ -188,6 +191,85 @@ def test_real_agent_run_extracts_exact_two_night_hotel_total():
 
     assert result.price_eur == 660.7
     assert result.status is StepStatus.stopped_before_commitment
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+@pytest.mark.parametrize("total_field", ["total_price", "total_price_eur"])
+def test_typed_hotel_report_precedes_legacy_price_and_stop(as_json, total_field):
+    payload = {
+        "stop_screen": "health", "hotel_name": "River Hotel", total_field: 180,
+        "currency": "EUR", "summary": "Stopped before the health declaration.",
+    }
+
+    class Run:
+        id = "typed-hotel"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.accommodation, status=StepStatus.completed,
+                summary="PRIX_TOTAL_2_NUITS: 999 EUR", stop_point="payment",
+                data={"answer": json.dumps(payload) if as_json else payload},
+            )
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.accommodation, lambda e: None, 10).wait())
+    assert result.price_eur == 180
+    assert result.status is StepStatus.stopped_before_commitment
+    assert result.stop_point == "health_declaration"
+    assert result.data["answer_typed"]["hotel_name"] == "River Hotel"
+
+
+def test_accommodation_start_keeps_canonical_answer_schema(monkeypatch):
+    monkeypatch.delenv("RUNAI_H_TYPED_ANSWERS", raising=False)
+    params = {}
+
+    class Run:
+        id = "canonical-schema"
+        status = "completed"
+
+        async def close(self):
+            pass
+
+        async def wait(self, **kwargs):
+            return StepResult(kind=StepKind.accommodation, status=StepStatus.failed)
+
+    class Runner:
+        async def start(self, kind, task, **kwargs):
+            params.update(kwargs)
+            return Run()
+
+    async def scenario():
+        agents = RealBrowserAgents(runner=Runner())
+        run = await agents.start(
+            StepKind.accommodation, "Find a hotel.",
+            Race(name="River Run", city="Lisbon", country="PT"), RunnerProfile(),
+            lambda event: None, lambda question, options: asyncio.sleep(0),
+        )
+        await run.wait()
+
+    asyncio.run(scenario())
+    assert params["answer_schema"] is AccommodationAnswer
+
+
+@pytest.mark.parametrize("data", [
+    {"h_status": "failed"}, {"h_status": "completed", "off_platform": True},
+    {"h_status": "completed", "error_code": "policy_refused"},
+])
+def test_real_typed_stop_cannot_mask_operational_failure(data):
+    class Run:
+        id = "failed-typed"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.transport, status=StepStatus.failed,
+                error="Original operational failure", data={**data, "answer": {
+                    "stop_screen": "none", "summary": "Done.",
+                }},
+            )
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.transport, lambda e: None, 10).wait())
+    assert result.status is StepStatus.failed
+    assert result.error == "Original operational failure"
+    assert result.data["answer_typed"]["stop_screen"] == "none"
 
 
 def test_real_browser_rejects_non_njuko_registration_link():
