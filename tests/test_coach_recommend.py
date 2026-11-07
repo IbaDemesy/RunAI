@@ -213,3 +213,16 @@ def test_same_day_races_in_different_cities_are_kept(camille):
     ]
     names = [r.name for r in rank_races(camille, DiscoveryResult(query=q, candidates=cands), TODAY).races]
     assert names[:2] == ["Semi Lille", "Semi Roubaix"] or set(names) == {"Semi Lille", "Semi Roubaix"}
+
+
+def test_undated_race_uses_window_start_for_preparation(beginner):
+    q = _query(distance_km=42.195, distance_label="marathon", tolerance_km=2.5, date_from=date(2026, 12, 1))
+    undated = CandidateRace(name="Marathon sans date", distance_km=42.195, status=S.ouvert)
+    result = rank_races(beginner, DiscoveryResult(query=q, candidates=[undated]), TODAY)
+    assert result.races == [] and "préparation" in result.excluded[0].why
+
+
+def test_default_distance_is_feasible_at_window_start(camille):
+    prefs = RacePreferences(date_from=date(2026, 12, 5), date_to=date(2027, 6, 30))
+    query, _ = build_query(camille, prefs, TODAY)
+    assert query.distance_km < 42

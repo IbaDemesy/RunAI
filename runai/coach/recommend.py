@@ -95,7 +95,9 @@ def build_query(
                 )
                 distance_km = DISTANCES_KM[fallback]
     else:
-        distance_km = DISTANCES_KM[choose_distance(assessment)]
+        weeks_min = max(0, (date_from - today).days // 7)
+        feasible = [advise_distance(assessment.profile, assessment.estimate, d, weeks_min) for d in DISTANCES_KM]
+        distance_km = DISTANCES_KM[choose_distance(assessment.model_copy(update={"advice": feasible}))]
 
     if preferences.trail:
         label = f"trail de {_km(distance_km)} km"
@@ -155,7 +157,7 @@ def _rank_one(
     profile, estimate = assessment.profile, assessment.estimate
     trail = q.distance_label.startswith("trail")
     category = distance_category(distance, c.elevation_gain_m if trail else None)
-    weeks = (c.race_date - today).days // 7 if c.race_date else None
+    weeks = max(0, ((c.race_date or q.date_from) - today).days // 7)
     advice = advise_distance(profile, estimate, category, weeks)
     if advice.verdict in ("bloque", "deconseille"):
         return reject(f"préparation {VERDICT_LABELS[advice.verdict]} : {advice.reason}")
@@ -163,9 +165,9 @@ def _rank_one(
     score = 3 - min(3, abs(distance - q.distance_km) / max(q.tolerance_km, 0.1) * 3)
     when = c.race_date.strftime("%d/%m/%Y") if c.race_date else "date à confirmer"
     reasons = [f"{_km(distance)} km le {when}"]
-    if weeks is not None:
-        score += 1 + (2 if advice.verdict == "recommande" else 0.5)
-        reasons.append(f"{weeks} semaines de préparation ({VERDICT_LABELS[advice.verdict]})")
+    score += 1 + (2 if advice.verdict == "recommande" else 0.5)
+    at_least = "" if c.race_date else "au moins "
+    reasons.append(f"{at_least}{weeks} semaines de préparation ({VERDICT_LABELS[advice.verdict]})")
     if trail and c.elevation_gain_m is not None:
         target = trail_time_range(profile, distance, c.elevation_gain_m)
     elif trail:
@@ -216,7 +218,7 @@ def _rank_one(
         price_eur=c.price_eur,
         travel_h_est=c.travel_h_est,
         prep_weeks=weeks,
-        prep_verdict=advice.verdict if weeks is not None else None,
+        prep_verdict=advice.verdict,
         target_time=target,
         score=round(score, 2),
         reason=" ; ".join(reasons) + ".",
