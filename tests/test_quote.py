@@ -381,6 +381,8 @@ def test_njuko_fee_inclusion_negation():
     )
     assert _frais(["frais de service inclus (5 euros)"]) == (5.0, True)
     assert _frais(["5 € de frais de service en plus du prix"]) == (5.0, False)
+    ambigu = "frais de service inclus (5 euros), parking en supplément"
+    assert _frais([ambigu]) == (5.0, None)
     assert _frais(["frais de service inclus (5 euros), en plus des options"]) == (
         5.0,
         True,

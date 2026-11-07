@@ -152,13 +152,9 @@ def _frais(texts: list[str]) -> tuple[float | None, bool | None]:
             m = re.search(pat, t, re.IGNORECASE)
             if m:
                 fen = t[max(0, m.start() - 80) : m.end() + 80]
-                inclus = (
-                    False
-                    if _NON_INCLUS.search(fen)
-                    else True
-                    if _INCLUS.search(fen)
-                    else None
-                )
+                non = bool(_NON_INCLUS.search(fen))
+                oui = bool(_INCLUS.search(_NON_INCLUS.sub(" ", fen)))
+                inclus = None if non == oui else oui
                 return float(m.group(1).replace(",", ".")), inclus
     return None, None
 
