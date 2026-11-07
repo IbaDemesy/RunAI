@@ -20,6 +20,7 @@ from runai.app.mission import Mission, MissionService, MissionStatus
 from runai.app.server import MAX_AUDIO_BYTES, create_app
 from runai.app.tasks import (
     HUMAN_ACTIONS,
+    STEP_LABELS,
     TripBrief,
     build_task,
     extract_budget_per_night,
@@ -852,7 +853,7 @@ async def test_step_failure_keeps_raw_error_and_publishes_friendly_copy(tmp_path
         event for event in mission.events
         if event.type == "step_failed" and event.data.get("step") == "accommodation"
     )
-    assert failure.message == f"Accommodation: {user_error}"
+    assert failure.message == f"{STEP_LABELS[StepKind.accommodation]}: {user_error}"
 @pytest.mark.anyio
 async def test_partial_failure_without_stop_fails_mission(tmp_path):
     agents = ScriptedAgents(
@@ -1031,7 +1032,7 @@ def test_api_runs_a_demo_mission_with_sse(tmp_path):
         mission = client.get(f"/api/missions/{mission_id}").json()
         session_id = mission["steps"][1]["h_session_id"]
         live = client.get(f"/api/live/{session_id}").json()
-        assert live["label"] == "Accommodation"
+        assert live["label"] == STEP_LABELS[StepKind.accommodation]
         assert live["history"]
         assert client.get("/demo/live").status_code == 200
 

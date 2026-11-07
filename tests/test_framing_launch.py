@@ -107,7 +107,7 @@ def test_tokyo_out_of_europe_plan_comes_from_confirmed_summary():
     assert str(registration.limitations[0].manual_url) == "https://example.org/tokyo-b"
     transport = plan.steps[StepKind.transport]
     assert transport.automation is Automation.manual and transport.task is None
-    assert "TAP interdit" in transport.limitations[0].message
+    assert "TAP forbidden" in transport.limitations[0].message
     accommodation = plan.steps[StepKind.accommodation]
     assert accommodation.automation is Automation.automated
     task = accommodation.task
@@ -153,7 +153,7 @@ def test_lisbon_klikego_link_is_manual_and_train_has_no_validated_vendor():
 
     registration = plan.steps[StepKind.registration]
     assert registration.automation is Automation.manual and registration.task is None
-    assert "Klikego est interdit" in registration.limitations[0].message
+    assert "Klikego is forbidden" in registration.limitations[0].message
     assert "klikego.com" in str(registration.limitations[0].manual_url)
     transport = plan.steps[StepKind.transport]
     assert transport.automation is Automation.manual

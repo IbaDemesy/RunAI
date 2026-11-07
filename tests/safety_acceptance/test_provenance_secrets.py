@@ -38,7 +38,7 @@ def test_live_without_key_is_error_never_fake(provider):
         "linkup": lambda: providers.search.find_race("course à Tokyo"),
         "gladia": lambda: providers.transcriber.transcribe(b"", "audio/wav"),
     }
-    with pytest.raises(ProviderUnavailableError, match="Mode live"):
+    with pytest.raises(ProviderUnavailableError, match="Live mode"):
         asyncio.run(calls[provider]())
     with pytest.raises(HKeyMissing):
         HLifecycle.from_env()

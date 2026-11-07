@@ -49,7 +49,6 @@ from runai.models import (
     StepKind,
     StepResult,
     StepStatus,
-    StopPoint,
     TraceEvent,
     utcnow,
 )
@@ -64,26 +63,6 @@ logger = logging.getLogger(__name__)
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
-
-STEP_LABELS = {
-    StepKind.search: "Search",
-    StepKind.registration: "Registration",
-    StepKind.accommodation: "Accommodation",
-    StepKind.transport: "Transport",
-}
-
-
-def human_action(stop_point: StopPoint | None) -> str:
-    if stop_point is None:
-        return "Nothing has been committed: take over from the live view if needed."
-    return {
-        StopPoint.payment: "Check the summary and price, then pay yourself on the official site.",
-        StopPoint.account_creation: "Create your account yourself: the agent never enters passwords.",
-        StopPoint.health_declaration: "Provide the medical certificate or PPS yourself: no health data passes through the agent.",
-        StopPoint.consent: "Read and accept the rules, terms or consent yourself.",
-        StopPoint.submission: "Review the pre-filled fields and submit the final form yourself.",
-    }[stop_point]
-
 
 class MissionStatus(str, Enum):
     searching = "searching"
