@@ -74,6 +74,9 @@ def test_headers(client, path):
     assert response.headers["x-frame-options"] == "DENY"
     assert "frame-ancestors 'none'" in response.headers["content-security-policy-report-only"]
     assert "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;" in response.headers["content-security-policy-report-only"]
+    assert "worker-src 'self' blob:;" in response.headers["content-security-policy-report-only"]
+    connect_sources = response.headers["content-security-policy-report-only"].split("connect-src ")[1].split(";")[0].split()
+    assert {"https://tile.openstreetmap.org", "https://tiles.mapterhorn.com", "https://tiles.maps.eox.at"} <= set(connect_sources)
     assert "content-security-policy" not in response.headers
     if path.startswith("/api/"):
         assert response.headers["cache-control"] == "no-store"
