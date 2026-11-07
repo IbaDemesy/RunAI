@@ -95,7 +95,7 @@
     </form>
     <div class="meta" id="meta"></div>
     <p class="hint" id="hint" hidden></p>
-    <div class="log" id="log" role="log" aria-label="Live transcript"></div>
+    <div class="log" id="log" aria-live="off" aria-label="Live transcript"></div>
     <div class="sr" id="live" aria-live="polite"></div>
     <ul class="understood" id="chips" aria-label="What RunAI understood"></ul>
     <div id="confirm"></div>
@@ -172,7 +172,7 @@
         b.onclick = () => openConfirm(c);
         li.append(b);
       } else {
-        li.className = "chip" + (c.answered ? " answered" : ""); li.textContent = c.label;
+        li.className = "chip" + (c.answered ? " answered" : ""); li.id = "chip-" + c.slot; li.textContent = c.label;
       }
       chips.append(li);
     }
@@ -259,7 +259,7 @@
     setTimeout(() => { pill.className = "pill confirmed"; pill.lastChild.textContent = "Switched to 10K \u00b7 confirmed by H"; s2.style.color = "var(--ok)"; }, 2200);
   }
 
-  mic.onclick = () => { if (state === "listening") { setState("transcribing"); setTimeout(() => setState("idle"), 1200); } else if (!mic.disabled) play(); };
+  mic.onclick = () => { if (state === "listening") { timers.forEach(clearTimeout); timers = []; setState("transcribing"); setTimeout(() => setState("idle"), 1200); } else if (!mic.disabled) play(); };
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state === "listening") mic.click();
     if (e.altKey && (e.key === "m" || e.key === "M")) { e.preventDefault(); mic.focus(); mic.click(); }

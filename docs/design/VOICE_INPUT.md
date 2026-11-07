@@ -34,7 +34,7 @@ Keyboard: the mic is a real `<button>`; `Space`/`Enter` toggles start/stop; `Esc
 
 ## 3. Live transcript line
 
-Placed directly under the ask field, inside a `role="log"` region.
+Placed directly under the ask field, in a container with `aria-live="off"` (not `role="log"`, which is implicitly live and would double-announce finals and translations); announcements go only through the dedicated polite region.
 
 - Each utterance is one `<p data-utterance-id="{data.id}">`.
 - Partial (`is_final=false`): text in `--mist`, italic, trailing caret; `aria-hidden="true"`.
