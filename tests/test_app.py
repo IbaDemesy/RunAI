@@ -61,6 +61,8 @@ def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, mon
     service._record(mission, event)
     metrics = TraceEvent(source="h", type="MetricsUpdateEvent", data={"step": "registration"})
     service._record(mission, metrics)
+    service._record(mission, TraceEvent(source="h", type="AgentRunStatusChangeEvent", message="running",
+                                       data={"step": "registration"}))
     mission.steps[StepKind.registration].data["events"] = 2
     service._record(mission, TraceEvent(source="human", type="answer", message="Réponse privée",
                                        data={"step": "registration"}))
@@ -72,6 +74,7 @@ def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, mon
     assert step["data"]["history"] == [
         {"at": event.at.isoformat(), "message": "Lecture [REDACTED]", "type": "action"},
         {"at": metrics.at.isoformat(), "message": None, "type": "MetricsUpdateEvent"},
+        {"at": mission.events[2].at.isoformat(), "message": "running", "type": "AgentRunStatusChangeEvent"},
     ]
     assert step["data"]["events"] == 2
     assert snapshot["steps"][1]["data"]["history"] == []

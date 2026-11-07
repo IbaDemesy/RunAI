@@ -476,7 +476,7 @@ class MissionService:
             if step is not None:
                 if session_id := event.data.get("h_session_id"):
                     step.h_session_id = session_id
-                if event.message:
+                if event.message and event.type != "AgentRunStatusChangeEvent":
                     step.data["last_action"] = event.message
                 if run := self._runs.get((mission.id, StepKind(step_name))):
                     self._set_agent_views(step, run)
