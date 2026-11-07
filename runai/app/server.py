@@ -1,0 +1,185 @@
+"""Backend FastAPI : API des missions, flux SSE et page web du portail."""
+
+import asyncio
+import json
+import os
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
+from runai.app.mission import MissionError, MissionService
+from runai.app.tasks import STEP_LABELS
+from runai.config import get_settings
+from runai.models import StepKind
+
+STATIC_DIR = Path(__file__).parent / "static"
+KEEPALIVE_SECONDS = 15
+
+
+class MissionRequest(BaseModel):
+    query: str = Field(min_length=3, max_length=500)
+
+
+class MessageRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
+
+
+def build_demo_service(delay: float | None = None) -> MissionService:
+    delay = float(os.getenv("RUNAI_DEMO_DELAY", "1.5")) if delay is None else delay
+    settings = get_settings()
+    return MissionService(
+        FakeRaceSearch(delay=delay),
+        FakeBrowserAgents(delay=delay),
+        FakeTranscriber(delay=delay / 3),
+        traces_dir=settings.traces_dir,
+        max_concurrency=settings.h_max_concurrency,
+        simulated=True,
+    )
+
+
+def create_app(service: MissionService | None = None) -> FastAPI:
+    app = FastAPI(title="RunAI")
+    app.state.service = service or build_demo_service()
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+    def get_service() -> MissionService:
+        return app.state.service
+
+    def handle(error: MissionError) -> HTTPException:
+        return HTTPException(
+            status_code=404 if "inconnue" in str(error) else 409, detail=str(error)
+        )
+
+    @app.get("/", include_in_schema=False)
+    async def index() -> FileResponse:
+        return FileResponse(STATIC_DIR / "index.html")
+
+    @app.get("/demo/live", include_in_schema=False)
+    async def demo_live() -> FileResponse:
+        return FileResponse(STATIC_DIR / "live.html")
+
+    @app.get("/api/health")
+    async def health() -> dict:
+        return {"ok": True, "simulated": get_service().simulated}
+
+    @app.post("/api/missions", status_code=201)
+    async def create_mission(body: MissionRequest) -> dict:
+        mission = await get_service().create(body.query)
+        return mission.snapshot(include_events=True)
+
+    @app.get("/api/missions/{mission_id}")
+    async def get_mission(mission_id: str) -> dict:
+        try:
+            return get_service().get(mission_id).snapshot(include_events=True)
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.get("/api/missions/{mission_id}/events")
+    async def mission_events(mission_id: str, request: Request) -> StreamingResponse:
+        service = get_service()
+        try:
+            service.get(mission_id)
+        except MissionError as error:
+            raise handle(error) from None
+
+        async def stream():
+            messages = service.subscribe(mission_id)
+            pending = asyncio.ensure_future(anext(messages))
+            try:
+                while True:
+                    done, _ = await asyncio.wait({pending}, timeout=KEEPALIVE_SECONDS)
+                    if await request.is_disconnected():
+                        break
+                    if not done:
+                        yield ": keepalive\n\n"
+                        continue
+                    try:
+                        name, data = pending.result()
+                    except StopAsyncIteration:
+                        yield "event: end\ndata: {}\n\n"
+                        break
+                    yield f"event: {name}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+                    pending = asyncio.ensure_future(anext(messages))
+            finally:
+                pending.cancel()
+                await messages.aclose()
+
+        return StreamingResponse(
+            stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    @app.post("/api/missions/{mission_id}/pause")
+    async def pause_all(mission_id: str) -> dict:
+        try:
+            await get_service().pause_all(mission_id)
+            return get_service().get(mission_id).snapshot()
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.post("/api/missions/{mission_id}/resume")
+    async def resume_all(mission_id: str) -> dict:
+        try:
+            await get_service().resume_all(mission_id)
+            return get_service().get(mission_id).snapshot()
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.post("/api/missions/{mission_id}/steps/{kind}/pause")
+    async def pause_step(mission_id: str, kind: StepKind) -> dict:
+        try:
+            await get_service().pause(mission_id, kind)
+            return get_service().get(mission_id).snapshot()
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.post("/api/missions/{mission_id}/steps/{kind}/resume")
+    async def resume_step(mission_id: str, kind: StepKind) -> dict:
+        try:
+            await get_service().resume(mission_id, kind)
+            return get_service().get(mission_id).snapshot()
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.post("/api/missions/{mission_id}/steps/{kind}/message")
+    async def message_step(
+        mission_id: str, kind: StepKind, body: MessageRequest
+    ) -> dict:
+        try:
+            await get_service().send_message(mission_id, kind, body.text)
+            return get_service().get(mission_id).snapshot()
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.post("/api/transcribe")
+    async def transcribe(request: Request) -> dict:
+        audio = await request.body()
+        if not audio:
+            raise HTTPException(status_code=400, detail="Audio vide")
+        content_type = request.headers.get("content-type", "application/octet-stream")
+        return {"text": await get_service().transcribe(audio, content_type)}
+
+    @app.get("/api/live/{session_id}")
+    async def live_session(session_id: str) -> dict:
+        found = get_service().find_session(session_id)
+        if found is None:
+            raise HTTPException(status_code=404, detail="Session inconnue")
+        mission, step = found
+        history = [
+            event.model_dump(mode="json")
+            for event in mission.events
+            if event.data.get("session_id") == session_id
+        ]
+        return {
+            "mission_id": mission.id,
+            "label": STEP_LABELS[step.kind],
+            "step": step.model_dump(mode="json"),
+            "history": history,
+        }
+
+    return app
