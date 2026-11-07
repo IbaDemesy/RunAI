@@ -75,7 +75,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .activity-bar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 35%; background: var(--ink); animation: slide 1.4s ease-in-out infinite; }
 .activity[data-state="waiting"] { border-color: var(--gold); background: var(--gold-soft); }
 .activity[data-state="waiting"] .activity-bar::after { background: var(--gold); }
-.activity[data-state="done"] .spinner, .activity[data-state="failed"] .spinner, .activity[data-state="done"] .activity-bar, .activity[data-state="failed"] .activity-bar { display: none; }
+.activity:is([data-state="done"], [data-state="failed"], [data-state="paused"]) :is(.spinner, .activity-bar) { display: none; }
 .activity[data-state="failed"] { color: var(--bad); }
 .spinner { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: spin 0.8s linear infinite; }
 .activity[data-state="waiting"] .spinner { border-top-color: var(--gold); animation-duration: 1.6s; }

@@ -192,6 +192,7 @@ function activityText(data) {
   const waiting = data.steps.filter((step) => step.status === "waiting_for_user").length;
   if (waiting) return ["waiting", waiting > 1 ? `${waiting} agents attendent votre réponse` : "Un agent attend votre réponse"];
   const running = data.steps.filter((step) => step.status === "running").length;
+  if (!running && data.steps.some((step) => step.status === "paused")) return ["paused", "Agents en pause : cliquez sur Reprendre"];
   if (running) return ["busy", running > 1 ? `${running} agents naviguent pour vous…` : "Un agent navigue pour vous…"];
   return ["busy", "Les agents se mettent en route…"];
 }
