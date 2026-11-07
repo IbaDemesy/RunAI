@@ -68,7 +68,7 @@ def test_no_secret_in_tracked_files():
         "hk-" + "A1b2C3d4E5f6G7h8J9",
         "sk_" + "live_" + "51Habcdef0123456789",
         "Authorization: Bearer " + "abcdefghijklmnopqrstuv",
-        "LINKUP" + "_API_KEY=lk-real-value",
+        "LINKUP_API_KEY" + "=lk-real-value",
         "HAI_API_KEY" + "_2=abc123def456",
     ],
 )
