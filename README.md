@@ -100,7 +100,7 @@ Tests hors ligne (sans clé) : `ruff check .` puis `pytest -q`.
 
 Le workflow `ci.yml` s’exécute sur chaque pull request et sur les pushs vers `main` : il vérifie le style avec Ruff et lance les tests hors ligne avec `pytest`.
 
-Le workflow `smoke.yml` lance les tests réels Linkup et Gladia lors d’un push vers `main`. Chaque test est ignoré avec une notice si son secret n’est pas configuré. Le test H est manuel : dans **Actions → Smoke → Run workflow**, activez `run_h=true`. Il prend environ 3 minutes et consomme des crédits ; le forfait H Free autorise 3 sessions concurrentes.
+Le workflow `smoke.yml` lance les tests réels Linkup et Gladia lors d’un push vers `main` qui modifie `scripts/`, `requirements.txt` ou `smoke.yml`, pour ne pas consommer de crédits sur les PR de documentation. On peut aussi le lancer à la main (**Actions → Smoke → Run workflow**). Chaque test est ignoré avec une notice si son secret n’est pas configuré. Le test H est manuel : dans **Actions → Smoke → Run workflow**, activez `run_h=true`. Il prend environ 3 minutes et consomme des crédits ; le forfait H Free autorise 3 sessions concurrentes.
 
 Secrets de dépôt requis : `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY`.
 

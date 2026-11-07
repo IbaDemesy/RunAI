@@ -3,6 +3,10 @@ name: Smoke
 on:
   push:
     branches: [main]
+    paths:
+      - "scripts/**"
+      - "requirements.txt"
+      - ".github/workflows/smoke.yml"
   workflow_dispatch:
     inputs:
       run_h:
