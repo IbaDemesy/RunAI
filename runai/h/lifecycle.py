@@ -225,6 +225,9 @@ class HLifecycle:
             for attempt in range(self.retry_policy.max_attempts):
                 await self._paused_all.wait()
                 await job._resume.wait()
+                accounts = getattr(self.runner, "accounts", [])
+                if accounts and all(a.max_concurrency == 0 for a in accounts):
+                    raise HCreditsExhausted("All H accounts have exhausted their credits.")
                 try:
                     run = await self.runner.start(job.kind, task, mission_id=job.mission_id, **start_params)
                 except HQuotaTimeout as exc:

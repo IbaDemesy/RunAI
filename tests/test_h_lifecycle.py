@@ -447,6 +447,26 @@ def test_credit_retry_waits_for_busy_healthy_account():
     asyncio.run(scenario())
 
 
+def test_new_job_fails_fast_after_all_accounts_exhausted():
+    async def scenario():
+        runner = RetryRunner(["insufficient_credit"])
+        lifecycle = HLifecycle(runner)
+        first = lifecycle.submit(StepKind.search, "Find a race")
+        with pytest.raises(HCreditsExhausted):
+            await asyncio.wait_for(first.wait(), 1)
+
+        async def start(*args, **kwargs):
+            pytest.fail("Exhausted accounts must not reach runner.start")
+
+        runner.start = start
+        follow = lifecycle.submit(StepKind.search, "Find another race")
+        with pytest.raises(HCreditsExhausted, match="All H accounts"):
+            await asyncio.wait_for(follow.wait(), 1)
+        assert follow.attempts == 0
+        assert follow.state is JobState.failed
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize("outcome", ["infeasible", "blocked"])
 def test_non_retryable_outcomes(outcome):
     async def scenario():
