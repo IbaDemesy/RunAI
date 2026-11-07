@@ -310,6 +310,7 @@ class FramingEngine:
         request_text = " / ".join(
             turn.text for turn in session.turns if turn.role == "user" and turn.text
         )
+        location_request = has_location_request(request_text)
         if (
             search
             and not session.selected_candidate_id
@@ -317,7 +318,7 @@ class FramingEngine:
             and (
                 session.slots[SlotName.city].is_known
                 or session.slots[SlotName.race].is_known
-                or has_location_request(request_text)
+                or location_request
             )
         ):
             session.limitations = [l for l in session.limitations if l.code not in {
@@ -325,15 +326,23 @@ class FramingEngine:
             }]
             try:
                 if hasattr(self.search, "search"):
-                    result = await self.search.search(
-                        session.slots, request_text=request_text
-                    )
+                    if location_request:
+                        result = await self.search.search(
+                            session.slots, request_text=request_text
+                        )
+                    else:
+                        result = await self.search.search(session.slots)
                     session.candidates = result.candidates
                     session.limitations.extend(result.limitations)
                 else:
-                    session.candidates = await self.search.find_candidates(
-                        session.slots, request_text=request_text
-                    )
+                    if location_request:
+                        session.candidates = await self.search.find_candidates(
+                            session.slots, request_text=request_text
+                        )
+                    else:
+                        session.candidates = await self.search.find_candidates(
+                            session.slots
+                        )
             except CandidateSearchError as exc:
                 session.candidates = []
                 session.limitations.append(Limitation(
