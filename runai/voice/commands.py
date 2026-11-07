@@ -42,11 +42,11 @@ _PAUSE = _words(
     "pause", "(?<!j')attends?", "attendez", "stop", "arrete[sz]?", "une seconde", "une minute",
     "wait", "hold on", "hang on", "espera", "pausa", "pare",
 )
-_RESUME = _words(
-    "reprends?", "reprenez", "reprendre", "reprise", "continue[rz]?", "vas-y", "vas y", "c'est bon",
-    "c est bon", "resume", "carry on", "keep going", "go on", "continua[r]?", "pode continuar",
-    "podes continuar", "siga",
+_RESUME_VERB = _words(
+    "reprends?", "reprenez", "reprendre", "reprise", "continue[rz]?", "resume", "carry on", "keep going",
+    "go on", "continua[r]?", "pode continuar", "podes continuar",
 )
+_RESUME_OK = _words("vas-y", "vas y", "c'est bon", "c est bon", "siga")
 _CORRECTION = _words(
     "change[rz]?", "changement", "modifie[rz]?", "corrige[rz]?", "plutot", "en fait",
     "finalement", "au lieu", "instead", "rather", "actually", "switch", "em vez", "antes",
@@ -169,17 +169,18 @@ def parse_command(text: str) -> VoiceCommand | None:
         )
 
     mission = _affirmed(_NEW_MISSION, norm)
-    resume = _affirmed(_RESUME, norm)
+    resume_verb = _affirmed(_RESUME_VERB, norm)
+    resume_ok = _affirmed(_RESUME_OK, norm)
     pause = _is_pause(norm)
-    negated = any(
-        p.search(norm) and not _affirmed(p, norm) for p in (_CANCEL, _CORRECTION, _NEW_MISSION, _RESUME, _PAUSE)
-    )
-    leading_resume = _affirmed(_RESUME, " ".join(norm.split()[:_PAUSE_WINDOW_WORDS]))
-    implicit = race and race.city and (race.distance_km or race.name) and not (negated or leading_resume or pause)
+    keywords = (_CANCEL, _CORRECTION, _NEW_MISSION, _RESUME_VERB, _RESUME_OK, _PAUSE)
+    negated = any(p.search(norm) and not _affirmed(p, norm) for p in keywords)
+    # « c'est bon » ne vaut reprise qu'en tête d'énoncé : « Le semi de Paris me va, c'est bon » est une mission.
+    leading_ok = _affirmed(_RESUME_OK, " ".join(norm.split()[:_PAUSE_WINDOW_WORDS]))
+    implicit = race and race.city and (race.distance_km or race.name) and not (negated or resume_verb or leading_ok or pause)
     if mission or implicit:
         return VoiceCommand(kind=CommandKind.new_mission, race=race, detail=text.strip())
 
-    if resume:
+    if resume_verb or resume_ok:
         return VoiceCommand(kind=CommandKind.resume)
     if pause:
         return VoiceCommand(kind=CommandKind.pause)
