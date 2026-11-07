@@ -41,7 +41,7 @@ Choisissez explicitement `RUNAI_MODE` :
 | --- | --- |
 | `live` | Linkup, H et Gladia réels selon les clés/SDK disponibles. Un fournisseur sans clé produit un état indisponible et une erreur honnête, jamais un repli silencieux en démo. |
 | `demo` | Candidats de fixtures et agents/transcription simulés, étiquetés démo. Ville ou critères sans fixture : limitation explicite, aucun événement de remplacement inventé. |
-| `replay` | Trace `replay.v1` explicite via `RUNAI_REPLAY_TRACE`, sans appel fournisseur ; données marquées replay. Sans trace, le démarrage est refusé. |
+| `replay` | Offline `replay.v1` recording via `RUNAI_REPLAY_TRACE`, or the committed demo trace by default; all results are labeled replay. |
 
 Variables de clés, **noms seulement** : `HAI_API_KEY`, puis `HAI_API_KEY_2`,
 `HAI_API_KEY_3`, etc. sans trou dans la numérotation ; `LINKUP_API_KEY` ;
@@ -60,6 +60,13 @@ RUNAI_MODE=replay RUNAI_REPLAY_TRACE=/chemin/trace.json .venv/bin/python -m runa
 
 Ouvrez `http://127.0.0.1:8000`. Hôte et port sont réglables avec `RUNAI_APP_HOST`
 et `RUNAI_APP_PORT`. [Commandes de test hors ligne](#tester) et [détails techniques V2](docs/V2.md).
+
+### Replay recordings
+`RUNAI_MODE=replay` defaults to `fixtures/replay/demo-marathon.replay.json`, also available in Render's repository checkout.
+Regenerate it offline with `python -m scripts.record_replay`; set `RUNAI_REPLAY_TRACE=/absolute/path/trace.json` to override it.
+For a LIVE recording, start `RUNAI_MODE=live .venv/bin/python -m runai.app`, confirm a framing, and answer its questions until terminal.
+Then run `curl --fail --user "$RUNAI_BASIC_AUTH" "http://127.0.0.1:8000/api/missions/$MISSION_ID/replay.json" --output live.replay.json` (set `MISSION_ID`; omit `--user` if authentication is disabled).
+Exports redact configured provider secrets and structured personal fields, emails and phone numbers; review free-text recordings before sharing.
 
 **Limites actuelles :** stockage mémoire des cadrages, missions, idempotence, événements
 SSE et révisions d'export ; automatisation limitée à **Njuko / Accor / Trenitalia**

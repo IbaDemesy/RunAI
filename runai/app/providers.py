@@ -45,6 +45,7 @@ class ProviderUnavailableError(RuntimeError):
 
 
 PROVIDERS = ("h", "linkup", "gladia")
+DEFAULT_REPLAY_TRACE = Path(__file__).resolve().parents[2] / "fixtures/replay/demo-marathon.replay.json"
 _KEY_NAMES = {
     "h": "HAI_API_KEY",
     "linkup": "LINKUP_API_KEY",
@@ -276,7 +277,7 @@ def build_providers(
                 FakeBrowserAgents(delay=delay),
                 DataMode.demo,
                 ProvenanceKind.fixture,
-                "Démo : agent simulé, aucune donnée réelle",
+                "Demo: simulated agent, no real data",
             ),
             FakeTranscriber(delay=delay / 3),
             health,
@@ -294,8 +295,9 @@ def build_providers(
             Path(env["RUNAI_REPLAY_TRACE"]) if env.get("RUNAI_REPLAY_TRACE") else None
         )
         if path is None:
-            raise ValueError(
-                "Mode replay : RUNAI_REPLAY_TRACE (fichier replay.v1) est requis."
+            path = DEFAULT_REPLAY_TRACE
+            health["replay"] = ProviderHealth(
+                name="replay", status=ProviderStatus.ok, detail="Default demo replay trace"
             )
         trace = ReplayTrace.load(path)
         return ProviderSet(

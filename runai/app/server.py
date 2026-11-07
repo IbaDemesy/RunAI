@@ -25,6 +25,7 @@ from runai.app.providers import (
     build_providers,
     provider_health,
 )
+from runai.app.replay_export import export_replay
 from runai.app.screenshots import build_screenshot_router
 from runai.app.tasks import STEP_LABELS
 from runai.config import get_settings
@@ -174,6 +175,18 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             return get_service().snapshot(mission_id).model_dump(mode="json")
         except MissionError as error:
             raise handle(error) from None
+
+    @app.get("/api/missions/{mission_id}/replay.json")
+    async def replay_export(mission_id: str) -> JSONResponse:
+        try:
+            mission = get_service().get(mission_id)
+        except MissionError:
+            raise HTTPException(404, "Unknown mission") from None
+        if not mission.is_terminal:
+            raise HTTPException(409, "Mission is not terminal")
+        return JSONResponse(export_replay(mission).model_dump(mode="json"), headers={
+            "Content-Disposition": f'attachment; filename="{mission.id}.replay.json"',
+        })
 
     @app.get("/api/missions/{mission_id}/events")
     async def mission_events(mission_id: str, request: Request) -> StreamingResponse:

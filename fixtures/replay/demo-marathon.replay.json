@@ -1,0 +1,443 @@
+{
+  "schema_version": "replay.v1",
+  "label": "Replay of Milano Marathon (demo) recorded in demo",
+  "recorded_mode": "demo",
+  "race": {
+    "name": "Milano Marathon (demo)",
+    "city": "Milan",
+    "country": "IT",
+    "race_date": "2027-04-11",
+    "start_time": null,
+    "distance_km": 42.195,
+    "registration_url": "https://in.njuko.com/runai-demo-milan",
+    "bib_pickup": null,
+    "start_location": null,
+    "sources": [
+      {
+        "url": "https://example.org/milano-marathon",
+        "title": "Fictional source"
+      }
+    ]
+  },
+  "transcript": null,
+  "steps": {
+    "registration": {
+      "result": {
+        "kind": "registration",
+        "status": "stopped_before_commitment",
+        "summary": "Demo — Milan · 2027-04-11 · 2 nights : Form prefilled; stopped before accepting the rules. User answers : Discovery ; under 3h30.",
+        "stop_point": "consent",
+        "url": "https://example.org/inscription/reglement",
+        "price_eur": 75.0,
+        "live_view_url": null,
+        "agent_view_url": null,
+        "h_session_id": "fake-registration-9e547092",
+        "data": {
+          "automation": "automated",
+          "headline": "Ready: finalize yourself on the official website",
+          "live_view_path": "/demo/live?session=fake-registration-9e547092",
+          "last_action": "Demo — Milano Marathon (demo) : Rules and medical certificate page reached",
+          "current_url": "https://example.org/inscription/reglement",
+          "simulated": true,
+          "provenance": {
+            "mode": "demo",
+            "kind": "fixture",
+            "url": null,
+            "label": "Demo: simulated agent, no real data",
+            "collected_at": "2026-11-07T20:27:02.987214Z"
+          }
+        },
+        "error": null
+      },
+      "events": [
+        {
+          "at": "2026-11-07T20:27:02.920973Z",
+          "source": "app",
+          "type": "step_started",
+          "message": "Registration : agent started",
+          "data": {
+            "step": "registration"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.926302Z",
+          "source": "agent:registration",
+          "type": "question",
+          "message": "Which starting group should we review (demo)?",
+          "data": {
+            "step": "registration",
+            "question_id": "0c4446770ab54f6e9b3a00596621d7e8",
+            "options": [
+              "Discovery",
+              "Performance"
+            ]
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.948685Z",
+          "source": "human",
+          "type": "answer",
+          "message": "Discovery",
+          "data": {
+            "step": "registration",
+            "question_id": "0c4446770ab54f6e9b3a00596621d7e8"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.950035Z",
+          "source": "agent:registration",
+          "type": "question",
+          "message": "What is your target finishing time?",
+          "data": {
+            "step": "registration",
+            "question_id": "d7ab829d69b749cd9f905a6bf7d6fa7e",
+            "options": [
+              "under 3h30",
+              "3h30–4h",
+              "over 4h"
+            ]
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.978879Z",
+          "source": "human",
+          "type": "answer",
+          "message": "under 3h30",
+          "data": {
+            "step": "registration",
+            "question_id": "d7ab829d69b749cd9f905a6bf7d6fa7e"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.980454Z",
+          "source": "agent:registration",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Opening the registration page",
+          "data": {
+            "step": "registration",
+            "session_id": "fake-registration-9e547092",
+            "url": "https://example.org/inscription"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.981840Z",
+          "source": "agent:registration",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Choosing the distance",
+          "data": {
+            "step": "registration",
+            "session_id": "fake-registration-9e547092",
+            "url": "https://example.org/inscription/distance"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.983273Z",
+          "source": "agent:registration",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Entering a fictional runner name",
+          "data": {
+            "step": "registration",
+            "session_id": "fake-registration-9e547092",
+            "url": "https://example.org/inscription/coureur"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.984541Z",
+          "source": "agent:registration",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Entering email and birth date",
+          "data": {
+            "step": "registration",
+            "session_id": "fake-registration-9e547092",
+            "url": "https://example.org/inscription/coureur"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.985755Z",
+          "source": "agent:registration",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Rules and medical certificate page reached",
+          "data": {
+            "step": "registration",
+            "session_id": "fake-registration-9e547092",
+            "url": "https://example.org/inscription/reglement"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.990701Z",
+          "source": "app",
+          "type": "step_done",
+          "message": "Registration : Demo — Milan · 2027-04-11 · 2 nights : Form prefilled; stopped before accepting the rules. User answers : Discovery ; under 3h30.",
+          "data": {
+            "step": "registration",
+            "status": "stopped_before_commitment"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "question": "Which starting group should we review (demo)?",
+          "options": [
+            "Discovery",
+            "Performance"
+          ]
+        },
+        {
+          "question": "What is your target finishing time?",
+          "options": [
+            "under 3h30",
+            "3h30–4h",
+            "over 4h"
+          ]
+        }
+      ]
+    },
+    "accommodation": {
+      "result": {
+        "kind": "accommodation",
+        "status": "stopped_before_commitment",
+        "summary": "Demo — Milan · 2027-04-11 · 2 nights : Room selected for the night before the race; stopped before payment. User answers : .",
+        "stop_point": "payment",
+        "url": "https://example.org/hotels/42/payment",
+        "price_eur": 129.0,
+        "live_view_url": null,
+        "agent_view_url": null,
+        "h_session_id": "fake-accommodation-4179d5f5",
+        "data": {
+          "automation": "automated",
+          "headline": "Ready: finalize yourself on the official website",
+          "live_view_path": "/demo/live?session=fake-accommodation-4179d5f5",
+          "last_action": "Demo — Milano Marathon (demo) : Payment page reached",
+          "current_url": "https://example.org/hotels/42/payment",
+          "simulated": true,
+          "provenance": {
+            "mode": "demo",
+            "kind": "fixture",
+            "url": null,
+            "label": "Demo: simulated agent, no real data",
+            "collected_at": "2026-11-07T20:27:02.934755Z"
+          },
+          "budget_max_per_night_eur": null,
+          "budget_max_total_eur": 900.0,
+          "over_budget": false
+        },
+        "error": null
+      },
+      "events": [
+        {
+          "at": "2026-11-07T20:27:02.922720Z",
+          "source": "app",
+          "type": "step_started",
+          "message": "Accommodation : agent started",
+          "data": {
+            "step": "accommodation"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.928960Z",
+          "source": "agent:accommodation",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Searching for hotels near the start",
+          "data": {
+            "step": "accommodation",
+            "session_id": "fake-accommodation-4179d5f5",
+            "url": "https://example.org/hotels"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.930099Z",
+          "source": "agent:accommodation",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Filtering for free cancellation",
+          "data": {
+            "step": "accommodation",
+            "session_id": "fake-accommodation-4179d5f5",
+            "url": "https://example.org/hotels?free_cancel=1"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.931162Z",
+          "source": "agent:accommodation",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Selecting the hotel nearest the start",
+          "data": {
+            "step": "accommodation",
+            "session_id": "fake-accommodation-4179d5f5",
+            "url": "https://example.org/hotels/42"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.932480Z",
+          "source": "agent:accommodation",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Entering fictional traveler details",
+          "data": {
+            "step": "accommodation",
+            "session_id": "fake-accommodation-4179d5f5",
+            "url": "https://example.org/hotels/42/guest"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.933623Z",
+          "source": "agent:accommodation",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Payment page reached",
+          "data": {
+            "step": "accommodation",
+            "session_id": "fake-accommodation-4179d5f5",
+            "url": "https://example.org/hotels/42/payment"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.937911Z",
+          "source": "app",
+          "type": "step_done",
+          "message": "Accommodation : Demo — Milan · 2027-04-11 · 2 nights : Room selected for the night before the race; stopped before payment. User answers : .",
+          "data": {
+            "step": "accommodation",
+            "status": "stopped_before_commitment"
+          }
+        }
+      ],
+      "questions": []
+    },
+    "transport": {
+      "result": {
+        "kind": "transport",
+        "status": "stopped_before_commitment",
+        "summary": "Demo — Milan · 2027-04-11 · 2 nights : Round trip selected; stopped before payment. User answers : morning.",
+        "stop_point": "payment",
+        "url": "https://example.org/trains/payment",
+        "price_eur": 89.0,
+        "live_view_url": null,
+        "agent_view_url": null,
+        "h_session_id": "fake-transport-a56e78e8",
+        "data": {
+          "automation": "automated",
+          "headline": "Ready: finalize yourself on the official website",
+          "live_view_path": "/demo/live?session=fake-transport-a56e78e8",
+          "last_action": "Demo — Milano Marathon (demo) : Payment page reached",
+          "current_url": "https://example.org/trains/payment",
+          "simulated": true,
+          "provenance": {
+            "mode": "demo",
+            "kind": "fixture",
+            "url": null,
+            "label": "Demo: simulated agent, no real data",
+            "collected_at": "2026-11-07T20:27:02.962455Z"
+          }
+        },
+        "error": null
+      },
+      "events": [
+        {
+          "at": "2026-11-07T20:27:02.924370Z",
+          "source": "app",
+          "type": "step_started",
+          "message": "Transport : agent started",
+          "data": {
+            "step": "transport"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.927740Z",
+          "source": "agent:transport",
+          "type": "question",
+          "message": "Preferred departure time (demo)?",
+          "data": {
+            "step": "transport",
+            "question_id": "47755f684d924c15826ac6bde33f9f12",
+            "options": [
+              "morning",
+              "afternoon"
+            ]
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.954882Z",
+          "source": "human",
+          "type": "answer",
+          "message": "morning",
+          "data": {
+            "step": "transport",
+            "question_id": "47755f684d924c15826ac6bde33f9f12"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.956046Z",
+          "source": "agent:transport",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Searching for a round trip",
+          "data": {
+            "step": "transport",
+            "session_id": "fake-transport-a56e78e8",
+            "url": "https://example.org/trains"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.957199Z",
+          "source": "agent:transport",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Selecting outbound travel the day before the race",
+          "data": {
+            "step": "transport",
+            "session_id": "fake-transport-a56e78e8",
+            "url": "https://example.org/trains/outbound"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.958555Z",
+          "source": "agent:transport",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Selecting return travel after finishing",
+          "data": {
+            "step": "transport",
+            "session_id": "fake-transport-a56e78e8",
+            "url": "https://example.org/trains/return"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.959773Z",
+          "source": "agent:transport",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Entering a fictional passenger",
+          "data": {
+            "step": "transport",
+            "session_id": "fake-transport-a56e78e8",
+            "url": "https://example.org/trains/passenger"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.961026Z",
+          "source": "agent:transport",
+          "type": "action",
+          "message": "Demo — Milano Marathon (demo) : Payment page reached",
+          "data": {
+            "step": "transport",
+            "session_id": "fake-transport-a56e78e8",
+            "url": "https://example.org/trains/payment"
+          }
+        },
+        {
+          "at": "2026-11-07T20:27:02.965984Z",
+          "source": "app",
+          "type": "step_done",
+          "message": "Transport : Demo — Milan · 2027-04-11 · 2 nights : Round trip selected; stopped before payment. User answers : morning.",
+          "data": {
+            "step": "transport",
+            "status": "stopped_before_commitment"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "question": "Preferred departure time (demo)?",
+          "options": [
+            "morning",
+            "afternoon"
+          ]
+        }
+      ]
+    }
+  }
+}
