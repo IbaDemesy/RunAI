@@ -1,0 +1,83 @@
+{
+  "course": "milan",
+  "url": "https://www.milanomarathon.it/wizz-air-milano-marathon/percorso/",
+  "quota_wait_s": 0,
+  "session_id": "9ff8cf08-1449-4735-814a-ecd1ad317949",
+  "tool_calls": [
+    {
+      "t_s": 277.2,
+      "args": {
+        "url_source": "https://www.goandrace.com/en/map/2026/wizz-air-milano-marathon-2026-course-map-1.php",
+        "nom_fichier": "wizz-air-milano-marathon-2026-milano-2026-track.gpx"
+      }
+    }
+  ],
+  "downloads_listing": [
+    {
+      "name": "wizz-air-milano-marathon-2026-milano-2026-track.gpx",
+      "size": 114899
+    }
+  ],
+  "file_saved": "trace_h_wizz-air-milano-marathon-2026-milano-2026-track.gpx",
+  "file_bytes": 114899,
+  "file_read_s": 2.12,
+  "status": "completed",
+  "steps": 45,
+  "duration_s": 292.3,
+  "usage": [
+    {
+      "name": "holo4-27b",
+      "input_tokens": 1173315,
+      "cached_tokens": 772000,
+      "output_tokens": 26952,
+      "reasoning_tokens": 23145
+    }
+  ],
+  "answer": {
+    "statut": "partiel",
+    "fichier": "wizz-air-milano-marathon-2026-milano-2026-track.gpx",
+    "ravitos": [
+      {
+        "km": 0,
+        "libelle": "Km 0 (Start, Corso Sempione)"
+      },
+      {
+        "km": 5,
+        "libelle": "Km 5"
+      },
+      {
+        "km": 10,
+        "libelle": "Km 10"
+      },
+      {
+        "km": 15,
+        "libelle": "Km 15"
+      },
+      {
+        "km": 20,
+        "libelle": "Km 20 (+ fruit et biscuits)"
+      },
+      {
+        "km": 25,
+        "libelle": "Km 25 (+ fruit et biscuits)"
+      },
+      {
+        "km": 30,
+        "libelle": "Km 30 (+ fruit et biscuits)"
+      },
+      {
+        "km": 35,
+        "libelle": "Km 35 (+ fruit et biscuits)"
+      },
+      {
+        "km": 40,
+        "libelle": "Km 40 (+ fruit et biscuits)"
+      }
+    ],
+    "remarque": "Le site officiel (milanomarathon.it) ne propose pas de GPX/KML téléchargeable directement — la carte du parcours est une image statique JPG. Le GPX téléchargé provient de goandrace.com (trace 2026, 42,195 km, départ Corso Sempione). Le parcours 2027 est identique au 2026 selon le site officiel (la page 'percorso' affiche la carte 2026 en attendant la confirmation 2027). Les 2 ristori supplémentaires mentionnés dans le règlement n'ont pas de km précisés. La carte officielle 2027 n'est pas encore publiée au moment de la consultation.",
+    "url_carte": "https://www.milanomarathon.it/wp-content/uploads/2026/03/mappa-percorso-MM26-light-scaled.jpg",
+    "edition_carte": "2026",
+    "source_ravitos": "Regolamento MM27 (PDF officiel, page 9 - section RISTORI): eau + integrateur à tous les points; fruit et biscuits à partir du km 20. 8 ristori réglementaires + 2 supplémentaires (lieux non précisés dans le règlement)."
+  },
+  "cancelled": true
+}

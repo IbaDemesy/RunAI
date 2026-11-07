@@ -1,0 +1,9 @@
+{
+ "data_ms": 445,
+ "map_load_ms": 4922,
+ "first_idle_ms": 18372,
+ "wall_until_idle_s": 18.84,
+ "survol_parcours_fps": 0.5,
+ "survol_parcours_frames": 23,
+ "animation_totale_s": "108.6"
+}

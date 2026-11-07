@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>RunAI — Survol du week-end</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<style>
+  :root { --or:#ff6a13; --bg:#0f1115ee; --fg:#f2f2f2; --mut:#9aa0a6; }
+  html,body { margin:0; height:100%; font:14px/1.35 system-ui,sans-serif; background:#000; color:var(--fg); }
+  #map { position:absolute; inset:0; }
+  #panel { position:absolute; top:10px; left:10px; width:330px; max-height:calc(100% - 210px); overflow:auto;
+           background:var(--bg); border-radius:10px; padding:12px 14px; }
+  #panel h1 { font-size:17px; margin:0 0 4px; } #panel h2 { font-size:13px; margin:12px 0 4px; color:var(--or); text-transform:uppercase; letter-spacing:.04em; }
+  .mut { color:var(--mut); font-size:12px; } .warn { color:#ffcf5c; font-size:12px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; } td,th { padding:1px 4px; text-align:right; } td:first-child,th:first-child { text-align:left; }
+  tr.cur { background:#ff6a1355; }
+  button,input { font:inherit; } button { background:var(--or); color:#fff; border:0; border-radius:6px; padding:6px 10px; cursor:pointer; }
+  input { width:70px; background:#222; color:#fff; border:1px solid #444; border-radius:4px; padding:3px; }
+  #caption { position:absolute; top:14px; left:50%; transform:translateX(-50%); background:var(--bg); padding:8px 16px;
+             border-radius:20px; font-size:16px; font-weight:600; display:none; white-space:nowrap; }
+  #profile { position:absolute; left:10px; right:10px; bottom:24px; height:170px; background:var(--bg); border-radius:10px; }
+  #profile canvas { width:100%; height:100%; }
+  .poi { background:#fff; color:#111; border-radius:12px; padding:2px 7px; font-size:12px; font-weight:600; box-shadow:0 1px 4px #0008; white-space:nowrap; }
+  .km { background:var(--or); color:#fff; border-radius:50%; width:20px; height:20px; font-size:10px; font-weight:700;
+        display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
+  .km.done { background:#2e7d32; }
+  .rav { background:#1e88e5; color:#fff; border-radius:4px; padding:1px 4px; font-size:11px; font-weight:700; border:1px solid #fff; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="caption"></div>
+<div id="panel">
+  <h1>Survol du week-end</h1>
+  <div id="title" class="mut"></div>
+  <div style="margin:8px 0; display:flex; gap:6px; align-items:center; flex-wrap:wrap">
+    <button id="play">Lancer le survol</button>
+    <button id="sat" style="background:#444">Plan / satellite</button>
+    <label class="mut">Objectif <input id="obj" value="1:45:00"></label>
+  </div>
+  <div id="prov" class="warn"></div>
+  <h2>Parcours</h2><div id="stats"></div>
+  <h2>Côtes</h2><div id="cotes"></div>
+  <h2>Ravitaillements</h2><div id="ravs"></div>
+  <h2>Trajets du week-end</h2><div id="trajets"></div>
+  <h2>Allure par km</h2><div id="pace"></div>
+  <h2>Mesures de rendu</h2><div id="metrics" class="mut"></div>
+</div>
+<div id="profile"><canvas id="cv"></canvas></div>
+<script>
+const T0 = performance.now();
+const M = window.__metrics = {};
+const qs = new URLSearchParams(location.search);
+const DATA_URL = qs.get('data') || 'data/course.json';
+const fmt = s => { s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(x).padStart(2,'0'); };
+const parseHms = t => t.split(':').map(Number).reduce((a,b) => a*60+b, 0);
+const $ = id => document.getElementById(id);
+
+// Meme modele que build_insights.py (regle empirique, non validee).
+function pacePlan(C, objS) {
+  const kms = C.allure_km.map(k => ({...k, f: 1 + 3.3*k.d_plus/k.longueur_m - 1.8*k.d_moins/k.longueur_m}));
+  const base = objS / kms.reduce((a,k) => a + k.f*k.longueur_m/1000, 0);
+  return kms.map(k => ({...k, allure: base*k.f}));
+}
+
+const style = {
+  version: 8,
+  glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+  sources: {
+    osm: { type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize:256, maxzoom:19,
+           attribution:'© OpenStreetMap contributors' },
+    sat: { type:'raster', tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+           tileSize:256, maxzoom:19, attribution:'Imagerie © Esri, Maxar, Earthstar Geographics' },
+    dem: { type:'raster-dem', url:'https://tiles.mapterhorn.com/tilejson.json', tileSize:512, encoding:'terrarium' },
+  },
+  layers: [
+    { id:'osm', type:'raster', source:'osm', layout:{visibility:'none'} },
+    { id:'sat', type:'raster', source:'sat' },
+    { id:'hill', type:'hillshade', source:'dem', paint:{'hillshade-exaggeration':0.25} },
+  ],
+  sky: { 'sky-color':'#7fb6ff', 'horizon-color':'#dfefff', 'fog-color':'#ffffff', 'sky-horizon-blend':0.6, 'atmosphere-blend':0.6 },
+  terrain: qs.get('terrain') === '0' ? undefined : { source:'dem', exaggeration: 1.5 },
+};
+
+const map = new maplibregl.Map({ container:'map', style, center:[-9.17,38.71], zoom:11, pitch:50, maxPitch:85,
+  attributionControl:{ compact:false, customAttribution:'Relief © Mapterhorn' }, canvasContextAttributes:{preserveDrawingBuffer:false} });
+map.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-right');
+$('sat').onclick = () => { const s = map.getLayoutProperty('sat','visibility') !== 'none';
+  map.setLayoutProperty('sat','visibility', s?'none':'visible'); map.setLayoutProperty('osm','visibility', s?'visible':'none'); };
+
+let D, C, kmMarkers = [], cursor = -1;
+const dataP = fetch(DATA_URL).then(r => r.json()).then(j => { M.data_ms = Math.round(performance.now()-T0); return j; });
+
+map.on('load', async () => {
+  M.map_load_ms = Math.round(performance.now()-T0);
+  D = await dataP; C = D.course; if (D.objectif) $('obj').value = D.objectif;
+  const W = D.weekend;
+  for (const [k,t] of Object.entries(D.trajets)) {
+    map.addSource('tr_'+k, { type:'geojson', data:{type:'Feature', geometry:{type:'LineString', coordinates:t.coords}} });
+    map.addLayer({ id:'tr_'+k, type:'line', source:'tr_'+k, paint:{'line-color':'#fff','line-width':3,'line-dasharray':[2,1.5],'line-opacity':0.85} });
+  }
+  const line = C ? C.coords : [[D.depart.lon,D.depart.lat],[D.arrivee.lon,D.arrivee.lat]];
+  map.addSource('course', { type:'geojson', data:{type:'Feature', geometry:{type:'LineString', coordinates:line}} });
+  map.addLayer({ id:'course-casing', type:'line', source:'course', paint:{'line-color':'#fff','line-width':8} , layout:{'line-cap':'round','line-join':'round'} });
+  map.addLayer({ id:'course', type:'line', source:'course', layout:{'line-cap':'round','line-join':'round'},
+    paint:{'line-color': C ? '#ff6a13' : '#ffcf5c', 'line-width':5, ...(C ? {} : {'line-dasharray':[1,2]})} });
+  map.addSource('done', { type:'geojson', data:{type:'Feature', geometry:{type:'LineString', coordinates:[line[0], line[0]]}} });
+  map.addLayer({ id:'done', type:'line', source:'done', layout:{'line-cap':'round'}, paint:{'line-color':'#ffe600','line-width':6} });
+
+  const poi = (p, label) => new maplibregl.Marker({ element: Object.assign(document.createElement('div'), {className:'poi', textContent:label}) })
+    .setLngLat([p.lon,p.lat]).addTo(map);
+  poi(W.gare,'Gare / aéroport'); poi(W.hotel,'Hôtel'); poi(W.retrait,'Retrait dossard'); poi(D.depart,'Départ'); poi(D.arrivee,'Arrivée');
+  if (C) {
+    for (const b of C.bornes) kmMarkers.push({ km:b.km, el: new maplibregl.Marker({ element: Object.assign(document.createElement('div'), {className:'km', textContent:b.km}) }).setLngLat([b.lon,b.lat]).addTo(map) });
+    for (const r of C.ravitos) if (r.lon) new maplibregl.Marker({ element: Object.assign(document.createElement('div'), {className:'rav', textContent:'R'}), offset:[14,-14] }).setLngLat([r.lon,r.lat]).addTo(map);
+  }
+  renderPanel(); drawProfile();
+  const b = new maplibregl.LngLatBounds(); line.concat([[W.hotel.lon,W.hotel.lat],[W.gare.lon,W.gare.lat]]).forEach(c => b.extend(c));
+  map.fitBounds(b, { padding:{left:360, top:40, right:40, bottom:210}, pitch:45, duration:0 });
+  map.once('idle', () => { M.first_idle_ms = Math.round(performance.now()-T0); renderMetrics();
+    if (qs.has('autoplay')) play(); });
+});
+
+function renderPanel() {
+  const P = D.provenance || {};
+  $('title').textContent = C ? `${C.nom_trace} — ${C.distance_km} km — fichier ${C.fichier}` : 'Mode repli : pas de tracé officiel';
+  $('prov').innerHTML = [P.edition_carte ? `Tracé récupéré par l'agent H : édition « ${P.edition_carte} ». Pas de tracé 2027 publié.` : '',
+    P.h_session ? `<span class="mut">session H ${P.h_session.slice(0,8)}…</span>` : '',
+    C ? '' : 'Départ, arrivée et trajet hôtel → départ seulement.'].filter(Boolean).join('<br>');
+  if (C) {
+    const dp = C.d_plus, om = C.d_plus_openmeteo;
+    $('stats').innerHTML = `<table>
+      <tr><td>Distance mesurée</td><td>${C.distance_km} km</td></tr>
+      <tr><td>D+ corrigé (pont + lissage 150 m)</td><td><b>${dp.corrige_lisse} m</b></td></tr>
+      <tr><td>D+ brut MNT Mapterhorn</td><td>${dp.brut} m</td></tr>
+      ${om ? `<tr><td>D+ brut / corrigé Copernicus 90 m</td><td>${om.brut} / ${om.corrige_lisse} m</td></tr>` : ''}
+      <tr><td>Altitude min / max</td><td>${C.alt_min} / ${C.alt_max} m</td></tr></table>
+      <div class="mut">${C.corrections.map(c => `Correction ${c.type.replaceAll('_',' ')} km ${c.km0}–${c.km1}`).join('<br>')}</div>`;
+    $('cotes').innerHTML = C.cotes.length ? '<table><tr><th>km</th><th>D+</th><th>pente</th></tr>' + C.cotes.map(c =>
+      `<tr><td>${c.km_debut}–${c.km_fin}</td><td>${c.d_plus} m</td><td>${c.pente_moy} %</td></tr>`).join('') + '</table>' : '<span class="mut">aucune > 2,5 % sur 300 m</span>';
+    $('ravs').innerHTML = '<table>' + C.ravitos.map(r => `<tr><td>km ${r.km ?? '?'}</td><td style="text-align:left">${r.libelle}</td></tr>`).join('') + '</table>' +
+      `<div class="mut">source : ${[...new Set(C.ravitos.map(r => r.source))].join(', ')}</div>`;
+  } else { $('stats').textContent = '—'; $('cotes').textContent = '—'; $('ravs').textContent = 'Règlement : tous les 5 km (positions inconnues).'; }
+  const names = { gare_hotel:'Gare/aéroport → hôtel', hotel_retrait:'Hôtel → retrait', hotel_depart:'Hôtel → départ' };
+  $('trajets').innerHTML = '<table>' + Object.entries(D.trajets).map(([k,t]) => `<tr><td>${names[k]}</td><td>${t.km ?? '?'} km</td><td>${t.min ?? '?'} min</td></tr>`).join('') +
+    '</table><div class="mut">route OSRM (voiture), indicatif</div>';
+  renderPace();
+}
+function renderPace() {
+  if (!C) { $('pace').textContent = '—'; return; }
+  const plan = pacePlan(C, parseHms($('obj').value));
+  $('pace').innerHTML = '<table><tr><th>km</th><th>D+/D−</th><th>allure</th></tr>' + plan.map((k,i) =>
+    `<tr id="pk${i}"><td>${k.km}</td><td>${Math.round(k.d_plus)}/${Math.round(k.d_moins)}</td><td>${fmt(k.allure)}/km</td></tr>`).join('') +
+    '</table><div class="mut">modèle simple : +3,3 %/% de montée, −1,8 %/% de descente (non validé)</div>';
+}
+$('obj').onchange = renderPace;
+function renderMetrics() {
+  $('metrics').innerHTML = Object.entries(M).map(([k,v]) => `${k} : ${v}`).join('<br>');
+}
+
+function drawProfile() {
+  const cv = $('cv'), dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w*dpr; cv.height = h*dpr; const g = cv.getContext('2d'); g.scale(dpr,dpr); g.clearRect(0,0,w,h);
+  if (!C) { g.fillStyle = '#9aa0a6'; g.fillText('Pas de profil : tracé officiel indisponible', 20, 30); return; }
+  const L = 40, R = 10, Tp = 18, B = 22, d = C.d_m, e = C.ele, eb = C.ele_brut, dmax = d[d.length-1];
+  const emax = Math.max(...e, ...eb) + 5, emin = Math.min(0, ...e);
+  const X = v => L + (w-L-R)*v/dmax, Y = v => h-B - (h-B-Tp)*(v-emin)/(emax-emin);
+  g.fillStyle = '#ffffff10'; for (const c of C.corrections) g.fillRect(X(c.km0*1000), Tp, X(c.km1*1000)-X(c.km0*1000), h-B-Tp);
+  for (const c of C.cotes) { g.fillStyle = '#ff6a1330'; g.fillRect(X(c.km_debut*1000), Tp, X(c.km_fin*1000)-X(c.km_debut*1000), h-B-Tp); }
+  g.beginPath(); g.moveTo(X(0), Y(emin)); d.forEach((v,i) => g.lineTo(X(v), Y(e[i]))); g.lineTo(X(dmax), Y(emin));
+  const grad = g.createLinearGradient(0,Tp,0,h-B); grad.addColorStop(0,'#ff6a13cc'); grad.addColorStop(1,'#ff6a1322'); g.fillStyle = grad; g.fill();
+  g.beginPath(); d.forEach((v,i) => i ? g.lineTo(X(v), Y(eb[i])) : g.moveTo(X(v), Y(eb[i]))); g.strokeStyle = '#ffffff66'; g.setLineDash([3,3]); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#9aa0a6'; g.font = '11px system-ui';
+  for (let k = 0; k <= dmax/1000; k += 1) { g.fillText(k, X(k*1000)-3, h-6); }
+  for (let a = 0; a <= emax; a += 20) { g.fillText(a+' m', 2, Y(a)+3); }
+  for (const r of C.ravitos) if (r.km != null) { g.fillStyle = '#1e88e5'; g.fillRect(X(r.km*1000)-1, Tp, 2, h-B-Tp); g.fillText('R', X(r.km*1000)+3, Tp+10); }
+  g.fillStyle = '#fff'; g.fillText('profil corrigé (plein) / MNT brut (pointillé) / zone grise = correction pont / orange = côte', L, 12);
+  if (cursor >= 0) { g.strokeStyle = '#ffe600'; g.lineWidth = 2; g.beginPath(); g.moveTo(X(d[cursor]), Tp); g.lineTo(X(d[cursor]), h-B); g.stroke(); g.lineWidth = 1; }
+}
+addEventListener('resize', drawProfile);
+
+// ---------- Animation ----------
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const cap = t => { $('caption').style.display = t ? 'block' : 'none'; $('caption').textContent = t || ''; };
+const fly = (p, opt={}) => new Promise(res => { map.once('moveend', res); map.flyTo({ center:[p.lon,p.lat], zoom:15, pitch:60, bearing:map.getBearing()+30, duration:3500, essential:true, ...opt }); });
+function bearing(a, b) { const r = Math.PI/180, y = Math.sin((b[0]-a[0])*r)*Math.cos(b[1]*r),
+  x = Math.cos(a[1]*r)*Math.sin(b[1]*r) - Math.sin(a[1]*r)*Math.cos(b[1]*r)*Math.cos((b[0]-a[0])*r); return Math.atan2(y,x)/r; }
+const lerpAng = (a, b, t) => a + (((b - a + 540) % 360) - 180) * t;
+
+function follow(coords, ms, onStep) {
+  return new Promise(res => {
+    let t0 = null, br = map.getBearing(), frames = 0;
+    const n = coords.length, ahead = Math.max(4, Math.round(n/60));
+    function f(now) {
+      t0 ??= now; frames++;
+      const u = Math.min(1, (now - t0)/ms), i = Math.min(n-1, Math.floor(u*(n-1)));
+      const target = bearing(coords[i], coords[Math.min(n-1, i+ahead)]);
+      br = lerpAng(br, target, 0.05);
+      map.jumpTo({ center: coords[i], bearing: br, pitch: 62, zoom: onStep ? 15.6 : 14 });
+      onStep && onStep(i);
+      if (u < 1) requestAnimationFrame(f); else res({ frames, ms: now - t0 });
+    }
+    requestAnimationFrame(f);
+  });
+}
+
+async function play() {
+  $('play').disabled = true; const W = D.weekend, ta = performance.now();
+  cap(`Veille de course — arrivée : ${W.gare.nom}`); await fly(W.gare, { zoom:14 }); await sleep(800);
+  cap(`Arrivée → hôtel : ${D.trajets.gare_hotel.km} km, ~${D.trajets.gare_hotel.min} min`); await follow(D.trajets.gare_hotel.coords, 5000);
+  cap(`Hôtel : ${W.hotel.nom}`); await fly(W.hotel, { zoom:16.5, duration:1500 }); await sleep(800);
+  cap(`Retrait du dossard : ${W.retrait.nom.replace(/^.*- /,'')}`); await follow(D.trajets.hotel_retrait.coords, 4000); await sleep(800);
+  cap(`Jour J — hôtel → départ : ${D.trajets.hotel_depart.km} km, ~${D.trajets.hotel_depart.min} min`); await follow(D.trajets.hotel_depart.coords, 4500);
+  cap('Départ'); await fly(D.depart, { zoom:15.5, pitch:65, duration:2000 }); await sleep(600);
+  if (C) {
+    const plan = pacePlan(C, parseHms($('obj').value)), src = map.getSource('done');
+    let lastKm = -1;
+    const r = await follow(C.coords, 45000, i => {
+      cursor = i; const km = C.d_m[i]/1000, k = Math.min(plan.length-1, Math.floor(km));
+      src.setData({type:'Feature', geometry:{type:'LineString', coordinates:C.coords.slice(0, i+1).concat([C.coords[i]])}});
+      if (k !== lastKm) { lastKm = k; document.querySelectorAll('tr.cur').forEach(x => x.classList.remove('cur')); $('pk'+k)?.classList.add('cur');
+        kmMarkers.forEach(m => m.el.getElement().classList.toggle('done', m.km <= km)); }
+      const nr = C.ravitos.find(x => x.km != null && x.km >= km);
+      cap(`km ${km.toFixed(1)} · ${Math.round(C.ele[i])} m · ${fmt(plan[k].allure)}/km` + (nr ? ` · ravito km ${nr.km}` : ''));
+      if (i % 4 === 0) drawProfile();
+    });
+    M.survol_parcours_fps = +(r.frames / (r.ms/1000)).toFixed(1); M.survol_parcours_frames = r.frames;
+  }
+  cap('Arrivée !'); await fly(D.arrivee, { zoom:16, pitch:55, duration:2500 });
+  M.animation_totale_s = ((performance.now()-ta)/1000).toFixed(1); renderMetrics();
+  $('play').disabled = false; setTimeout(() => cap(''), 3000);
+}
+$('play').onclick = play;
+</script>
+</body>
+</html>

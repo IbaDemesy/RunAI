@@ -1,0 +1,63 @@
+{
+  "course": "lisbonne",
+  "url": "https://maratonaclubedeportugal.com/en/corrida-marco/edp-lisbon-half-marathon/",
+  "quota_wait_s": 0,
+  "session_id": "562119bf-9c35-4da8-9129-0e9cc3f7ad11",
+  "tool_calls": [
+    {
+      "t_s": 77.2,
+      "args": {
+        "url_source": "https://maratonaclubedeportugal.com/en/corrida-marco/edp-lisbon-half-marathon/",
+        "nom_fichier": "EDP Lisbon Half Marathon 2026.kml"
+      }
+    }
+  ],
+  "downloads_listing": [
+    {
+      "name": "EDP Lisbon Half Marathon 2026.kml",
+      "size": 19041
+    }
+  ],
+  "file_saved": "trace_h_EDP Lisbon Half Marathon 2026.kml",
+  "file_bytes": 19041,
+  "file_read_s": 0.64,
+  "status": "completed",
+  "steps": 37,
+  "duration_s": 205.2,
+  "usage": [
+    {
+      "name": "holo4-27b",
+      "input_tokens": 729375,
+      "cached_tokens": 469600,
+      "output_tokens": 10473,
+      "reasoning_tokens": 6953
+    }
+  ],
+  "answer": {
+    "statut": "ok",
+    "fichier": "EDP Lisbon Half Marathon 2026.kml",
+    "ravitos": [
+      {
+        "km": 5,
+        "libelle": "Vitalis Water"
+      },
+      {
+        "km": 7,
+        "libelle": "Vitalis Water"
+      },
+      {
+        "km": 10,
+        "libelle": "Vitalis Water + 226ERS Gel"
+      },
+      {
+        "km": 13,
+        "libelle": "Vitalis Water + Powerade"
+      }
+    ],
+    "remarque": "The 2027 race page (maratonaclubedeportugal.com) displays the 2026 course map (35ª EDP Meia Maratona Lisboa JT). Water station details are taken from the 2026 map markers and may be updated for 2027. No separate 2027-specific water station list was found on the race page or in the regulations/FAQ sections.",
+    "url_carte": "https://www.google.com/maps/d/viewer?mid=1OJJ0KpT0ZaRGcYOHJbIfJ3DJd0ONXWY",
+    "edition_carte": "2026 (35ª EDP Meia Maratona Lisboa JT)",
+    "source_ravitos": "Google My Maps (official course map embedded on race page)"
+  },
+  "cancelled": true
+}
