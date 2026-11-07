@@ -391,10 +391,13 @@ def test_changing_date_window_while_candidates_are_shown_searches_again():
     asyncio.run(run())
 
 
-def test_selection_derived_date_window_is_not_overwritten_by_holo():
+def test_conversational_period_change_replaces_derived_date_window():
     class DateWindowFiller:
         async def extract(self, text, known, turns=()):
-            return {"date_window": "avril 2028"} if text == "ma période" else {}
+            if text == "actually I'd rather go in May":
+                assert "date_window" not in known
+                return {"date_window": "May 2028"}
+            return {}
 
         async def phrase(self, turns, question, known):
             return question
@@ -417,15 +420,21 @@ def test_selection_derived_date_window_is_not_overwritten_by_holo():
             session.id, FramingReply(revision=session.revision, choice_id="c0")
         )
         assert session.status == FramingStatus.ready_to_confirm
-        selected_id = session.selected_candidate_id
-        with pytest.raises(FramingError, match="explicit answer or correction"):
-            await engine.reply(
-                session.id, FramingReply(revision=session.revision, text="ma période")
+        session = await engine.reply(
+            session.id, FramingReply(
+                revision=session.revision, text="actually I'd rather go in May"
             )
-        session = engine.get(session.id)
-        assert session.slots[SlotName.date_window].value == "2028-06-12"
-        assert session.selected_candidate_id == selected_id == "c0"
-        assert session.status == FramingStatus.ready_to_confirm
+        )
+        window = session.slots[SlotName.date_window]
+        assert window.value == "May 2028"
+        assert window.status.value == "answered"
+        assert window.provenance.kind == "human"
+        assert session.selected_candidate_id is None
+        assert session.status == FramingStatus.choosing_candidate
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, choice_id="c0")
+        )
+        assert session.slots[SlotName.date_window] == window
 
     asyncio.run(run())
 

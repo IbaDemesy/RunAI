@@ -324,14 +324,23 @@ class FramingEngine:
         extract = getattr(self.phraser, "extract", None)
         if not extract:
             return {}
-        known = {name.value: str(slot.value) for name, slot in session.slots.items() if slot.is_known}
+        known = {
+            name.value: str(slot.value)
+            for name, slot in session.slots.items()
+            if slot.is_known
+            and not (
+                name == SlotName.date_window
+                and slot.provenance
+                and slot.provenance.kind == "derived"
+            )
+        }
         filled: dict[SlotName, object] = {}
         for raw, value in (await extract(text, known, session.turns)).items():
             try:
                 name = SlotName(raw)
             except ValueError:
                 continue
-            if name in values or session.slots[name].is_known:
+            if name in values or name.value in known:
                 continue
             try:
                 self._validate({name: value})
