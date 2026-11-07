@@ -234,6 +234,7 @@ class MissionService:
                 id=snapshot.mission_id, query=document.plan.brief.race_label,
                 status=snapshot.status, created_at=document.created_at, race=snapshot.race,
                 steps={step.kind: step for step in snapshot.steps}, plan=document.plan,
+                events=[TraceEvent.model_validate(event.payload) for event in document.envelopes if event.type == "trace"],
                 envelopes=document.envelopes, limitations=snapshot.limitations, error=snapshot.error,
                 framing_summary=document.framing_summary, framing_turns=document.framing_turns,
                 journey=document.journey, read_only=True,

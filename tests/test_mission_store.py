@@ -58,6 +58,9 @@ def test_completed_demo_survives_restart_with_journey_exports_and_event_replay(t
         journey = client.get(f"{route}/journey").json()
         recap = client.get(f"{route}/recap.html").text
         events = client.get(f"{route}/events").text
+        session_id = before["steps"][0]["h_session_id"]
+        history = client.get(f"/api/live/{session_id}").json()["history"]
+        assert history
 
     restored = build_demo_service(delay=0)
     with TestClient(create_app(restored)) as client:
@@ -71,6 +74,7 @@ def test_completed_demo_survives_restart_with_journey_exports_and_event_replay(t
         assert client.get(f"{route}/recap.pdf").content.startswith(b"%PDF")
         assert client.get(f"{route}/recap.ics").status_code == 200
         assert client.get(f"{route}/events").text == events
+        assert client.get(f"/api/live/{session_id}").json()["history"] == history
         envelopes = [json.loads(line[6:]) for line in events.splitlines() if line.startswith("data: ")]
         cursor = envelopes[2]["event_id"]
         replay = client.get(f"{route}/events", headers={"Last-Event-ID": cursor})
@@ -181,6 +185,10 @@ def test_store_skips_corrupt_and_cross_mission_documents(tmp_path, monkeypatch):
     assert MissionStore(tmp_path).load() == []
     (directory / f"{mission.id}.json").write_text(json.dumps(document), encoding="utf-8")
     assert [item.snapshot.mission_id for item in MissionStore(tmp_path).load()] == [mission.id]
+    invalid_trace = next(item for item in document["envelopes"] if item["type"] == "trace")
+    invalid_trace["payload"]["at"] = "invalid timestamp"
+    (directory / f"{mission.id}.json").write_text(json.dumps(document), encoding="utf-8")
+    assert MissionStore(tmp_path).load() == []
 
 
 def test_store_redacts_all_fields_on_write_and_read(tmp_path, monkeypatch):

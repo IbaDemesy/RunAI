@@ -19,6 +19,7 @@ from runai.contracts.framing import FramingSummary, FramingTurn
 from runai.contracts.journey import JourneyPlan
 from runai.contracts.mission import EventEnvelope, MissionSnapshot
 from runai.framing.launch import LaunchPlan
+from runai.models import TraceEvent
 from runai.redaction import redact_secrets
 from runai.tracing import _MISSION_ID
 
@@ -47,6 +48,8 @@ class StoredMission(BaseModel):
         for sequence, event in enumerate(self.envelopes, 1):
             if (event.mission_id, event.sequence, event.event_id) != (mission_id, sequence, f"{mission_id}:{sequence}"):
                 raise ValueError("Invalid stored event identity or sequence")
+            if event.type == "trace":
+                TraceEvent.model_validate(event.payload)
         if any(question.mission_id != mission_id for question in self.snapshot.questions):
             raise ValueError("Invalid stored question identity")
         if self.journey and (self.journey.mission_id != mission_id or self.journey.revision != self.snapshot.journey_revision):
