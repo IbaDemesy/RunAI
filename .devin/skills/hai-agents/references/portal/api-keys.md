@@ -48,7 +48,7 @@ Response (`ApiKeyCreateOutput`):
 ```json
 {
   "id": "5f1c9c5e-2a7b-4d2e-9c1a-8e3f6b2d4a01",
-  "key": "hk-3f9a1c0d7e5b2a8f4c6d1e0b9a7f3c2d5e8b1a4f6c9d0e2b",
+  "key": "hk-EXAMPLE_KEY_REDACTED",
   "expires_at": "2026-12-31",
   "created_at": "2026-06-10T14:32:11.123456Z",
   "name": "ci-deploy-key"

@@ -13,6 +13,8 @@ Skills officiels des éditeurs du stack RunAI, copiés tels quels (format `SKILL
 
 Écartés : `gladia-using-cli` (installe la CLI via `curl | sh`, RunAI utilise le SDK/REST).
 
+Seule modification locale : la clé d'exemple `hk-…` de `hai-agents/references/portal/api-keys.md` est remplacée par `hk-EXAMPLE_KEY_REDACTED` (le test anti-secrets de `tests/test_repo.py` la détectait).
+
 ## Écarts connus avec RunAI
 
 - Gladia : les skills recommandent le SDK, mais `gladiaio-sdk` 2.2.1 plante avec `audio_to_llm` (`KeyError: 'success'`) : passer par le REST (httpx) dans ce cas.
