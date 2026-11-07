@@ -16,7 +16,9 @@ from runai.models import (
 )
 from runai.recap import (
     PdfRenderError,
+    RecapSource,
     TimelineItem,
+    default_timeline,
     demo_recap,
     recap_from_mission,
     render_html,
@@ -66,7 +68,7 @@ def test_recap_from_mission_defaults():
     assert "bloqué" in r.missions[2].human_action
     assert [s.found_by for s in r.sources] == ["Linkup", "Agent H", "Agent H"]
     titles = [t.title for t in r.timeline]
-    assert titles == ["Retrait du dossard", "Départ : Milano Marathon"]
+    assert titles == ["Retrait du dossard (jour à confirmer)", "Départ : Milano Marathon"]
     start = r.timeline[1].start
     assert start == datetime(2027, 4, 4, 9, tzinfo=ZoneInfo("Europe/Rome")) and r.timeline[1].alarm_minutes
     assert r.timeline[0].time_known is False
@@ -224,3 +226,25 @@ def test_render_pdf_real_chrome():
     pdf = render_pdf(demo_recap())
     assert pdf.startswith(b"%PDF-")
     assert len(re.findall(rb"/Type\s*/Page[^s]", pdf)) >= 2
+
+
+def test_non_http_urls_rejected():
+    with pytest.raises(ValueError):
+        RecapSource(label="x", url="javascript:alert(1)")
+    assert RecapSource(label="x", url="https://example.com").url == "https://example.com"
+
+
+def test_invalid_minutes_and_unknown_country_keep_time_as_text():
+    assert parse_start_time("09:75") is None
+    race = _race(country="US", start_time="07:30")
+    assert race_start(race) is None
+    course = next(t for t in default_timeline(race) if t.tag == "course")
+    assert not course.time_known and "07:30" in course.detail
+    assert course.start.date() == race.race_date
+
+
+def test_default_notice_depends_on_profile():
+    fake = recap_from_mission(_race(), RunnerProfile(), [])
+    real = recap_from_mission(_race(), RunnerProfile(email="vrai@coureur.fr"), [])
+    assert "fictif" in fake.notice and "fictif" not in real.notice
+    assert "Rien n'a été payé" in real.notice

@@ -3,7 +3,7 @@
 import base64
 import re
 from collections.abc import Iterable, Mapping
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from runai.models import (
@@ -60,14 +60,16 @@ def human_action(step: StepResult) -> str:
     return HUMAN_ACTIONS[step.stop_point]
 
 
-def race_timezone(race: Race) -> ZoneInfo:
-    return ZoneInfo(COUNTRY_TZ.get(race.country.upper(), "Europe/Paris"))
+def race_timezone(race: Race) -> ZoneInfo | None:
+    """Fuseau du lieu de la course ; None si le pays n'est pas connu (l'heure locale reste alors en texte)."""
+    name = COUNTRY_TZ.get(race.country.upper())
+    return ZoneInfo(name) if name else None
 
 
 def parse_start_time(value: str | None) -> time | None:
     """« 09:00 », « 9h30 », « 8 h » → time ; None si illisible."""
     m = _TIME_RE.search(value or "")
-    if not m or int(m.group(1)) > 23:
+    if not m or int(m.group(1)) > 23 or int(m.group(2) or 0) > 59:
         return None
     return time(int(m.group(1)), int(m.group(2) or 0))
 
@@ -76,19 +78,20 @@ def race_start(race: Race) -> datetime | None:
     if race.race_date is None:
         return None
     t = parse_start_time(race.start_time)
-    if t is None:
+    tz = race_timezone(race)
+    if t is None or tz is None:
         return None
-    return datetime.combine(race.race_date, t, tzinfo=race_timezone(race))
+    return datetime.combine(race.race_date, t, tzinfo=tz)
 
 
 def default_timeline(race: Race) -> list[TimelineItem]:
-    """Retrait du dossard (veille, horaire à confirmer) et départ de la course, à l'heure locale du lieu."""
+    """Rappel du retrait du dossard (veille, jour à confirmer) et départ de la course, à l'heure locale du lieu."""
     if race.race_date is None:
         return []
-    tz = race_timezone(race)
+    tz = race_timezone(race) or UTC
     eve = datetime.combine(race.race_date - timedelta(days=1), time(0), tzinfo=tz)
     items = [TimelineItem(
-        start=eve, time_known=False, title="Retrait du dossard",
+        start=eve, time_known=False, title="Retrait du dossard (jour à confirmer)",
         detail=(race.bib_pickup or "lieu et horaires à confirmer") + " · pièce d'identité et documents exigés",
         tag="info",
     )]
@@ -102,7 +105,8 @@ def default_timeline(race: Race) -> list[TimelineItem]:
     else:
         items.append(TimelineItem(
             start=datetime.combine(race.race_date, time(0), tzinfo=tz), time_known=False,
-            title=f"Course : {race.name}", detail="heure de départ à confirmer",
+            title=f"Course : {race.name}",
+            detail=(f"départ {race.start_time} (heure locale)" if race.start_time else "heure de départ à confirmer"),
             location=race.start_location, tag="course",
         ))
     return items
@@ -174,7 +178,7 @@ def recap_from_mission(
     checklist: Iterable[str] = (),
     extra_sources: Iterable[RecapSource] = (),
     captures: Mapping[StepKind, bytes] | None = None,
-    notice: str | None = "Profil coureur fictif. Rien n'a été payé ni soumis par RunAI.",
+    notice: str | None = None,
     generated_at: datetime | None = None,
     calendar_timezone: str = "Europe/Paris",
 ) -> Recap:
@@ -185,6 +189,8 @@ def recap_from_mission(
     - `prices` remplace `StepResult.price_eur` ; `options` ajoute des lignes « Option » à une mission.
     - `timeline` remplace la timeline par défaut (`default_timeline(race)`), `extra_timeline` la complète.
     - Sources : `race.sources` (trouvées par Linkup), `extra_sources`, puis la page où chaque agent s'est arrêté.
+    - `notice` : bandeau en tête ; par défaut il rappelle que rien n'a été payé (et que le profil est fictif
+      si l'e-mail est en @example.com) ; passer `""` pour le masquer.
     """
     prices, options, captures = prices or {}, options or {}, captures or {}
     last: dict[StepKind, StepResult] = {s.kind: s for s in steps if s.kind in MISSION_TITLES}
@@ -198,6 +204,7 @@ def recap_from_mission(
     sources += [RecapSource(label=f"Page atteinte par l'agent ({m.title.lower()})", url=m.finalize_url,
                             found_by="Agent H", used_for="lien pour finaliser")
                 for m in missions if m.finalize_url]
+    fictive = profile.email.endswith("@example.com")
     items = list(default_timeline(race) if timeline is None else timeline) + list(extra_timeline)
     return Recap(
         id=recap_id,
@@ -208,10 +215,11 @@ def recap_from_mission(
         distance_km=race.distance_km,
         runner_name=f"{profile.first_name} {profile.last_name}",
         runner_email=profile.email,
-        runner_fictive=profile.email.endswith("@example.com"),
+        runner_fictive=fictive,
         goal=goal,
         voice_request=voice_request,
-        notice=notice,
+        notice=notice if notice is not None else (
+            ("Profil coureur fictif. " if fictive else "") + "Rien n'a été payé ni soumis par RunAI."),
         key_facts=default_key_facts(race) if key_facts is None else key_facts,
         timeline=sorted(items, key=lambda t: t.start),
         missions=missions,
