@@ -143,14 +143,21 @@ def test_hotel_budget_overrun_is_marked_failed():
                 question="Budget max par nuit ?",
                 options=["100 €", "150 €", "200 €"],
                 answer="150 €",
-            )
+            ),
+            AgentQuestion(
+                id="hotel-choice",
+                kind=StepKind.accommodation,
+                question="Quel hôtel choisissez-vous ?",
+                options=["Ibis 180 €", "Novotel 210 €"],
+                answer="Novotel 210 €",
+            ),
         ],
     )
     result = StepResult(
         kind=StepKind.accommodation,
         status=StepStatus.stopped_before_commitment,
-        summary="Sofitel disponible.",
-        price_eur=660.70,
+        summary="Novotel disponible.",
+        price_eur=350,
     )
 
     filtered = MissionService._validate_hotel_budget(mission, result)

@@ -503,6 +503,7 @@ class MissionService:
                 parsed
                 for question in reversed(mission.questions)
                 if question.kind is StepKind.accommodation
+                and "budget" in question.question.casefold()
                 and question.answer
                 and (parsed := extract_budget_per_night(question.answer)) is not None
             ),
