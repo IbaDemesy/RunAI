@@ -25,7 +25,7 @@
       "provenance": {
         "kind": "fixture",
         "url": null,
-        "label": "E1 deterministic",
+        "label": "Origine publique",
         "collected_at": "2028-01-01T00:00:00Z"
       },
       "confidence": "unknown"
@@ -83,7 +83,7 @@
       }
     },
     {
-      "id": "s-hotel-home",
+      "id": "s-main-back",
       "from_stop_id": "hotel",
       "to_stop_id": "home",
       "mode": "local",
@@ -97,7 +97,12 @@
       "automation": "not_covered",
       "manual_url": null,
       "provenance": null,
-      "limitation": null
+      "limitation": {
+        "code": "transport_not_covered",
+        "message": "Transport retour « inconnu » non couvert : organiser soi-même.",
+        "step": "transport",
+        "manual_url": null
+      }
     },
     {
       "id": "s-hotel-start",
@@ -173,11 +178,13 @@
     {
       "id": "return_trip",
       "label": "Retour",
-      "stop_ids": [],
-      "segment_ids": [
-        "s-hotel-home"
+      "stop_ids": [
+        "home"
       ],
-      "status": "unavailable"
+      "segment_ids": [
+        "s-main-back"
+      ],
+      "status": "partial"
     }
   ],
   "budget": {
@@ -246,9 +253,21 @@
       "message": "Transport « bus » non couvert : organiser le trajet soi-même.",
       "step": "transport",
       "manual_url": null
+    },
+    {
+      "code": "transport_not_covered",
+      "message": "Transport retour « inconnu » non couvert : organiser soi-même.",
+      "step": "transport",
+      "manual_url": null
     }
   ],
   "sources": [
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "Origine publique",
+      "collected_at": "2028-01-01T00:00:00Z"
+    },
     {
       "kind": "fixture",
       "url": null,
