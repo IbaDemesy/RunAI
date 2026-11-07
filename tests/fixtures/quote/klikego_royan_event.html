@@ -1,0 +1,1446 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<title>
+		11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan | Klikego
+	</title>
+	<!-- Google tag (gtag.js) -->
+	<!-- FreshDesk -->
+</head>
+<body class="v8 min-h-screen flex flex-col">
+<header class="bg-background-elevated sticky top-0 z-50 shadow-lg">
+	<nav class="mx-auto flex max-w-12xl items-center justify-between py-4 px-5 lg:px-8 text-content-body-regular">
+		<div class="flex shrink-0 mr-4">
+			<a href="/" class="-m-1.5 p-1.5">
+				<span class="sr-only">Klikego</span>
+				<img src="/v8/assets/images/logos/logo_klikego_clic.png" alt="" class="h-10.5 w-auto" />
+			</a>
+		</div>
+		<div class="flex lg:flex-1 items-center w-full">
+			<form action="/recherche" method="GET" class="flex">
+				<div class="flex-1 min-w-[220px] form-field form-field-lg">
+					<label class="form-label">
+						<span class="form-label-text sr-only">Rechercher</span>
+						<div class="form-control">
+							<input class="form-input bg-transparent"
+							       name="search"
+							       placeholder="Rechercher" />
+							<button type="submit" class="form-icon form-icon-right pointer-events-auto cursor-pointer">
+								<span class="sr-only">Rechercher</span>
+								<i class="fa-solid fa-magnifying-glass"></i>
+							</button>
+						</div>
+					</label>
+				</div>
+			</form>
+		</div>
+		<div class="flex lg:hidden">
+			<button type="button" command="show-modal" commandfor="mobile-menu" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 cursor-pointer">
+				<span class="sr-only">Ouvrir menu</span>
+			</button>
+		</div>
+		<el-popover-group class="hidden lg:flex items-center lg:gap-x-2">
+			<a href="/challenges" class="btn btn-link btn-lg">Challenges</a>
+			<a href="/admin/organisateur.jsp" class="btn btn-link btn-lg">Organisateur</a>
+			<a href="/a-propos" class="btn btn-link btn-lg">A propos</a>
+			<a href="/contact" class="btn btn-link btn-lg">Contact</a>
+			<div class="relative">
+				<button popovertarget="desktop-menu-lang" class="btn btn-link btn-lg">
+					FR
+				</button>
+				<el-popover id="desktop-menu-lang" anchor="bottom" popover class="w-56 overflow-visible rounded-xl bg-white p-2 shadow-lg outline-1 outline-gray-900/5
+					transition transition-discrete [--anchor-gap:--spacing(3)]
+					backdrop:bg-transparent open:block
+					data-closed:translate-y-1 data-closed:opacity-0
+					data-enter:duration-200 data-enter:ease-out
+					data-leave:duration-150 data-leave:ease-in ">
+					<div class="flex flex-col">
+						<a href="?lang=fr" class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm/6 text-gray-900 hover:bg-gray-50"><img
+		src="/v8/assets/images/icons/flags/FR.svg"
+		alt="FR"
+		onerror="this.onerror=null; this.style.visibility='hidden';"
+		class="size-5"
+/>
+FR</a>
+						<a href="?lang=en" class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm/6 text-gray-900 hover:bg-gray-50"><img
+		src="/v8/assets/images/icons/flags/GB.svg"
+		alt="GB"
+		onerror="this.onerror=null; this.style.visibility='hidden';"
+		class="size-5"
+/>
+EN</a>
+						<a href="?lang=es" class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm/6 text-gray-900 hover:bg-gray-50"><img
+		src="/v8/assets/images/icons/flags/ES.svg"
+		alt="ES"
+		onerror="this.onerror=null; this.style.visibility='hidden';"
+		class="size-5"
+/>
+ES</a>
+					</div>
+				</el-popover>
+			</div>
+			<div class="flex flex-1 gap-2">
+				<a href="/v8/compte/connexion" class="btn btn-primary btn-lg">
+					Se connecter
+				</a>
+			</div>
+		</el-popover-group>
+	</nav>
+	<el-dialog>
+		<dialog id="mobile-menu" class="backdrop:bg-transparent lg:hidden">
+			<div tabindex="0" class="fixed inset-0 focus:outline-none">
+				<el-dialog-panel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+					<div class="flex items-center justify-between">
+						<a href="/" class="-m-1.5 p-1.5">
+							<span class="sr-only">Klikego</span>
+							<img src="/v8/assets/images/logos/logo_klikego_principal.png" alt="" class="h-8 w-auto" />
+						</a>
+						<button type="button" command="close" commandfor="mobile-menu" class="-m-2.5 rounded-md p-2.5 text-gray-700 cursor-pointer">
+							<span class="sr-only">Close menu</span>
+						</button>
+					</div>
+					<div class="mt-6 flow-root">
+						<div class="-my-6 divide-y divide-gray-500/10">
+							<div class="space-y-2 py-6">
+								<a href="/challenges" class="-mx-3 block rounded-lg px-3 py-2 text-gray-900 hover:bg-gray-50">Challenges</a>
+								<a href="/admin/organisateur.jsp" class="-mx-3 block rounded-lg px-3 py-2 text-gray-900 hover:bg-gray-50">Organisateur</a>
+								<a href="/a-propos" class="-mx-3 block rounded-lg px-3 py-2 text-gray-900 hover:bg-gray-50">A propos</a>
+								<a href="/contact" class="-mx-3 block rounded-lg px-3 py-2 text-gray-900 hover:bg-gray-50">Contact</a>
+								<div class="-mx-3">
+									<button type="button" command="--toggle" commandfor="lang" class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-gray-900 hover:bg-gray-50 cursor-pointer">
+										FR
+									</button>
+									<el-disclosure id="lang" hidden class="mt-2 block space-y-2">
+										<a href="?lang=fr" class="block rounded-lg py-2 pr-3 pl-6 text-gray-900 hover:bg-gray-50">FR</a>
+										<a href="?lang=en" class="block rounded-lg py-2 pr-3 pl-6 text-gray-900 hover:bg-gray-50">EN</a>
+										<a href="?lang=es" class="block rounded-lg py-2 pr-3 pl-6 text-gray-900 hover:bg-gray-50">ES</a>
+									</el-disclosure>
+								</div>
+							</div>
+							<div class="py-6">
+								<a href="/v8/compte/connexion" class="btn btn-primary btn-lg">
+									Se connecter
+								</a>
+							</div>
+						</div>
+					</div>
+				</el-dialog-panel>
+			</div>
+		</dialog>
+	</el-dialog>
+</header>
+<main class="flex-1 flex">
+<template id="affiche">
+	<img src="/documents?reference=1446588740963-17&index=4&version=1793636919000&affiche=1&fullsize=0" />
+</template>
+<div class="flex flex-1 min-w-0 flex-col bg-background-brand-faint-default px-6 md:px-12 lg:px-24 py-6">
+<div class="event-header flex flex-col gap-4">
+	<div class="flex-col lg:flex-row self-stretch inline-flex justify-start gap-4">
+		<div class="flex-1 flex flex-wrap justify-start items-center gap-2 text-content-note-regular text-text-base-moderate">
+			<a class="lg:hidden" href="/recherche">Événements</a>
+			<a class="max-lg:hidden" href="/recherche">Tous les événements</a>
+			<i class="fa-solid fa-angle-right"></i>
+			<a href="/recherche?geo=17">Charente Maritime</a>
+			<i class="fa-solid fa-angle-right"></i>
+			<span class="text-text-brand-bolder">11ème Marathon Royan U Côte de Beauté</span>
+		</div>
+		<div class="flex flex-wrap justify-start items-center gap-2">
+			<a href="https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17"
+			   class="event-header-btn-presentation btn btn-md btn-primary">
+				<i class="fa-solid fa-info max-sm:!hidden"></i>
+				Présentation
+			</a>
+			<a href="https://www.klikego.com/inscrits/11eme-marathon-royan-u-cote-de-beaute-2027/1446588740963-17"
+			   class="event-header-btn-participants btn btn-md btn-secondary border border-border-default">
+				<i class="fa-solid fa-user-check max-sm:!hidden"></i>
+				Inscrits
+			</a>
+			<a href="https://www.klikego.com/resultats/11eme-marathon-royan-u-cote-de-beaute-2027/1446588740963-17"
+			   class="event-header-btn-results btn btn-md btn-secondary border border-border-default">
+				<i class="fa-solid fa-trophy max-sm:!hidden"></i>
+				Résultats
+			</a>
+			<!-- Favorite button -->
+			<div class="favorite-container ml-auto md:hidden" data-id="1446588740963-17">
+				<button
+						type="button"
+						class="btn-favorite-add btn btn-secondary btn-icon rounded-full pointer-events-auto"
+						aria-label="Ajouter aux favoris">
+					<i class="fa-regular fa-heart"></i>
+				</button>
+				<button
+						type="button"
+						style='display: none;'
+						class="btn-favorite-remove btn btn-secondary btn-icon rounded-full pointer-events-auto"
+						aria-label="Retirer des favoris">
+					<i class="fa-solid fa-heart text-text-danger-moderate"></i>
+				</button>
+			</div>
+		</div>
+	</div>
+	<div class="flex flex-col gap-2">
+		<div class="flex justify-between items-center gap-2">
+			<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+				<h1 class="event-header-title text-heading-displayextralarge text-text-brand-bolder">
+					11ème Marathon Royan U Côte de Beauté
+					<span data-event-state="future" class="badge badge-success badge-light badge-lg align-top mt-4">
+						Dans 196 jours
+					</span>
+				</h1>
+			</div>
+			<!-- Favorite button -->
+			<div class="favorite-container max-md:hidden" data-id="1446588740963-17">
+				<button
+						type="button"
+						class="btn-favorite-add btn btn-secondary btn-icon rounded-full pointer-events-auto"
+						aria-label="Ajouter aux favoris">
+					<i class="fa-regular fa-heart"></i>
+				</button>
+				<button
+						type="button"
+						style='display: none;'
+						class="btn-favorite-remove btn btn-secondary btn-icon rounded-full pointer-events-auto"
+						aria-label="Retirer des favoris">
+					<i class="fa-solid fa-heart text-text-danger-moderate"></i>
+				</button>
+			</div>
+		</div>
+		<div class="flex flex-wrap justify-start items-start gap-1">
+			<span class="event-header-date tag tag-brand tag-ghost">
+				<i class="fa-solid fa-calendar"></i>
+				22–23 mai 2027
+			</span>
+			<span class="event-header-location tag tag-brand tag-ghost whitespace-normal">
+				<i class="fa-solid fa-location-dot"></i>
+				17200 Royan
+			</span>
+		</div>
+	</div>
+</div>
+	<div class="sticky top-20 z-40 bg-background-brand-faint-default mt-4 py-4">
+<nav class="event-presentation-nav tab-list tab-list-fill">
+	<div class="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-thin custom-scrollbar">
+		<!-- Active -->
+		<button data-target="about" class="tab-item tab-item-fill tab-item-active">
+			A propos
+		</button>
+		<button data-target="dossards" class="tab-item tab-item-fill">
+			Retrait des dossards
+		</button>
+		<button data-target="custom-tab-0" class="tab-item tab-item-fill">
+			Documents
+		</button>
+		<button data-target="custom-tab-1" class="tab-item tab-item-fill">
+			Venir à Royan
+		</button>
+		<button data-target="custom-tab-2" class="tab-item tab-item-fill">
+			Hébergements
+		</button>
+		<button data-target="maps" class="tab-item tab-item-fill">
+			Cartes
+		</button>
+		<button data-target="documents" class="tab-item tab-item-fill">
+			Documents
+		</button>
+		<button data-target="contact" class="tab-item tab-item-fill">
+			Informations de contact
+		</button>
+	</div>
+</nav>
+	</div>
+    <div class="flex flex-col lg:flex-row gap-6 mt-4">
+      <div class="flex flex-1 flex-col gap-8">
+	      <div class="flex flex-1 flex-col gap-2">
+<div class="flex mb-2 lg:hidden">
+	<a href="/types/portal/jeminscris2.jsp?force-multiple=0&light-presentation=0&version=v6" class="btn btn-primary w-full">
+		S'inscrire
+	</a>
+</div>
+	      </div>
+<section id="about" class="external-link scroll-mt-44">
+	<h2 class="text-heading-large text-text-base-bolder">A propos</h2>
+	<div id="about-content" class="prose max-w-full mt-2 text-content-body-regular text-text-base-moderate line-clamp-15">
+		<h1 style="text-align:center"><span style="color:#0000FF"><span style="font-family:tahoma,geneva,sans-serif"><strong>Marathon Royan U C&ocirc;te de Beaut&eacute;</strong></span></span></h1>
+<p style="text-align:center"><img alt="" src="https://www.klikego.com/documents?reference=1446588740963-17&amp;name=Banniere-FB_820x312-px-03.png" style="height:370px; width:1000px" /></p>
+<p style="text-align:center"><span style="font-family:tahoma,geneva,sans-serif"><strong>Un week-end 100% sport et f&ecirc;te pour la 11&egrave;me &eacute;dition du Marathon Royan U C&ocirc;te de Beaut&eacute; !</strong><br />
+Rendez-vous les 22 et 23 mai 2027.&nbsp;<br />
+Retrouvez toutes les informations sur notre&nbsp;<a href="https://www.marathonroyancotedebeaute.fr" style="text-align: center;">site internet</a>.</span></p>
+<p style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif">Cette ann&eacute;e, le MRCB vous propose un nouveau format et transforme le week-end en un v&eacute;ritable rendez-vous sportif et festif, avec des courses r&eacute;paties sur deux jours.&nbsp;</span></p>
+<p style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif">De belles surpriuses vous attendent tout au long du week-end, sur les parcours mais aussi avant et apr&egrave;s les courses.</span></p>
+<h3 style="text-align:justify"><span style="color:#0000FF"><strong>SAMEDI 22 MAI</strong></span></h3>
+<ul>
+	<li style="text-align:justify">Le samedi matin, les <strong>Dr&ocirc;les et Dr&ocirc;lesses</strong> sont &agrave; l&#39;honneur.</li>
+</ul>
+<h3 style="text-align:justify"><span style="color:rgb(0, 0, 255)"><strong>DIMANCHE 23&nbsp;MAI</strong></span></h3>
+<ul>
+	<li style="text-align:justify"><strong>LE MARATHON</strong>, ouvert &agrave; toute personne n&eacute;e en 2007 et avant</li>
+	<li style="text-align:justify"><strong>LE&nbsp;SEMI-MARATHON</strong>, ouvert &agrave; toute personne n&eacute;e en 2009 et avant</li>
+	<li style="text-align:justify"><strong>LE 10KM</strong>, ouvert &agrave; toute personn&eacute;e n&eacute;e en 2011 et avant</li>
+</ul>
+<hr />
+<p style="text-align:justify"><span style="color:rgb(0, 0, 255)"><span style="font-size:16px"><strong>LE T-SHIRT DE L&#39;EDITION</strong></span></span><br />
+<span style="font-family:arial,helvetica,sans-serif">D&eacute;couvre notre <strong>T-shirt technique sublim&eacute;</strong>, con&ccedil;u dans une mati&egrave;re respirante et ultra-confortable.<br />
+Disponible en <strong>coupe homme</strong> et <strong>coupe femme</strong>.<br />
+👉 <strong>Pr&eacute;commande-le d&egrave;s ton inscription, au tarif exclusif de 12 &euro; <span style="color:rgb(255, 140, 0)"><em>(&agrave; la place de 20&euro;)</em></span> !</strong></span></p>
+<p style="text-align:justify"><a href="https://www.klikego.com/documents?reference=1446588740963-17&amp;name=_BAT-TSHIRT_MRCB-2027-4.pdf.png" target="_blank"><img alt="" src="https://www.klikego.com/documents?reference=1446588740963-17&amp;name=_BAT-TSHIRT_MRCB-2027-4.pdf.png" style="height:283px; margin-left:25px; margin-right:25px; width:400px" /></a></p>
+<hr />
+<p style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><span style="color:#0000FF"><strong><span style="font-size:14px">5</span></strong></span></span><span style="font-family:tahoma,geneva,sans-serif"><span style="color:#0000FF"><strong><span style="font-size:14px"> courses pour les enfants le samedi 22&nbsp;mai </span>:&nbsp;</strong></span></span></p>
+<ul>
+	<li style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><strong>Les Alouettes</strong>&nbsp;<span style="font-size:11px">(4-6 ans, enfants n&eacute;s entre 2021&nbsp;et 2023), course non chronom&eacute;tr&eacute;e.</span></span></li>
+	<li style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><strong>Les Mouettes</strong> <span style="font-size:11px">(7-9 ans, enfants n&eacute;s entre 2018&nbsp;et 2020), course non chronom&eacute;tr&eacute;e</span>.</span></li>
+	<li style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><strong>Les Go&eacute;lands</strong> <span style="font-size:11px">(10-11 ans, enfants n&eacute;s entre 2016&nbsp;et 2017), course non chronom&eacute;tr&eacute;e.</span></span></li>
+	<li style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><strong>Les Albatros</strong> <span style="font-size:11px">(12-13 ans, enfants n&eacute;s entre 2014&nbsp;et 2015), <strong>course&nbsp;chronom&eacute;tr&eacute;e</strong>.</span></span></li>
+	<li style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><strong>Les H&eacute;rons</strong> <span style="font-size:11px">(14-15 ans, enfants n&eacute;s entre&nbsp;2012&nbsp;et 2013), <strong>course chronom&eacute;tr&eacute;e</strong>.</span></span></li>
+</ul>
+<p style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><span style="font-size:12px"><strong><em>Ton inscription (courses enfants) contribuera directement &agrave; soutenir deux associations caritatives locales.</em></strong></span></span></p>
+<p style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif"><span style="font-size:12px"><strong>Joindre l&#39;autorisation parentale/questionnaire de sant&eacute;</strong><span style="color:rgb(0, 0, 0)">&nbsp;compl&eacute;t&eacute;e lors de l&#39;inscription de votre enfant pour toutes les courses.&nbsp;Pour les courses des <strong>Albatros et des H&eacute;rons</strong>, fournir le n&deg;Licence si licenci&eacute; FFA.</span></span></span></p>
+<p style="text-align:justify">&nbsp;</p>
+<hr />
+<p><span style="color:#0000FF"><span style="font-family:tahoma,geneva,sans-serif"><strong><span style="font-size:14px">ASSURANCE ANNULATION : 8&euro;/personne</span></strong></span></span></p>
+<p style="text-align:justify"><span style="font-family:tahoma,geneva,sans-serif">Tout coureur peut souscrire &agrave; la garantie annulation au moment de son inscription. <span style="color:#FF0000"><strong>Seulement sur le Marathon et le Semi-Marathon, pas d&#39;assurance pour le 10KM.</strong></span><br />
+<span style="font-size:11px"><em>Cette garantie interviendra&nbsp;en cas de maladie, blessure, accident de trajet, d&eacute;c&egrave;s du conjoint, d&#39;un ascendant ou descendant. Un certificat m&eacute;dical ou un justificatif devra &ecirc;tre adress&eacute; &agrave; l&#39;organisation du Marathon de Royan C&ocirc;te de Beaut&eacute;, au plus tard le 15 Mai 2027.</em></span></span></p>
+	</div>
+	<div class="flex justify-center mt-2">
+		<button id="about-showMore" class="btn btn-sm btn-secondary">
+			Voir plus
+		</button>
+		<button id="about-showLess" class="btn btn-sm btn-secondary hidden">
+			Voir moins
+		</button>
+	</div>
+</section>
+<section id="dossards" class="external-link scroll-mt-44">
+	<h2 class="text-heading-large text-text-base-bolder">
+			Retrait des dossards
+	</h2>
+	<div class="prose max-w-full text-content-body-regular text-text-base-moderate">
+		<p>Tous les dossards seront &agrave; retirer sous le chapiteau du MRCB, situ&eacute; Place K&eacute;rimel de Kerveno.<br />
+Toute l&rsquo;&eacute;quipe sera ravie de vous y accueillir 😊</p>
+<h3><strong>👧👦 Retrait des dossards&nbsp; - Courses enfants</strong></h3>
+<ul>
+	<li>Mercredi 19&nbsp;mai&nbsp;: de 14h00 &agrave; 18h00</li>
+	<li>Vendredi 21&nbsp;mai : de 14h00 &agrave; 19h00</li>
+</ul>
+<h3><strong>🏃 Retrait des dossards - Courses adultes</strong>&nbsp;<em>(10KM, Semi &amp; Marathon)</em></h3>
+<ul>
+	<li>Vendredi 21&nbsp;mai : de 14h00 &agrave; 19h00</li>
+	<li>Samedi 22&nbsp;mai : de 9h30 &agrave; 19h00</li>
+</ul>
+<p>⚠️ <strong>Aucun retrait de dossard ne sera possible le dimanche 23&nbsp;mai. Merci de prendre vos dispositions.</strong></p>
+	</div>
+</section>
+<section id="custom-tab-0" class="external-link scroll-mt-44">
+	<h2 class="text-heading-large text-text-base-bolder">
+			Documents
+	</h2>
+	<div class="prose max-w-full text-content-body-regular text-text-base-moderate">
+		<p><span style="background-color:rgba(255, 255, 255, 0.85); color:rgb(33, 37, 41); font-family:-apple-system,system-ui,segoe ui,roboto,helvetica neue,arial,noto sans,sans-serif,apple color emoji,segoe ui emoji,segoe ui symbol,noto color emoji; font-size:16px">Cliquez sur les liens ci-dessous pour t&eacute;l&eacute;charger et visualiser les documents :</span></p>
+<p><a href="https://www.marathonroyancotedebeaute.fr/PDFs/Reglement-Marathon-2027.pdf" target="_blank"><span style="color:#0000FF">R&egrave;glement MARATHON</span></a></p>
+<p><a href="https://www.marathonroyancotedebeaute.fr/PDFs/Reglement-semi-marathon-2027.pdf" target="_blank"><span style="color:#0000FF">R&egrave;glement SEMI MARATHON</span></a></p>
+<p><a href="https://www.marathonroyancotedebeaute.fr/PDFs/Reglement-10KMS-2027-3.pdf"><span style="color:#0000FF">R&egrave;glement 10 KM</span></a></p>
+<p><a href="https://www.marathonroyancotedebeaute.fr/PDFs/Reglement-courses-enfants-2027.pdf" target="_blank"><span style="color:#0000FF">R&egrave;glement COURSES ENFANTS</span></a></p>
+<p><a href="https://www.klikego.com/documents?reference=1446588740963-17&amp;name=AUTORISATION-PARENTALE-2027-%28modifiable%29.pdf"><span style="color:#0000FF">Autorisation Parentale</span></a></p>
+	</div>
+</section>
+<section id="custom-tab-1" class="external-link scroll-mt-44">
+	<h2 class="text-heading-large text-text-base-bolder">
+			Venir à Royan
+	</h2>
+	<div class="prose max-w-full text-content-body-regular text-text-base-moderate">
+		<p>Plusieurs choix s&#39;offrent &agrave; vous en terme&nbsp;de mode de transports pour venir courir le week-end du marathon : Voiture, train ou bus seront vos amis</p>
+<p>Des propositions de covoiturage sont post&eacute;es sur la page Klikego.</p>
+<p><a href="https://www.marathonroyancotedebeaute.fr/venir-au-marathon-royan-cote-de-beaute.html">https://www.marathonroyancotedebeaute.fr/venir-au-marathon-royan-cote-de-beaute.html</a></p>
+	</div>
+</section>
+<section id="custom-tab-2" class="external-link scroll-mt-44">
+	<h2 class="text-heading-large text-text-base-bolder">
+			Hébergements
+	</h2>
+	<div class="prose max-w-full text-content-body-regular text-text-base-moderate">
+		<h2 style="text-align: center;"><span style="color:#0000FF"><span style="font-size:28px"><strong>Nos partenaires h&eacute;bergements</strong></span></span></h2>
+<ul>
+	<li><span style="font-size:18px"><strong>H&ocirc;tels</strong></span></li>
+</ul>
+<p><a href="https://www.marathonroyancotedebeaute.fr/partenaires-hebergements.html" target="_blank">https://www.marathonroyancotedebeaute.fr/partenaires-hebergements.html</a></p>
+<ul>
+	<li><span style="font-size:18px"><strong>Campings</strong></span></li>
+</ul>
+<p><a href="https://www.marathonroyancotedebeaute.fr/partenaires-hebergements-2.html" target="_blank">https://www.marathonroyancotedebeaute.fr/partenaires-hebergements-2.html</a><span style="font-size:18px"><strong>​</strong></span></p>
+	</div>
+</section>
+<section id="maps" class="scroll-mt-44">
+	<div class="flex flex-column justify-between items-center">
+		<h2 class="text-heading-large text-text-base-bolder">
+			Cartes
+		</h2>
+		<div class="tab-list tab-list-fill">
+			<button data-tab="map" class="tab-btn tab-item tab-item-sm tab-item-fill tab-item-active">
+				Localisation
+			</button>
+		</div>
+	</div>
+	<div id="map" class="tab-content mt-2">
+	<iframe
+			id="route"
+			title="Localisation de l'événement"
+			src="/v8/evenement/map.jsp?coords=45.63432017397648,-1.01265973310522&insee=17306"
+			style="width: 100%; height: 700px; border: none;"
+			allowfullscreen>
+	</iframe>
+	</div>
+</section>
+<section id="documents" class="scroll-mt-44">
+	<h2 class="text-heading-large text-text-base-bolder">
+		Documents
+	</h2>
+	<div class="flex flex-col mt-1">
+		<a rel="nofollow" target="_blank"
+		   href="/documents/?reference=1446588740963-17&index=0">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-regular fa-file-lines"></i>
+					</div>
+					<div class="flex-1 break-all">Bannière</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/documents/?reference=1446588740963-17&index=1">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-regular fa-file-lines"></i>
+					</div>
+					<div class="flex-1 break-all">Autorisation parentale 2027</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/documents/?reference=1446588740963-17&index=2">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-regular fa-file-lines"></i>
+					</div>
+					<div class="flex-1 break-all">Ouverture inscriptions</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/documents/?reference=1446588740963-17&index=3">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-regular fa-file-lines"></i>
+					</div>
+					<div class="flex-1 break-all">T-SHIRT2027.png</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/documents/?reference=1446588740963-17&index=4">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-regular fa-file-lines"></i>
+					</div>
+					<div class="flex-1 break-all">Affiche MRCB27</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-courses-enfants-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement Albatros</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-courses-enfants-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement Hérons</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-courses-enfants-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement Mouettes</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-courses-enfants-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement Goélands</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-courses-enfants-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlements Alouettes</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-Semi-Marathon-Royan-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement Semi-Marathon</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-Marathon-Royan-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement Marathon</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+		<a rel="nofollow" target="_blank"
+		   href="/servlet/com.iel.types.root.participant.ParticipantPhotoServlet?reference=1446588740963-17&name=Reglement-10KM-Royan-2027.pdf">
+			<div class="self-stretch px-4 py-2 border-b border-border-default flex justify-between items-center gap-4">
+				<div class="flex-1 flex items-center text-text-base-moderate gap-2">
+					<div class="size-5 relative overflow-hidden">
+						<i class="fa-solid fa-file-signature"></i>
+					</div>
+					<div class="flex-1 break-all">Règlement 10KM</div>
+				</div>
+				<div class="size-5 text-icon-brand-bolder ml-auto">
+					<i class="fa-solid fa-arrow-up-right-from-square"></i>
+				</div>
+			</div>
+		</a>
+	</div>
+</section>
+<section id="contact" class="scroll-mt-44">
+	<h2 class="mx-1 my-2 text-heading-large text-text-base-bolder">
+		Informations de contact
+	</h2>
+	<div class="self-stretch inline-flex flex-col gap-4 m-2">
+		<div class="flex flex-col gap-2">
+			<div class="text-content-body-regular text-text-base-bolder">
+				Site web et réseaux sociaux&nbsp;:
+			</div>
+			<div class="text-content-body-regular text-text-brand-bolder flex flex-col gap-1">
+              <a href="http://www.marathonroyancotedebeaute.fr/" target="_blank" rel="noopener" class="inline-flex gap-1">
+                <div class="size-6 flex items-center justify-center">
+                  <i class="fa-solid fa-globe"></i>
+                </div>
+                <span class="underline">Site web de l’organisateur</span>
+              </a>
+              <a href="https://www.facebook.com/MRCBroyan" target="_blank" rel="noopener noreferrer" class="inline-flex gap-1">
+                <div class="size-6 flex items-center justify-center">
+                  <i class="fa-brands fa-facebook-f"></i>
+                </div>
+                <span class="underline">Facebook de l’organisateur</span>
+              </a>
+              <a href="https://www.instagram.com/marathonroyan/?hl=fr" target="_blank" rel="noopener noreferrer" class="inline-flex gap-1">
+                <div class="size-6 flex items-center justify-center">
+                  <i class="fa-brands fa-instagram"></i>
+                </div>
+                <span class="underline">Instagram de l’organisateur</span>
+              </a>
+              <a href="https://www.youtube.com/channel/UCt5RjLc2im9nQSYJQ1V-bBA" target="_blank" rel="noopener noreferrer" class="inline-flex gap-1">
+                <div class="size-6 flex items-center justify-center">
+                  <i class="fa-brands fa-youtube"></i>
+                </div>
+                <span class="underline">Youtube de l’organisateur</span>
+              </a>
+			</div>
+		</div>
+		<div class="flex flex-col gap-2">
+			<div class="text-content-body-regular text-text-base-bolder">
+				Responsable des inscriptions&nbsp;:
+			</div>
+			<div class="text-content-body-regular text-text-brand-bolder inline-flex gap-1">
+				<div class="size-6 flex items-center justify-center">
+					<i class="fa-regular fa-circle-user"></i>
+				</div>
+				<div class="text-text-brand-bolder">
+                  MRCB Marathon Royan Côte de Beauté 
+				</div>
+			</div>
+		</div>
+		<div>
+			<a href="/v8/evenement/contact.jsp?e=1446588740963-17" class="btn btn-lg btn-secondary">
+				Contacter l’organisateur
+			</a>
+		</div>
+	</div>
+</section>
+      </div>
+<aside id="sidebar" class="lg:w-80 xl:w-100 min-w-80 w-full h-fit max-lg:hidden">
+	<div class="flex justify-between items-center mb-2">
+		<h2 class="text-heading-large text-text-base-bolder">
+			Les épreuves
+		</h2>
+		<a href="/types/portal/jeminscris2.jsp?force-multiple=0&light-presentation=0&version=v6" class="btn btn-primary">
+			S'inscrire
+		</a>
+	</div>
+	<div id="heat-list" class="flex flex-col gap-2">
+		<div data-heat-id="1447756132652" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1447756132652');"
+					aria-label="Marathon Royan U Côte de Beauté"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Marathon Royan U Côte de Beauté</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								42,19 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 65 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							dim. 23 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							7h15
+						</span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540543878023" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540543878023');"
+					aria-label="Semi-Marathon Royan U Côte de Beauté"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Semi-Marathon Royan U Côte de Beauté</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								21,1 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 40 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							dim. 23 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							7h45
+						</span>
+					</div>
+					<!-- Progression -->
+					<div data-heat-progress="58" class="heat-preogress flex items-center gap-3">
+						<div class="h-1 flex-1 rounded bg-background-neutral-lighter-default overflow-hidden">
+							<div class="h-full bg-background-brand-medium-hover" style="width: 58%;"></div>
+						</div>
+						<span class="text-content-note-regular text-base-moderate">
+	                        Complet à 58%
+                        </span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540543327856" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540543327856');"
+					aria-label="10km Royan U Côte de beauté"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">10km Royan U Côte de beauté</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								10 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 23 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							dim. 23 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							08h15
+						</span>
+					</div>
+					<!-- Progression -->
+					<div data-heat-progress="72" class="heat-preogress flex items-center gap-3">
+						<div class="h-1 flex-1 rounded bg-background-neutral-lighter-default overflow-hidden">
+							<div class="h-full bg-background-brand-medium-hover" style="width: 72%;"></div>
+						</div>
+						<span class="text-content-note-regular text-base-moderate">
+	                        Complet à 72%
+                        </span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540544153231" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540544153231');"
+					aria-label="Course Eveils 4 - 6 ans les Alouettes"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Course Eveils 4 - 6 ans les Alouettes</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								0,4 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 6 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							sam. 22 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							10h30
+						</span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540553200748" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540553200748');"
+					aria-label="Course Les Goélands 10 - 11 ans"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Course Les Goélands 10 - 11 ans</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								1,6 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 6 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							sam. 22 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							10h15
+						</span>
+					</div>
+					<!-- Progression -->
+					<div data-heat-progress="63" class="heat-preogress flex items-center gap-3">
+						<div class="h-1 flex-1 rounded bg-background-neutral-lighter-default overflow-hidden">
+							<div class="h-full bg-background-brand-medium-hover" style="width: 63%;"></div>
+						</div>
+						<span class="text-content-note-regular text-base-moderate">
+	                        Complet à 63%
+                        </span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540546172785" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540546172785');"
+					aria-label="Course Eveils 7 - 9 ans les Mouettes"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Course Eveils 7 - 9 ans les Mouettes</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								0,8 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 6 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							sam. 22 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							10h45
+						</span>
+					</div>
+					<!-- Progression -->
+					<div data-heat-progress="55" class="heat-preogress flex items-center gap-3">
+						<div class="h-1 flex-1 rounded bg-background-neutral-lighter-default overflow-hidden">
+							<div class="h-full bg-background-brand-medium-hover" style="width: 55%;"></div>
+						</div>
+						<span class="text-content-note-regular text-base-moderate">
+	                        Complet à 55%
+                        </span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540618101625" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540618101625');"
+					aria-label="Course Les Albatros 12 - 13 ans"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Course Les Albatros 12 - 13 ans</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								2,4 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 7 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							sam. 22 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							10h00
+						</span>
+					</div>
+					<!-- Progression -->
+					<div data-heat-progress="62" class="heat-preogress flex items-center gap-3">
+						<div class="h-1 flex-1 rounded bg-background-neutral-lighter-default overflow-hidden">
+							<div class="h-full bg-background-brand-medium-hover" style="width: 62%;"></div>
+						</div>
+						<span class="text-content-note-regular text-base-moderate">
+	                        Complet à 62%
+                        </span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div data-heat-id="1540618320013" class="relative flex min-h-24 items-stretch group">
+			<!-- Lien global (au-dessus de tout) -->
+			<a
+					href="#"
+					onclick="event.preventDefault(); heatDetails('1540618320013');"
+					aria-label="Course Les Hérons 14 - 15 ans"
+					class="heat-link
+						   absolute inset-0 z-10 rounded-xl
+					       bg-transparent
+					       transition-colors duration-200
+		                   group-hover:bg-black/5
+                           active:bg-black/5
+					       focus-visible:outline focus-visible:outline-2
+					       focus-visible:outline-offset-2
+					       focus-visible:outline-primary">
+			</a>
+			<!-- Bloc principal -->
+			<div class="flex flex-1 items-center rounded-l-lg border border-r-0 border-border-default bg-background-base px-3 py-2 ">
+				<div class="flex flex-1 flex-col gap-2">
+					<!-- Titre + badge -->
+					<div class="flex w-full items-center gap-2">
+						<div class="flex w-full items-center justify-between">
+							<h3 class="flex-1 text-content-note-emphasis text-text-base-bolder">Course Les Hérons 14 - 15 ans</h3>
+							<span class="px-2 py-1 rounded-full
+					            bg-background-neutral-faint-default
+					            outline outline-1 outline-border-neutral-lighter
+					            text-xs font-medium text-text-base-bolder">
+								3,2 km
+							</span>
+						</div>
+					</div>
+					<!-- Tags -->
+					<div class="flex flex-wrap items-center gap-2">
+							<!-- Prix -->
+							<span data-heat-tag="price" class="tag tag-brand tag-light">
+								<i class="fa-solid fa-tag"></i>
+								À partir de 7 €
+							</span>
+						<!-- Date -->
+						<span data-heat-tag="date" class="tag tag-neutral tag-light">
+							<i class="fa-solid fa-calendar"></i>
+							sam. 22 mai
+						</span>
+						<!-- Heure -->
+						<span data-heat-tag="hour" class="tag tag-neutral tag-light">
+							<i class="fa-regular fa-clock"></i>
+							9h30
+						</span>
+					</div>
+					<!-- Progression -->
+					<div data-heat-progress="50" class="heat-preogress flex items-center gap-3">
+						<div class="h-1 flex-1 rounded bg-background-neutral-lighter-default overflow-hidden">
+							<div class="h-full bg-background-brand-medium-hover" style="width: 50%;"></div>
+						</div>
+						<span class="text-content-note-regular text-base-moderate">
+	                        Complet à 50%
+                        </span>
+					</div>
+				</div>
+			</div>
+			<a class="flex w-8 items-center justify-center rounded-r-lg bg-background-brand-medium-default border border-0">
+				<i class="fa-solid fa-chevron-right text-icon-neutral-moderate"></i>
+			</a>
+		</div>
+		<div>
+			<span class="text-content-caption-regular text-text-base-moderate">
+				À ce jour, l'organisateur n'a pas mis en place de <a href="/services/#bourse" class="underline">bourse d'échange de dossards</a>.
+			</span>
+		</div>
+		<a href="/types/portal/jeminscris2.jsp?force-multiple=0&light-presentation=0&version=v6" class="btn btn-sm btn-secondary">
+			<i class="fa-solid fa-fire"></i>
+			J'ai un code promo
+		</a>
+	</div>
+</aside>
+    </div>
+	<!-- Heat details -->
+	<el-dialog>
+		<dialog id="dialogDetails"
+		        class="
+				        md:fixed md:inset-0 md:max-h-none md:overflow-y-auto md:size-auto md:max-w-4xl md:mx-auto
+				        bg-transparent backdrop:bg-transparent">
+			<el-dialog-backdrop
+					class="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/50">
+			</el-dialog-backdrop>
+			<div class="
+						max-md:fixed max-md:inset-0 max-md:focus:outline-none
+						md:flex md:min-h-full md:items-center md:justify-center md:p-4
+						">
+				<el-dialog-panel class="
+								relative overflow-hidden
+								max-md:right-0 max-md:z-50
+								md:w-11/12 md:rounded-lg md:shadow-xl
+						">
+					<div id="dialogContent" class="bg-white max-md:h-full">
+					</div>
+				</el-dialog-panel>
+			</div>
+		</dialog>
+	</el-dialog>
+	<div class="lg:hidden">
+		<div class="h-12">
+		</div>
+		<!-- Bouton / header visible -->
+		<div class="fixed bottom-0 left-0 right-0 bg-background-base border border-border-default rounded-t-2xl shadow-lg">
+			<button command="show-modal" commandfor="bottomsheet" type="button"
+					class="h-16 w-full px-12 flex items-center justify-between">
+				<span class="text-heading-medium text-text-base-bolder">
+					Les épreuves
+				</span>
+				<i class="fa-solid fa-chevron-up"></i>
+			</button>
+		</div>
+		<!-- Bottom sheet -->
+		<el-dialog>
+			<dialog id="bottomsheet" class="fixed inset-0 size-auto max-h-none max-w-none bg-transparent backdrop:bg-transparent">
+				<el-dialog-backdrop class="fixed inset-0 bg-gray-500/75 transition-opacity">
+				</el-dialog-backdrop>
+				<div class="flex w-full min-h-full items-end justify-center">
+					<el-dialog-panel class="relative w-full h-[80vh] overflow-hidden bg-background-base border border-border-default rounded-t-2xl shadow-lg">
+						<div class="flex flex-col h-full">
+							<button command="close" commandfor="bottomsheet" type="button"
+									class="h-16 w-full px-12 flex items-center justify-between">
+								<span class="text-heading-medium text-text-base-bolder">
+									Les épreuves
+								</span>
+								<i class="fa-solid fa-chevron-down"></i>
+							</button>
+							<div id="bottomsheet-heat-list" class="flex-1 min-h-0 overflow-y-auto p-4"></div>
+						</div>
+					</el-dialog-panel>
+				</div>
+			</dialog>
+		</el-dialog>
+	</div>
+</div>
+<script>
+    document.querySelectorAll('section').forEach(section => {
+        const tabs = section.querySelectorAll('.tab-btn');
+        const contents = section.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                // reset tabs (dans cette section uniquement)
+                tabs.forEach(t => {
+                    t.classList.remove('tab-item-active');
+                });
+                // reset contents (dans cette section uniquement)
+                contents.forEach(c => c.classList.add('hidden'));
+                // activate tab
+                tab.classList.add('tab-item-active');
+                // show content (recherche uniquement dans la section)
+                const contentToShow = section.querySelector('#' + target);
+                if (contentToShow) {
+                    contentToShow.classList.remove('hidden');
+                }
+            });
+        });
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+        const source = document.getElementById("heat-list");
+        const target = document.getElementById("bottomsheet-heat-list");
+        target.innerHTML = "";
+        target.appendChild(source.cloneNode(true));
+    });
+    document.querySelectorAll('.external-link a').forEach(link => {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener');
+    });
+    // on corrige le centrage des images si besoin
+    document.querySelectorAll('.img-fluid').forEach(img => {
+        img.classList.add('inline-flex')
+    });
+    document.querySelectorAll('img').forEach(img => {
+        const parent = img.parentElement
+        if (!parent) return
+        const style = getComputedStyle(parent)
+        if (style.textAlign === 'center') {
+            img.classList.add('inline-block')
+        }
+    })
+    const dialog = document.getElementById("dialogDetails");
+    const content = document.getElementById("dialogContent");
+    function heatDetails(heatId) {
+        content.innerHTML = "";
+        const url = "/v8/evenement/epreuve.jsp?embedded=1&e=1446588740963-17&heat=" + heatId;
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                content.innerHTML = html;
+                dialog.showModal();
+            })
+            .catch(error => {
+                content.innerHTML = "<div class='text-red-500'>Erreur de chargement</div>";
+                console.error(error);
+                dialog.showModal();
+            });
+    }
+</script>
+<!-- FreshDesk -->
+</main>
+<footer class="bg-background-footer text-text-inverse">
+	<div class="max-w-screen-xl mx-auto px-5 py-8 md:px-12 md:py-10 flex flex-col gap-6 md:gap-12">
+		<!-- Top -->
+		<div class="flex flex-col gap-6">
+			<div class="grid grid-cols-1 md:grid-cols-4 md:gap-12 gap-6 text-content-body-regular">
+				<!-- Brand -->
+				<div class="flex flex flex-col gap-3">
+					<img src="/v8/assets/images/logos/logo_klikego_vert_blanc.png" alt="Klikego" class="w-52 h-auto" />
+					<p class="">
+						La plateforme d'inscriptions en ligne aux événements sportives
+					</p>
+				</div>
+				<!-- Column -->
+				<nav class="flex flex-col md:gap-2">
+					<h4 class="text-text-brand-medium">
+						Coureurs
+					</h4>
+					<ul class="flex flex-col md:gap-2">
+						<li><a href="/recherche/">Les courses</a></li>
+						<li><a href="/recherche?sport=running&search=marche">Marche</a></li>
+						<li><a href="/recherche?sport=running">Running</a></li>
+						<li><a href="/recherche?sport=running&search=trail">Trail</a></li>
+						<li><a href="/recherche?sport=triathlon">Triathlon</a></li>
+					</ul>
+				</nav>
+				<!-- Column -->
+				<nav class="flex flex-col md:gap-2">
+					<h4 class="text-text-brand-medium">
+						Organisateurs
+					</h4>
+					<ul class="flex flex-col md:gap-2">
+						<li><a href="/services/">Nos services</a></li>
+						<li><a href="/tarifs/">Tarifs</a></li>
+					</ul>
+				</nav>
+				<!-- Column -->
+				<nav class="flex flex-col md:gap-2">
+					<h4 class="text-text-brand-medium">
+						Klikego
+					</h4>
+					<ul class="flex flex-col md:gap-2">
+						<li><a href="/a-propos">A propos</a></li>
+						<li><a href="/contact">Nous contacter</a></li>
+					</ul>
+				</nav>
+			</div>
+			<!-- Divider -->
+			<div class="border-t border-border-brand-strong"></div>
+		</div>
+		<!-- Bottom -->
+		<div class="flex flex-col gap-5 md:flex-row md:justify-between text-content-note-regular">
+			<nav aria-label="Liens légaux">
+				<ul class="flex flex-wrap items-center gap-x-5 gap-y-2 list-none p-0 m-0">
+					<li>
+						<span>© Sat Nov 07 16:22:52 CET 2026 Klikego</span>
+					</li>
+					<li>
+						<a href="/mentions-legales">
+							Mentions légales
+						</a>
+					</li>
+					<li>
+						<a href="/divers/CGV.pdf"
+						   target="_blank"
+						   type="application/pdf">
+							Conditions Générales de Vente
+						</a>
+					</li>
+					<li>
+						<a href="/divers/CGU.pdf"
+						   target="_blank"
+						   type="application/pdf">
+							Conditions Générales d'Utilisation
+						</a>
+					</li>
+				</ul>
+			</nav>
+			<nav aria-label="Réseaux sociaux">
+				<ul class="flex items-center gap-4">
+					<li>
+						<a
+								href="https://www.strava.com/clubs/1770229"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="social-link">
+							<i class="fa-brands fa-strava" aria-hidden="true"></i>
+							<span class="sr-only">Strava</span>
+						</a>
+					</li>
+					<li>
+						<a
+								href="https://www.instagram.com/klikego/?hl=fr"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="social-link">
+							<i class="fa-brands fa-instagram" aria-hidden="true"></i>
+							<span class="sr-only">Instagram</span>
+						</a>
+					</li>
+					<li>
+						<a
+								href="https://www.facebook.com/Klikego"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="social-link"
+						>
+							<i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+							<span class="sr-only">Facebook</span>
+						</a>
+					</li>
+					<li>
+						<a
+								href="https://www.linkedin.com/company/klikego/"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="social-link">
+							<i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+							<span class="sr-only">LinkedIn</span>
+						</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</footer>
+<el-dialog>
+	<dialog id="dialogUnauthenticated"
+	        class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+		<el-dialog-backdrop
+				class="fixed inset-0 bg-gray-500/75 transition-opacity">
+		</el-dialog-backdrop>
+		<div class="flex min-h-full items-center justify-center p-4">
+			<el-dialog-panel class="relative overflow-hidden rounded-lg bg-white shadow-xl">
+				<div class="flex flex-col">
+					<!-- Header -->
+					<div class="p-4 flex gap-3">
+						<!-- Icon -->
+						<div class="w-8 h-8 rounded-full border border-border-default flex items-center justify-center">
+							<i class="fa-solid fa-circle-info text-text-brand-bolder"></i>
+						</div>
+						<!-- Text -->
+						<div class="flex-1 space-y-1">
+							<h3 class="text-content-body-accent text-text-base-bolder">
+								Connexion requise
+							</h3>
+							<p class="text-content-note-regular text-text-base-moderate">
+								Pour continuer, vous devez vous connecter.
+							</p>
+						</div>
+					</div>
+					<!-- Footer -->
+					<div class="p-3 border-t border-border-neutral-lighter flex gap-2">
+						<div class="flex flex-1"></div>
+						<button command="close" commandfor="dialogUnauthenticated" type="button" class="btn btn-sm btn-secondary">
+							Annuler
+						</button>
+						<a href="/v8/compte/connexion" class="btn btn-sm btn-primary">
+							Se connecter
+						</a>
+					</div>
+				</div>
+			</el-dialog-panel>
+		</div>
+	</dialog>
+</el-dialog>
+</body>
+</html>
