@@ -47,3 +47,18 @@ def test_origin_is_public_before_storage_exposure_and_agent_task(origin, public)
             assert plan.brief.origin == "Paris"
             assert "12 rue des Lilas" not in " ".join(s.task or "" for s in plan.steps.values())
     asyncio.run(run())
+
+
+def test_dated_candidate_button_label_is_not_a_date_correction():
+    async def run():
+        engine = FramingEngine(Search(), DataMode.demo)
+        session = await engine.create(FramingCreate(text="course à Rome depuis Lyon, 800 euros, 2 nuits, en train"))
+        question = session.open_questions[0]
+        choice = question.choices[0]
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, choice_id=choice.id,
+            text=choice.label, channel="buttons"))
+        assert session.selected_candidate_id == "race"
+        assert session.summary.race.race_date == date(2028, 6, 12)
+        assert session.status == FramingStatus.ready_to_confirm
+    asyncio.run(run())

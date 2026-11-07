@@ -119,7 +119,7 @@ class FramingEngine:
                 )
                 if choice is None:
                     raise FramingError("Choix inconnu")
-            values = extract_slots(reply.text or "") | reply.corrections
+            values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
             if (
                 question
                 and len(question.slots) == 1
