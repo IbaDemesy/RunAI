@@ -148,15 +148,16 @@ def _document_reasons(
             )
         ]
     path_source = str(path.source.url) if path.source else source
+    reasons = []
     if path.to_confirm:
-        return [
+        reasons.append(
             Reason(
                 level=Light.orange,
                 code="entry_path_unconfirmed",
                 message=f"Voie « {path.label} » : {path.to_confirm}.",
                 source_url=path_source,
             )
-        ]
+        )
     certificate = next((r for r in path.requirements if r.kind is RequirementKind.medical_certificate), None)
     if certificate and not situation.has_valid_medical_certificate:
         message = f"Voie « {path.label} » : {certificate.label}."
@@ -166,7 +167,9 @@ def _document_reasons(
             limits = " ; ".join(alternative.limitations)
             message += f" Repli possible sans certificat : « {alternative.label} »" + (f" ({limits})." if limits else ".")
         cert_source = str(certificate.source.url) if certificate.source else path_source
-        return [Reason(level=Light.orange, code="medical_certificate", message=message, source_url=cert_source)]
+        return [*reasons, Reason(level=Light.orange, code="medical_certificate", message=message, source_url=cert_source)]
+    if reasons:
+        return reasons
     message = f"Voie « {path.label} » : pièces à fournir par vous, rien de bloquant."
     if path.limitations:
         message += " " + " ; ".join(path.limitations) + "."

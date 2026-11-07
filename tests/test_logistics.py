@@ -14,6 +14,7 @@ from runai.logistics import (
     PickupWindow,
     RaceRules,
     RecentResult,
+    Requirement,
     RequirementKind,
     RunnerGoal,
     RunnerSituation,
@@ -233,6 +234,12 @@ def test_foreign_licence_needs_explicit_acceptance():
     verdict = eligibility(rules, RunnerProfile(), foreign, today=TODAY)
     assert verdict.light is Light.orange and verdict.entry_path_id == "foreign_license_unconfirmed"
     assert "entry_path_unconfirmed" in {r.code for r in verdict.reasons}
+    certificate = Requirement(kind=RequirementKind.medical_certificate, label="Certificat médical")
+    unconfirmed = rules.entry_paths[1]
+    with_certificate = unconfirmed.model_copy(update={"requirements": [*unconfirmed.requirements, certificate]})
+    rules_cert = rules.model_copy(update={"entry_paths": [rules.entry_paths[0], with_certificate]})
+    codes = {r.code for r in eligibility(rules_cert, RunnerProfile(), foreign, today=TODAY).reasons}
+    assert {"entry_path_unconfirmed", "medical_certificate"} <= codes
     refused = parse_rules_response("Semi de Test", SimpleNamespace(data={**data, "foreign_license_accepted": False}))
     assert [p.id for p in refused.entry_paths] == ["license", "no_license"]
 
