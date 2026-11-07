@@ -33,7 +33,7 @@ EXTRACT_PROMPT = """Extract travel information from a runner's French or English
 Return only a JSON object containing these keys only when clearly given:
 - "city": race city (one city; use the preferred one if several are mentioned);
 - "origin": runner's departure city;
-- "race": official event name, only if stated;
+- "race": official event name, only if stated (never a generic distance label such as "10K" or "half marathon");
 - "distance_km": a number in kilometers (half marathon=21.0975, marathon=42.195, 10K=10), greater than 0 and at most 400;
 - "race_date": ISO yyyy-mm-dd, only when a full date including year is given;
 - "edition": edition year (yyyy), within three years of today;
