@@ -111,9 +111,10 @@ function renderStep(step) {
   }
   const summary = [step.summary, step.error && `Erreur : ${step.error}`].filter(Boolean).join(" ");
   $(".summary", card).textContent = summary;
-  const active = step.status === "running" || step.status === "paused";
-  $(".pause", card).disabled = step.status !== "running";
-  $(".resume", card).disabled = step.status !== "paused";
+  const started = Boolean(step.h_session_id);
+  const active = started && (step.status === "running" || step.status === "paused");
+  $(".pause", card).disabled = !started || step.status !== "running";
+  $(".resume", card).disabled = !started || step.status !== "paused";
   $(".message", card).classList.toggle("hidden", !active);
 }
 
