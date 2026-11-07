@@ -920,3 +920,20 @@ def test_sourced_date_fills_unknown_period():
         assert window.provenance.kind == "derived"
 
     asyncio.run(run())
+
+
+def test_clearing_race_date_clears_derived_period():
+    async def run():
+        engine = FramingEngine(Search(), DataMode.demo)
+        session = await engine.create(FramingCreate(text="race in Tokyo on 2028-06-12"))
+        assert session.slots[SlotName.date_window].provenance.kind == "derived"
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.race_date: None},
+        ))
+        window = session.slots[SlotName.date_window]
+        assert not window.is_known
+        assert window.value is None
+        assert window.provenance is None
+        assert any(q.slots == [SlotName.date_window] for q in session.open_questions)
+
+    asyncio.run(run())

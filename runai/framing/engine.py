@@ -370,6 +370,12 @@ class FramingEngine:
         session.open_questions = []
         race_date = session.slots[SlotName.race_date]
         date_window = session.slots[SlotName.date_window]
+        if (
+            (not race_date.is_known or race_date.value is None)
+            and date_window.provenance
+            and date_window.provenance.kind == "derived"
+        ):
+            session.slots[SlotName.date_window] = Slot(name=SlotName.date_window)
         if race_date.is_known and race_date.value is not None and (
             not date_window.is_known
             or (date_window.provenance and date_window.provenance.kind == "derived")
