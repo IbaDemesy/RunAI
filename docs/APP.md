@@ -21,6 +21,8 @@ Parcours : on tape la course ou on clique sur **Dire la course** (micro → `/ap
 2. Renseigner `RUNAI_BASIC_AUTH` (obligatoire : `render.yaml` fixe `RUNAI_PUBLIC=1` et l'app refuse alors de démarrer en mode live sans mot de passe), `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY` (facultative, voix).
 3. Garde-fous crédits : `RUNAI_H_MAX_STEPS=40`, `RUNAI_H_MAX_TIME_S=600`. Les slots H sont partagés entre toutes les missions live ; en démo, les missions ne s'attendent pas.
 
+Plan gratuit : le service s'endort après ~15 min sans visite (réveil ~1 min, missions en cours perdues). Ouvrir la page avant une démo, ou passer `plan: starter` pour éviter la veille.
+
 Couper le service après le hackathon.
 
 ## Fichiers
