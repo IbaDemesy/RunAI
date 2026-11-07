@@ -6,6 +6,8 @@ Projet du « Computer Use Agents Hackathon » (H Company × 42AI, 7–8 novembre
 
 ## Avancement
 
+- [Plan de développement multi-agents — équipes, lots et voyage complet](docs/PLAN_DEVELOPPEMENT.md)
+- [Frontend — direction visuelle, écrans et critères de finition](docs/FRONTEND.md)
 - [Notation du jury : ce qui est fait, ce qui manque](docs/NOTATION.md)
 - [Démo et livrables](docs/DEMO_ET_LIVRABLES.md)
 - [Recherches des agents : ce qu'on fait, en option, coupé](docs/RECHERCHES_AGENTS.md)
