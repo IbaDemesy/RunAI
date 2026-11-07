@@ -1,0 +1,433 @@
+{
+  "schema_version": "journey.v1",
+  "mission_id": "e1-berlin_train",
+  "revision": 0,
+  "framing_revision": 3,
+  "mode": "demo",
+  "origin_public": "Lyon",
+  "date_range": [
+    "2028-06-11",
+    "2028-06-13"
+  ],
+  "timezone": "Europe/Berlin",
+  "currency": "EUR",
+  "stops": [
+    {
+      "id": "home",
+      "kind": "home",
+      "label": "Lyon",
+      "coords": {
+        "lat": 45.76,
+        "lon": 4.84
+      },
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "E1 deterministic",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    },
+    {
+      "id": "hotel",
+      "kind": "hotel",
+      "label": "Berlin",
+      "coords": {
+        "lat": 52.52,
+        "lon": 13.405
+      },
+      "local_time": null,
+      "timezone": "Europe/Berlin",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "E1 deterministic",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    },
+    {
+      "id": "hub-out",
+      "kind": "station",
+      "label": "Lyon",
+      "coords": {
+        "lat": 45.76,
+        "lon": 4.84
+      },
+      "local_time": "2028-06-11T01:00:00+02:00",
+      "timezone": "Europe/Paris",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "E1 deterministic",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    },
+    {
+      "id": "hub-in",
+      "kind": "station",
+      "label": "Berlin",
+      "coords": {
+        "lat": 52.52,
+        "lon": 13.405
+      },
+      "local_time": "2028-06-11T09:00:00+02:00",
+      "timezone": "Europe/Berlin",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "E1 deterministic",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    },
+    {
+      "id": "start",
+      "kind": "race_start",
+      "label": "Berlin",
+      "coords": {
+        "lat": 52.52,
+        "lon": 13.405
+      },
+      "local_time": "2028-06-12T09:00:00+02:00",
+      "timezone": "Europe/Berlin",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "E1 deterministic",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    }
+  ],
+  "segments": [
+    {
+      "id": "s-home-hub",
+      "from_stop_id": "home",
+      "to_stop_id": "hub-out",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          4.84,
+          45.76
+        ],
+        [
+          4.84,
+          45.76
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-main-out",
+      "from_stop_id": "hub-out",
+      "to_stop_id": "hub-in",
+      "mode": "train",
+      "departure": "2028-06-11T01:00:00+02:00",
+      "arrival": "2028-06-11T09:00:00+02:00",
+      "timezone": "Europe/Paris",
+      "geometry": [
+        [
+          4.84,
+          45.76
+        ],
+        [
+          13.405,
+          52.52
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 480,
+      "cost": {
+        "amount": 100.0,
+        "currency": "EUR",
+        "collected_at": "2028-01-01T00:00:00Z",
+        "confidence": "estimated",
+        "provenance": {
+          "kind": "fixture",
+          "url": null,
+          "label": "E1 deterministic",
+          "collected_at": "2028-01-01T00:00:00Z"
+        }
+      },
+      "automation": "manual",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": {
+        "code": "transport_manual",
+        "message": "Train non automatisé : vérifier et réserver soi-même via le lien officiel.",
+        "step": "transport",
+        "manual_url": null
+      }
+    },
+    {
+      "id": "s-hub-hotel",
+      "from_stop_id": "hub-in",
+      "to_stop_id": "hotel",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          13.405,
+          52.52
+        ],
+        [
+          13.405,
+          52.52
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-main-back",
+      "from_stop_id": "hub-in",
+      "to_stop_id": "hub-out",
+      "mode": "train",
+      "departure": "2028-06-13T09:00:00+02:00",
+      "arrival": "2028-06-13T17:00:00+02:00",
+      "timezone": "Europe/Berlin",
+      "geometry": [
+        [
+          13.405,
+          52.52
+        ],
+        [
+          4.84,
+          45.76
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 480,
+      "cost": {
+        "amount": 110.0,
+        "currency": "EUR",
+        "collected_at": "2028-01-01T00:00:00Z",
+        "confidence": "estimated",
+        "provenance": {
+          "kind": "fixture",
+          "url": null,
+          "label": "E1 deterministic",
+          "collected_at": "2028-01-01T00:00:00Z"
+        }
+      },
+      "automation": "manual",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-hotel-start",
+      "from_stop_id": "hotel",
+      "to_stop_id": "start",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          13.405,
+          52.52
+        ],
+        [
+          13.405,
+          52.52
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    }
+  ],
+  "chapters": [
+    {
+      "id": "home",
+      "label": "Chez moi",
+      "stop_ids": [
+        "home"
+      ],
+      "segment_ids": [
+        "s-home-hub"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "departure_hub",
+      "label": "Gare",
+      "stop_ids": [
+        "hub-out"
+      ],
+      "segment_ids": [],
+      "status": "available"
+    },
+    {
+      "id": "main_transport",
+      "label": "Train",
+      "stop_ids": [
+        "hub-in"
+      ],
+      "segment_ids": [
+        "s-main-out"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "arrival_hotel",
+      "label": "Arrivée et hôtel",
+      "stop_ids": [
+        "hotel"
+      ],
+      "segment_ids": [
+        "s-hub-hotel"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "bib_pickup",
+      "label": "Dossard",
+      "stop_ids": [],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "race",
+      "label": "Départ et course",
+      "stop_ids": [
+        "start"
+      ],
+      "segment_ids": [
+        "s-hotel-start"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "return_trip",
+      "label": "Retour",
+      "stop_ids": [
+        "hub-out"
+      ],
+      "segment_ids": [
+        "s-main-back"
+      ],
+      "status": "available"
+    }
+  ],
+  "budget": {
+    "currency": "EUR",
+    "cap": 2000.0,
+    "lines": [
+      {
+        "id": "c-reg",
+        "category": "registration",
+        "label": "Inscription",
+        "money": {
+          "amount": 50.0,
+          "currency": "EUR",
+          "collected_at": "2028-01-01T00:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "E1 deterministic",
+            "collected_at": "2028-01-01T00:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-hotel",
+        "category": "accommodation",
+        "label": "Hôtel 2 nuits",
+        "money": {
+          "amount": 200.0,
+          "currency": "EUR",
+          "collected_at": "2028-01-01T00:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "E1 deterministic",
+            "collected_at": "2028-01-01T00:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-transport",
+        "category": "transport",
+        "label": "Transport aller-retour",
+        "money": {
+          "amount": 210.0,
+          "currency": "EUR",
+          "collected_at": "2028-01-01T00:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "derived",
+            "url": null,
+            "label": "Somme des trajets",
+            "collected_at": "2028-01-01T00:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-local",
+        "category": "local",
+        "label": "Transports locaux",
+        "money": null,
+        "note": "Non estimé"
+      }
+    ],
+    "known_total": 460.0,
+    "missing_line_ids": [
+      "c-local"
+    ],
+    "complete": false,
+    "over_cap": null
+  },
+  "warnings": [
+    "Données de démonstration : course, hôtel et horaires fictifs.",
+    "Retrait des dossards inconnu.",
+    "Jours et horaires de retrait du dossard non trouvés : à confirmer.",
+    "Budget partiel : postes non chiffrés exclus du total."
+  ],
+  "limitations": [
+    {
+      "code": "transport_manual",
+      "message": "Train non automatisé : vérifier et réserver soi-même via le lien officiel.",
+      "step": "transport",
+      "manual_url": null
+    }
+  ],
+  "sources": [
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "E1 deterministic",
+      "collected_at": "2028-01-01T00:00:00Z"
+    }
+  ]
+}
