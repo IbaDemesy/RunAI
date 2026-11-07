@@ -8,15 +8,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 REQUIRED = ("runai/app/static/app.js", "runai/app/static/live.html")
 LITERAL = re.compile(r'([\"\'`])((?:\\.|(?!\1).)*?)\1', re.DOTALL)
-SINGLE = {
-    "Source", "Transport", "Budget", "Replay", "Pause", "RunAI", "Performance",
-    "Inscription", "Envoyer", "Explorer", "Lecture", "Agrandir", "Parler", "Ville",
-    "Course", "Nuits", "Avion", "Train", "Voiture", "Autocar", "Paiement",
-    "Consentement", "Inconnu", "Illustratif", "Ouverte", "inconnu", "inconnue",
-    "en attente", "en cours", "en pause", "sans objet", " nuits", " nuit", "Depuis ",
-    " (nouvel onglet)", "RunAI cherche pour vous…", " € max", "Marche", "Vol",
-    "Partiel", "illustratif", "matin", "moins de 3h30", "3h30–4h", "plus de 4h",
-}
 
 
 def looks_like_copy(value: str) -> bool:
@@ -24,24 +15,57 @@ def looks_like_copy(value: str) -> bool:
     text = value.strip()
     if not text or not any(c.isalpha() for c in text):
         return False
-    if re.match(r"(?:https?:|/|about:|data:|#[\w-])", text):
+    if re.match(r"(?:[a-z][a-z0-9+.-]*:|[/#.]|\([^)]*:[^)]*\))", text):
         return False
-    if value in SINGLE or text in SINGLE:
-        return True
-    if text == "use strict" or re.fullmatch(r"[a-z0-9_.:#/\[\]()> =,-]+", text):
+    if text == "use strict" or re.fullmatch(r"[A-Z_]+", text):
         return False
-    return text in SINGLE or bool(re.search(r"[À-ÿ]|[A-Z][a-z]+(?: |…|[.!?])", text))
+    if re.fullmatch(r"[\w.-]+/[\w.+-]+", text):
+        return False
+    if re.fullmatch(r"[a-z]{2,3}-[A-Z]{2}", text):
+        return False
+    if re.fullmatch(r"[A-Z][a-z]+(?:-[A-Z][a-z]+)+", text):
+        return False
+    if re.fullmatch(r"\w+", text) and (
+        "_" in text or re.search(r"^[a-z].*[A-Z]", text)
+    ):
+        return False
+    if re.fullmatch(r"[a-z0-9-]+(?: [a-z0-9-]+)*", text) and "-" in text:
+        return False
+    if re.search(r"[\[\]#]", text) or re.fullmatch(
+        r"[a-z]+(?::[a-z-]+)?(?:,\s*[a-z]+(?::[a-z-]+)?)+", text
+    ):
+        return False
+    words = re.findall(r"[^\W\d_]+", text)
+    return (
+        any(c.isalpha() and not c.isascii() for c in text)
+        or any(c in text for c in "’…«»")
+        or any(word[0].isupper() for word in words)
+        or len(re.findall(r"[^\W\d_]+(?:\s+)[^\W\d_]+", text)) > 0
+    )
 
 
 def js_strings(source: str) -> set[str]:
     # Comments are skipped by the same scanner, so apostrophes in prose cannot
     # consume the next literal. Template expressions remain verbatim copy slots.
     scanner = re.compile(r"//[^\n]*|/\*.*?\*/|" + LITERAL.pattern, re.DOTALL)
-    return {
-        match.group(2).replace("\\'", "'").replace('\\"', '"')
-        for match in scanner.finditer(source)
-        if match.group(2) is not None and looks_like_copy(match.group(2))
-    }
+    strings = set()
+    for match in scanner.finditer(source):
+        value = match.group(2)
+        if value is None or not looks_like_copy(value):
+            continue
+        prefix = source[source.rfind("\n", 0, match.start()) + 1:match.start()]
+        if re.search(r"\.(?:className|rel)\s*=\s*$", prefix):
+            continue
+        # The local el(tag, text, className) helper's last argument is CSS.
+        if (
+            re.fullmatch(r"[a-z][a-z0-9-]*(?: [a-z][a-z0-9-]*)*", value)
+            and re.search(r"\bel\(", prefix)
+            and prefix.count(",") >= 2
+            and re.match(r"\s*\)", source[match.end():])
+        ):
+            continue
+        strings.add(value.replace("\\'", "'").replace('\\"', '"'))
+    return strings
 
 
 class CopyHTMLParser(HTMLParser):

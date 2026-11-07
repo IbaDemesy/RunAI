@@ -27,14 +27,25 @@ def test_js_inventory_filters_code_and_comments():
     /* l'agent says "Not copy either" */
     el("h1", "Where do you want to run?", "hero");
     button("Envoyer", submit);
+    el("p", "Dites-m’en un peu plus sur votre projet.");
+    button("Exporter ", submit);
+    el("p", "Your race, your goal, your trip.");
     const status = {running: "en cours"};
     const route = "/api/missions";
     const url = "https://example.org";
     const event = "mission_status";
     const selector = ".agent-live[open]";
+    const method = "showChapter";
+    const type = "application/json";
+    const css = "agent-live";
+    el("div", null, "trace corrections");
+    node.rel = "noopener noreferrer";
+    const header = "Content-Type";
     '''
     assert coverage.js_strings(source) == {
-        "Where do you want to run?", "Envoyer", "en cours"
+        "Where do you want to run?", "Envoyer", "en cours",
+        "Dites-m’en un peu plus sur votre projet.", "Exporter ",
+        "Your race, your goal, your trip.",
     }
     assert coverage.js_strings("") == set()
 

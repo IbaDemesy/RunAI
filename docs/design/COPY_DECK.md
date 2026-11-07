@@ -513,3 +513,6 @@ No user-facing literals found; contract identifiers are not UI copy.
 | fakes.over_time | plus de 4h | over 4 h | Demo preparation | 80 | Preserve dynamic data and source spacing. |
 | narrate.website | Sur  | On {host} | Agent progress | 80 | Show only the public hostname and page title; preserve source spacing. |
 | flyover.file_source | fichier (GPX/KML) | Route file (GPX/KML) | Explore | 32 | Source label. |
+| framing.more_details | Dites-m’en un peu plus sur votre projet. | Tell me a little more about your running goal. | Request framing | 80 | Prompt when more details are needed. |
+| stay.export_action | Exporter  | Export  | Trip export | 32 | Append the format name; preserve trailing space. |
+| framing.not_needed |  : sans objet | : not needed | Request framing | 32 | Append to the detail label. |
