@@ -201,6 +201,7 @@ class HLifecycle:
 
     async def _drive(self, job: HJob, task: str, timeout_s: float | None, start_params: dict[str, Any]) -> None:
         run: HRun | None = None
+        result_wrapper = start_params.pop("result_wrapper", None)
         try:
             await self._paused_all.wait()
             await job._resume.wait()
@@ -214,9 +215,9 @@ class HLifecycle:
             job.state = JobState.paused if not job._resume.is_set() else JobState.running
             if job.state is JobState.paused:
                 await run.pause()
-            result = await run.wait(timeout_s=timeout_s)
+            result = await result_wrapper(run).wait() if result_wrapper else await run.wait(timeout_s=timeout_s)
             job.result = result
-            if run.status == "idle":
+            if run.status == "idle" and result_wrapper is None:
                 job.state = JobState.idle
                 await job._finish.wait()
             self._conclude(job, run, result)

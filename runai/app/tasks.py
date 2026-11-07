@@ -274,14 +274,10 @@ def build_task(
     kind: StepKind,
     race: Race,
     profile: RunnerProfile,
-    query: str = "",
-    brief: TripBrief | None = None,
+    *,
+    brief: TripBrief,
 ) -> str:
-    """Consigne H d'une étape. Sans `brief`, compat V1 : `runai.framing.launch.legacy_v1_brief`."""
-    if brief is None:
-        from runai.framing.launch import legacy_v1_brief
-
-        brief = legacy_v1_brief(race, query)
+    """Consigne H d'une étape à partir du cadrage confirmé."""
     if kind is StepKind.registration:
         task = _registration_task(race, brief, profile)
     elif kind is StepKind.accommodation:

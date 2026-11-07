@@ -19,6 +19,7 @@ from runai.app.providers import (
 from runai.app.tasks import extract_budget_per_night
 from runai.contracts.common import DataMode, ProvenanceKind
 from runai.h.events import to_trace_event
+from runai.h.lifecycle import HLifecycle
 from runai.h.runner import HRun, HRunner
 from runai.models import Race, RunnerProfile, StepKind, StepResult, StepStatus
 from runai.safety import guard_task
@@ -123,6 +124,38 @@ class RealAgentRun:
         return result
 
 
+class LifecycleAgentRun:
+    def __init__(self, job, lifecycle: HLifecycle):
+        self.job = job
+        self.lifecycle = lifecycle
+
+    @property
+    def session_id(self):
+        return self.job.h_session_id
+
+    @property
+    def live_view_url(self):
+        run = self.job.run
+        return (run.live_view_url or run.agent_view_url) if run else None
+
+    async def pause(self):
+        await self.lifecycle.pause(self.job.job_id)
+
+    async def resume(self):
+        await self.lifecycle.resume(self.job.job_id)
+
+    async def send_message(self, text):
+        if self.job.run is None:
+            raise RuntimeError("Session H encore en file ; réessayez après son démarrage.")
+        await self.job.run.send_message(text)
+
+    async def wait(self):
+        return await self.job.wait()
+
+    async def cancel(self):
+        await self.lifecycle.cancel(self.job.job_id)
+
+
 class RealBrowserAgents:
     def __init__(
         self,
@@ -135,6 +168,7 @@ class RealBrowserAgents:
         self.runner = runner or HRunner(traces_dir=traces_dir)
         self.max_steps = max_steps or int(os.getenv("RUNAI_H_MAX_STEPS", "60"))
         self.max_time_s = max_time_s or float(os.getenv("RUNAI_H_MAX_TIME_S", "900"))
+        self.lifecycle = HLifecycle(self.runner)
 
     async def start(
         self,
@@ -147,6 +181,7 @@ class RealBrowserAgents:
         mission_id: str | None = None,
         query: str = "",
         start_url: str | None = None,
+        brief=None,
     ) -> RealAgentRun:
         if start_url and (reason := forbidden_reason(start_url)):
             raise RuntimeError(f"URL de départ refusée : {reason}.")
@@ -156,7 +191,7 @@ class RealBrowserAgents:
                     "Lien d'inscription Njuko manquant ; Klikego et les autres plateformes sont interdits."
                 )
             start_url = str(race.registration_url)
-        run = await self.runner.start(
+        job = self.lifecycle.submit(
             kind,
             guard_task(task),
             mission_id=mission_id,
@@ -164,13 +199,10 @@ class RealBrowserAgents:
             max_steps=self.max_steps,
             max_time_s=self.max_time_s,
             tools=[ask_user_tool(ask_user)],
-        )
-        return RealAgentRun(
-            run,
-            kind,
-            on_event,
             timeout_s=self.max_time_s + 30,
+            result_wrapper=lambda run: RealAgentRun(run, kind, on_event, self.max_time_s + 30),
         )
+        return LifecycleAgentRun(job, self.lifecycle)
 
 
 class RealTranscriber:

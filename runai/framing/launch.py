@@ -17,7 +17,7 @@ from runai.app.providers import (
     registration_coverage,
     transport_coverage,
 )
-from runai.app.tasks import TripBrief, build_task, extract_budget_per_night
+from runai.app.tasks import TripBrief, build_task
 from runai.contracts.common import Automation, DataMode, Limitation
 from runai.contracts.framing import (
     FramingError,
@@ -218,34 +218,4 @@ def plan_launch(
         brief=brief,
         steps=steps,
         limitations=limitations,
-    )
-
-
-def legacy_v1_brief(race: Race, query: str = "") -> TripBrief:
-    """Compat V1 (`POST /api/missions` sans cadrage, Milan uniquement) : à retirer quand E3
-    remplace la création directe par `confirm`. Sert de non-régression des consignes V1."""
-    return TripBrief(
-        race_label="Wizz Air Milano Marathon 2027",
-        city="Milan",
-        country=race.country or "IT",
-        race_date=race.race_date,
-        distance_km=race.distance_km or 42.195,
-        arrival=date(2027, 4, 3),
-        departure=date(2027, 4, 5),
-        nights=2,
-        origin="Paris",
-        budget_per_night_eur=extract_budget_per_night(query, require_context=True),
-        transport_mode="train",
-        hotel_landmarks=[
-            "départ Corso Sempione",
-            "retrait des dossards Via Moncucco 35",
-        ],
-        health_question=(
-            "Avez-vous une Runcard ou un certificat médical de compétition (ECG d'effort) ?"
-        ),
-        registration_platform="Njuko",
-        accommodation_site="site officiel Accor",
-        accommodation_url="https://all.accor.com",
-        transport_site="trenitalia.com",
-        transport_url="https://www.trenitalia.com",
     )

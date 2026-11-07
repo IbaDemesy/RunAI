@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-import re
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -14,12 +13,16 @@ from typing import Any
 from pydantic import BaseModel, Field, HttpUrl
 
 from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
+from runai.app.providers import UnavailableBrowserAgents
 from runai.app.tasks import (
     STEP_LABELS,
-    build_task,
-    extract_budget_per_night,
     human_action,
 )
+from runai.contracts.common import DataMode, Limitation
+from runai.contracts.framing import FramingError
+from runai.contracts.mission import EventEnvelope, HumanAnswer, MissionSnapshot
+from runai.framing.launch import LaunchPlan, plan_launch
+from runai.h.human_questions import HumanQuestionRegistry
 from runai.models import (
     AgentQuestion,
     Race,
@@ -30,14 +33,12 @@ from runai.models import (
     TraceEvent,
     utcnow,
 )
+from runai.redaction import redact_secrets
 from runai.safety import detect_stop_point, guard_task
 from runai.tracing import TraceWriter
 
 logger = logging.getLogger(__name__)
 
-_BUDGET_QUESTION = re.compile(
-    r"budget|prix\s+max|maximum|par\s+nuit|per\s+night", re.IGNORECASE
-)
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
 
@@ -48,12 +49,14 @@ class MissionStatus(str, Enum):
     awaiting_human = "awaiting_human"
     completed = "completed"
     failed = "failed"
+    cancelled = "cancelled"
 
 
 TERMINAL_STATUSES = {
     MissionStatus.awaiting_human,
     MissionStatus.completed,
     MissionStatus.failed,
+    MissionStatus.cancelled,
 }
 QUESTION_TIMEOUT_ANSWER = "Pas de réponse de l'utilisateur : arrête-toi ici et résume."
 
@@ -68,6 +71,9 @@ class Mission(BaseModel):
     questions: list[AgentQuestion] = Field(default_factory=list)
     events: list[TraceEvent] = Field(default_factory=list)
     error: str | None = None
+    plan: LaunchPlan | None = Field(default=None, exclude=True)
+    envelopes: list[EventEnvelope] = Field(default_factory=list, exclude=True)
+    limitations: list[Limitation] = Field(default_factory=list)
 
     @property
     def is_terminal(self) -> bool:
@@ -89,7 +95,7 @@ class Mission(BaseModel):
             }
             for kind, step in self.steps.items()
         ]
-        return data
+        return redact_secrets(data)
 
 
 class MissionError(Exception):
@@ -127,31 +133,115 @@ class MissionService:
             str, set[asyncio.Queue[tuple[str, dict[str, Any]]]]
         ] = {}
         self._tasks: set[asyncio.Task[None]] = set()
-        self._pending_questions: dict[str, asyncio.Future[str]] = {}
+        self.questions = HumanQuestionRegistry()
+        self._event_subscribers: dict[str, set[asyncio.Queue]] = {}
+        self.providers = None
+        self._mission_tasks: dict[str, asyncio.Task] = {}
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._loop: asyncio.AbstractEventLoop | None = None
 
-    async def create(self, query: str) -> Mission:
+    async def confirm(self, session) -> MissionSnapshot:
+        plan = plan_launch(session, self.profile)
+        if plan.mode is not DataMode.live and not session.selected_candidate_id:
+            raise FramingError(
+                f"Pas de fixture {plan.mode.value} pour cet événement ; préparation manuelle uniquement, aucun agent lancé."
+            )
+        mission = await self.create(plan)
+        return self.snapshot(mission.id)
+
+    async def create(self, plan: LaunchPlan) -> Mission:
+        if not isinstance(plan, LaunchPlan):
+            raise MissionError("Un cadrage confirmé est obligatoire : /api/framings")
         self._loop = asyncio.get_running_loop()
         mission = Mission(
-            id=uuid.uuid4().hex[:12],
-            query=query.strip(),
-            steps={kind: StepResult(kind=kind) for kind in AGENT_STEPS},
+            id=uuid.uuid4().hex[:12], query=plan.brief.race_label,
+            race=plan.race, plan=plan, limitations=list(plan.limitations),
+            steps={kind: StepResult(
+                kind=kind,
+                status=StepStatus.pending if kind in plan.automated_steps() else StepStatus.completed,
+                url=next((l.manual_url for l in step.limitations if l.manual_url), None),
+                summary=None if kind in plan.automated_steps() else "Non automatisé : à préparer manuellement.",
+                data={"automation": step.automation.value},
+            ) for kind, step in plan.steps.items()},
         )
         self.missions[mission.id] = mission
         self._writers[mission.id] = TraceWriter(mission.id, traces_dir=self.traces_dir)
-        self._record(
-            mission,
-            TraceEvent(
-                source="app",
-                type="mission_created",
-                message=f"Mission créée : « {mission.query} »",
-            ),
-        )
+        self._record(mission, TraceEvent(source="app", type="mission_created",
+                                        message=f"Mission créée : « {mission.query} »"))
+        self._emit(mission, "snapshot", self.snapshot(mission.id).model_dump(mode="json"))
         task = asyncio.create_task(self._run_mission(mission))
         self._tasks.add(task)
+        self._mission_tasks[mission.id] = task
         task.add_done_callback(self._tasks.discard)
         return mission
+
+    def snapshot(self, mission_id: str) -> MissionSnapshot:
+        mission = self.get(mission_id)
+        plan = mission.plan
+        snapshot = MissionSnapshot(
+            mission_id=mission.id, framing_id=plan.framing_id,
+            framing_revision=plan.revision, mode=plan.mode,
+            status=mission.status.value, sequence=len(mission.envelopes),
+            race=mission.race, steps=list(mission.steps.values()),
+            questions=[q for q in self.questions.questions.values() if q.mission_id == mission.id],
+            limitations=mission.limitations, error=mission.error,
+        )
+        return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
+
+    def _emit(self, mission: Mission, type_: str, payload: dict) -> None:
+        envelope = EventEnvelope.build(mission.id, len(mission.envelopes) + 1, type_, payload)
+        mission.envelopes.append(envelope)
+        for queue in self._event_subscribers.get(mission.id, ()):
+            queue.put_nowait(envelope)
+
+    async def subscribe_events(self, mission_id: str, last_event_id: str | None = None):
+        mission = self.get(mission_id)
+        sequence = 0
+        if last_event_id:
+            prefix, _, raw = last_event_id.rpartition(":")
+            try:
+                sequence = int(raw)
+            except ValueError:
+                raise MissionError("Last-Event-ID invalide") from None
+            if prefix != mission_id or not 0 <= sequence <= len(mission.envelopes):
+                raise MissionError("Last-Event-ID invalide")
+        queue = asyncio.Queue()
+        self._event_subscribers.setdefault(mission_id, set()).add(queue)
+        try:
+            for event in tuple(mission.envelopes[sequence:]):
+                yield event
+            if mission.is_terminal:
+                return
+            while True:
+                event = await queue.get()
+                yield event
+                if event.type == "mission_status" and event.payload["status"] in {s.value for s in TERMINAL_STATUSES}:
+                    return
+        finally:
+            self._event_subscribers[mission_id].discard(queue)
+
+    async def cancel(self, mission_id: str) -> None:
+        mission = self.get(mission_id)
+        if mission.status is MissionStatus.cancelled:
+            return
+        mission.status = MissionStatus.cancelled
+        self.questions.cancel_mission(mission_id)
+        lifecycle = getattr(self.agents, "lifecycle", None)
+        if lifecycle:
+            await lifecycle.cancel_all(mission_id)
+        for (mid, _), run in list(self._runs.items()):
+            if mid == mission_id and hasattr(run, "cancel"):
+                await run.cancel()
+        task = self._mission_tasks.get(mission_id)
+        if task and not task.done():
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        mission.limitations.append(Limitation(code="h_cancelled", message="Mission annulée ; aucun nouveau lancement."))
+        self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
+        self._publish_state(mission)
 
     def get(self, mission_id: str) -> Mission:
         try:
@@ -167,101 +257,42 @@ class MissionService:
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         return await self.transcriber.transcribe(audio, content_type)
 
-    async def ask(
-        self, mission_id: str, kind: StepKind, question: str, options: list[str]
-    ) -> str:
+    async def ask(self, mission_id: str, kind: StepKind, question: str, options: list[str]) -> str:
         mission = self.get(mission_id)
-        duplicate = next(
-            (
-                item
-                for item in reversed(mission.questions)
-                if item.kind is kind
-                and item.question == question
-                and item.options == options
-            ),
-            None,
-        )
-        if duplicate is not None:
-            if duplicate.answer is not None:
-                return duplicate.answer
-            future = self._pending_questions.get(duplicate.id)
-            if future is not None:
-                return await future
-        if sum(item.kind is kind for item in mission.questions) >= 2:
-            return "Tu as déjà posé deux questions. Utilise les informations disponibles et arrête-toi avant tout engagement."
-        step = mission.steps[kind]
-        question_model = AgentQuestion(
-            id=uuid.uuid4().hex,
-            kind=kind,
-            question=question,
-            options=options,
-        )
-        future = asyncio.get_running_loop().create_future()
-        self._pending_questions[question_model.id] = future
+        if mission.status is MissionStatus.cancelled:
+            raise MissionError("Mission annulée")
+        question_model = AgentQuestion(id=uuid.uuid4().hex, kind=kind, question=question, options=options)
         mission.questions.append(question_model)
+        step = mission.steps[kind]
+        run = self._runs.get((mission_id, kind))
+        if run:
+            step.h_session_id = run.session_id
+            self._set_live_view(step, run.live_view_url)
+        wrapped = self.questions.open(question_model, mission_id, mission.plan.revision,
+                                      step.h_session_id, ttl=self.question_timeout_s)
         step.status = StepStatus.waiting_for_user
-        self._record(
-            mission,
-            TraceEvent(
-                source=f"agent:{kind.value}",
-                type="question",
-                message=question,
-                data={
-                    "step": kind.value,
-                    "question_id": question_model.id,
-                    "options": options,
-                },
-            ),
-        )
+        self._record(mission, TraceEvent(source=f"agent:{kind.value}", type="question", message=question,
+                                       data={"step": kind.value, "question_id": question_model.id, "options": options}))
         self._publish(mission, ("question", question_model.model_dump(mode="json")))
-        timed_out = False
+        self._emit(mission, "question_opened", wrapped.model_dump(mode="json"))
         try:
-            try:
-                answer = await asyncio.wait_for(
-                    future, timeout=self.question_timeout_s
-                )
-            except TimeoutError:
-                timed_out = True
-                answer = QUESTION_TIMEOUT_ANSWER
-            question_model.answer = answer
-            question_model.answered_at = question_model.answered_at or utcnow()
-            step.status = StepStatus.running
-            self._record(
-                mission,
-                TraceEvent(
-                    source="system" if timed_out else "human",
-                    type="answer",
-                    message=f"{STEP_LABELS[kind]} : « {answer} »",
-                    data={
-                        "step": kind.value,
-                        "question_id": question_model.id,
-                        "answer": answer,
-                    },
-                ),
-            )
-            self._publish(
-                mission, ("answer", question_model.model_dump(mode="json"))
-            )
+            answer = await self.questions.wait_answer(question_model.id)
             return answer
         finally:
-            self._pending_questions.pop(question_model.id, None)
+            resolved = self.questions.get(question_model.id)
+            question_model.answer = resolved.answer
+            question_model.answered_at = utcnow()
+            if mission.status is not MissionStatus.cancelled:
+                step.status = StepStatus.running
+            self._emit(mission, "question_resolved", resolved.model_dump(mode="json"))
+            self._record(mission, TraceEvent(source="human", type="answer",
+                                           message=resolved.answer or resolved.status.value,
+                                           data={"step": kind.value, "question_id": question_model.id}))
+            self._publish(mission, ("answer", question_model.model_dump(mode="json")))
 
-    def answer_question(
-        self, mission_id: str, question_id: str, answer: str
-    ) -> AgentQuestion:
-        mission = self.get(mission_id)
-        question = next(
-            (item for item in mission.questions if item.id == question_id), None
-        )
-        if question is None:
-            raise MissionError(f"Question inconnue : {question_id}")
-        future = self._pending_questions.get(question_id)
-        if question.answer is not None or future is None or future.done():
-            raise MissionError(f"Question déjà répondue : {question_id}")
-        question.answer = answer.strip()
-        question.answered_at = utcnow()
-        future.set_result(question.answer)
-        return question
+    def answer_question(self, mission_id: str, question_id: str, answer: HumanAnswer):
+        self.get(mission_id)
+        return self.questions.answer(question_id, mission_id, answer)
 
     async def pause(self, mission_id: str, kind: StepKind) -> None:
         mission, step, run = self._active(mission_id, kind)
@@ -297,6 +328,8 @@ class MissionService:
 
     async def send_message(self, mission_id: str, kind: StepKind, text: str) -> None:
         mission, step, run = self._active(mission_id, kind)
+        if run.session_id is None:
+            raise MissionError("Session H encore en file ; réessayez après son démarrage.")
         await run.send_message(guard_task(text))
         step.data.setdefault("messages", []).append(text)
         self._record(
@@ -366,7 +399,9 @@ class MissionService:
         if self._loop is not None and running is not self._loop:
             self._loop.call_soon_threadsafe(self._record, mission, event)
             return
+        event = TraceEvent.model_validate(redact_secrets(event.model_dump(mode="json")))
         mission.events.append(event)
+        self._emit(mission, "trace", event.model_dump(mode="json"))
         try:
             self._writers[mission.id].write(event)
         except OSError:
@@ -377,6 +412,8 @@ class MissionService:
         ):
             step = mission.steps.get(StepKind(step_name))
             if step is not None:
+                if session_id := event.data.get("h_session_id"):
+                    step.h_session_id = session_id
                 step.data["last_action"] = event.message
                 if event.data.get("url"):
                     step.data["current_url"] = event.data["url"]
@@ -384,6 +421,7 @@ class MissionService:
 
     def _publish_state(self, mission: Mission) -> None:
         self._publish(mission, ("mission", mission.snapshot()))
+        self._emit(mission, "step", {"steps": [step.model_dump(mode="json") for step in mission.steps.values()]})
 
     def _publish(self, mission: Mission, message: tuple[str, dict[str, Any]]) -> None:
         for queue in self._subscribers.get(mission.id, ()):
@@ -392,27 +430,10 @@ class MissionService:
             self._publish_state(mission)
 
     async def _run_mission(self, mission: Mission) -> None:
-        try:
-            mission.race = await self.search.find_race(mission.query)
-        except Exception as error:  # noqa: BLE001 - toute erreur de brique doit remonter au portail
-            mission.status = MissionStatus.failed
-            mission.error = f"Recherche impossible : {error}"
-            self._record(
-                mission,
-                TraceEvent(source="search", type="error", message=mission.error),
-            )
-            return
-        self._record(
-            mission,
-            TraceEvent(
-                source="search",
-                type="race_found",
-                message=f"Course trouvée : {mission.race.name} ({mission.race.city})",
-                data={"sources": [str(source.url) for source in mission.race.sources]},
-            ),
-        )
         mission.status = MissionStatus.running
-        await asyncio.gather(*(self._run_step(mission, kind) for kind in AGENT_STEPS))
+        await asyncio.gather(*(self._run_step(mission, kind) for kind in mission.plan.automated_steps()))
+        if mission.status is MissionStatus.cancelled:
+            return
         statuses = {step.status for step in mission.steps.values()}
         if StepStatus.stopped_before_commitment in statuses:
             mission.status = MissionStatus.awaiting_human
@@ -420,6 +441,7 @@ class MissionService:
             mission.status = MissionStatus.failed
         else:
             mission.status = MissionStatus.completed
+        self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
         self._record(
             mission,
             TraceEvent(
@@ -449,9 +471,8 @@ class MissionService:
                 ),
             )
             try:
-                task = build_task(
-                    kind, mission.race, self.profile, query=mission.query
-                )
+                step_plan = mission.plan.steps[kind]
+                task = step_plan.task
 
                 async def ask_user(question: str, options: list[str]) -> str:
                     return await self.ask(mission.id, kind, question, options)
@@ -465,16 +486,24 @@ class MissionService:
                     ask_user=ask_user,
                     mission_id=mission.id,
                     query=mission.query,
+                    start_url=step_plan.start_url,
+                    brief=mission.plan.brief,
                 )
                 self._runs[(mission.id, kind)] = run
                 step.h_session_id = run.session_id
                 self._set_live_view(step, run.live_view_url)
                 self._publish_state(mission)
                 result = await run.wait()
+                step.h_session_id = run.session_id
+                self._set_live_view(step, run.live_view_url)
                 result = self._validate_hotel_budget(mission, result)
             except Exception as error:  # noqa: BLE001
                 step.status = StepStatus.failed
-                step.error = str(error)
+                step.error = redact_secrets(str(error))
+                code = "h_key_missing" if isinstance(self.agents, UnavailableBrowserAgents) else getattr(error, "code", "agent_error")
+                limitation = Limitation(code=code, message=step.error, step=kind.value)
+                mission.limitations.append(limitation)
+                self._emit(mission, "error", limitation.model_dump(mode="json"))
                 self._record(
                     mission,
                     TraceEvent(
@@ -503,32 +532,20 @@ class MissionService:
         if result.kind is not StepKind.accommodation or result.status is StepStatus.failed:
             return result
 
-        budgets = [
-            parsed
-            for question in mission.questions
-            if question.kind is StepKind.accommodation
-            and _BUDGET_QUESTION.search(question.question)
-            and question.answer
-            and (parsed := extract_budget_per_night(question.answer)) is not None
-        ]
-        query_budget = extract_budget_per_night(mission.query, require_context=True)
-        if query_budget is not None:
-            budgets.append(query_budget)
-        budget = min(budgets) if budgets else None
-        if result.price_eur is None and budget is None:
+        brief = mission.plan.brief if mission.plan else None
+        if brief is None or brief.nights is None:
             return result
-        if budget is None:
-            result.status = StepStatus.failed
-            result.error = "Le budget hôtel maximal par nuit n'a pas été fourni."
-            result.summary = f"BUDGET MANQUANT — {result.summary or ''}".strip()
+        budget = brief.budget_per_night_eur
+        total_limit = brief.budget_total_eur
+        if budget is not None:
+            per_night_limit = budget * brief.nights
+            total_limit = min(total_limit, per_night_limit) if total_limit is not None else per_night_limit
+        if total_limit is None:
             return result
         if result.price_eur is None:
             result.status = StepStatus.failed
             result.error = "Le prix total de l'hôtel n'a pas pu être vérifié."
-            result.summary = f"PRIX INCONNU — {result.summary or ''}".strip()
             return result
-
-        total_limit = budget * 2
         result.data.update(
             {
                 "budget_max_per_night_eur": budget,
@@ -540,7 +557,7 @@ class MissionService:
             result.status = StepStatus.failed
             result.error = (
                 f"HORS BUDGET : {result.price_eur:.2f} € dépasse "
-                f"{total_limit:.2f} € ({budget:g} €/nuit × 2 nuits)."
+                f"{total_limit:.2f} € pour {brief.nights} nuits."
             )
             result.summary = f"{result.error} {result.summary or ''}".strip()
         return result

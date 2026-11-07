@@ -7,8 +7,14 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from runai.app.fakes import FakeBrowserAgents, FakeTranscriber
+from runai.app.fakes import FakeTranscriber
+from runai.app.providers import (
+    LabeledBrowserAgents,
+    UnavailableBrowserAgents,
+    UnavailableTranscriber,
+)
 from runai.app.real import (
+    LifecycleAgentRun,
     RealAgentRun,
     RealBrowserAgents,
     RealRaceSearch,
@@ -46,6 +52,10 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
         id = "h-session-1"
         agent_view_url = "https://platform.hcompany.ai/sessions/h-session-1"
         live_view_url = None
+        status = "terminated"
+
+        async def close(self):
+            pass
 
         async def wait(self, **kwargs):
             return StepResult(
@@ -77,17 +87,15 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
         race_date=date(2027, 4, 11),
         registration_url="https://in.njuko.com/milano-marathon",
     )
-    run = asyncio.run(
-        agents.start(
-            StepKind.registration,
-            "Prépare l'inscription.",
-            race,
-            RunnerProfile(),
-            lambda event: None,
-            ask_user,
-            mission_id="mission-1",
+    async def scenario():
+        run = await agents.start(
+            StepKind.registration, "Prépare l'inscription.", race, RunnerProfile(),
+            lambda event: None, ask_user, mission_id="mission-1",
         )
-    )
+        result = await run.wait()
+        return run, result
+
+    run, result = asyncio.run(scenario())
 
     kind, task, params = runner.params
     answer = asyncio.run(
@@ -104,10 +112,9 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert params["tools"][0].name == "ask_user"
     assert answer == "moins de 3h30"
     assert answers == [("Quel sas ?", ["moins de 3h30", "plus de 3h30"])]
-    assert isinstance(run, RealAgentRun)
+    assert isinstance(run, LifecycleAgentRun)
     assert run.session_id == "h-session-1"
-    assert run.timeout_s == 90
-    assert asyncio.run(run.wait()).status is StepStatus.stopped_before_commitment
+    assert result.status is StepStatus.stopped_before_commitment
 
 
 def test_real_agent_run_extracts_exact_two_night_hotel_total():
@@ -199,31 +206,29 @@ def test_real_transcriber_decodes_uploaded_wav_and_uses_voice_stream():
 
 
 def test_service_selects_fakes_or_real_adapters_from_environment(monkeypatch):
-    monkeypatch.setenv("HAI_API_KEY", "fake-h-key")
-    monkeypatch.setenv("LINKUP_API_KEY", "fake-linkup-key")
+    monkeypatch.delenv("RUNAI_MODE", raising=False)
     monkeypatch.setenv("RUNAI_DEMO", "1")
     demo = build_service()
     assert demo.simulated
-    assert isinstance(demo.agents, FakeBrowserAgents)
+    assert isinstance(demo.agents, LabeledBrowserAgents)
     assert isinstance(demo.transcriber, FakeTranscriber)
 
     monkeypatch.delenv("RUNAI_DEMO")
+    monkeypatch.setenv("HAI_API_KEY", "fake-h-key")
+    monkeypatch.setenv("LINKUP_API_KEY", "fake-linkup-key")
+    monkeypatch.delenv("GLADIA_API_KEY", raising=False)
     real = build_service()
     assert not real.simulated
     assert isinstance(real.search, RealRaceSearch)
     assert isinstance(real.agents, RealBrowserAgents)
-    assert isinstance(real.transcriber, FakeTranscriber)
+    assert isinstance(real.transcriber, UnavailableTranscriber)
     with TestClient(create_app(real)) as client:
-        assert client.get("/api/health").json() == {
-            "ok": True,
-            "mode": "real",
-            "simulated": False,
-        }
+        health = client.get("/api/health").json()
+        assert health["mode"] == "live" and not health["simulated"]
+        assert health["providers"]["gladia"] == "missing_key"
 
     monkeypatch.setenv("GLADIA_API_KEY", "fake-gladia-key")
-    real_with_voice = build_service()
-    assert isinstance(real_with_voice.transcriber, RealTranscriber)
-
+    assert isinstance(build_service().transcriber, RealTranscriber)
     monkeypatch.setenv("HAI_API_KEY", "")
     monkeypatch.setenv("HAI_API_KEY_2", "fake-secondary-h-key")
     monkeypatch.delenv("HAI_API_KEY_3", raising=False)
@@ -231,16 +236,12 @@ def test_service_selects_fakes_or_real_adapters_from_environment(monkeypatch):
     assert not secondary_only.simulated
     assert isinstance(secondary_only.agents, RealBrowserAgents)
     with TestClient(create_app(secondary_only)) as client:
-        assert client.get("/api/health").json() == {
-            "ok": True,
-            "mode": "real",
-            "simulated": False,
-        }
+        assert client.get("/api/health").json()["mode"] == "live"
 
     monkeypatch.delenv("HAI_API_KEY_2")
-    fallback = build_service()
-    assert fallback.simulated
-    assert isinstance(fallback.agents, FakeBrowserAgents)
+    unavailable = build_service()
+    assert not unavailable.simulated
+    assert isinstance(unavailable.agents, UnavailableBrowserAgents)
 
 
 def test_real_agent_limits_default_to_sixty_steps_and_fifteen_minutes(monkeypatch):

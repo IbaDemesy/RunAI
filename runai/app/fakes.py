@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from runai.app.ports import AskUser, EventSink
-from runai.app.tasks import extract_budget_per_night
+from runai.app.tasks import TripBrief
 from runai.models import (
     Race,
     RunnerProfile,
@@ -28,7 +28,7 @@ DEMO_RACES: dict[str, Race] = {
         race_date=date(2027, 4, 11),
         start_time="09:00",
         distance_km=42.195,
-        registration_url="https://example.org/milano-marathon/inscription",
+        registration_url="https://in.njuko.com/runai-demo-milan",
         bib_pickup="Village marathon, la veille (donnée factice)",
         start_location="Piazza Duomo (donnée factice)",
         sources=[
@@ -47,6 +47,12 @@ DEMO_RACES: dict[str, Race] = {
         start_location="Praça do Comércio (donnée factice)",
         sources=[Source(url="https://example.org/lisbon-10k", title="Source factice")],
     ),
+    "tokyo": Race(
+        name="Tokyo 10K (démo)", city="Tokyo", country="JP",
+        race_date=date(2028, 6, 12), distance_km=10,
+        registration_url="https://in.njuko.com/runai-demo-tokyo",
+        sources=[Source(url="https://example.org/tokyo-10k", title="Fixture démo, pas un événement réel")],
+    ),
 }
 
 _LISBON_WORDS = ("lisbon", "lisbonne", "lisboa")
@@ -64,12 +70,11 @@ class FakeRaceSearch:
 
     async def find_race(self, query: str) -> Race:
         await asyncio.sleep(self.delay)
-        key = (
-            "lisbon"
-            if any(word in _normalize(query) for word in _LISBON_WORDS)
-            else "milan"
-        )
-        return DEMO_RACES[key].model_copy(deep=True)
+        for key, race in DEMO_RACES.items():
+            aliases = _LISBON_WORDS if key == "lisbon" else (key, _normalize(race.city))
+            if any(word in _normalize(query) for word in aliases):
+                return race.model_copy(deep=True)
+        raise ValueError("Pas de fixture démo pour cette ville")
 
 
 @dataclass(frozen=True)
@@ -146,19 +151,17 @@ SCRIPTS: dict[StepKind, _Script] = {
 QUESTIONS: dict[StepKind, list[tuple[str, list[str]]]] = {
     StepKind.registration: [
         (
-            "Avez-vous une Runcard ou un certificat médical de compétition (ECG d'effort) ?",
-            ["Oui, j'ai les deux", "Pas encore"],
+            "Quel sas souhaitez-vous examiner (démo) ?",
+            ["Découverte", "Performance"],
         ),
         (
             "Quel temps visez-vous ? (pour le sas de départ)",
             ["moins de 3h30", "3h30–4h", "plus de 4h"],
         ),
     ],
-    StepKind.accommodation: [
-        ("Budget max par nuit ?", ["100 €", "150 €", "200 €"]),
-    ],
+    StepKind.accommodation: [],
     StepKind.transport: [
-        ("Horaire de départ le 3 avril ?", ["matin", "après-midi"]),
+        ("Préférence horaire pour le trajet confirmé (démo) ?", ["matin", "après-midi"]),
     ],
 }
 
@@ -172,10 +175,14 @@ class FakeAgentRun:
         ask_user: AskUser,
         delay: float,
         query: str = "",
+        race: Race | None = None,
+        brief: TripBrief | None = None,
     ):
         self.kind = kind
         self.task = task
         self.query = query
+        self.race = race
+        self.brief = brief
         self.session_id = f"fake-{kind.value}-{uuid.uuid4().hex[:8]}"
         self.live_view_url = f"/demo/live?session={self.session_id}"
         self._on_event = on_event
@@ -202,6 +209,13 @@ class FakeAgentRun:
     async def wait(self) -> StepResult:
         return await self._task
 
+    async def cancel(self) -> None:
+        self._task.cancel()
+        try:
+            await self._task
+        except asyncio.CancelledError:
+            pass
+
     def _emit(self, type_: str, message: str, url: str | None = None) -> None:
         data = {"step": self.kind.value, "session_id": self.session_id}
         if url:
@@ -218,11 +232,6 @@ class FakeAgentRun:
     async def _run(self) -> StepResult:
         script = SCRIPTS[self.kind]
         questions = QUESTIONS[self.kind]
-        if (
-            self.kind is StepKind.accommodation
-            and extract_budget_per_night(self.query, require_context=True) is not None
-        ):
-            questions = []
         answers = [
             await self._ask_user(question, options)
             for question, options in questions
@@ -230,10 +239,11 @@ class FakeAgentRun:
         for message, url in script.actions:
             await asyncio.sleep(self._delay)
             await self._resumed.wait()
-            self._emit("action", message, url)
+            self._emit("action", f"Démo — {self.race.name if self.race else 'course de fixture'} : {message}", url)
         await asyncio.sleep(self._delay)
         await self._resumed.wait()
-        summary = script.summary
+        context = f"{self.brief.city} · {self.brief.race_date} · {self.brief.nights} nuits" if self.brief else "fixture"
+        summary = f"Démo — {context} : {script.summary}"
         summary += f" Réponses utilisateur : {' ; '.join(answers)}."
         if self._messages:
             summary += f" Consignes appliquées : {' ; '.join(self._messages)}."
@@ -244,7 +254,7 @@ class FakeAgentRun:
             stop_point=script.stop_point,
             url=script.actions[-1][1],
             price_eur=script.price_eur,
-            data={"simulated": True},
+            data={"simulated": True, "provenance": {"mode": "demo", "kind": "fixture"}},
         )
 
 
@@ -263,8 +273,10 @@ class FakeBrowserAgents:
         ask_user: AskUser,
         mission_id: str | None = None,
         query: str = "",
+        start_url: str | None = None,
+        brief: TripBrief | None = None,
     ) -> FakeAgentRun:
-        run = FakeAgentRun(kind, task, on_event, ask_user, self.delay, query=query)
+        run = FakeAgentRun(kind, task, on_event, ask_user, self.delay, query=query, race=race, brief=brief)
         self.runs.append(run)
         return run
 

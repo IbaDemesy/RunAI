@@ -27,6 +27,8 @@ from runai.contracts.framing import (
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.interpret import extract_slots
 from runai.models import Race
+from runai.redaction import redact_secrets
+from runai.search.candidates import CandidateSearchError
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
 
@@ -224,13 +226,26 @@ class FramingEngine:
             search
             and not session.selected_candidate_id
             and session.id not in self._manual
-            and not session.slots[SlotName.race].is_known
             and (
                 session.slots[SlotName.city].is_known
                 or session.slots[SlotName.race].is_known
             )
         ):
-            session.candidates = await self.search.find_candidates(session.slots)
+            session.limitations = [l for l in session.limitations if l.code not in {
+                "no_candidates", "candidate_provider_error", "fixture_missing"
+            }]
+            try:
+                if hasattr(self.search, "search"):
+                    result = await self.search.search(session.slots)
+                    session.candidates = result.candidates
+                    session.limitations.extend(result.limitations)
+                else:
+                    session.candidates = await self.search.find_candidates(session.slots)
+            except CandidateSearchError as exc:
+                session.candidates = []
+                session.limitations.append(Limitation(
+                    code="candidate_provider_error", message=redact_secrets(str(exc))
+                ))
             if not session.candidates and not any(
                 l.code == "no_candidates" for l in session.limitations
             ):

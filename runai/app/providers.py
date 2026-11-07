@@ -225,6 +225,7 @@ class LabeledBrowserAgents:
             ask_user,
             mission_id=mission_id,
             query=query,
+            **kwargs,
         )
         return LabeledRun(run, self.mode, self.kind, self.label)
 
