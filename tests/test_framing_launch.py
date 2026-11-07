@@ -111,11 +111,11 @@ def test_tokyo_out_of_europe_plan_comes_from_confirmed_summary():
     accommodation = plan.steps[StepKind.accommodation]
     assert accommodation.automation is Automation.automated
     task = accommodation.task
-    assert "Tokyo (JP)" in task and "16 avril 2027" in task and "20 avril 2027" in task
-    assert "(4 nuits)" in task and "PRIX_TOTAL_4_NUITS" in task
-    assert "1800 € tous postes" in task
+    assert "Tokyo (JP)" in task and "Friday 16 April 2027" in task and "Tuesday 20 April 2027" in task
+    assert "(4 nights)" in task and "PRIX_TOTAL_4_NUITS" in task
+    assert "1800 EUR for everything" in task
     assert task.endswith(STOP_INSTRUCTIONS)
-    assert not any(word in task for word in ("Milan", "Paris", "Corso", "42,195"))
+    assert not any(word in task for word in ("Milan", "Paris", "Corso", "42,195", "42.195"))
     assert plan.automated_steps() == [StepKind.accommodation]
 
 
@@ -131,13 +131,13 @@ def test_milan_train_with_njuko_automates_three_steps_without_v1_strings():
     registration = plan.steps[StepKind.registration].task
     transport = plan.steps[StepKind.transport].task
     assert (
-        "Course fictive de Milan 2027 sur Njuko" in registration
+        "Course fictive de Milan 2027 on Njuko" in registration
         and "(10 km)" in registration
     )
     assert "Runcard" not in registration and "Klikego" in registration
     assert "camille.test@example.com" in registration
     assert "Turin → Milan" in transport and "trenitalia.com" in transport
-    assert "2 octobre 2027" in transport and "jamais TAP" in transport
+    assert "Saturday 2 October 2027" in transport and "never TAP" in transport
     assert "Paris" not in transport
 
 
@@ -209,13 +209,13 @@ def test_unknown_values_become_questions_not_inventions():
         brief=brief,
     )
     assert (
-        "dates de séjour inconnues" in accommodation
+        "stay dates unknown" in accommodation
         and "PRIX_TOTAL_SEJOUR" in accommodation
     )
-    assert "Budget max par nuit" in accommodation
-    assert "ville de départ inconnue" in transport and "dates inconnues" in transport
-    assert "distance inconnue" in registration
-    with pytest.raises(ValueError, match="non automatisé"):
+    assert "Max budget per night" in accommodation
+    assert "origin city unknown" in transport and "dates unknown" in transport
+    assert "distance unknown" in registration
+    with pytest.raises(ValueError, match="not automated"):
         build_task(
             StepKind.transport,
             race,

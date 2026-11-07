@@ -380,32 +380,28 @@ def test_build_task_is_guarded_and_uses_fake_profile():
         task = build_task(kind, race, RunnerProfile(), brief=task_brief())
         assert task.endswith(STOP_INSTRUCTIONS)
         assert "ask_user" in task
-        assert "au plus 2 questions" in task
-        assert "BLOCAGE CAPTCHA/ANTI-BOT" in task
+        assert "at most 2 questions" in task
+        assert "BLOCKED: CAPTCHA/ANTI-BOT" in task
     registration = build_task(StepKind.registration, race, RunnerProfile(), brief=task_brief())
     accommodation = build_task(StepKind.accommodation, race, RunnerProfile(), brief=task_brief())
     transport = build_task(StepKind.transport, race, RunnerProfile(), brief=task_brief())
     assert "camille.test@example.com" in registration
     assert "Wizz Air Milano Marathon 2027" in registration
-    assert "en invité" in registration
+    assert "as a guest" in registration
     assert "Runcard" not in registration and "ECG d'effort" not in registration
-    assert "Avant de poursuivre, demande exactement avec ask_user" not in registration
+    assert "Before continuing, ask exactly with ask_user" not in registration
     assert (
-        "Ne pose aucune question de santé : le certificat médical ou le PPS "
-        "sera fourni par l'utilisateur lui-même."
+        "Ask no health question: the user provides the medical certificate or PPS."
     ) in registration
     assert (
-        "Ne redemande jamais une information déjà donnée ci-dessus "
-        "(dates, budget, ville de départ, distance, mode de transport)."
+        "Never re-ask information already given above "
+        "(dates, budget, origin city, distance, transport mode)."
     ) in registration
-    assert (
-        "Utilise ask_user uniquement pour un choix qui dépend du site "
-        "(sas, taille de t-shirt, hôtel parmi plusieurs offres, horaire, tarif) ; "
-        "pose au plus 2 questions."
-    ) in registration
+    assert "ask at most 2 questions." in registration
+    assert "Stop before any payment" in registration
     assert "Klikego" in registration
     assert "ask_user" in registration
-    assert "3 avril 2027" in accommodation and "5 avril 2027" in accommodation
+    assert "Saturday 3 April 2027" in accommodation and "Monday 5 April 2027" in accommodation
     assert "all.accor.com" in accommodation
     assert "PRIX_TOTAL_2_NUITS" in accommodation
     assert all(
@@ -414,25 +410,24 @@ def test_build_task_is_guarded_and_uses_fake_profile():
     )
     assert "Corso Sempione" in accommodation and "Via Moncucco 35" in accommodation
     assert "trenitalia.com" in transport and "Paris" in transport
-    assert "jamais TAP" in transport
+    assert "never TAP" in transport
     budget_task = build_task(
         StepKind.accommodation,
         race,
         RunnerProfile(),
         brief=task_brief(budget_per_night_eur=150),
     )
-    assert "150 € par nuit" in budget_task and "300 € maximum" in budget_task
+    assert "150 EUR per night" in budget_task and "300 EUR max" in budget_task
     assert (
-        "Pas de plafond de budget : propose les meilleures options qualité-prix "
-        "et donne leur prix."
+        "No budget cap: propose the best-value options with their price."
     ) in build_task(
         StepKind.accommodation,
         race,
         RunnerProfile(),
         brief=task_brief(budget_open=True),
     )
-    assert "Budget max par nuit ?" in accommodation
-    assert "Budget max par nuit ?" not in build_task(
+    assert "Max budget per night?" in accommodation
+    assert "Max budget per night?" not in build_task(
         StepKind.accommodation,
         race,
         RunnerProfile(),
