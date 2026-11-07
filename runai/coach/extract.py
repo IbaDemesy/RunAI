@@ -121,7 +121,7 @@ def _duration_s(text: str) -> float | None:
 
 
 def _distance_km(text: str) -> float | None:
-    if re.search(r"\d+\s+\d+\s*km\b", text):
+    if re.search(r"\d+\s+\d+\s*(?:km|k|miles?)\b", text):
         return None  # Ambiguous transcription: ask again rather than guess.
     m = re.search(rf"{_NUM}\s*(km|k|miles?)\b", text)
     if m:

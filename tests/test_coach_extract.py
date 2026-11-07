@@ -180,3 +180,10 @@ def test_colon_race_times_remain_plausible(distance, time, time_s):
 def test_custom_vocabulary_keeps_both_languages():
     assert {"half marathon", "elevation gain", "PR", "pace", "10K", "VO2max",
             "semi", "dénivelé", "chrono", "VMA"} <= set(CUSTOM_VOCABULARY)
+
+
+@pytest.mark.parametrize("unit", ["km", "k", "mile", "miles"])
+def test_ambiguous_distance_units_leave_run_empty(unit):
+    p = extract_rule_based(f"My longest run was 14 10 {unit} in 1h20.")
+    assert p.longest_recent_run is None
+    assert "longest_recent_run" in p.missing_fields
