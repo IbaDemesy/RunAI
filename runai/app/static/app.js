@@ -109,6 +109,7 @@
     pendingFocus = null;
     const selection = active?.selectionStart;
     destroyView(); screen.replaceChildren();
+    document.body?.classList?.toggle("dawn", !mission);
     if (mission) { mode(mission.mode); renderMission(); }
     else if (framing) { mode(framing.mode); renderFraming(); }
     else renderStart();
@@ -156,18 +157,33 @@
       drafts.clear();
     }, reloadFraming);
   }
+  const IDEAS = ["Mon premier semi en octobre", "Un marathon au printemps, depuis Lyon", "Un trail en montagne cet été"];
+  function chatField(parent, title, placeholder, onSubmit, draftKey) {
+    const node = el("form", null, "ask");
+    const fieldLabel = el("label", null, "ask-field");
+    fieldLabel.append(el("span", title, "sr-only"));
+    const input = el("input"); input.required = true; input.maxLength = 1000; input.name = "text";
+    input.placeholder = placeholder; input.autocomplete = "off";
+    input.value = drafts.get(draftKey) || "";
+    input.oninput = () => drafts.set(draftKey, input.value);
+    fieldLabel.append(input);
+    const submit = button("Envoyer", () => {}, true); submit.type = "submit"; submit.className += " send";
+    submit.setAttribute("aria-label", "Envoyer · " + title);
+    node.append(fieldLabel, submit);
+    node.onsubmit = (event) => { event.preventDefault(); if (!busy && input.value.trim()) onSubmit(input.value.trim()); };
+    parent.append(node);
+    return node;
+  }
+  function startFraming(text) {
+    return mutate(async () => { framing = await api.request("/api/framings", { text, channel: "text" }); drafts.clear(); });
+  }
   function renderStart() {
     screen.className = "hero";
-    screen.append(el("h1", "Préparer ma course"), el("p", "Inscription, hôtel, transport : un séjour préparé, sans paiement ni engagement automatique.", "hero-sub"));
-    const node = el("form", null, "ask");
-    const fieldLabel = el("label", "Quelle course et quel séjour souhaitez-vous préparer ?");
-    const input = el("textarea"); input.required = true; input.maxLength = 1000; input.name = "text"; fieldLabel.append(input);
-    const submit = button("Préparer mon séjour", () => {}, true); submit.type = "submit";
-    node.append(fieldLabel, submit);
-    node.onsubmit = (event) => { event.preventDefault(); mutate(async () => {
-      framing = await api.request("/api/framings", { text: input.value.trim(), channel: "text" });
-    }); };
-    screen.append(node);
+    screen.append(el("h1", "Où voulez-vous courir ?"), el("p", "Dites-moi votre prochain objectif. Je trouve la course, le dossard, l’hôtel et le trajet, et je m’arrête avant de payer.", "hero-sub"));
+    chatField(screen, "Votre objectif de course", "Un marathon au printemps, une ville, une envie…", startFraming, "start");
+    const ideas = el("div", null, "ideas");
+    for (const idea of IDEAS) ideas.append(button(idea, () => startFraming(idea)));
+    screen.append(ideas);
   }
   const voice = window.RunAIVoiceInput?.createVoiceInput({
     getRevision: () => framing?.revision ?? 0,
@@ -198,38 +214,79 @@
   });
   function voiceControls() {
     if (!voice) return;
-    const controls = el("div", null, "question-options");
+    const controls = el("div", null, "question-options voice-controls");
     controls.append(button("Parler", () => {
       voiceFraming = framing?.id; voiceMission = mission?.mission_id; voice.start();
     }), button("Terminer l’enregistrement", () => voice.stop()));
-    screen.append(controls);
+    (screen.querySelector(".ask") || screen).append(controls);
+  }
+  function slotText(name, slot) {
+    const value = slot.value;
+    if (value == null) return label(name) + " : sans objet";
+    if (name === "distance_km" && typeof value === "number") return value + " km";
+    if (name === "budget" && typeof value === "number") return value + " € max";
+    if (name === "nights" && typeof value === "number") return value + (value > 1 ? " nuits" : " nuit");
+    if (Array.isArray(value)) return value.map(label).join(" – ");
+    if (typeof value === "object") return Object.values(value).filter((v) => v != null).map(label).join(" – ") || label(name);
+    return name === "origin" ? "Depuis " + value : label(value);
+  }
+  function understood(parent) {
+    const list = el("ul", null, "understood"); list.setAttribute("aria-label", "Ce que RunAI a compris");
+    let missing = 0;
+    for (const [name, slot] of Object.entries(framing.slots)) {
+      if (["answered", "sourced"].includes(slot.status)) list.append(el("li", slotText(name, slot), "chip"));
+      else if (slot.status !== "not_needed" && missing < 3) { missing += 1; list.append(el("li", label(name) + " ?", "chip empty")); }
+    }
+    if (list.children.length) parent.append(list);
+  }
+  function aiMessage(parent, text) {
+    const node = el("li", null, "ai"); node.append(el("span", null, "ai-dot"));
+    const body = el("div", null, "ai-body"); if (text) body.append(el("p", text));
+    node.append(body); parent.append(node); return body;
   }
   function renderFraming() {
-    screen.className = "shell-stack";
-    screen.append(el("h1", "Compléter ma demande"));
+    screen.className = "chat";
+    screen.append(el("h1", "Votre course, en discutant", "sr-only"));
     const state = core.framingState(framing);
-    if (state === "cancelled") { screen.append(el("p", "Demande annulée. Aucun agent lancé.")); return; }
+    if (state === "cancelled") {
+      screen.append(el("p", "Demande annulée. Aucun agent lancé.", "chat-note"));
+      screen.append(button("Nouvelle demande", () => { framing = null; storage.removeItem("runai:framing"); render(); }, true));
+      return;
+    }
+    understood(screen);
     const thread = el("ol", null, "thread");
-    for (const turn of framing.turns) thread.append(el("li", (turn.role === "user" ? "Vous : " : "RunAI : ") + turn.text));
+    let lastAi = null;
+    for (const turn of framing.turns) {
+      if (turn.role === "user") { thread.append(el("li", turn.text, "me")); lastAi = null; }
+      else lastAi = aiMessage(thread, turn.text);
+    }
+    const phrased = lastAi && framing.turns[framing.turns.length - 1].revision === framing.revision;
+    for (const question of framing.open_questions.filter((q) => !q.choices.some((c) => c.candidate_id)).slice(0, 1)) {
+      const body = phrased ? lastAi : aiMessage(thread);
+      body.append(el("h2", question.text, phrased ? "ai-question sr-only" : "ai-question"));
+      const choices = el("div", null, "replies");
+      for (const choice of question.choices) {
+        if (choice.candidate_id) continue;
+        choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
+      }
+      if (choices.children.length) body.append(choices);
+    }
+    if (framing.candidates.length) {
+      const body = phrased && !framing.open_questions.some((q) => !q.choices.some((c) => c.candidate_id)) ? lastAi : aiMessage(thread);
+      const list = el("div", null, "candidates");
+      for (const candidate of framing.candidates) {
+        const card = el("article", null, "candidate");
+        card.append(el("h2", candidate.name), el("p", [candidate.city, candidate.country, candidate.race_date || "Date inconnue", candidate.distances_km.join(" / ") + " km"].join(" · "), "candidate-meta"));
+        const question = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id === candidate.id));
+        const choice = question?.choices.find((c) => c.candidate_id === candidate.id);
+        if (choice) card.append(button("Choisir cette course · " + candidate.name, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id }), true));
+        link(card, candidate.official_url || candidate.sources[0]?.url, "Source officielle");
+        limitations(card, candidate.limitations); list.append(card);
+      }
+      body.append(list);
+    }
     screen.append(thread);
-    for (const question of framing.open_questions) {
-      const block = el("article", null, "agent-question"); block.append(el("h2", question.text));
-      const choices = el("div", null, "question-options");
-      for (const choice of question.choices) choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
-      block.append(choices);
-      if (question.allow_free_text) form(block, "Votre réponse · " + question.text, (text) => submitReply(text, { question_id: question.id }), question.id);
-      screen.append(block);
-    }
-    for (const candidate of framing.candidates) {
-      const block = el("article", null, "step");
-      block.append(el("h2", candidate.name), el("p", [candidate.city, candidate.country, candidate.race_date || "Date inconnue", candidate.distances_km.join(" / ") + " km"].join(" · ")));
-      const question = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id === candidate.id));
-      const choice = question?.choices.find((c) => c.candidate_id === candidate.id);
-      if (choice) block.append(button("Choisir cette course · " + candidate.name, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
-      link(block, candidate.official_url || candidate.sources[0]?.url, "Source officielle");
-      limitations(block, candidate.limitations); screen.append(block);
-    }
-    const slots = el("details", null, "trace"); slots.open = true; slots.append(el("summary", "Informations connues et corrections"));
+    const slots = el("details", null, "trace corrections"); slots.append(el("summary", "Modifier quelque chose"));
     for (const [name, slot] of Object.entries(framing.slots)) {
       const known = ["answered", "sourced", "not_needed"].includes(slot.status);
       const row = el("div", null, "slot-row");
@@ -241,23 +298,31 @@
       }));
       slots.append(row);
     }
-    screen.append(slots);
-    if (!framing.open_questions.length && state !== "ready_to_confirm") form(screen, "Compléter ou corriger votre demande", submitReply, "reply");
     if (state === "ready_to_confirm" && framing.summary) {
-      const summary = el("section", null, "bib shell-stack"); summary.append(el("h2", "Votre demande, avant lancement"));
-      framing.summary.lines.forEach((line) => summary.append(el("p", line)));
+      const summary = el("section", null, "ready");
+      summary.append(el("h2", framing.summary.race?.name || "Votre demande, avant lancement"));
+      const lines = el("ul", null, "ready-lines");
+      framing.summary.lines.forEach((line) => lines.append(el("li", line)));
+      summary.append(lines);
       limitations(summary, framing.summary.limitations);
-      summary.append(button("Confirmer et lancer les agents", () => mutate(async () => {
+      summary.append(button("Lancer la recherche", () => mutate(async () => {
         const result = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/confirm", {
           revision: framing.summary.revision, idempotency_key: key(framing.id, framing.summary.revision),
         });
         mission = result; framing.mission_id = result.mission_id; subscribe();
-      }, reloadFraming), true)); screen.append(summary);
-    }
+      }, reloadFraming), true));
+      summary.append(el("p", "Trois agents vont naviguer pour vous. Ils s’arrêtent avant tout paiement ou envoi définitif.", "hint"), slots);
+      screen.append(summary);
+    } else screen.append(slots);
     limitations(screen, framing.limitations);
+    const question = framing.open_questions.find((q) => q.allow_free_text && !q.choices.some((c) => c.candidate_id)) || framing.open_questions.find((q) => q.allow_free_text);
+    const dock = el("div", null, "dock");
+    if (question) chatField(dock, "Votre réponse · " + question.text, "Répondez ou parlez…", (text) => submitReply(text, { question_id: question.id }), question.id);
+    else chatField(dock, "Compléter ou corriger votre demande", state === "ready_to_confirm" ? "Une précision ? Écrivez-la ici…" : "Répondez ou parlez…", submitReply, "reply");
+    screen.append(dock);
     screen.append(button("Annuler la demande", () => mutate(async () => {
       framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/cancel", {});
-    }, reloadFraming)));
+    }, reloadFraming), false));
   }
   async function loadMission(id) {
     mission = await api.request("/api/missions/" + encodeURIComponent(id)); persist(); subscribe();

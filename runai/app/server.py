@@ -32,6 +32,7 @@ from runai.contracts.common import DataMode
 from runai.contracts.mission import HumanAnswer
 from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
+from runai.framing.holo import HoloPhraser, Phraser, TemplatePhraser
 from runai.h.human_questions import HumanQuestionError
 from runai.models import StepKind
 from runai.planning import recap_adapter
@@ -86,6 +87,14 @@ def candidate_search(providers: ProviderSet):
     return LinkupCandidateSearch()
 
 
+def framing_phraser(providers: ProviderSet) -> Phraser:
+    """Holo reformule les questions en live si la clé H est là ; sinon formulation locale."""
+    key = get_settings().hai_api_key
+    if providers.mode is DataMode.live and key and os.getenv("RUNAI_FRAMING_LLM", "1") != "0":
+        return HoloPhraser(key)
+    return TemplatePhraser()
+
+
 def create_app(service: MissionService | None = None) -> FastAPI:
     selected = service or build_service()
     if selected.providers is None:
@@ -121,7 +130,10 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     async def validation_error(request, error):
         return JSONResponse(redact_secrets(jsonable_encoder({"detail": error.errors()})), status_code=422)
     app.state.service = selected
-    engine = FramingEngine(search=candidate_search(selected.providers), mode=selected.providers.mode)
+    engine = FramingEngine(
+        search=candidate_search(selected.providers), mode=selected.providers.mode,
+        phraser=framing_phraser(selected.providers),
+    )
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
     app.include_router(build_screenshot_router(selected))

@@ -26,6 +26,7 @@ from runai.contracts.framing import (
     missing_slots,
 )
 from runai.contracts.mission import MissionSnapshot
+from runai.framing.holo import Phraser
 from runai.framing.interpret import extract_slots
 from runai.journey import public_origin
 from runai.models import Race
@@ -47,9 +48,15 @@ LABELS = {
 
 
 class FramingEngine:
-    def __init__(self, search: CandidateSearch, mode: DataMode = DataMode.live):
+    def __init__(
+        self,
+        search: CandidateSearch,
+        mode: DataMode = DataMode.live,
+        phraser: Phraser | None = None,
+    ):
         self.search = search
         self.mode = mode
+        self.phraser = phraser
         self.sessions: dict[str, FramingSession] = {}
         self._locks: dict[str, asyncio.Lock] = {}
         self._missions: dict[str, MissionSnapshot] = {}
@@ -225,8 +232,26 @@ class FramingEngine:
                 )
             )
             await self._advance(session, search=choice is None)
+            await self._phrase_next_question(session)
             self.sessions[framing_id] = session
             return self.get(framing_id)
+
+    async def _phrase_next_question(self, session: FramingSession) -> None:
+        if not self.phraser or not session.open_questions:
+            return
+        question = next(
+            (q for q in session.open_questions if not any(c.candidate_id for c in q.choices)),
+            session.open_questions[0],
+        )
+        known = {
+            name.value: str(slot.value)
+            for name, slot in session.slots.items()
+            if slot.is_known and slot.value is not None
+        }
+        text = await self.phraser.phrase(session.turns, question.text, known)
+        session.turns.append(
+            FramingTurn(role="assistant", text=text, revision=session.revision)
+        )
 
     async def _advance(self, session: FramingSession, *, search: bool) -> None:
         session.open_questions = []
