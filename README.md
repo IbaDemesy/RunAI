@@ -1,18 +1,26 @@
 # RunAI
 
-Projet du « Computer Use Agents Hackathon ». Le concept et le pitch restent à définir.
+Projet du « Computer Use Agents Hackathon » (H Company × 42AI, 7–8 novembre 2026).
+
+**« Dis-moi ta course, je prépare tout le déplacement. »** Le coureur dit à voix haute la course qu'il veut faire. RunAI trouve la page officielle avec Linkup, puis des agents H préparent en parallèle l'inscription, l'hôtel et le transport sur les vrais sites, et s'arrêtent avant tout paiement ou engagement.
+
+## Avancement
+
+- [Notation du jury : ce qui est fait, ce qui manque](docs/NOTATION.md)
+- [Démo et livrables](docs/DEMO_ET_LIVRABLES.md)
+- [Recherches des agents : ce qu'on fait, en option, coupé](docs/RECHERCHES_AGENTS.md)
 
 ## Règles du hackathon
 
 Le projet doit utiliser au moins **3 partenaires** parmi Devin, H Company, Gladia, Linkup et Stripe.
-Le trio prévu est **Devin + H Company + Gladia** ; Linkup pourra être ajouté comme quatrième partenaire.
+RunAI en utilise **4** : Devin, H Company, Gladia et Linkup.
 
 | Partenaire | Rôle | Utilisé ? | Documentation |
 | --- | --- | --- | --- |
-| Devin | Assistance au développement | Prévu | [Guide du hackathon](Infos/devin_hackathon_guide.pdf) |
-| H Company | Agents de navigation et d’automatisation | Script de test présent ; intégration prévue | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
-| Gladia | Transcription audio et traitement de la parole | SDK installé, script de test présent ; intégration prévue | [Documentation](https://docs.gladia.io) |
-| Linkup | Recherche web, branchée comme outil des agents H | Prévu (architecture « Linkup cherche, H agit ») | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
+| Devin | Développement, exploration multi-agents, CI | Utilisé : PR, CI, workflow de 16 agents | [Guide du hackathon](Infos/devin_hackathon_guide.pdf) |
+| H Company | Agents de navigation et d’automatisation | Testé : 3 agents en parallèle, smoke test ; intégration prévue | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
+| Gladia | Transcription audio et traitement de la parole | Testé : smoke test sur chaque push ; interface vocale prévue | [Documentation](https://docs.gladia.io) |
+| Linkup | Recherche web, branchée comme outil des agents H | Testé : smoke test sur chaque push ; architecture « Linkup cherche, H agit » | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
 | Stripe | Paiements | Non prévu pour le moment | [Ressource du hackathon](Infos/stripe_credits.pdf) |
 
 Les liens utiles, documents et crédits sont regroupés dans [Infos/README.md](Infos/README.md).
@@ -78,6 +86,16 @@ python scripts/test_gladia.py mon_audio.mp3   # fichier local ou URL
 
 Ce test appelle réellement l’API Gladia et consomme des crédits. Il transcrit l’audio, puis affiche le statut et la transcription.
 
+Pour Linkup, avec une clé valide dans `.env` :
+
+```bash
+python scripts/test_linkup.py
+```
+
+Ce test lance une vraie recherche et affiche le nombre de résultats et la première URL.
+
+Tests hors ligne (sans clé) : `ruff check .` puis `pytest -q`.
+
 ## CI/CD
 
 Le workflow `ci.yml` s’exécute sur chaque pull request et sur les pushs vers `main` : il vérifie le style avec Ruff et lance les tests hors ligne avec `pytest`.
@@ -94,10 +112,14 @@ Le déploiement continu vers Render sera ajouté avec le backend.
 
 ```text
 RunAI/
+├── .github/workflows/  # CI (ci.yml) et smoke tests (smoke.yml)
 ├── Infos/              # Guides partenaires et récapitulatif des crédits
+├── docs/               # Notation, démo, recherches, notes partenaires
 ├── scripts/
 │   ├── test_gladia.py  # Test de l’API Gladia
-│   └── test_h.py       # Test de l’API H
+│   ├── test_h.py       # Test de l’API H
+│   └── test_linkup.py  # Test de l’API Linkup
+├── tests/              # Tests hors ligne (imports, .env.example, clés committées)
 ├── .env.example        # Variables d’environnement à renseigner
 ├── .gitignore
 ├── README.md
