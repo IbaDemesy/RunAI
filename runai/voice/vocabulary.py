@@ -170,11 +170,22 @@ def _key(value: str) -> str:
 
 
 def _dedupe(entries: Iterable[dict]) -> list[dict]:
-    seen: set[str] = set()
-    unique = []
+    """Keep the first spelling of each word, merging hints from its later duplicates."""
+    kept: dict[str, dict] = {}
     for entry in entries:
         key = _key(entry["value"])
-        if key and key not in seen:
-            seen.add(key)
-            unique.append(entry)
-    return unique
+        if not key:
+            continue
+        if key not in kept:
+            kept[key] = dict(entry)
+            continue
+        first = kept[key]
+        pronunciations = first.get("pronunciations", []) + [
+            p for p in entry.get("pronunciations", []) if p not in first.get("pronunciations", [])
+        ]
+        if pronunciations:
+            first["pronunciations"] = pronunciations
+        first["intensity"] = max(first["intensity"], entry["intensity"])
+        if first.get("language") != entry.get("language"):
+            first.pop("language", None)
+    return list(kept.values())

@@ -75,6 +75,15 @@ def test_dedupe_is_case_and_accent_insensitive():
     assert len(keys) == len(set(keys))
 
 
+def test_dedupe_merges_hints_from_static_duplicates():
+    entries = vocabulary_for([candidate("Corrida", "Lisbonne", "PT")], extra=["njuko", "half marathon"])
+    by_value = {entry["value"].casefold(): entry for entry in entries}
+    assert "language" not in by_value["lisbonne"]
+    assert by_value["njuko"]["pronunciations"] == ["nyouko", "niouko"]
+    assert by_value["njuko"]["intensity"] == PROPER_NAME_INTENSITY
+    assert by_value["corrida"]["language"] == "pt"
+
+
 def test_cap_keeps_dynamic_entries_first():
     many = [candidate(f"Race {i}", f"Town {i}", "US", i) for i in range(60)]
     entries = vocabulary_for(many)
