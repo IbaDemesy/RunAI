@@ -465,7 +465,9 @@ class HRunner:
             if deadline is None:
                 deadline = time.monotonic() + self.quota_timeout_s
             account, seen = await self._pick(local)
-            if account is not None and account.has_local_slot:
+            if account is not None and not account.has_local_slot:
+                continue  # pris par un lancement concurrent pendant la lecture du quota : on relit
+            if account is not None:
                 account.active += 1
                 try:
                     return account, await account.client.sessions.create_session(**params)

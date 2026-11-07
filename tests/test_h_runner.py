@@ -429,3 +429,14 @@ def test_trace_failure_while_following_releases_slot(tmp_path):
     asyncio.run(scenario())
     assert ("cancel", "s1") in sessions.calls
     assert runner.accounts[0].active == 0
+
+
+def test_concurrent_launches_use_other_free_key(tmp_path):
+    first, second = FakeSessions(), FakeSessions(quotas=[2] * 10)
+    runner = make_accounts(tmp_path, first, second, cap=1, quota_timeout_s=0)
+
+    async def scenario():
+        return await asyncio.gather(runner.start(StepKind.search, "a"), runner.start(StepKind.search, "b"))
+
+    runs = asyncio.run(scenario())
+    assert sorted(run.account.name for run in runs) == ["k1", "k2"]
