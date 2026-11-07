@@ -145,6 +145,8 @@ class FramingEngine:
                         raise FramingError(
                             "Une valeur numérique est nécessaire"
                         ) from exc
+            if not choice and reply.text:
+                values = await self._holo_fill(session, reply.text, values) | values
             if not values and choice is None and session.turns:
                 raise FramingError("Précisez une réponse ou une correction explicite")
             self._validate(values)
@@ -235,6 +237,29 @@ class FramingEngine:
             await self._phrase_next_question(session)
             self.sessions[framing_id] = session
             return self.get(framing_id)
+
+    async def _holo_fill(
+        self, session: FramingSession, text: str, values: dict[SlotName, object]
+    ) -> dict[SlotName, object]:
+        """Complète, sans jamais écraser, les slots que l'heuristique n'a pas compris."""
+        extract = getattr(self.phraser, "extract", None)
+        if not extract:
+            return {}
+        known = {name.value: str(slot.value) for name, slot in session.slots.items() if slot.is_known}
+        filled: dict[SlotName, object] = {}
+        for raw, value in (await extract(text, known)).items():
+            try:
+                name = SlotName(raw)
+            except ValueError:
+                continue
+            if name in values or session.slots[name].is_known:
+                continue
+            try:
+                self._validate({name: value})
+            except FramingError:
+                continue
+            filled[name] = value
+        return filled
 
     async def _phrase_next_question(self, session: FramingSession) -> None:
         if not self.phraser or not session.open_questions:

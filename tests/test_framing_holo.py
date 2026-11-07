@@ -83,3 +83,41 @@ async def test_engine_without_phraser_keeps_turns_unchanged():
         FramingCreate(text="Je veux courir un marathon", channel="text")
     )
     assert [turn.role for turn in session.turns] == ["user"]
+
+
+@pytest.mark.anyio
+async def test_holo_extract_parses_and_cleans_json():
+    content = 'Voici : {"city": "Paris", "date_window": "décembre 2026", "budget": "beaucoup", "nights": 2, "transport_mode": "fusée", "origin": "75001"}'
+    phraser = HoloPhraser("hk-test", transport=transport(
+        lambda request: httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+    ))
+    assert await phraser.extract("une course en décembre, Paris de préférence", {}) == {
+        "city": "Paris", "date_window": "décembre 2026", "nights": 2,
+    }
+
+
+@pytest.mark.anyio
+async def test_holo_extract_failure_returns_nothing():
+    phraser = HoloPhraser("hk-test", transport=transport(lambda request: httpx.Response(503)))
+    assert await phraser.extract("Paris", {}) == {}
+    assert await TemplatePhraser().extract("Paris", {}) == {}
+
+
+class Extractor(Recorder):
+    def __init__(self, values):
+        super().__init__()
+        self.values = values
+
+    async def extract(self, text, known):
+        return self.values
+
+
+@pytest.mark.anyio
+async def test_engine_fills_only_unknown_slots_from_holo():
+    phraser = Extractor({"city": "Paris", "distance_km": 10, "nights": -3, "unknown_slot": "x"})
+    engine = FramingEngine(NoCandidates(), DataMode.demo, phraser=phraser)
+    session = await engine.create(FramingCreate(text="Un marathon en décembre en France (Paris de préférence)", channel="text"))
+    assert session.slots["city"].value == "Paris"
+    assert session.slots["distance_km"].value == 42.195
+    assert not session.slots["nights"].is_known
+    assert not any("ville" in q.text.lower() and "partez" not in q.text.lower() for q in session.open_questions)

@@ -5,8 +5,11 @@ que transformer la prochaine question en une réplique naturelle. Toute erreur
 retombe sur une formulation locale, jamais sur un blocage du cadrage.
 """
 
+import json
 import os
+import re
 from collections.abc import Mapping, Sequence
+from datetime import date
 from typing import Protocol
 
 import httpx
@@ -27,10 +30,48 @@ Réponds en français en vouvoyant le coureur, en une ou deux phrases courtes, c
 Réponds uniquement par la réplique, sans guillemets ni préambule."""
 
 
+EXTRACT_PROMPT = """Tu extrais des informations de voyage d'un message de coureur, en français ou en anglais.
+Réponds uniquement par un objet JSON avec, seulement si le message les donne clairement, ces clés :
+- "city" : ville de la course (une seule ville ; si plusieurs sont citées avec une préférence, la préférée) ;
+- "origin" : ville de départ du coureur ;
+- "race" : nom officiel de l'événement s'il est cité ;
+- "date_window" : mois et année visés, au format « décembre 2026 » (déduis l'année à partir de la date du jour : le prochain mois correspondant) ;
+- "budget" : budget total en euros (nombre) ;
+- "nights" : nombre de nuits (entier) ;
+- "transport_mode" : "train", "flight", "car" ou "bus".
+N'invente rien. Si rien n'est donné, réponds {}."""
+
+EXTRACTABLE = {"city", "origin", "race", "date_window", "budget", "nights", "transport_mode"}
+TRANSPORTS = {"train", "flight", "car", "bus"}
+
+
 class Phraser(Protocol):
     async def phrase(
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> str: ...
+
+    async def extract(self, text: str, known: Mapping[str, str]) -> dict[str, object]: ...
+
+
+def clean_extraction(raw: object) -> dict[str, object]:
+    """Garde seulement des valeurs plausibles et typées ; le moteur revalide ensuite."""
+    if not isinstance(raw, dict):
+        return {}
+    values: dict[str, object] = {}
+    for name in EXTRACTABLE & raw.keys():
+        value = raw[name]
+        if name in {"city", "origin", "race", "date_window"}:
+            if isinstance(value, str) and 1 < len(value.strip()) <= 80 and not re.search(r"\d", value if name != "date_window" else "x"):
+                values[name] = value.strip()
+        elif name == "budget":
+            if isinstance(value, int | float) and not isinstance(value, bool) and 0 < value < 100_000:
+                values[name] = float(value)
+        elif name == "nights":
+            if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 30:
+                values[name] = value
+        elif name == "transport_mode" and value in TRANSPORTS:
+            values[name] = value
+    return values
 
 
 def _user_turns(turns: Sequence[FramingTurn]) -> int:
@@ -48,6 +89,9 @@ class TemplatePhraser:
         else:
             opener = "C'est noté."
         return f"{opener} {question}"
+
+    async def extract(self, text: str, known: Mapping[str, str]) -> dict[str, object]:
+        return {}
 
 
 class HoloPhraser:
@@ -68,6 +112,37 @@ class HoloPhraser:
         self._fallback = fallback or TemplatePhraser()
         self._transport = transport
 
+    async def _complete(self, messages: list[dict[str, str]], max_tokens: int) -> str:
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout_s, transport=self._transport) as client:
+                response = await client.post(
+                    H_MODELS_URL,
+                    headers={"Authorization": f"Bearer {self._api_key}"},
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "reasoning_effort": "none",
+                        "max_tokens": max_tokens,
+                        "temperature": 0.2,
+                    },
+                )
+                response.raise_for_status()
+                content = response.json()["choices"][0]["message"]["content"]
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+            return ""
+        return content if isinstance(content, str) else ""
+
+    async def extract(self, text: str, known: Mapping[str, str]) -> dict[str, object]:
+        content = await self._complete([
+            {"role": "system", "content": EXTRACT_PROMPT},
+            {"role": "user", "content": f"Date du jour : {date.today().isoformat()}\nMessage : {text}"},
+        ], 200)
+        match = re.search(r"\{.*\}", content, re.DOTALL)
+        try:
+            return clean_extraction(json.loads(match[0])) if match else {}
+        except ValueError:
+            return {}
+
     def _messages(
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> list[dict[str, str]]:
@@ -87,25 +162,7 @@ class HoloPhraser:
     async def phrase(
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> str:
-        try:
-            async with httpx.AsyncClient(timeout=self._timeout_s, transport=self._transport) as client:
-                response = await client.post(
-                    H_MODELS_URL,
-                    headers={"Authorization": f"Bearer {self._api_key}"},
-                    json={
-                        "model": self.model,
-                        "messages": self._messages(turns, question, known),
-                        "reasoning_effort": "none",
-                        "max_tokens": 200,
-                        "temperature": 0.3,
-                    },
-                )
-                response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
-        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
-            content = ""
-        if not isinstance(content, str):
-            content = ""
+        content = await self._complete(self._messages(turns, question, known), 200)
         content = redact_secrets(content.strip().strip('"«» ').strip())
         if not content or len(content) > MAX_REPLY_CHARS or "?" not in content:
             return await self._fallback.phrase(turns, question, known)
