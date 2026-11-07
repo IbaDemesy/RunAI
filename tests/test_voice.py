@@ -294,3 +294,11 @@ def test_decimal_distance_correction_targets_race():
 
 def test_race_mission_survives_unrelated_keyword():
     assert parse_command("Le semi de Paris avec une pause à Porto").kind is CommandKind.new_mission
+
+
+@pytest.mark.parametrize(("text", "kind"), [
+    ("Pause, le semi de Paris", CommandKind.pause),
+    ("C'est bon, continue le semi de Paris", CommandKind.resume),
+])
+def test_pause_and_resume_beat_implicit_race_mission(text, kind):
+    assert parse_command(text).kind is kind
