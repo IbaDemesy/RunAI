@@ -1,6 +1,6 @@
-"""Préréglages de démo : préférences dont le résultat Linkup est livré dans `fixtures/`.
+"""Demo preferences whose Linkup results are bundled in `fixtures/`.
 
-`recommend_races(assessment, DEMO_PREFERENCES["milan"], mode="replay")` rejoue sans réseau.
+`recommend_races(assessment, DEMO_PREFERENCES["milan"], mode="replay")` runs offline.
 """
 
 from datetime import date
@@ -8,15 +8,15 @@ from datetime import date
 from runai.coach.models import RacePreferences
 
 DEMO_TRANSCRIPT = (
-    "Je cours quatre fois par semaine, à peu près quarante kilomètres. "
-    "Ma plus longue sortie c'est 22 km en 2h05. "
-    "J'ai fait le semi de Boulogne en 1h48 il y a 3 mois. "
-    "Je cours depuis 3 ans et j'ai 31 ans. "
-    "J'aimerais courir mon premier marathon en voyage, à l'étranger."
+    "I run four times a week, roughly forty kilometres. "
+    "My longest run was 22 km in 2h05. "
+    "I ran the Boulogne half marathon in 1h48 3 months ago. "
+    "I have been running for 3 years and I am 31. "
+    "I'd like to run my first marathon while travelling abroad."
 )
 
 DEMO_PREFERENCES: dict[str, RacePreferences] = {
-    # Course de démo retenue : Wizz Air Milano Marathon (04/04/2027, inscription Njuko).
+    # Selected demo race: Wizz Air Milano Marathon (04/04/2027, Njuko registration).
     "milan": RacePreferences(
         origin_city="Paris",
         date_from=date(2027, 3, 1),
@@ -30,7 +30,7 @@ DEMO_PREFERENCES: dict[str, RacePreferences] = {
         zone_hint="en Europe hors de France (Italie, Espagne, Portugal, Belgique, Pays-Bas, Allemagne)",
         seed_races=["Wizz Air Milano Marathon"],
     ),
-    # Les 4 profils mesurés du spike trouver_courses (07/11/2026).
+    # Four measured profiles from the race-finding spike (07/11/2026).
     "debutant_10k_paris": RacePreferences(
         origin_city="Paris",
         date_from=date(2027, 3, 1),

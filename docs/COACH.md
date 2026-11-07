@@ -1,58 +1,76 @@
-# Coach — « quel coureur es-tu ? » (`runai/coach/`)
+# Coach — “What kind of runner are you?” (`runai/coach/`)
 
-Cinq questions à la voix → profil sportif → niveau + fourchettes de temps + verdict par distance →
-3 à 5 courses ouvertes adaptées, avec une raison lisible et le statut d'inscription.
-Porté depuis `spike/niveau` et `spike/trouver_courses`. Aucun appel H : les statuts non confirmés
-sont marqués `a_verifier` (`needs_h_check=True`) pour un agent H **en lecture seule**, plus tard.
+Five voice questions → runner profile → level, predicted times and distance advice →
+3–5 suitable open races with a reason and registration status. English questions and
+prompts accept both English and French answers, including code-switching.
+No H calls are made: unconfirmed statuses remain `a_verifier` (`needs_h_check=True`)
+for a later **read-only** H check.
 
 ## API
 
 ```python
 from runai.coach import QUESTIONS, extract_profile, assess, recommend_races, RacePreferences
 
-x = extract_profile(transcript)            # ProfileExtraction
-x.profile                                  # CoachProfile (≠ runai.models.RunnerProfile, identité fictive)
-x.follow_up_questions                      # questions de QUESTIONS à reposer (champs invraisemblables effacés)
+transcript = (
+    "I run four times a week, roughly forty kilometres. "
+    "My longest run was 22 km in 2h05. "
+    "I ran a half marathon in 1:48 3 months ago. "
+    "I have been running for 3 years and I am 31. "
+    "I want to run a marathon while travelling abroad."
+)
+x = extract_profile(transcript)             # ProfileExtraction
+x.profile                                   # CoachProfile, not the identity RunnerProfile
+x.follow_up_questions                       # Questions to repeat after clearing suspect fields
 
-a = assess(x.profile)                      # Assessment
-a.estimate.level, a.estimate.predictions   # debutant…expert ; TimeRange par 5k/10k/semi/marathon
-a.recommended, a.not_advised, a.summary()  # distances conseillées / déconseillées ou bloquées
+a = assess(x.profile)                       # Assessment
+a.estimate.level, a.estimate.predictions    # Level and TimeRange per race distance
+a.recommended, a.not_advised, a.summary()   # Recommended, discouraged or blocked distances
 
 r = recommend_races(a, RacePreferences(origin_city="Paris", distance_km=42.195), mode="replay")
-r.races[0].reason, r.races[0].status       # « 42,2 km le 04/04/2027 ; 21 semaines… », ouvert | a_verifier
-r.races[0].to_race()                       # runai.models.Race pour lancer une mission
+r.races[0].reason, r.races[0].status         # Reason and registration status
+r.races[0].to_race()                        # Race for an existing mission
 ```
 
-| Fonction | Rôle |
+| Function | Role |
 | --- | --- |
-| `QUESTIONS` | 5 questions (fréquence/volume, sortie longue, chrono récent, ancienneté/âge, objectifs). `CUSTOM_VOCABULARY` pour Gladia. |
-| `extract_profile(text, llm_json=None)` | Parseur à règles (ou JSON LLM via `llm_prompt()`), puis `plausibility_issues()` : allure, sortie > volume hebdo, chrono hors bornes → champ remis à `None` + question à reposer. Ne devine jamais (« 14 10 km » → vide). |
-| `assess(profile, weeks_available=None)` | Daniels/VDOT (chrono), Cooper, sortie d'entraînement ou déclaratif ; Riegel pour la borne haute ; garde-fous (marathon < 12 sem. bloqué, débutant marathon ≥ 24 sem., < 3 sorties/sem. → marathon déconseillé, plafonds jeunes). |
-| `recommend_races(assessment, preferences, mode=…)` | `replay` = cache uniquement (démo, sans réseau, `CacheMiss` sinon) ; `live` = Linkup puis écriture en cache ; `auto` = cache de moins de 24 h (`max_cache_age`) sinon live. Bloquant (20–60 s en live). |
-| `rank_races(assessment, discovery)` | Classement déterministe sans réseau : courses citées, puis ouvertes, complétées par `a_verifier` jusqu'à 3 ; exclut complet/fermé/hors fenêtre/préparation insuffisante/doublons. |
+| `QUESTIONS` | Five English questions: frequency/volume, longest run, recent race, experience/age and goals. `CUSTOM_VOCABULARY` retains French terms alongside English terms for Gladia. |
+| `extract_profile(text, llm_json=None)` | Bilingual rules or LLM JSON via `llm_prompt()`, then plausibility checks for pace, longest run vs weekly volume and race bounds. Suspect fields become `None` with follow-up questions. Never guesses: “14 10 km” leaves the field empty. |
+| `assess(profile, weeks_available=None)` | Daniels/VDOT, Cooper, training run or self-reported level; Riegel upper bounds; preparation and age safeguards. Marathon preparation under 12 weeks is blocked, beginners need at least 24 weeks, and fewer than three weekly sessions discourages marathons. |
+| `recommend_races(assessment, preferences, mode=…)` | `replay`: offline cache only (`CacheMiss` otherwise); `live`: Linkup and cache write; `auto`: cache under 24 hours old (`max_cache_age`), otherwise live. Blocking, typically 20–60 seconds live. |
+| `rank_races(assessment, discovery)` | Deterministic offline ranking: named races, then open races, then `a_verifier` to reach three. Excludes full/closed races, dates outside the window, insufficient preparation and duplicates. |
 
-## Mode démo (cache/fixtures)
+Rules support English number words from one through sixty, kilometres and miles
+(1 mile = 1.609344 km), half marathons and marathons, `1h48`, `1:48` (hours:minutes),
+and `48 minutes`. “3 months ago”, “I am 31” and “running for 3 years” fill the
+corresponding fields. Goal values stay unchanged: first 10K → `premier_10k`,
+PR/PB → `chrono`, trail → `trail`, abroad/travel → `voyage`, finish → `finir`.
+French answers continue to use the same profile schema.
 
-`runai/coach/fixtures/*.json` = `DiscoveryResult` bruts (avant classement), clé = `SearchQuery.cache_key()`.
-Le classement est refait à la lecture, donc un même fichier sert pour tout profil.
-Préréglages dans `DEMO_PREFERENCES` : `milan` (Wizz Air Milano Marathon 04/04/2027, run Linkup réel
-du 07/11/2026) et les 4 profils mesurés du spike (`debutant_10k_paris`, `semi_france`, `trail_lyon`,
-`semi_etranger`). Régénérer : `recommend_races(a, DEMO_PREFERENCES["milan"], mode="live")`
-(écrit dans `fixtures/`, `DiscoveryCache(dir)` pour un autre dossier).
+## Demo mode (cache/fixtures)
 
-## Mesures
+`runai/coach/fixtures/*.json` contains raw `DiscoveryResult` objects before ranking,
+keyed by `SearchQuery.cache_key()`. Ranking is repeated on read for each profile.
+`DEMO_TRANSCRIPT` is English; `DEMO_PREFERENCES` contains `milan` (Wizz Air Milano
+Marathon, April 4, 2027; measured Linkup run on November 7, 2026), plus the four
+measured spike profiles: `debutant_10k_paris`, `semi_france`, `trail_lyon`, `semi_etranger`.
+Regenerate with `recommend_races(a, DEMO_PREFERENCES["milan"], mode="live")`;
+this writes fixtures. Use `DiscoveryCache(dir)` for a different directory.
 
-Mesuré (Linkup, 07/11/2026) : 20 à 61 s par profil, 0,04 à 0,10 $ (delta de solde), 8/12 courses
-« ouvertes » confirmées par H sur le spike ; run Milan : 49 s, delta de solde 0,098 $ (indicatif : clé partagée entre agents ; 0,152 $ estimés
-par `FinderMetrics`), 5 courses ouvertes dont Milan. Pages Njuko (SPA) illisibles par `/fetch` →
-`a_verifier` sans appel.
-Estimé, à valider par un coach : bornes de confiance, semaines de préparation, plafonds d'âge,
-majoration trail ; temps de trajet = vol d'oiseau (sol ×1,3 à 90 km/h, avion 750 km/h + 0,5 h).
+## Measurements
 
-## Intégration proposée (non implémentée)
+Measured on November 7, 2026: Linkup took 20–61 seconds per profile, costing
+$0.04–$0.10 by balance delta; H confirmed 8/12 open races in the spike. Milan:
+49 seconds, $0.098 balance delta ($0.152 estimated by `FinderMetrics`, shared key),
+five open races including Milan. Njuko SPA pages unreadable by `/fetch` remain
+`a_verifier` without H calls.
+Confidence bounds, preparation weeks, age caps and trail adjustments still need
+coach validation. Travel time uses straight-line distance (ground ×1.3 at 90 km/h;
+flight at 750 km/h plus 0.5 hours).
 
-- `GET /coach/questions` → `QUESTIONS` ; `POST /coach/profile` (transcription Gladia) → `ProfileExtraction`.
-- `POST /coach/assess` → `Assessment` ; `POST /coach/races` (`RacePreferences`) → `Recommendations`
-  via `anyio.to_thread.run_sync`, `mode="replay"` par défaut en démo.
-- Le choix d'une course : `RaceRecommendation.to_race()` → mission existante ; `needs_h_check` →
-  étape de vérification H en lecture seule avant l'inscription.
+## Proposed integration (not implemented)
+
+- `GET /coach/questions` → `QUESTIONS`; `POST /coach/profile` with a Gladia transcript → `ProfileExtraction`.
+- `POST /coach/assess` → `Assessment`; `POST /coach/races` with `RacePreferences` → `Recommendations`,
+  using `anyio.to_thread.run_sync` and defaulting to `mode="replay"` for demos.
+- Race selection: `RaceRecommendation.to_race()` → existing mission; `needs_h_check` →
+  read-only H verification before registration.

@@ -1,10 +1,8 @@
-"""Questions « Quel coureur es-tu ? » et extraction des réponses en `CoachProfile`.
+"""Runner interview questions and bilingual extraction into `CoachProfile`.
 
-Chaîne visée : Gladia (transcription, éventuellement `audio_to_llm`) -> LLM avec le schéma JSON
-de `CoachProfile` (`llm_prompt()`) -> `parse_llm_json()`. Le parseur à règles sert de secours
-sans LLM : il ne remplit que ce qui est dit. Dans les deux cas, `plausibility_issues()` repère les
-erreurs de transcription (ex. mesuré le 07/11 : « 14 km en 1h20 » devenu « 100 km en 80 min ») ;
-le champ fautif est remis à `None` et la question correspondante est reposée.
+Gladia transcripts can be passed to an LLM with `llm_prompt()` and `parse_llm_json()`.
+The rule-based fallback only fills explicitly stated information. Plausibility checks
+clear suspect fields and request another answer to the corresponding question.
 """
 
 import json
@@ -16,14 +14,14 @@ from pydantic import BaseModel, Field, ValidationError
 from runai.coach.models import CoachProfile, Goal, RecentRace, RecentRun
 
 QUESTIONS: list[str] = [
-    "Combien de fois cours-tu par semaine en ce moment, et à peu près combien de kilomètres ?",
-    "Quelle a été ta plus longue sortie ces dernières semaines : distance, et en combien de temps ?",
-    "As-tu un chrono récent sur une course, 5 km, 10 km, semi ou marathon ? Si oui, lequel et quand ?",
-    "Depuis combien de temps cours-tu, et quel âge as-tu ?",
-    "Qu'est-ce qui te fait envie : un premier 10 km, battre un chrono, du trail, ou courir en voyage ?",
+    "How many times a week do you run now, and roughly how many kilometres?",
+    "What was your longest run in recent weeks: how far, and how long did it take?",
+    "Do you have a recent race time for a 5K, 10K, half marathon or marathon? Which race, and when?",
+    "How long have you been running, and how old are you?",
+    "What appeals to you: your first 10K, a PR, trail running, or running abroad?",
 ]
 
-# Indice de la question (dans QUESTIONS) qui renseigne chaque champ.
+# Question index for each profile field.
 FIELD_QUESTION: dict[str, int] = {
     "sessions_per_week": 0,
     "weekly_km": 0,
@@ -35,29 +33,35 @@ FIELD_QUESTION: dict[str, int] = {
     "goals": 4,
 }
 
-CUSTOM_VOCABULARY: list[str] = ["semi", "marathon", "trail", "D+", "dénivelé", "Cooper", "chrono", "10 km", "VMA"]
+CUSTOM_VOCABULARY: list[str] = [
+    "semi", "marathon", "trail", "D+", "dénivelé", "Cooper", "chrono", "10 km", "VMA",
+    "half marathon", "elevation gain", "PR", "pace", "10K", "VO2max",
+]
 
 _LLM_PROMPT = (
-    "Tu extrais le profil d'un coureur à partir de la transcription de ses réponses. "
-    "Réponds UNIQUEMENT par un objet JSON valide conforme à ce schéma JSON. "
-    "Règles : une information non dite vaut null (ou [] pour goals), ne jamais deviner ni inventer ; "
-    "temps en secondes pour recent_race.time_s, en minutes pour longest_recent_run.duration_min ; "
-    "'semi' = 21.0975 km, 'marathon' = 42.195 km ; months_ago = ancienneté du chrono en mois ; "
-    "goals parmi premier_10k, chrono, trail, voyage, finir.\nSchéma : "
+    "Extract a runner's profile from their transcribed answers in English or French. "
+    "Reply ONLY with a valid JSON object matching this JSON schema. "
+    "Unstated information must be null (or [] for goals); never guess or invent. "
+    "Use seconds for recent_race.time_s and minutes for longest_recent_run.duration_min. "
+    "Convert miles to kilometres (1 mile = 1.609344 km). "
+    "'half marathon', 'half' or 'semi' = 21.0975 km; 'marathon' = 42.195 km. "
+    "months_ago is the age of the race result in months. "
+    "Map first 10K, PR/PB, trail, travel/abroad and finish goals to "
+    "premier_10k, chrono, trail, voyage and finir respectively.\nSchema: "
 )
 
 
 def llm_prompt() -> str:
-    """Consigne LLM (ou `audio_to_llm` de Gladia) avec le schéma JSON de `CoachProfile`."""
+    """LLM instructions (including Gladia `audio_to_llm`) with the profile schema."""
     schema = CoachProfile.model_json_schema(mode="validation")
     return _LLM_PROMPT + json.dumps(schema, ensure_ascii=False, separators=(",", ":"))
 
 
 def parse_llm_json(text: str) -> CoachProfile:
-    """Valide la sortie du LLM (tolère un bloc ```json ... ```). Lève `ValueError` si invalide."""
+    """Validate LLM output, accepting fenced JSON; raise `ValueError` if invalid."""
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match is None:
-        raise ValueError("pas d'objet JSON dans la réponse du LLM")
+        raise ValueError("no JSON object in the LLM response")
     data = json.loads(match.group(0))
     data.pop("missing_fields", None)
     return CoachProfile.model_validate(data)
@@ -68,10 +72,14 @@ _NUMBER_WORDS = {
     "huit": 8, "neuf": 9, "dix": 10, "onze": 11, "douze": 12, "treize": 13, "quatorze": 14,
     "quinze": 15, "seize": 16, "vingt": 20, "trente": 30, "quarante": 40, "cinquante": 50,
     "soixante": 60,
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "seven": 7,
+    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
+    "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+    "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60,
 }  # fmt: skip
 _NUM = r"(\d+(?:[.,]\d+)?)"
-_DIST_WORDS = {"semi-marathon": 21.0975, "semi": 21.0975, "marathon": 42.195}
-_CHRONO_HINT = r"(?:chrono|course|couru|fait|termin\w*|boucl\w*)"
+_DIST_WORDS = {"half marathon": 21.0975, "half": 21.0975, "semi-marathon": 21.0975, "semi": 21.0975, "marathon": 42.195}
+_CHRONO_HINT = r"(?:chrono|course|couru|fait|termin\w*|boucl\w*|\bran\b|race|completed|finished|\bdid\b)"
 
 
 _ET_COMPOUNDS = {(20, 1), (30, 1), (40, 1), (50, 1), (60, 1), (60, 11)}
@@ -86,11 +94,11 @@ def _normalize(text: str) -> str:
         r"\b(\d+) et (\d+)\b",
         lambda m: str(int(m[1]) + int(m[2])) if (int(m[1]), int(m[2])) in _ET_COMPOUNDS else m[0],
         t,
-    )  # « vingt et un », « soixante et onze »
+    )
     t = re.sub(r"\bentre (\d+) et (\d+)\b", lambda m: f"{(int(m[1]) + int(m[2])) / 2:g}", t)
     t = re.sub(r"\b(\d+)[- ](\d)\b", lambda m: str(int(m[1]) + int(m[2])) if int(m[1]) % 10 == 0 else m[0], t)
     t = re.sub(r"\b(\d+) et demi(e)?\b", lambda m: f"{m[1]}.5", t)
-    return t.replace("kilomètres", "km").replace("kilometres", "km").replace("bornes", "km")
+    return re.sub(r"\b(?:kilomètres|kilometres|kilometers|bornes)\b", "km", t)
 
 
 def _num(s: str) -> float:
@@ -98,6 +106,9 @@ def _num(s: str) -> float:
 
 
 def _duration_s(text: str) -> float | None:
+    m = re.search(r"\b(\d+):([0-5]\d)(?::([0-5]\d))?\b", text)
+    if m:
+        return int(m[1]) * 3600 + int(m[2]) * 60 + (int(m[3]) if m[3] else 0)
     m = re.search(rf"{_NUM}\s*h(?:eures?)?\s*(?:(\d{{1,2}})(?:\s*(?:min\w*|'))?)?", text)
     if m:
         return _num(m[1]) * 3600 + (int(m[2]) * 60 if m[2] else 0)
@@ -109,10 +120,10 @@ def _duration_s(text: str) -> float | None:
 
 def _distance_km(text: str) -> float | None:
     if re.search(r"\d+\s+\d+\s*km\b", text):
-        return None  # « 14 10 km » : transcription ambiguë, la question sera reposée
-    m = re.search(rf"{_NUM}\s*(?:km|k)\b", text)
+        return None  # Ambiguous transcription: ask again rather than guess.
+    m = re.search(rf"{_NUM}\s*(km|k|miles?)\b", text)
     if m:
-        return _num(m[1])
+        return _num(m[1]) * (1.609344 if m[2].startswith("mile") else 1)
     for word, km in _DIST_WORDS.items():
         if re.search(rf"\b{word}\b", text):
             return km
@@ -120,43 +131,48 @@ def _distance_km(text: str) -> float | None:
 
 
 def extract_rule_based(transcript: str) -> CoachProfile:
-    """Parseur à règles (regex), sans LLM ; ne remplit que ce qui est dit."""
+    """Extract explicitly stated information using bilingual rules, without an LLM."""
     t = _normalize(transcript)
     data: dict[str, Any] = {}
     sentences = [s for s in re.split(r"(?<=[.!?;])\s+|\n", t) if s.strip()]
 
-    m = re.search(rf"{_NUM}\s*(?:fois|sorties?|séances?|seances?)\s*(?:par|/|a la|à la)\s*semaine", t)
+    frequency = r"(?:fois|sorties?|séances?|seances?)\s*(?:par|/|a la|à la)\s*semaine|(?:times?|runs?|sessions?)\s*(?:a|per|/)\s*week"
+    m = re.search(rf"{_NUM}\s*(?:{frequency})", t)
     if m:
         data["sessions_per_week"] = _num(m[1])
-    m = re.search(rf"{_NUM}\s*km\s*(?:par|/|a la|à la)\s*semaine", t)
+    m = re.search(rf"{_NUM}\s*(km|miles?)\s*(?:(?:par|/|a la|à la)\s*semaine|(?:a|per|/)\s*week)", t)
     if m is None:
-        m = re.search(rf"(?:fois|sorties?|séances?) (?:par|/) semaine[^.]*?{_NUM}\s*km", t)
+        m = re.search(rf"(?:{frequency})[^.!?;\n]*?{_NUM}\s*(km|miles?)", t)
     if m:
-        data["weekly_km"] = _num(m[1])
+        data["weekly_km"] = _num(m[1]) * (1.609344 if m[2].startswith("mile") else 1)
 
     for s in sentences:
-        if "plus longue" in s or "sortie longue" in s:
+        timed = re.split(r"\s(?:en|in)\s", s, maxsplit=1)
+        after = timed[1] if len(timed) == 2 else ""
+        if "plus longue" in s or "sortie longue" in s or "longest run" in s or "long run" in s:
             dist = _distance_km(s)
             if dist is not None:
-                after = s.split(" en ", 1)[1] if " en " in s else ""
                 duration_s = _duration_s(after)
-                dplus = re.search(r"(\d+)\s*(?:m(?:ètres?)?\s*(?:de\s*)?(?:d\+|dénivelé|denivele))", s)
+                dplus = re.search(r"(\d+)\s*(?:m(?:ètres?|etres?|eters?)?\s*(?:de\s*|of\s*)?(?:d\+|dénivelé|denivele|elevation gain))", s)
                 data["longest_recent_run"] = RecentRun(
                     distance_km=dist,
                     duration_min=duration_s / 60 if duration_s else None,
                     d_plus_m=int(dplus[1]) if dplus else None,
                 )
             continue
-        if re.search(_CHRONO_HINT, s) and " en " in s and "semaine" not in s:
+        if re.search(_CHRONO_HINT, s) and after and not re.search(r"semaine|week", s):
             dist = _distance_km(s)
-            dur = _duration_s(s.split(" en ", 1)[1])
+            dur = _duration_s(after)
             if dist is not None and dur:
                 months = 0.0
                 ago = re.search(rf"(?:il y a|ça fait|ca fait)\s*{_NUM}\s*(mois|ans?|semaines?)", s)
                 if ago:
                     factor = {"mois": 1, "an": 12, "ans": 12}.get(ago[2], 0.25)
                     months = _num(ago[1]) * factor
-                elif "année dernière" in s or "l'an dernier" in s or "annee derniere" in s:
+                elif ago := re.search(rf"{_NUM}\s*(months?|years?|weeks?)\s+ago", s):
+                    factor = 12 if ago[2].startswith("year") else 0.25 if ago[2].startswith("week") else 1
+                    months = _num(ago[1]) * factor
+                elif "année dernière" in s or "l'an dernier" in s or "annee derniere" in s or "last year" in s:
                     months = 12
                 try:
                     data["recent_race"] = RecentRace(distance_km=dist, time_s=int(dur), months_ago=months)
@@ -168,23 +184,26 @@ def extract_rule_based(transcript: str) -> CoachProfile:
     )
     if m and 800 <= _num(m[1]) <= 5000:
         data["cooper_m"] = int(_num(m[1]))
-    m = re.search(rf"(?:j'ai|âgée? de|agee? de)\s*{_NUM}\s*ans\b", t)
+    m = re.search(rf"(?:j'ai|âgée? de|agee? de)\s*{_NUM}\s*ans\b", t) or re.search(rf"\b(?:i am|i'm|aged)\s*{_NUM}\b", t)
     if m and 8 <= _num(m[1]) <= 100:
         data["age"] = int(_num(m[1]))
     m = re.search(rf"(?:depuis|ça fait|ca fait)\s*{_NUM}\s*(mois|ans?)\s*(?:que je cours|de course)?", t)
     if m and ("cour" in t[m.start() : m.end() + 25] or "depuis" in m[0]):
         data["running_since_months"] = int(_num(m[1]) * (1 if m[2] == "mois" else 12))
+    m = re.search(rf"\brunning for\s*{_NUM}\s*(months?|years?)\b", t)
+    if m:
+        data["running_since_months"] = int(_num(m[1]) * (12 if m[2].startswith("year") else 1))
 
     goals = []
-    if re.search(r"premier 10|1er 10|premier dix", t):
+    if re.search(r"premier 10|1er 10|premier dix|first 10\s*k", t):
         goals.append(Goal.premier_10k)
-    if re.search(r"chrono|record|battre|sous les", t) and "pas de chrono" not in t:
+    if re.search(r"chrono|record|battre|sous les|\b(?:pr|pb)\b", t) and "pas de chrono" not in t:
         goals.append(Goal.chrono)
     if "trail" in t:
         goals.append(Goal.trail)
-    if re.search(r"voyage|étranger|etranger|week-end", t):
+    if re.search(r"voyage|étranger|etranger|week-end|abroad|travel", t):
         goals.append(Goal.voyage)
-    if re.search(r"\bfinir\b|terminer", t):
+    if re.search(r"\bfinir\b|terminer|\bfinish\b", t):
         goals.append(Goal.finir)
     data["goals"] = goals
     return CoachProfile(**data)
@@ -196,7 +215,7 @@ class PlausibilityIssue(BaseModel):
 
 
 def plausibility_issues(p: CoachProfile) -> list[PlausibilityIssue]:
-    """Champs incohérents (erreur de transcription ou de LLM) : à remettre à `None` et à reposer."""
+    """Find suspect transcription or LLM fields to clear and ask about again."""
     issues: list[PlausibilityIssue] = []
     run = p.longest_recent_run
     if run is not None and run.duration_min:
@@ -205,14 +224,14 @@ def plausibility_issues(p: CoachProfile) -> list[PlausibilityIssue]:
             issues.append(
                 PlausibilityIssue(
                     field="longest_recent_run",
-                    message=f"{run.distance_km:g} km en {run.duration_min:g} min ({pace:.1f} min/km)",
+                    message=f"{run.distance_km:g} km in {run.duration_min:g} min ({pace:.1f} min/km)",
                 )
             )
     if run is not None and p.weekly_km and run.distance_km > max(p.weekly_km, 10) * 1.2:
         issues.append(
             PlausibilityIssue(
                 field="longest_recent_run",
-                message=f"{run.distance_km:g} km > volume hebdo {p.weekly_km:g} km",
+                message=f"{run.distance_km:g} km > weekly volume {p.weekly_km:g} km",
             )
         )
     race = p.recent_race
@@ -222,16 +241,16 @@ def plausibility_issues(p: CoachProfile) -> list[PlausibilityIssue]:
             issues.append(
                 PlausibilityIssue(
                     field="recent_race",
-                    message=f"{race.distance_km:g} km en {race.time_s} s ({pace:.1f} min/km)",
+                    message=f"{race.distance_km:g} km in {race.time_s} s ({pace:.1f} min/km)",
                 )
             )
     if p.sessions_per_week and p.weekly_km and p.weekly_km / p.sessions_per_week > 40:
-        issues.append(PlausibilityIssue(field="weekly_km", message="plus de 40 km par sortie"))
+        issues.append(PlausibilityIssue(field="weekly_km", message="more than 40 km per run"))
     return issues
 
 
 class ProfileExtraction(BaseModel):
-    """Profil nettoyé + ce qu'il faut redemander au coureur."""
+    """Cleaned profile and follow-up questions for the runner."""
 
     profile: CoachProfile
     method: Literal["llm", "regles"]
@@ -242,12 +261,10 @@ class ProfileExtraction(BaseModel):
 
 
 def extract_profile(text: str, llm_json: str | None = None) -> ProfileExtraction:
-    """Transcription (et sortie LLM facultative) -> `CoachProfile` vérifié.
+    """Validate a transcript with optional LLM output, falling back to bilingual rules.
 
-    Avec `llm_json` (réponse du LLM à `llm_prompt()` + transcription), on l'utilise ; s'il est
-    invalide, on retombe sur le parseur à règles. Les champs invraisemblables sont remis à `None`.
-    `follow_up_questions` liste les questions de `QUESTIONS` à reposer pour ces champs effacés ;
-    les champs simplement non dits sont dans `profile.missing_fields` (« je ne sais pas » est valide).
+    Implausible fields are cleared and listed in `follow_up_questions`. Unstated
+    information remains in `profile.missing_fields`; unknown answers are valid.
     """
     method: Literal["llm", "regles"] = "regles"
     llm_error = None
