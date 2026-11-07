@@ -5,7 +5,7 @@
 ## Contexte du hackathon
 
 - **Computer Use Agents Hackathon**, H Company x 42AI, les 7 et 8 novembre 2026 à Paris (La Maison by Motier Ventures). [Page de l'événement](https://builderbase.com/track-dashboard/h-company-42ai-computer-use-agents-hackathon/event-site), [Discord](https://discord.gg/WjmTcMW9e).
-- **Rendu : dimanche 8 novembre à 14h00.** Pitchs finaux à 15h45.
+- **Rendu : dimanche 8 novembre à 14h00** (le dashboard indique une clôture à 14h30, on vise 14h00). Pitchs finaux à 15h45. Les 6 livrables sont détaillés dans [Livrables de soumission](#livrables-de-soumission).
 - Outils H : [Agents API](https://hub.hcompany.ai/agents-api/introduction) et [modèles](https://hub.hcompany.ai/models-api/introduction). Mentorat 1:1 avec les chercheurs et ingénieurs de H sur place.
 - Défi : un agent qui navigue sur des sites, des applis desktop ou des interfaces logicielles pour accomplir une **vraie tâche utile**. La démo doit montrer **le problème, les actions de l'agent, puis le résultat**.
 - Équipes de 1 à 4 personnes.
@@ -25,6 +25,23 @@
 | Dim. 8, 17h45 | Annonce des gagnants |
 
 Horaires de Paris, susceptibles de petits ajustements.
+
+### Livrables de soumission
+
+Le formulaire du [dashboard](https://builderbase.com/track-dashboard/h-company-42ai-computer-use-agents-hackathon/overview) demande **6 éléments**. Le bouton « Submit » ne se débloque qu'une fois les 6 remplis, et la saisie est enregistrée au fur et à mesure.
+
+| # | Champ | Statut | Ce qu'on met |
+| --- | --- | --- | --- |
+| 1 | Project Name | Fait | RunAI |
+| 2 | Github Repo | Fait | [github.com/IbaDemesy/RunAI](https://github.com/IbaDemesy/RunAI) |
+| 3 | Submission on H Showcase Platform | À faire | Fiche sur [showcase.hcompany.ai/submit](https://showcase.hcompany.ai/submit/), sur le modèle des fiches existantes : *What it does*, *How it works*, *Built with*, commandes pour lancer le code |
+| 4 | Demo Video URL | À faire | Vidéo d'environ 3 min : le problème, les actions des agents H en live, puis le résultat (arrêt avant paiement) |
+| 5 | Project Description | À faire | Pitch court : « Dis-moi ta course, je prépare tout le déplacement », partenaires utilisés (H, Linkup, Gladia, Devin) |
+| 6 | How do I test your product live | À faire | Instructions pour le jury : URL ou commandes, clés nécessaires, scénario à dire au micro, et le rappel que rien n'est payé |
+
+Le jury voit un aperçu de la soumission (« Review what judges will see ») : à relire avant d'envoyer.
+
+**Deadline** : la page de l'événement indique un rendu à 14h00, le dashboard une clôture des soumissions à 14h30 (GMT+1). On vise **14h00**.
 
 ### Grille du jury
 
