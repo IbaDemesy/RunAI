@@ -131,6 +131,19 @@ def test_build_task_is_guarded_and_uses_fake_profile():
         build_task(StepKind.search, race, RunnerProfile())
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("300 € au total", 150),
+        ("300 € pour les deux nuits", 150),
+        ("150 € par nuit", 150),
+        ("150 €", 150),
+    ],
+)
+def test_extract_budget_per_night_normalizes_two_night_totals(text, expected):
+    assert extract_budget_per_night(text) == expected
+
+
 def test_hotel_budget_overrun_is_marked_failed():
     mission = Mission(
         id="budget-test",

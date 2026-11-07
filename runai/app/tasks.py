@@ -38,6 +38,12 @@ _BUDGET_AMOUNT = re.compile(
     re.IGNORECASE,
 )
 _BARE_AMOUNT = re.compile(rf"^\s*(?P<amount>{_AMOUNT})\s*$")
+_TOTAL_BUDGET = re.compile(
+    r"\btotal\b|\bpour\s+(?:les\s+)?(?:2|deux)\s+nuits\b", re.IGNORECASE
+)
+_PER_NIGHT_BUDGET = re.compile(
+    r"\bpar\s+nuit\b|/\s*nuit\b|\bper\s+night\b", re.IGNORECASE
+)
 
 
 def extract_budget_per_night(
@@ -65,7 +71,10 @@ def extract_budget_per_night(
         amount = amount.replace(",", ".")
     elif re.fullmatch(r"\d{1,3}(?:\.\d{3})+", amount):
         amount = amount.replace(".", "")
-    return float(amount)
+    budget = float(amount)
+    if _TOTAL_BUDGET.search(text) and not _PER_NIGHT_BUDGET.search(text):
+        budget /= 2
+    return budget
 
 
 def human_action(stop_point: StopPoint | None) -> str:
