@@ -22,6 +22,8 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      report: ${{ steps.check.outputs.report }}
     env:
       RENDER_URL: ${{ vars.RENDER_URL }}
       RENDER_DEMO_URL: ${{ vars.RENDER_DEMO_URL }}
@@ -31,6 +33,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Check deployed services
+        id: check
         shell: bash
         run: |
           if [[ -z "$RENDER_URL" && -z "$RENDER_DEMO_URL" ]]; then
@@ -96,12 +99,36 @@ jobs:
           done
 
           if (( failed )); then
-            issue=$(gh issue list --search 'in:title "Render deploy unhealthy"' --state open \
-              --json number,title --jq '.[] | select(.title == "Render deploy unhealthy") | .number' | head -n 1)
-            if [[ -n "$issue" ]]; then
-              gh issue comment "$issue" --body-file "$report"
-            else
-              gh issue create --title 'Render deploy unhealthy' --body-file "$report"
-            fi
+            {
+              echo 'report<<DEPLOY_HEALTH_EOF'
+              cat "$report"
+              echo 'DEPLOY_HEALTH_EOF'
+            } >> "$GITHUB_OUTPUT"
             exit 1
+          fi
+
+  report:
+    needs: health
+    if: failure() && needs.health.outputs.report != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: render-deploy-health-issue
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      REPORT: ${{ needs.health.outputs.report }}
+    steps:
+      - name: Open or update the incident issue
+        shell: bash
+        run: |
+          report="$RUNNER_TEMP/deploy-health-report.md"
+          printf '%s\n' "$REPORT" > "$report"
+          issue=$(gh issue list --search 'in:title "Render deploy unhealthy"' --state open \
+            --json number,title --jq '.[] | select(.title == "Render deploy unhealthy") | .number' | head -n 1)
+          if [[ -n "$issue" ]]; then
+            gh issue comment "$issue" --body-file "$report"
+          else
+            gh issue create --title 'Render deploy unhealthy' --body-file "$report"
           fi
