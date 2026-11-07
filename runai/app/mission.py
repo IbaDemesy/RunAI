@@ -13,6 +13,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, HttpUrl
 
+from runai.app.capture_store import CaptureStore
 from runai.app.mission_journey import project_journey
 from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
 from runai.app.providers import UnavailableBrowserAgents
@@ -131,6 +132,7 @@ class MissionService:
         self.profile = profile or RunnerProfile()
         self.phraser = phraser
         self.traces_dir = traces_dir
+        self.capture_store = CaptureStore(traces_dir)
         self.simulated = simulated
         self.question_timeout_s = (
             float(os.getenv("RUNAI_QUESTION_TIMEOUT_S", "600"))
@@ -548,6 +550,8 @@ class MissionService:
                         self._set_agent_views(step, run)
                         if observation := getattr(run, "browser_observation", None):
                             step.data["browser_observation"] = observation
+                            if event.data.get("mode") != "replay":
+                                self.capture_store.schedule(mission.id, step.kind, observation, run)
                             self._capture_runs[(mission.id, StepKind(step_name))] = run
                     if event.data.get("url"):
                         step.data["current_url"] = event.data["url"]
