@@ -35,6 +35,27 @@ jobs:
           done <<< "$files"
 
           if [[ "$has_static" == false ]]; then
+            labels=$(gh api "repos/$REPO/issues/$N/labels" --jq '.[].name') || {
+              echo "::warning::Could not read PR labels."
+              labels=''
+            }
+            while IFS= read -r label; do
+              if [[ "$label" == front-night ]]; then
+                gh api --method DELETE "repos/$REPO/issues/$N/labels/front-night" \
+                  >/dev/null || echo "::warning::Could not remove stale front-night label; it may be absent or the token read-only."
+              fi
+            done <<< "$labels"
+            comment_ids=$(gh api "repos/$REPO/issues/$N/comments" --paginate \
+              --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | startswith("<!-- front-night-guard -->")) | .id') || {
+              echo "::warning::Could not read guard comments."
+              comment_ids=''
+            }
+            while IFS= read -r comment_id; do
+              if [[ -n "$comment_id" ]]; then
+                gh api --method DELETE "repos/$REPO/issues/comments/$comment_id" \
+                  >/dev/null || echo "::warning::Could not delete stale guard comment; token may be read-only."
+              fi
+            done <<< "$comment_ids"
             echo "::notice::No runai/app/static file touched; front-night guard not applicable."
             exit 0
           fi
