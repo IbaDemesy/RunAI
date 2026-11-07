@@ -15,7 +15,7 @@ from pydantic import (
     model_serializer,
 )
 
-from runai.contracts.common import DataMode, Limitation
+from runai.contracts.common import Automation, DataMode, Limitation
 from runai.contracts.journey import Budget
 from runai.models import (
     AgentQuestion,
@@ -180,6 +180,7 @@ class MissionSummaryRace(BaseModel):
 class MissionSummaryStep(BaseModel):
     kind: StepKind
     status: StepStatus
+    automation: Automation | None = None
     stop_point: StopPoint | None = None
     price_eur: float | None = None
     url: str | None = None

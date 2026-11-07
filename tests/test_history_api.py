@@ -1,5 +1,5 @@
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from runai.app.history import build_headline, list_summaries, summarize
 from runai.app.mission import Mission, MissionStatus
 from runai.app.server import build_demo_service, create_app
-from runai.models import StepKind, StepResult, StepStatus, utcnow
+from runai.models import StepKind, StepResult, StepStatus, StopPoint, utcnow
 
 TERMINAL = {"awaiting_human", "failed", "completed", "cancelled"}
 
@@ -84,13 +84,13 @@ def test_history_lists_missions_per_user_with_summary_fields(client):
     assert item["total_price_eur"] == pytest.approx(sum(prices))
     assert {s["kind"] for s in item["steps"]} == {"registration", "accommodation", "transport"}
     assert all(s["status"] == "stopped_before_commitment" for s in item["steps"])
-    assert item["headline"] == "Prepared up to payment on 3 of 3 steps"
+    assert all(s["automation"] == "automated" for s in item["steps"])
+    assert item["headline"] == "Prepared up to your final confirmation on 3 of 3 steps"
     assert item["replay_available"] is True
 
     assert [m["mission_id"] for m in client.get("/api/missions", params={"user_id": "runner_b"}).json()] == [second]
     assert client.get("/api/missions", params={"user_id": "nobody"}).json() == []
-    everyone = client.get("/api/missions").json()
-    assert [m["mission_id"] for m in everyone] == [second, first]
+    assert client.get("/api/missions").status_code == 422
 
     summary = client.get(f"/api/missions/{first}/summary")
     assert summary.status_code == 200
@@ -103,19 +103,19 @@ def test_history_is_newest_first_limited_and_filtered_by_status(client):
         finish(client, mid)
     listed = client.get("/api/missions", params={"user_id": "runner-a", "limit": 2}).json()
     assert [m["mission_id"] for m in listed] == [ids[2], ids[1]]
-    assert client.get("/api/missions", params={"status": "awaiting_human"}).json()
-    assert client.get("/api/missions", params={"status": "running"}).json() == []
+    assert len(client.get("/api/missions", params={"user_id": "runner-a", "status": "awaiting_human"}).json()) == 3
+    assert client.get("/api/missions", params={"user_id": "runner-a", "status": "running"}).json() == []
 
 
 def test_history_rejects_bad_input_and_unknown_mission(client):
     assert client.get("/api/missions/doesnotexist/summary").status_code == 404
     assert client.get("/api/missions", params={"user_id": "bad id!"}).status_code == 422
     assert client.get("/api/missions", params={"user_id": "x" * 65}).status_code == 422
-    assert client.get("/api/missions", params={"limit": 0}).status_code == 422
-    assert client.get("/api/missions", params={"status": "paid"}).status_code == 422
+    assert client.get("/api/missions", params={"user_id": "a", "limit": 0}).status_code == 422
+    assert client.get("/api/missions", params={"user_id": "a", "status": "paid"}).status_code == 422
     assert client.post("/api/framings", json={"text": "a race", "user_id": "a/b"}).status_code == 422
     assert client.post("/api/framings", json={"text": "a race", "user_id": ""}).status_code == 422
-    assert client.get("/api/missions").json() == []
+    assert client.get("/api/missions", params={"user_id": "a"}).json() == []
 
 
 def mission(mid, status, statuses, *, user_id=None, created_delta=0, prices=()):
@@ -136,7 +136,13 @@ def test_headlines_and_totals_for_every_outcome():
     assert build_headline(mission("a", MissionStatus.running, [stop, run, run])) == "In progress: 1 of 3 steps prepared so far"
     assert build_headline(mission("b", MissionStatus.cancelled, [stop, stop, run])) == "Cancelled after preparing 2 of 3 steps"
     assert build_headline(mission("c", MissionStatus.failed, [fail, fail, fail])) == "Failed before reaching any payment page"
-    assert build_headline(mission("d", MissionStatus.awaiting_human, [stop, fail, stop])) == "Prepared up to payment on 2 of 3 steps"
+    assert build_headline(mission("d", MissionStatus.awaiting_human, [stop, fail, stop])) == "Prepared up to your final confirmation on 2 of 3 steps"
+    paid = mission("p", MissionStatus.awaiting_human, [stop, stop, stop])
+    for step in paid.steps.values():
+        step.stop_point = StopPoint.payment
+    assert build_headline(paid) == "Prepared up to payment on 3 of 3 steps"
+    paid.steps[StepKind.registration].stop_point = StopPoint.consent
+    assert build_headline(paid) == "Prepared up to your final confirmation on 3 of 3 steps"
     summary = summarize(mission("e", MissionStatus.awaiting_human, [stop, stop, stop], prices=(45.5, 120, 80.25)))
     assert summary.total_price_eur == pytest.approx(245.75)
     assert summary.race is None and summary.framing_id is None
@@ -149,3 +155,18 @@ def test_list_summaries_orders_by_creation_time_not_insertion():
     other = mission("other", MissionStatus.completed, [], user_id="v", created_delta=30)
     assert [s.mission_id for s in list_summaries([new, old, other], user_id="u")] == ["new", "old"]
     assert [s.mission_id for s in list_summaries([new, old, other], limit=1)] == ["other"]
+
+
+def test_cancelled_mission_reports_cancellation_time(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    service = build_demo_service(delay=.2)
+    service.traces_dir = tmp_path
+    with TestClient(create_app(service)) as client:
+        mid = launch(client, "runner-c", "cancel")
+        assert client.get(f"/api/missions/{mid}/summary").json()["finished_at"] is None
+        before = utcnow()
+        assert client.post(f"/api/missions/{mid}/cancel").status_code == 200
+        summary = client.get(f"/api/missions/{mid}/summary").json()
+    assert summary["status"] == "cancelled"
+    assert summary["headline"].startswith("Cancelled after preparing")
+    assert datetime.fromisoformat(summary["finished_at"]) >= before

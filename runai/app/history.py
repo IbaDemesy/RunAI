@@ -13,7 +13,7 @@ from runai.contracts.mission import (
     MissionSummaryRace,
     MissionSummaryStep,
 )
-from runai.models import StepStatus
+from runai.models import StepStatus, StopPoint
 from runai.redaction import redact_secrets
 
 DEFAULT_LIMIT = 20
@@ -32,6 +32,8 @@ def _automated_steps(mission: Mission):
 def _finished_at(mission: Mission) -> datetime | None:
     if mission.status not in TERMINAL_STATUSES:
         return None
+    if mission.finished_at is not None:
+        return mission.finished_at
     for event in reversed(mission.events):
         if event.type in FINISH_EVENTS:
             return event.at
@@ -41,7 +43,9 @@ def _finished_at(mission: Mission) -> datetime | None:
 def build_headline(mission: Mission) -> str:
     steps = _automated_steps(mission)
     total = len(steps)
-    prepared = sum(step.status is StepStatus.stopped_before_commitment for step in steps)
+    stopped = [step for step in steps if step.status is StepStatus.stopped_before_commitment]
+    prepared = len(stopped)
+    target = "payment" if all(s.stop_point is StopPoint.payment for s in stopped) else "your final confirmation"
     noun = "step" if total == 1 else "steps"
     status = mission.status.value
     if status in {"searching", "running"}:
@@ -51,8 +55,8 @@ def build_headline(mission: Mission) -> str:
     if status == "failed" and prepared == 0:
         return "Failed before reaching any payment page"
     if status == "failed":
-        return f"Partly failed: prepared up to payment on {prepared} of {total} {noun}"
-    return f"Prepared up to payment on {prepared} of {total} {noun}"
+        return f"Partly failed: prepared up to {target} on {prepared} of {total} {noun}"
+    return f"Prepared up to {target} on {prepared} of {total} {noun}"
 
 
 def summarize(mission: Mission) -> MissionSummary:
@@ -85,7 +89,8 @@ def summarize(mission: Mission) -> MissionSummary:
         total_price_eur=round(sum(prices), 2) if prices else None,
         steps=[
             MissionSummaryStep(
-                kind=step.kind, status=step.status, stop_point=step.stop_point,
+                kind=step.kind, status=step.status, automation=step.data.get("automation"),
+                stop_point=step.stop_point,
                 price_eur=step.price_eur, url=str(step.url) if step.url else None,
             )
             for step in mission.steps.values()
@@ -103,7 +108,7 @@ def list_summaries(
     status: str | None = None,
     limit: int = DEFAULT_LIMIT,
 ) -> list[MissionSummary]:
-    """Newest first; `user_id=None` lists every mission held by this instance."""
+    """Newest first; `user_id=None` lists every mission (internal use, the API requires a user_id)."""
     selected = [
         (mission.created_at, index, mission)
         for index, mission in enumerate(missions)

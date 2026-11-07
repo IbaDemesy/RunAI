@@ -250,7 +250,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.get("/api/missions")
     async def list_missions(
-        user_id: str | None = Query(None, pattern=USER_ID_PATTERN),
+        user_id: str = Query(pattern=USER_ID_PATTERN),
         limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
         status: MissionStatusV2 | None = None,
     ) -> list[dict]:

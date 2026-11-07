@@ -90,6 +90,7 @@ class Mission(BaseModel):
     user_id: str | None = None
     status: MissionStatus = MissionStatus.searching
     created_at: datetime = Field(default_factory=utcnow)
+    finished_at: datetime | None = None
     race: Race | None = None
     steps: dict[StepKind, StepResult]
     questions: list[AgentQuestion] = Field(default_factory=list)
@@ -396,6 +397,7 @@ class MissionService:
         if mission.status is MissionStatus.cancelled:
             return
         mission.status = MissionStatus.cancelled
+        mission.finished_at = utcnow()
         self.questions.cancel_mission(mission_id)
         lifecycle = getattr(self.agents, "lifecycle", None)
         if lifecycle:
@@ -710,6 +712,7 @@ class MissionService:
             mission.status = MissionStatus.failed
         else:
             mission.status = MissionStatus.completed
+        mission.finished_at = utcnow()
         self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
         self._record(
             mission,
