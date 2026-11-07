@@ -20,6 +20,7 @@ def test_routes_revision_and_launch_gate():
     )
     with TestClient(app) as client:
         assert client.get("/api/framings/missing").status_code == 404
+        assert client.get("/api/framings/missing").json()["detail"] == "Unknown framing"
         assert client.post("/api/framings", json={"text": ""}).status_code == 422
         response = client.post(
             "/api/framings",

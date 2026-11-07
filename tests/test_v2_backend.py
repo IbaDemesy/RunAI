@@ -230,7 +230,10 @@ def test_live_missing_keys_and_linkup_failure_are_honest(monkeypatch, tmp_path):
                 "900 euros, 2 nuits, train"
             )
         }).json()
-        assert any(l["message"] == "Linkup indisponible : [REDACTED]" for l in broken["limitations"])
+        assert any(
+            l["message"] == "Race search is temporarily unavailable. Please try again or provide the official event details."
+            for l in broken["limitations"]
+        )
         assert secret not in json.dumps(broken)
 
 

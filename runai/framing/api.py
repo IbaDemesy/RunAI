@@ -18,7 +18,7 @@ def build_framing_router(engine: FramingEngine, on_confirm: OnConfirm) -> APIRou
         try:
             return engine.get(framing_id)
         except KeyError as exc:
-            raise HTTPException(404, "Cadrage inconnu") from exc
+            raise HTTPException(404, "Unknown framing") from exc
 
     async def call(operation):
         try:

@@ -1,15 +1,14 @@
-"""Cadrage conversationnel multi-tours, obligatoire avant toute mission et tout agent H.
+"""Multi-turn conversational framing required before any mission or H agent.
 
-Machine d'états (`FramingStatus`) :
+State machine (`FramingStatus`):
 
     collecting ⇄ choosing_candidate → ready_to_confirm → confirmed → launched
           ↑______________ correction (revision + 1) ______________|
-    tout état non lancé → cancelled
+    any unlaunched state → cancelled
 
-Chaque réponse/correction incrémente `revision` et rend obsolète tout résumé antérieur.
-`assert_launchable` est le seul garde-fou de lancement : sans confirmation explicite de la
-révision courante, aucune mission n'est créée. Aucune liste de villes : la ville est une
-valeur libre ; les événements possibles viennent de recherches sourcées (`RaceCandidate`).
+Each reply/correction increments `revision` and invalidates previous summaries.
+`assert_launchable` guards launch: no mission without explicit confirmation of the
+current revision. Cities are free text; events come from sourced searches (`RaceCandidate`).
 """
 
 from datetime import date, datetime
@@ -72,7 +71,7 @@ KNOWN_STATUSES = {SlotStatus.answered, SlotStatus.sourced, SlotStatus.not_needed
 
 
 class Slot(BaseModel):
-    """`value` reste None tant que l'humain ou une source ne l'a pas fourni ; jamais deviné."""
+    """`value` stays None until supplied by a human or source; never guessed."""
 
     name: SlotName
     status: SlotStatus = SlotStatus.unknown
@@ -86,13 +85,13 @@ class Slot(BaseModel):
 
 
 def matching_distance(distances_km: list[float], km: float) -> float | None:
-    """Distance proposée la plus proche de `km`, à l'arrondi près (21.097 ≈ 21.0975)."""
+    """Closest offered distance to `km`, allowing rounding (21.097 ≈ 21.0975)."""
     close = [d for d in distances_km if abs(d - km) <= max(0.5, km * 0.03)]
     return min(close, key=lambda d: abs(d - km)) if close else None
 
 
 class RaceCandidate(BaseModel):
-    """Événement trouvé par recherche générique (B1), proposé au choix humain."""
+    """Event found by generic search (B1), offered for human selection."""
 
     id: str
     name: str
@@ -143,7 +142,7 @@ class FramingTurn(BaseModel):
 
 
 class FramingSummary(BaseModel):
-    """Résumé présenté avant confirmation ; valide seulement pour `revision`."""
+    """Summary shown before confirmation; valid only for `revision`."""
 
     revision: int
     race: Race
@@ -190,7 +189,7 @@ class FramingCreate(BaseModel):
 
 
 class FramingReply(BaseModel):
-    """Réponse libre, choix de bouton ou correction d'un slot. `revision` = révision vue par l'UI."""
+    """Free-text reply, button choice or slot correction at the UI's `revision`."""
 
     revision: int
     text: str | None = Field(default=None, max_length=1000)
@@ -206,7 +205,7 @@ class FramingConfirm(BaseModel):
 
 
 class CandidateSearch(Protocol):
-    """Recherche générique sourcée (B1) : aucun filtre par liste de villes ; [] si rien trouvé."""
+    """Generic sourced search (B1): no city allowlist; [] if nothing is found."""
 
     async def find_candidates(
         self, slots: dict[SlotName, Slot], request_text: str | None = None
@@ -214,7 +213,7 @@ class CandidateSearch(Protocol):
 
 
 class FramingError(Exception):
-    """Refus de lancement ou de réponse ; le serveur la traduit en 409."""
+    """Launch or reply refusal; the server translates it to HTTP 409."""
 
 
 def missing_slots(session: FramingSession) -> list[SlotName]:
@@ -223,30 +222,30 @@ def missing_slots(session: FramingSession) -> list[SlotName]:
 
 def check_reply_revision(session: FramingSession, reply: FramingReply) -> None:
     if session.status in (FramingStatus.cancelled, FramingStatus.launched):
-        raise FramingError(f"Cadrage {session.status.value} : plus de réponse acceptée")
+        raise FramingError(f"Framing {session.status.value}: no further replies accepted")
     if reply.revision != session.revision:
         raise FramingError(
-            f"Révision obsolète {reply.revision} (courante {session.revision})"
+            f"Stale revision {reply.revision} (current {session.revision})"
         )
 
 
 def assert_launchable(session: FramingSession, confirm: FramingConfirm) -> str | None:
-    """Retourne l'id de mission existant si la même confirmation est rejouée, sinon None.
+    """Return the existing mission ID on replay of the same confirmation, else None.
 
-    Lève FramingError si la confirmation ne porte pas sur le résumé courant complet.
+    Raise FramingError unless confirmation targets the complete current summary.
     """
     if session.mission_id is not None:
         if confirm.idempotency_key == session.confirm_key:
             return session.mission_id
-        raise FramingError("Mission déjà lancée pour ce cadrage")
+        raise FramingError("Mission already launched for this framing")
     if session.status is not FramingStatus.ready_to_confirm:
-        raise FramingError(f"Cadrage non prêt : {session.status.value}")
+        raise FramingError(f"Framing not ready: {session.status.value}")
     if session.summary is None or session.summary.revision != session.revision:
-        raise FramingError("Résumé absent ou obsolète")
+        raise FramingError("Summary missing or stale")
     if confirm.revision != session.revision:
         raise FramingError(
-            f"Confirmation de la révision {confirm.revision}, courante {session.revision}"
+            f"Confirmation for revision {confirm.revision}, current {session.revision}"
         )
     if missing := missing_slots(session):
-        raise FramingError("Informations manquantes : " + ", ".join(m.value for m in missing))
+        raise FramingError("Missing information: " + ", ".join(m.value for m in missing))
     return None

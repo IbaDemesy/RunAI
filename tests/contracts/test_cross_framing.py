@@ -210,7 +210,7 @@ def test_city_correction_invalidates_old_summary_and_candidate_question(channel)
         for name in (SlotName.race, SlotName.race_date):
             assert not corrected.slots[name].is_known
         assert corrected.slots[SlotName.distance_km].value == 10
-        with pytest.raises(FramingError, match="Question périmée"):
+        with pytest.raises(FramingError, match="Stale or unknown question"):
             await engine.reply(
                 ready.id,
                 FramingReply(
