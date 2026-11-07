@@ -1,0 +1,161 @@
+{
+  "job_id": "d2d8e205-39f9-4863-b36e-9fc8a0145779",
+  "status": "done",
+  "audio_duration_s": 22.144,
+  "wall_time_s": 5.9,
+  "transcription_time_s": 3.333,
+  "audio_to_llm_exec_time_s": 1.4458037550002336,
+  "audio_to_llm_success": true,
+  "audio_to_llm_error": null,
+  "audio_to_llm_item": {},
+  "transcript": "Je cours trois fois par semaine, à peu près 25 kilomètres. Ma plus longue sortie, c'est 14 10 km 1h20. J'ai fait le 10 km de Paris en 52 minutes il y a 4 mois. Je cours depuis 2 ans et j'ai 31 ans. J'aimerais battre mon chrono et courir à l'étranger.",
+  "llm_raw": "{\n  \"sessions_per_week\": 3,\n  \"weekly_km\": 25,\n  \"longest_recent_run\": {\n    \"distance_km\": 100,\n    \"duration_min\": 80,\n    \"d_plus_m\": null\n  },\n  \"recent_race\": {\n    \"distance_km\": 10,\n    \"time_s\": 3120,\n    \"months_ago\": 4\n  },\n  \"cooper_m\": null,\n  \"running_since_months\": 24,\n  \"age\": 31,\n  \"goals\": [\n    \"chrono\",\n    \"voyage\"\n  ]\n}",
+  "llm_profile": {
+    "sessions_per_week": 3.0,
+    "weekly_km": 25.0,
+    "longest_recent_run": {
+      "distance_km": 100.0,
+      "duration_min": 80.0,
+      "d_plus_m": null
+    },
+    "recent_race": {
+      "distance_km": 10.0,
+      "time_s": 3120,
+      "months_ago": 4.0
+    },
+    "cooper_m": null,
+    "running_since_months": 24,
+    "age": 31,
+    "goals": [
+      "chrono",
+      "voyage"
+    ],
+    "missing_fields": []
+  },
+  "llm_parse_error": null,
+  "llm_plausibility_issues": [
+    "longest_recent_run : 100 km en 80 min (0.8 min/km)",
+    "longest_recent_run : 100 km > volume hebdo 25 km"
+  ],
+  "rule_profile": {
+    "sessions_per_week": 3.0,
+    "weekly_km": 25.0,
+    "longest_recent_run": {
+      "distance_km": 10.0,
+      "duration_min": null,
+      "d_plus_m": null
+    },
+    "recent_race": {
+      "distance_km": 10.0,
+      "time_s": 3120,
+      "months_ago": 4.0
+    },
+    "cooper_m": null,
+    "running_since_months": 24,
+    "age": 31,
+    "goals": [
+      "chrono",
+      "voyage"
+    ],
+    "missing_fields": []
+  },
+  "rule_plausibility_issues": [],
+  "assessment_from_rules": {
+    "profile": {
+      "sessions_per_week": 3.0,
+      "weekly_km": 25.0,
+      "longest_recent_run": {
+        "distance_km": 10.0,
+        "duration_min": null,
+        "d_plus_m": null
+      },
+      "recent_race": {
+        "distance_km": 10.0,
+        "time_s": 3120,
+        "months_ago": 4.0
+      },
+      "cooper_m": null,
+      "running_since_months": 24,
+      "age": 31,
+      "goals": [
+        "chrono",
+        "voyage"
+      ],
+      "missing_fields": []
+    },
+    "estimate": {
+      "level": "intermediaire",
+      "source": "chrono",
+      "confidence": "haute",
+      "vdot_low": 36.9,
+      "vdot_high": 39.0,
+      "predictions": {
+        "5k": {
+          "distance": "5k",
+          "low_s": 1478,
+          "high_s": 1547,
+          "label": "24'38 - 25'47",
+          "pace_label": "4'56 - 5'09 /km"
+        },
+        "10k": {
+          "distance": "10k",
+          "low_s": 3068,
+          "high_s": 3224,
+          "label": "51'08 - 53'44",
+          "pace_label": "5'07 - 5'22 /km"
+        },
+        "semi": {
+          "distance": "semi",
+          "low_s": 6803,
+          "high_s": 7275,
+          "label": "1h53'23 - 2h01'15",
+          "pace_label": "5'22 - 5'45 /km"
+        },
+        "marathon": {
+          "distance": "marathon",
+          "low_s": 14074,
+          "high_s": 16169,
+          "label": "3h54'34 - 4h29'29",
+          "pace_label": "5'34 - 6'23 /km"
+        }
+      },
+      "notes": []
+    },
+    "weeks_available": 14,
+    "advice": [
+      {
+        "distance": "5k",
+        "verdict": "recommande",
+        "weeks_needed_low": 3,
+        "weeks_needed_high": 4,
+        "reason": "14 semaines disponibles pour 3 a 4 necessaires."
+      },
+      {
+        "distance": "10k",
+        "verdict": "recommande",
+        "weeks_needed_low": 4,
+        "weeks_needed_high": 6,
+        "reason": "14 semaines disponibles pour 4 a 6 necessaires."
+      },
+      {
+        "distance": "semi",
+        "verdict": "recommande",
+        "weeks_needed_low": 8,
+        "weeks_needed_high": 11,
+        "reason": "14 semaines disponibles pour 8 a 11 necessaires."
+      },
+      {
+        "distance": "marathon",
+        "verdict": "deconseille",
+        "weeks_needed_low": 16,
+        "weeks_needed_high": 21,
+        "reason": "14 semaines pour 16 minimum : risque de blessure, viser plus court."
+      }
+    ],
+    "recommended": [
+      "5k",
+      "10k",
+      "semi"
+    ]
+  }
+}
