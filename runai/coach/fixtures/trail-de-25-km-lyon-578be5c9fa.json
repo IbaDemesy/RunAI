@@ -1,0 +1,309 @@
+{
+  "query": {
+    "distance_km": 25.0,
+    "distance_label": "trail de 25 km",
+    "tolerance_km": 6.0,
+    "date_from": "2027-04-01",
+    "date_to": "2027-06-30",
+    "origin_city": "Lyon",
+    "max_travel_h": 3.0,
+    "travel_mode": "ground",
+    "terrain": "vallonne",
+    "race_size": "indifferent",
+    "zone_hint": "en Auvergne-Rhone-Alpes, Bourgogne ou Jura (moins de 3 h de Lyon)",
+    "foreign": false,
+    "seed_races": []
+  },
+  "candidates": [
+    {
+      "name": "Trail des Forts de Besançon — 22KM",
+      "race_date": "2027-05-07",
+      "city": "Besançon",
+      "country": "France",
+      "distance_km": 22.0,
+      "elevation_gain_m": 700.0,
+      "platform": null,
+      "registration_url": "https://www.traildesforts.com/",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "INSCRIPTIONS OUVERTES",
+      "status_from_search": "Ouvertes",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 2.73,
+      "sources": [
+        "https://www.traildesforts.com/",
+        "https://sasdepart.fr/calendrier-trail/mai-2027/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Trail Patrimoine Chemin des Batignolles",
+      "race_date": "2027-05-08",
+      "city": "Volvic",
+      "country": "France",
+      "distance_km": 21.0,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://www.volvic-vvx.com/",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Inscriptions sportives",
+      "status_from_search": "Ouvertes",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 2.04,
+      "sources": [
+        "https://sasdepart.fr/calendrier-trail/mai-2027/",
+        "https://www.volvic-vvx.com/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "La Transju'Trails",
+      "race_date": "2027-06-05",
+      "city": "Les Rousses",
+      "country": "France",
+      "distance_km": null,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://www.latransju.com/evenements/la-transju-trail/",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Les inscriptions sont ouvertes !",
+      "status_from_search": "Ouvertes — ouverture annoncée le 8 octobre 2026",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 1.8,
+      "sources": [
+        "https://www.latransju.com/evenements/la-transju-trail/",
+        "https://sasdepart.fr/calendrier-trail/bourgogne-franche-comte/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "TOUR DU VAL FONCINE",
+      "race_date": "2027-05-23",
+      "city": "Foncine-le-Haut",
+      "country": "France",
+      "distance_km": 26.0,
+      "elevation_gain_m": 810.0,
+      "platform": null,
+      "registration_url": "https://val-foncine-trail.fr/",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "non_lu",
+      "status_evidence": null,
+      "status_from_search": "Non annoncées — inscriptions non annoncées",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 1.99,
+      "sources": [
+        "https://val-foncine-trail.fr/",
+        "https://sasdepart.fr/calendrier-trail/bourgogne-franche-comte/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Duo De L'hermitage",
+      "race_date": "2027-05-15",
+      "city": "Tain L'hermitage",
+      "country": "France",
+      "distance_km": null,
+      "elevation_gain_m": 1000.0,
+      "platform": null,
+      "registration_url": "https://www.athle.fr/competitions/887846683840663852753828875831106843",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "agregateur",
+      "status_evidence": null,
+      "status_from_search": "Non annoncées — ouverture non annoncée par l’organisateur",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 1.1,
+      "sources": [
+        "https://www.athle.fr/competitions/887846683840663852753828875831106843",
+        "https://sasdepart.fr/calendrier-trail/mai-2027/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Trail des Reculées — parcours de 20 à 30 km (distance exacte non précisée)",
+      "race_date": "2027-04-04",
+      "city": "Lons-le-Saunier",
+      "country": "France",
+      "distance_km": null,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://www.traildesreculees.fr/",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "page",
+      "status_evidence": null,
+      "status_from_search": "Non annoncées — inscriptions non annoncées",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": "The Linkup API returned a fetch target unreachable error (400). The provided URL could not be reached by Linkup.",
+      "km_from_origin": null,
+      "travel_h_est": 1.68,
+      "sources": [
+        "https://www.traildesreculees.fr/",
+        "https://sasdepart.fr/calendrier-trail/bourgogne-franche-comte/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Trail de la saint ju",
+      "race_date": "2027-04-24",
+      "city": "Brioude",
+      "country": "France",
+      "distance_km": 25.0,
+      "elevation_gain_m": 900.0,
+      "platform": null,
+      "registration_url": "https://www.athle.fr/competitions/559846611840116852317843336831829855",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "agregateur",
+      "status_evidence": "Engagement en ligne",
+      "status_from_search": "Non annoncées — ouverture non annoncée par l’organisateur",
+      "price_eur": 25.0,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 1.8,
+      "sources": [
+        "https://sasdepart.fr/calendrier-trail/auvergne-rhone-alpes/",
+        "https://www.athle.fr/competitions/559846611840116852317843336831829855"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Lyon Urban Trail",
+      "race_date": "2027-04-03",
+      "city": "Lyon",
+      "country": "France",
+      "distance_km": 25.0,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://www.lyonurbantrail.com/",
+      "official_url": null,
+      "participants": null,
+      "status": "pas_encore_ouvert",
+      "status_source": "page",
+      "status_evidence": "OUVERTURE DES INSCRIPTIONS : 12/11/2026",
+      "status_from_search": "Pas encore ouvertes — « Inscriptions prochainement »",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.0,
+      "sources": [
+        "https://sasdepart.fr/calendrier-trail/avril-2027/",
+        "https://www.lyonurbantrail.com/"
+      ],
+      "seed": false
+    }
+  ],
+  "rejected": [
+    {
+      "name": "Trail de Douvres — parcours de 20 à 30 km (distance exacte non précisée)",
+      "race_date": "2027-04-25",
+      "city": "Douvres",
+      "why": "trajet estime 8.03 h > 3.0 h"
+    },
+    {
+      "name": "Foulées Mélinoises — parcours de 25 km",
+      "race_date": "2027-06-13",
+      "city": "Échenoz-la-Méline",
+      "why": "trajet estime 3.3 h > 3.0 h"
+    },
+    {
+      "name": "Trail des Reculées",
+      "race_date": "2027-04-04",
+      "city": "Lons-le-Saunier",
+      "why": "distance 55.0 km hors cible"
+    },
+    {
+      "name": "Trail des Vosges Saônoises",
+      "race_date": "2027-04-17",
+      "city": "Fresse",
+      "why": "trajet estime 4.03 h > 3.0 h"
+    },
+    {
+      "name": "Trail du Sapeur",
+      "race_date": "2027-05-02",
+      "city": "Lure",
+      "why": "trajet estime 3.6 h > 3.0 h"
+    },
+    {
+      "name": "Trail des Forts de Besançon",
+      "race_date": "2027-05-07",
+      "city": "Besançon",
+      "why": "distance 62.0 km hors cible"
+    },
+    {
+      "name": "La Transju’Trails (TransJu’Trail)",
+      "race_date": "2027-06-05",
+      "city": "Montagnes du Jura (secteur Les Rousses / Morez)",
+      "why": "distance 110.0 km hors cible"
+    },
+    {
+      "name": "Foulées Mélinoises",
+      "race_date": "2027-06-13",
+      "city": "Échenoz-la-Méline",
+      "why": "trajet estime 3.3 h > 3.0 h"
+    },
+    {
+      "name": "Trail du Mont d’Or",
+      "race_date": "2027-06-19",
+      "city": "Métabief",
+      "why": "distance 55.0 km hors cible"
+    },
+    {
+      "name": "Trail de la Vallée de la Haute-Seille",
+      "race_date": "2027-06-20",
+      "city": "Château-Chalon",
+      "why": "distance 18.0 km hors cible"
+    }
+  ],
+  "metrics": {
+    "search_calls": 2,
+    "fetch_calls": 9,
+    "fetch_errors": 1,
+    "skipped_fetches": 0,
+    "total_s": 52.17,
+    "phases_s": {
+      "decouverte": 27.88,
+      "filtre_geo": 3.33,
+      "url_inscription": 0.0,
+      "verification": 20.97
+    },
+    "cost_usd_estimated": 0.10399999999999998,
+    "second_round": false
+  },
+  "created_at": "2026-11-07T12:00:00Z",
+  "origin": "spike/trouver_courses (p3_trail_20_30_lyon, run réel du 07/11/2026)",
+  "notes": [
+    "mesuré : 52.17 s, delta solde Linkup 0.056 $"
+  ]
+}
