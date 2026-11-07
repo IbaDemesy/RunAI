@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RunAI · portail de mission</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>RunAI</h1>
+      <p class="tagline">Dis-moi ta course, je prépare tout le déplacement. L'agent prépare, vous signez et payez.</p>
+    </div>
+    <span id="mode" class="badge hidden">Mode démo : agents simulés, aucune clé utilisée</span>
+  </header>
+
+  <main>
+    <form id="mission-form" class="panel ask">
+      <label for="query">Quelle course voulez-vous courir ?</label>
+      <div class="row">
+        <input id="query" name="query" required minlength="3" autocomplete="off"
+               placeholder="Ex. : le marathon de Milan, je pars de Paris">
+        <button type="button" id="mic" class="secondary" title="Dire la course">Dire la course</button>
+        <button type="submit" id="start">Préparer</button>
+      </div>
+      <p id="mic-status" class="muted"></p>
+    </form>
+
+    <section id="mission" class="hidden">
+      <div class="panel race">
+        <div class="race-head">
+          <div>
+            <p class="muted">Mission <code id="mission-id"></code> · <span id="mission-status"></span></p>
+            <h2 id="race-name">Recherche de la course…</h2>
+          </div>
+          <div class="row">
+            <button id="pause-all" class="secondary">Tout mettre en pause</button>
+            <button id="resume-all" class="secondary">Tout reprendre</button>
+          </div>
+        </div>
+        <dl id="race-facts" class="facts"></dl>
+        <ul id="race-sources" class="sources"></ul>
+      </div>
+
+      <div id="steps" class="steps"></div>
+
+      <div class="panel portal">
+        <h2>Portail : à vous de jouer</h2>
+        <p class="muted">Chaque agent s'arrête avant tout engagement. Voici où il s'est arrêté et ce que vous devez faire vous-même.</p>
+        <div id="portal-items"><p class="muted">Les agents travaillent encore…</p></div>
+        <p id="portal-total" class="total"></p>
+      </div>
+
+      <div class="panel trace">
+        <h2>Trace de la mission</h2>
+        <ol id="events"></ol>
+      </div>
+    </section>
+  </main>
+
+  <template id="step-template">
+    <article class="panel step">
+      <header>
+        <h3 class="step-label"></h3>
+        <span class="status"></span>
+      </header>
+      <p class="last-action muted"></p>
+      <p class="current-url"></p>
+      <div class="live">
+        <iframe class="live-frame" title="Vue live de l'agent" loading="lazy"></iframe>
+        <a class="live-link" target="_blank" rel="noopener">Ouvrir la vue live ↗</a>
+      </div>
+      <p class="summary"></p>
+      <div class="row controls">
+        <button class="pause secondary">Pause</button>
+        <button class="resume secondary">Reprise</button>
+      </div>
+      <form class="row message">
+        <input name="text" placeholder="Message à l'agent (ex. : prends plutôt le 10 km)" autocomplete="off">
+        <button type="submit" class="secondary">Envoyer</button>
+      </form>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

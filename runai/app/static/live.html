@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Vue live simulée</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="live-page">
+  <div class="browser">
+    <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><code id="url">about:blank</code></div>
+    <div class="browser-body">
+      <p class="muted">Vue live simulée · <span id="label"></span> · <span id="status"></span></p>
+      <h2 id="action">En attente de l'agent…</h2>
+      <ol id="history"></ol>
+    </div>
+  </div>
+  <script>
+    const STATUS = { pending: "en attente", running: "en cours", paused: "en pause", stopped_before_commitment: "arrêté avant engagement", completed: "terminé", failed: "échec" };
+    const session = new URLSearchParams(location.search).get("session");
+    async function refresh() {
+      const response = await fetch(`/api/live/${encodeURIComponent(session)}`);
+      if (!response.ok) return;
+      const live = await response.json();
+      document.getElementById("label").textContent = live.label;
+      document.getElementById("status").textContent = STATUS[live.step.status] || live.step.status;
+      document.getElementById("url").textContent = live.step.data.current_url || "about:blank";
+      document.getElementById("action").textContent = live.step.data.last_action || "En attente de l'agent…";
+      const list = document.getElementById("history");
+      list.replaceChildren(...live.history.map((event) => {
+        const item = document.createElement("li");
+        item.textContent = event.message;
+        return item;
+      }));
+    }
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>
