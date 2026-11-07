@@ -12,6 +12,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, HttpUrl
 
+from runai.app.mission_journey import project_journey
 from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
 from runai.app.providers import UnavailableBrowserAgents
 from runai.app.tasks import (
@@ -19,7 +20,8 @@ from runai.app.tasks import (
     human_action,
 )
 from runai.contracts.common import DataMode, Limitation
-from runai.contracts.framing import FramingError
+from runai.contracts.framing import FramingError, FramingSummary
+from runai.contracts.journey import JourneyPlan
 from runai.contracts.mission import EventEnvelope, HumanAnswer, MissionSnapshot
 from runai.framing.launch import LaunchPlan, plan_launch
 from runai.h.human_questions import HumanQuestionRegistry
@@ -33,6 +35,7 @@ from runai.models import (
     TraceEvent,
     utcnow,
 )
+from runai.planning.recap_adapter import recap_from_journey
 from runai.redaction import redact_secrets
 from runai.safety import detect_stop_point, guard_task
 from runai.tracing import TraceWriter
@@ -74,6 +77,8 @@ class Mission(BaseModel):
     plan: LaunchPlan | None = Field(default=None, exclude=True)
     envelopes: list[EventEnvelope] = Field(default_factory=list, exclude=True)
     limitations: list[Limitation] = Field(default_factory=list)
+    framing_summary: FramingSummary | None = Field(default=None, exclude=True)
+    journey: JourneyPlan | None = Field(default=None, exclude=True)
 
     @property
     def is_terminal(self) -> bool:
@@ -137,6 +142,7 @@ class MissionService:
         self._event_subscribers: dict[str, set[asyncio.Queue]] = {}
         self.providers = None
         self._mission_tasks: dict[str, asyncio.Task] = {}
+        self._recaps = {}
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._loop: asyncio.AbstractEventLoop | None = None
 
@@ -146,16 +152,17 @@ class MissionService:
             raise FramingError(
                 f"Pas de fixture {plan.mode.value} pour cet événement ; préparation manuelle uniquement, aucun agent lancé."
             )
-        mission = await self.create(plan)
+        mission = await self.create(plan, summary=session.summary)
         return self.snapshot(mission.id)
 
-    async def create(self, plan: LaunchPlan) -> Mission:
+    async def create(self, plan: LaunchPlan, *, summary: FramingSummary | None = None) -> Mission:
         if not isinstance(plan, LaunchPlan):
             raise MissionError("Un cadrage confirmé est obligatoire : /api/framings")
         self._loop = asyncio.get_running_loop()
         mission = Mission(
             id=uuid.uuid4().hex[:12], query=plan.brief.race_label,
             race=plan.race, plan=plan, limitations=list(plan.limitations),
+            framing_summary=summary.model_copy(deep=True) if summary else None,
             steps={kind: StepResult(
                 kind=kind,
                 status=StepStatus.pending if kind in plan.automated_steps() else StepStatus.completed,
@@ -166,6 +173,7 @@ class MissionService:
         )
         self.missions[mission.id] = mission
         self._writers[mission.id] = TraceWriter(mission.id, traces_dir=self.traces_dir)
+        self._refresh_journey(mission)
         self._record(mission, TraceEvent(source="app", type="mission_created",
                                         message=f"Mission créée : « {mission.query} »"))
         self._emit(mission, "snapshot", self.snapshot(mission.id).model_dump(mode="json"))
@@ -185,8 +193,52 @@ class MissionService:
             race=mission.race, steps=list(mission.steps.values()),
             questions=[q for q in self.questions.questions.values() if q.mission_id == mission.id],
             limitations=mission.limitations, error=mission.error,
+            journey_revision=mission.journey.revision if mission.journey else None,
+            budget=mission.journey.budget if mission.journey else None,
         )
         return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
+
+    def _refresh_journey(self, mission: Mission) -> None:
+        if mission.framing_summary is None:
+            return
+        try:
+            plan, questions = project_journey(mission)
+        except (ValueError, TypeError, KeyError) as error:
+            limitation = Limitation(code="journey_data_invalid", message=redact_secrets(str(error)))
+            if limitation not in mission.limitations:
+                mission.limitations.append(limitation)
+                self._emit(mission, "error", limitation.model_dump(mode="json"))
+            return
+        plan = JourneyPlan.model_validate(redact_secrets(plan.model_dump(mode="json")))
+        if mission.journey is None or plan.revision != mission.journey.revision:
+            mission.journey = plan
+            self._recaps[(mission.id, plan.revision)] = recap_from_journey(plan)
+            self._emit(mission, "journey_revised", {"revision": plan.revision})
+            self._emit(mission, "budget_updated", plan.budget.model_dump(mode="json"))
+        for question in questions:
+            qid = f"eligibility-{mission.id}-{question.id}"
+            if qid in self.questions.questions:
+                continue
+            manual = AgentQuestion(id=qid, kind=StepKind.registration, question=question.text,
+                                   options=["À vérifier moi-même sur le site officiel"])
+            wrapped = self.questions.open(manual, mission.id, mission.plan.revision,
+                                          ttl=self.question_timeout_s)
+            self.questions.questions[qid].reason = f"eligibility: Démarche manuelle uniquement. {question.detail or ''} {question.source_url or ''} {question.deadline or ''}"
+            wrapped = self.questions.get(qid)
+            self._emit(mission, "question_opened", wrapped.model_dump(mode="json"))
+
+    def get_journey(self, mission_id: str) -> JourneyPlan:
+        mission = self.get(mission_id)
+        if mission.journey is None:
+            raise MissionError("Séjour indisponible : données confirmées encore insuffisantes")
+        return mission.journey.model_copy(deep=True)
+
+    def get_recap(self, mission_id: str, revision: int | None = None):
+        plan = self.get_journey(mission_id)
+        try:
+            return self._recaps[(mission_id, plan.revision if revision is None else revision)]
+        except KeyError:
+            raise MissionError("Révision du récap indisponible") from None
 
     def _emit(self, mission: Mission, type_: str, payload: dict) -> None:
         envelope = EventEnvelope.build(mission.id, len(mission.envelopes) + 1, type_, payload)
@@ -291,8 +343,11 @@ class MissionService:
             self._publish(mission, ("answer", question_model.model_dump(mode="json")))
 
     def answer_question(self, mission_id: str, question_id: str, answer: HumanAnswer):
-        self.get(mission_id)
-        return self.questions.answer(question_id, mission_id, answer)
+        mission = self.get(mission_id)
+        result = self.questions.answer(question_id, mission_id, answer)
+        if (result.reason or "").startswith("eligibility:") or question_id.startswith("eligibility-"):
+            self._emit(mission, "question_resolved", result.model_dump(mode="json"))
+        return result
 
     async def pause(self, mission_id: str, kind: StepKind) -> None:
         mission, step, run = self._active(mission_id, kind)
@@ -513,10 +568,12 @@ class MissionService:
                         data={"step": kind.value},
                     ),
                 )
+                self._refresh_journey(mission)
                 return
             finally:
                 self._runs.pop((mission.id, kind), None)
         step = mission.steps[kind] = self._merge_result(step, result)
+        self._refresh_journey(mission)
         self._record(
             mission,
             TraceEvent(

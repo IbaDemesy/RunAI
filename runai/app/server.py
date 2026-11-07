@@ -6,9 +6,13 @@ from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
@@ -27,10 +31,12 @@ from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
 from runai.h.human_questions import HumanQuestionError
 from runai.models import StepKind
+from runai.planning import recap_adapter
 from runai.redaction import redact_secrets
 from runai.search.candidates import LinkupCandidateSearch
 
 STATIC_DIR = Path(__file__).parent / "static"
+ROOT_DIR = Path(__file__).resolve().parents[2]
 KEEPALIVE_SECONDS = 15
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
 
@@ -94,10 +100,22 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             await lifecycle.aclose()
 
     app = FastAPI(title="RunAI", lifespan=lifespan)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error(request, error):
+        return JSONResponse(redact_secrets({"detail": error.detail}), status_code=error.status_code,
+                            headers=redact_secrets(error.headers))
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request, error):
+        return JSONResponse(redact_secrets(jsonable_encoder({"detail": error.errors()})), status_code=422)
     app.state.service = selected
     engine = FramingEngine(search=candidate_search(selected.providers), mode=selected.providers.mode)
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
+    app.mount("/static/contract-fixtures", StaticFiles(directory=ROOT_DIR / "runai/contracts/fixtures"), name="contract-fixtures")
+    app.mount("/static/flyover", StaticFiles(directory=ROOT_DIR / "web/flyover"), name="flyover")
+    app.mount("/static/voice", StaticFiles(directory=ROOT_DIR / "web/voice"), name="voice")
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     def get_service() -> MissionService:
@@ -118,7 +136,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> dict:
-        return get_service().providers.health_payload()
+        return redact_secrets(get_service().providers.health_payload())
 
     @app.post("/api/missions", status_code=410)
     async def create_mission(body: MissionRequest) -> dict:
@@ -172,6 +190,34 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    @app.get("/api/missions/{mission_id}/journey")
+    async def journey(mission_id: str):
+        try:
+            return get_service().get_journey(mission_id).model_dump(mode="json")
+        except MissionError as error:
+            raise HTTPException(404, redact_secrets(str(error))) from None
+
+    @app.get("/api/missions/{mission_id}/recap.{format}")
+    async def export_recap(mission_id: str, format: str, revision: int | None = None):
+        renderers = {"html": (recap_adapter.render_html, "text/html"),
+                     "pdf": (recap_adapter.render_pdf, "application/pdf"),
+                     "ics": (recap_adapter.render_ics, "text/calendar")}
+        if format not in renderers:
+            raise HTTPException(404, "Format d'export inconnu")
+        try:
+            snapshot = get_service().get_recap(mission_id, revision)
+        except MissionError as error:
+            raise HTTPException(404, redact_secrets(str(error))) from None
+        renderer, media = renderers[format]
+        try:
+            content = await run_in_threadpool(renderer, snapshot)
+        except Exception as error:  # noqa: BLE001 - erreur de rendu honnête, sans autre instantané
+            raise HTTPException(503, redact_secrets(str(error))) from None
+        return Response(content, media_type=media, headers={
+            "X-RunAI-Journey-Revision": str(snapshot.revision),
+            "Content-Disposition": f'inline; filename="{mission_id}-r{snapshot.revision}.{format}"',
+        })
 
     @app.post("/api/missions/{mission_id}/pause")
     async def pause_all(mission_id: str) -> dict:
@@ -252,7 +298,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             raise HTTPException(status_code=400, detail="Audio vide")
         content_type = request.headers.get("content-type", "application/octet-stream")
         try:
-            return {"text": await get_service().transcribe(audio, content_type), "mode": selected.providers.mode.value}
+            return redact_secrets({"text": await get_service().transcribe(audio, content_type), "mode": selected.providers.mode.value})
         except Exception as error:  # noqa: BLE001 - erreur fournisseur exposée sans faux résultat
             raise HTTPException(503, redact_secrets(str(error))) from None
 
@@ -267,11 +313,11 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             for event in mission.events
             if event.data.get("session_id") == session_id
         ]
-        return {
+        return redact_secrets({
             "mission_id": mission.id,
             "label": STEP_LABELS[step.kind],
             "step": step.model_dump(mode="json"),
             "history": history,
-        }
+        })
 
     return app

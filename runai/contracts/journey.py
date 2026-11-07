@@ -8,7 +8,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_serializer, model_validator
 
 from runai.contracts.common import (
     Automation,
@@ -17,6 +17,7 @@ from runai.contracts.common import (
     Limitation,
     Provenance,
 )
+from runai.redaction import redact_secrets
 
 SCHEMA_VERSION = "journey.v1"
 
@@ -186,6 +187,10 @@ class JourneyPlan(BaseModel):
     warnings: list[str] = Field(default_factory=list)
     limitations: list[Limitation] = Field(default_factory=list)
     sources: list[Provenance] = Field(default_factory=list)
+
+    @model_serializer(mode="wrap")
+    def serialize_plan(self, handler):
+        return redact_secrets(handler(self))
 
     @model_validator(mode="after")
     def _references(self) -> "JourneyPlan":

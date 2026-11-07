@@ -698,7 +698,7 @@ def test_api_runs_a_demo_mission_with_sse(tmp_path):
         answers.join(timeout=2)
         assert not answers.is_alive()
         names = [name for name, _ in events]
-        assert names[0] == "trace"
+        assert names[0] == "journey_revised"
         assert "trace" in names
         final = [data["payload"] for name, data in events if name == "mission_status"][-1]
         assert final["status"] == "awaiting_human"

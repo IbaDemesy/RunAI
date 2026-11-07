@@ -96,7 +96,39 @@ python scripts/test_linkup.py
 
 Ce test lance une vraie recherche et affiche le nombre de résultats et la première URL.
 
-Tests hors ligne (sans clé) : `ruff check .` puis `pytest -q`.
+Tests hors ligne (sans clé), avec les dépendances installées dans `.venv` :
+
+```bash
+source ~/.nvm/nvm.sh  # sur la VM : Node 24 doit aussi être dans le PATH de pytest
+.venv/bin/ruff check .
+.venv/bin/pytest -q
+node --test web/flyover/tests/*.test.js tests/contracts/*.test.js runai/app/static/tests/*.test.js web/voice/tests/*.test.js
+for script in runai/app/static/*.js web/flyover/*.js web/voice/voice-input.js; do node --check "$script" || break; done
+```
+
+Les tests UX rejouent les patches D1 sur le commit `97265c6` ; un clone de test doit
+contenir cet historique. Le job CI utilise un checkout complet et installe Node 24
+avant pytest et les suites JavaScript.
+
+Après confirmation, `GET /api/missions/{id}/journey` retourne le séjour partiel ou
+complet et sa révision. Les exports `/api/missions/{id}/recap.html`, `.pdf`, `.ics`
+acceptent `?revision=N` : les liens du shell utilisent la même révision pour les trois
+formats. Une révision inconnue ou un séjour indisponible retourne 404 ; une panne de
+rendu PDF retourne 503, sans remplacer les données. Les instantanés restent en mémoire.
+
+Les résultats structurés sont lus dans `StepResult.data.journey` (ou dans son `answer`
+structuré) : `race` pour l'inscription, `hotel` pour l'hébergement,
+`home/outbound/return_trip/local_cost` pour le transport, selon les modèles de
+`runai.journey`. Les preuves d'inscription `quote`, `rules`, `race_sheet` utilisent
+les modèles métier existants ; `chosen_options` et `entry_path_id` restent des choix
+explicites. Sans ces données structurées, le plan conserve les inconnues : aucun
+géocodage ni horaire n'est déduit du résumé textuel. Les démarches d'éligibilité
+restent manuelles et ne sont jamais renvoyées à un agent comme autorisation.
+
+Le shell sert les composants journey et voix localement ; `?mock=1` utilise les
+fixtures montées sous `/static/contract-fixtures/`. MapLibre est chargé depuis le CDN
+épinglé avec SRI ; les tuiles proviennent d'OpenStreetMap. Si WebGL, le CDN ou les
+tuiles échouent, la carte est détruite et la timeline accessible reste disponible.
 
 ## CI/CD
 

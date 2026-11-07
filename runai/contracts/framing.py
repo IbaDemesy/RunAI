@@ -16,10 +16,11 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Any, Literal, Protocol
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_serializer
 
 from runai.contracts.common import DataMode, Limitation, Provenance
 from runai.models import Race, Source, utcnow
+from runai.redaction import redact_secrets
 
 SCHEMA_VERSION = "framing.v1"
 
@@ -166,6 +167,10 @@ class FramingSession(BaseModel):
     confirm_key: str | None = None
     mission_id: str | None = None
     created_at: datetime = Field(default_factory=utcnow)
+
+    @model_serializer(mode="wrap")
+    def serialize_session(self, handler):
+        return redact_secrets(handler(self))
 
 
 class FramingCreate(BaseModel):

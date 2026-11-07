@@ -6,10 +6,21 @@
   <title>RunAI · Préparer ma course</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/flyover/journey.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
 </head>
 <body>
   <header class="top"><a class="brand" href="/" aria-label="RunAI, accueil"><span class="brand-mark" aria-hidden="true"></span>RunAI</a><span id="mode" class="badge">Mode en vérification</span></header>
   <main id="shell"><p id="feedback" role="status" aria-live="polite"></p><section id="screen"></section></main>
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin="anonymous"></script>
+  <script>
+    window.RUNAI_JOURNEY_SCRIPTS = [
+      "/static/flyover/journey-contract.js", "/static/flyover/route.js",
+      "/static/flyover/journey-data.js", "/static/flyover/journey-player.js",
+      "/static/flyover/journey-fallback.js", "/static/journey-view.js"
+    ];
+  </script>
+  <script src="/static/voice/voice-input.js"></script>
   <script src="/static/shell-core.js"></script>
   <script src="/static/mock-api.js"></script>
   <script src="/static/app.js"></script>

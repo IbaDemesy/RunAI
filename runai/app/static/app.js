@@ -17,7 +17,7 @@
   };
   let framing, mission, events, view, plan, busy = false, page = "progress";
   const drafts = new Map();
-  let journeyScripts, pendingFocus;
+  let journeyScripts, pendingFocus, voiceFraming, voiceMission, voiceAborted = false;
   function loadJourneyScripts() {
     if (!journeyScripts) journeyScripts = (window.RUNAI_JOURNEY_SCRIPTS || []).reduce((previous, src) => previous.then(() => new Promise((resolve) => {
       const script = document.createElement("script");
@@ -104,6 +104,7 @@
     if (mission) { mode(mission.mode); renderMission(); }
     else if (framing) { mode(framing.mode); renderFraming(); }
     else renderStart();
+    if (framing?.status !== "cancelled" && mission?.status !== "cancelled") voiceControls();
     screen.querySelectorAll("input, textarea, button").forEach((node, index) => {
       node.dataset.focusKey = node.tagName === "BUTTON" ? "button:" + node.textContent : "field:" + index;
     });
@@ -120,15 +121,17 @@
   }
   async function mutate(action, reload) {
     if (busy) return;
+    let accepted = false;
     busy = true; screen.querySelectorAll("button").forEach((b) => { b.disabled = true; });
     announce("Envoi en cours…");
-    try { await action(); persist(); announce("Demande acceptée."); }
+    try { await action(); accepted = true; persist(); announce("Demande acceptée."); }
     catch (error) {
       if (error.status === 409 && reload) {
         try { await reload(); announce("Cette version a changé ou la réponse a expiré. Données actualisées : vérifiez avant de répondre à nouveau."); }
         catch (_) { announce("Actualisation impossible. Rechargez la page pour reprendre sans relancer."); }
       } else announce(error.message || "Connexion indisponible. Réessayez.");
     } finally { busy = false; render(); }
+    return accepted;
   }
   async function reloadFraming() {
     framing = await api.request("/api/framings/" + encodeURIComponent(framing.id));
@@ -136,6 +139,10 @@
   }
   async function submitReply(text, options = {}) {
     if (!framing || mission) return;
+    if (options.revision != null && options.revision !== framing.revision) {
+      await reloadFraming(); render();
+      throw new Error("Révision vocale périmée. Vérifiez le cadrage actualisé avant de répondre.");
+    }
     return mutate(async () => {
       framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/replies", core.replyPayload(framing, text, options));
       drafts.clear();
@@ -153,6 +160,38 @@
       framing = await api.request("/api/framings", { text: input.value.trim(), channel: "text" });
     }); };
     screen.append(node);
+  }
+  const voice = window.RunAIVoiceInput?.createVoiceInput({
+    getRevision: () => framing?.revision ?? 0,
+    onFramingReply: async ({ text, revision }) => {
+      if (voiceAborted || voiceFraming !== framing?.id || voiceMission !== mission?.mission_id) throw new Error("Cette demande vocale n’est plus active.");
+      let accepted;
+      if (!framing && !mission && revision === 0) {
+        accepted = await mutate(async () => { framing = await api.request("/api/framings", { text, channel: "voice" }); });
+      } else accepted = await window.RunAIShell.submitReply(text, { channel: "voice", revision });
+      if (!accepted) throw new Error("Réponse vocale non appliquée. Vérifiez la version actuelle du cadrage.");
+    },
+    onAgentsCommand: async action => {
+      if (voiceAborted || voiceMission !== mission?.mission_id) throw new Error("Cette commande vocale n’est plus active.");
+      const accepted = await mutate(async () => {
+        if (!mission) throw new Error("Aucun agent lancé.");
+        mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/" + action, {});
+      }, () => loadMission(mission.mission_id));
+      if (!accepted) throw new Error("Commande des agents non appliquée. Vérifiez leur état.");
+    },
+    view: Object.fromEntries(["pause", "play", "showChapter", "seekKm"].map(method => [method, (...args) => {
+      if (!view) throw new Error("Ouvrez Explorer pour commander la caméra.");
+      return view[method](...args);
+    }])),
+    onStateChange: state => announce(state.message || ({ listening: "Microphone actif.", transcribing: "Transcription en cours…", idle: "Microphone arrêté." }[state.state] || state.state)),
+  });
+  function voiceControls() {
+    if (!voice) return;
+    const controls = el("div", null, "question-options");
+    controls.append(button("Parler", () => {
+      voiceFraming = framing?.id; voiceMission = mission?.mission_id; voice.start();
+    }), button("Terminer l’enregistrement", () => voice.stop()));
+    screen.append(controls);
   }
   function renderFraming() {
     screen.className = "shell-stack";
@@ -267,6 +306,13 @@
       const budget = core.budgetText(mission.budget);
       budget.lines.forEach((line, index) => { screen.append(el("p", line)); provenance(screen, mission.budget.lines[index].money); });
       screen.append(el("p", budget.total, "total"), el("p", budget.cap));
+      if (mission.journey_revision != null) {
+        const exports = el("nav"); exports.setAttribute("aria-label", "Exporter ce séjour");
+        for (const format of ["html", "pdf", "ics"]) link(exports,
+          new URL("/api/missions/" + encodeURIComponent(mission.mission_id) + "/recap." + format + "?revision=" + mission.journey_revision, location.href).href,
+          "Exporter " + format.toUpperCase());
+        screen.append(exports);
+      }
       for (const id of mission.budget?.missing_line_ids || []) {
         if (!mission.budget.lines.some((line) => line.id === id)) screen.append(el("p", "Poste manquant : Prix inconnu"));
       }
@@ -299,33 +345,24 @@
       const errors = window.RunAIJourneyContract?.validateJourneyPlan(plan) || [];
       if (errors.length) throw new Error("Le parcours reçu est invalide. Réessayez après actualisation.");
       mode(plan.mode);
-      fallback.append(el("h3", "Parcours accessible"));
-      for (const chapter of plan.chapters) {
-        const block = el("article", null, "step"); block.append(el("h3", chapter.label));
-        for (const id of chapter.stop_ids) { const stop = plan.stops.find((s) => s.id === id); if (stop) block.append(el("p", stop.label + " · " + label(stop.confidence))); }
-        for (const id of chapter.segment_ids) { const segment = plan.segments.find((s) => s.id === id); if (segment) block.append(el("p", "Géométrie : " + label(segment.geometry_status))); }
-        fallback.append(block);
-      }
-      (plan.warnings || []).forEach((warning) => fallback.append(el("p", warning)));
-      limitations(fallback, plan.limitations);
       const controls = el("div", null, "question-options"); screen.insertBefore(controls, container);
-      function mapError() { destroyView(); container.hidden = true; announce("Carte indisponible. Le parcours reste disponible dans la liste."); }
-      container.addEventListener(window.RunAIJourneyContract?.MAP_EVENTS.error || "runai:journey-error", mapError);
-      if (typeof window.createJourneyView === "function") {
-        try {
-          view = window.createJourneyView(container, { reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches });
-          view.setPlan(plan);
-          plan.chapters.forEach((chapter) => controls.append(button(chapter.label, () => view?.showChapter(chapter.id))));
-          if (!matchMedia("(prefers-reduced-motion: reduce)").matches) controls.append(button("Lecture", () => view?.play()));
-          controls.append(button("Pause", () => view?.pause()));
-        } catch (_) { mapError(); }
-      } else container.hidden = true;
+      view = window.RunAIJourneyView.createJourneyView(container, { reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+        timelineContainer: fallback, errorTarget: screen,
+        onEvent: (name, detail) => {
+          window.dispatchEvent(new CustomEvent("runai:shell-journey", { detail: { name, ...detail } }));
+          if (name === window.RunAIJourneyContract.MAP_EVENTS.error && detail.fatal !== false) announce("Carte indisponible. Le parcours reste disponible dans la timeline.");
+        },
+      });
+      view.setPlan(plan);
+      plan.chapters.forEach((chapter) => controls.append(button(chapter.label, () => view?.showChapter(chapter.id))));
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) controls.append(button("Lecture", () => view?.play()));
+      controls.append(button("Pause", () => view?.pause()));
     } catch (error) {
       fallback.append(el("p", error.message), button("Réessayer", render));
     }
   }
   window.RunAIShell = { api, submitReply };
-  window.addEventListener("pagehide", () => { destroyView(); if (events) events.close(); });
+  window.addEventListener("pagehide", () => { voiceAborted = true; voice?.stop(); destroyView(); if (events) events.close(); });
   async function init() {
     render();
     try {

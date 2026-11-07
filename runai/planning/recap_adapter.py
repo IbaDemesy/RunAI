@@ -17,6 +17,7 @@ from runai.recap import render_html as legacy_html
 from runai.recap import render_ics as legacy_ics
 from runai.recap.ics import escape_text, fold
 from runai.recap.render import html_to_pdf
+from runai.redaction import redact_secrets
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,7 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     Naive times without a stop/segment timezone remain text-only. Each known
     departure and arrival is a separate calendar point (no inferred duration).
     """
+    plan = JourneyPlan.model_validate(redact_secrets(plan.model_dump(mode="json")))
     identity = f"{plan.schema_version} · {plan.mission_id} · revision {plan.revision} · {plan.mode.value}"
     prepared = "Préparé ≠ réservé : aucun élément réservé, payé ou confirmé."
     mode = {"demo": "DEMO — données de démonstration, pas des données live.",

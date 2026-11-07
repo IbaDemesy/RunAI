@@ -7,7 +7,13 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_serializer,
+    field_validator,
+    model_serializer,
+)
 
 from runai.contracts.common import DataMode, Limitation
 from runai.contracts.journey import Budget
@@ -133,6 +139,10 @@ class MissionSnapshot(BaseModel):
     budget: Budget | None = None
     limitations: list[Limitation] = Field(default_factory=list)
     error: str | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize_snapshot(self, handler):
+        return redact_secrets(handler(self))
 
     @field_validator("error")
     @classmethod
