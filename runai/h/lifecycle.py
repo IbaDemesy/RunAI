@@ -25,6 +25,7 @@ from runai.h.runner import (
     api_keys_from_env,
 )
 from runai.models import StepKind, StepResult, StepStatus
+from runai.redaction import redact_secrets
 
 
 class HLifecycleError(RuntimeError):
@@ -33,7 +34,7 @@ class HLifecycleError(RuntimeError):
     code = "h_error"
 
     def __init__(self, message: str, *, job_id: str | None = None):
-        super().__init__(message)
+        super().__init__(redact_secrets(message))
         self.job_id = job_id
 
 
@@ -322,4 +323,3 @@ class HLifecycle:
 
     async def __aexit__(self, *exc: object) -> None:
         await self.aclose()
-

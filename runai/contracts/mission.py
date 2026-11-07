@@ -7,11 +7,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 from runai.contracts.common import DataMode, Limitation
 from runai.contracts.journey import Budget
 from runai.models import AgentQuestion, Race, StepKind, StepResult, utcnow
+from runai.redaction import redact_secrets
 
 EVENTS_SCHEMA_VERSION = "events.v1"
 MISSION_SCHEMA_VERSION = "mission.v2"
@@ -95,6 +96,15 @@ class EventEnvelope(BaseModel):
     type: EventType
     payload: dict[str, Any] = Field(default_factory=dict)
 
+    @field_validator("payload")
+    @classmethod
+    def redact_payload(cls, value: dict[str, Any]) -> dict[str, Any]:
+        return redact_secrets(value)
+
+    @field_serializer("payload")
+    def serialize_payload(self, value: dict[str, Any]) -> dict[str, Any]:
+        return redact_secrets(value)
+
     @classmethod
     def build(cls, mission_id: str, sequence: int, type: EventType, payload: dict[str, Any]) -> "EventEnvelope":
         return cls(event_id=f"{mission_id}:{sequence}", sequence=sequence, mission_id=mission_id, type=type, payload=payload)
@@ -123,3 +133,12 @@ class MissionSnapshot(BaseModel):
     budget: Budget | None = None
     limitations: list[Limitation] = Field(default_factory=list)
     error: str | None = None
+
+    @field_validator("error")
+    @classmethod
+    def redact_error(cls, value: str | None) -> str | None:
+        return redact_secrets(value)
+
+    @field_serializer("error")
+    def serialize_error(self, value: str | None) -> str | None:
+        return redact_secrets(value)
