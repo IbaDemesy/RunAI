@@ -56,7 +56,7 @@ def test_health_reports_each_provider_without_secret_values():
     secondary = provider_health({"HAI_API_KEY_2": "secret-h"})
     assert secondary["h"].status is ProviderStatus.ok
     both = provider_health({"HAI_API_KEY": "a", "HAI_API_KEY_2": "b"})
-    assert both["h"].status is ProviderStatus.ok and "2 clé(s)" in both["h"].detail
+    assert both["h"].status is ProviderStatus.ok and "2 H key(s)" in both["h"].detail
 
 
 def test_health_error_when_sdk_missing(monkeypatch):
@@ -96,15 +96,15 @@ def test_live_without_keys_fails_explicitly_and_never_uses_fakes():
     assert isinstance(providers.search, UnavailableRaceSearch)
     assert isinstance(providers.agents, UnavailableBrowserAgents)
     assert isinstance(providers.transcriber, UnavailableTranscriber)
-    with pytest.raises(ProviderUnavailableError, match="LINKUP_API_KEY absente"):
+    with pytest.raises(ProviderUnavailableError, match="LINKUP_API_KEY missing"):
         asyncio.run(providers.search.find_race("une course à Lisbonne"))
-    with pytest.raises(ProviderUnavailableError, match="HAI_API_KEY absente"):
+    with pytest.raises(ProviderUnavailableError, match="HAI_API_KEY missing"):
         asyncio.run(
             providers.agents.start(
                 StepKind.transport, "t", None, RunnerProfile(), None, None
             )
         )
-    with pytest.raises(ProviderUnavailableError, match="GLADIA_API_KEY absente"):
+    with pytest.raises(ProviderUnavailableError, match="GLADIA_API_KEY missing"):
         asyncio.run(providers.transcriber.transcribe(b"", "audio/wav"))
     payload = providers.health_payload()
     assert payload["mode"] == "live"

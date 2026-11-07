@@ -1,4 +1,4 @@
-"""Orchestration d'une mission : recherche, trois agents en parallèle, portail avant engagement."""
+"""Mission orchestration: search, three parallel agents, and pre-commitment handoff."""
 
 import asyncio
 import contextlib
@@ -49,6 +49,7 @@ from runai.models import (
     StepKind,
     StepResult,
     StepStatus,
+    StopPoint,
     TraceEvent,
     utcnow,
 )
@@ -63,6 +64,25 @@ logger = logging.getLogger(__name__)
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
+
+STEP_LABELS = {
+    StepKind.search: "Search",
+    StepKind.registration: "Registration",
+    StepKind.accommodation: "Accommodation",
+    StepKind.transport: "Transport",
+}
+
+
+def human_action(stop_point: StopPoint | None) -> str:
+    if stop_point is None:
+        return "Nothing has been committed: take over from the live view if needed."
+    return {
+        StopPoint.payment: "Check the summary and price, then pay yourself on the official site.",
+        StopPoint.account_creation: "Create your account yourself: the agent never enters passwords.",
+        StopPoint.health_declaration: "Provide the medical certificate or PPS yourself: no health data passes through the agent.",
+        StopPoint.consent: "Read and accept the rules, terms or consent yourself.",
+        StopPoint.submission: "Review the pre-filled fields and submit the final form yourself.",
+    }[stop_point]
 
 
 class MissionStatus(str, Enum):
@@ -80,7 +100,7 @@ TERMINAL_STATUSES = {
     MissionStatus.failed,
     MissionStatus.cancelled,
 }
-QUESTION_TIMEOUT_ANSWER = "Pas de réponse de l'utilisateur : arrête-toi ici et résume."
+QUESTION_TIMEOUT_ANSWER = "No answer from the user: stop here and summarize."
 
 
 class Mission(BaseModel):
@@ -188,7 +208,7 @@ class MissionService:
         plan = plan_launch(session, self.profile)
         if plan.mode is not DataMode.live and not session.selected_candidate_id:
             raise FramingError(
-                f"Pas de fixture {plan.mode.value} pour cet événement ; préparation manuelle uniquement, aucun agent lancé."
+                f"No {plan.mode.value} fixture for this event; manual preparation only, no agent launched."
             )
         mission = await self.create(
             plan, summary=session.summary, turns=session.turns,
@@ -205,7 +225,7 @@ class MissionService:
         user_id: str | None = None,
     ) -> Mission:
         if not isinstance(plan, LaunchPlan):
-            raise MissionError("Un cadrage confirmé est obligatoire : /api/framings")
+            raise MissionError("Confirmed framing is required: /api/framings")
         self._loop = asyncio.get_running_loop()
         mission = Mission(
             id=uuid.uuid4().hex[:12], query=plan.brief.race_label, user_id=user_id,
@@ -216,7 +236,7 @@ class MissionService:
                 kind=kind,
                 status=StepStatus.pending if kind in plan.automated_steps() else StepStatus.completed,
                 url=next((l.manual_url for l in step.limitations if l.manual_url), None),
-                summary=None if kind in plan.automated_steps() else "Non automatisé : à préparer manuellement.",
+                summary=None if kind in plan.automated_steps() else "Not automated: prepare manually.",
                 data={"automation": step.automation.value},
             ) for kind, step in plan.steps.items()},
         )
@@ -224,7 +244,7 @@ class MissionService:
         self._writers[mission.id] = TraceWriter(mission.id, traces_dir=self.traces_dir)
         self._refresh_journey(mission)
         self._record(mission, TraceEvent(source="app", type="mission_created",
-                                        message=f"Mission créée : « {mission.query} »"))
+                                        message=f"Mission created: {mission.query}"))
         self._emit(mission, "snapshot", self.snapshot(mission.id).model_dump(mode="json"))
         self._save_mission(mission)
         task = asyncio.create_task(self._run_mission(mission))
@@ -338,17 +358,17 @@ class MissionService:
             if qid in self.questions.questions:
                 continue
             manual = AgentQuestion(id=qid, kind=StepKind.registration, question=question.text,
-                                   options=["À vérifier moi-même sur le site officiel"])
+                                   options=["I will check on the official site"])
             wrapped = self.questions.open(manual, mission.id, mission.plan.revision,
                                           ttl=self.question_timeout_s)
-            self.questions.questions[qid].reason = f"eligibility: Démarche manuelle uniquement. {question.detail or ''} {question.source_url or ''} {question.deadline or ''}"
+            self.questions.questions[qid].reason = f"eligibility: Manual action only. {question.detail or ''} {question.source_url or ''} {question.deadline or ''}"
             wrapped = self.questions.get(qid)
             self._emit(mission, "question_opened", wrapped.model_dump(mode="json"))
 
     def get_journey(self, mission_id: str) -> JourneyPlan:
         mission = self.get(mission_id)
         if mission.journey is None:
-            raise MissionError("Séjour indisponible : données confirmées encore insuffisantes")
+            raise MissionError("Trip unavailable: not enough confirmed data yet")
         return mission.journey.model_copy(deep=True)
 
     def get_recap(self, mission_id: str, revision: int | None = None):
@@ -356,7 +376,7 @@ class MissionService:
         try:
             return self._recaps[(mission_id, plan.revision if revision is None else revision)]
         except KeyError:
-            raise MissionError("Révision du récap indisponible") from None
+            raise MissionError("Recap revision unavailable") from None
 
     def _emit(self, mission: Mission, type_: str, payload: dict) -> None:
         envelope = EventEnvelope.build(mission.id, len(mission.envelopes) + 1, type_, payload)
@@ -372,9 +392,9 @@ class MissionService:
             try:
                 sequence = int(raw)
             except ValueError:
-                raise MissionError("Last-Event-ID invalide") from None
+                raise MissionError("Invalid Last-Event-ID") from None
             if prefix != mission_id or not 0 <= sequence <= len(mission.envelopes):
-                raise MissionError("Last-Event-ID invalide")
+                raise MissionError("Invalid Last-Event-ID")
         queue = asyncio.Queue()
         self._event_subscribers.setdefault(mission_id, set()).add(queue)
         try:
@@ -412,7 +432,7 @@ class MissionService:
                 await task
             except asyncio.CancelledError:
                 pass
-        mission.limitations.append(Limitation(code="h_cancelled", message="Mission annulée ; aucun nouveau lancement."))
+        mission.limitations.append(Limitation(code="h_cancelled", message="Mission cancelled; no new launches."))
         self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
         self._publish_state(mission)
 
@@ -444,15 +464,15 @@ class MissionService:
         if dates:
             known["dates"] = " ; ".join(dates)
         if brief.origin:
-            known["départ"] = brief.origin
+            known["origin"] = brief.origin
         if brief.budget_open:
-            known["budget"] = "sans plafond"
+            known["budget"] = "no limit"
         else:
             budget = []
             if brief.budget_total_eur is not None:
-                budget.append(f"{brief.budget_total_eur:g} € au total")
+                budget.append(f"{brief.budget_total_eur:g} € total")
             if brief.budget_per_night_eur is not None:
-                budget.append(f"{brief.budget_per_night_eur:g} € par nuit")
+                budget.append(f"{brief.budget_per_night_eur:g} € per night")
             if budget:
                 known["budget"] = ", ".join(budget)
         if brief.transport_mode:
@@ -462,7 +482,7 @@ class MissionService:
     async def ask(self, mission_id: str, kind: StepKind, question: str, options: list[str]) -> str:
         mission = self._writable(mission_id)
         if mission.status is MissionStatus.cancelled:
-            raise MissionError("Mission annulée")
+            raise MissionError("Mission cancelled")
         display_text = question
         if self.phraser:
             try:
@@ -534,7 +554,7 @@ class MissionService:
             TraceEvent(
                 source="human",
                 type="pause",
-                message=f"{STEP_LABELS[kind]} : pause demandée",
+                message=f"{STEP_LABELS[kind]}: pause requested",
                 data={"step": kind.value},
             ),
         )
@@ -550,7 +570,7 @@ class MissionService:
             TraceEvent(
                 source="human",
                 type="resume",
-                message=f"{STEP_LABELS[kind]} : reprise",
+                message=f"{STEP_LABELS[kind]}: resumed",
                 data={"step": kind.value},
             ),
         )
@@ -558,7 +578,7 @@ class MissionService:
     async def send_message(self, mission_id: str, kind: StepKind, text: str) -> None:
         mission, step, run = self._active(mission_id, kind)
         if run.session_id is None:
-            raise MissionError("Session H encore en file ; réessayez après son démarrage.")
+            raise MissionError("H session is still queued; try again after it starts.")
         await run.send_message(guard_task(text))
         step.data.setdefault("messages", []).append(text)
         self._record(
@@ -566,7 +586,7 @@ class MissionService:
             TraceEvent(
                 source="human",
                 type="message",
-                message=f"{STEP_LABELS[kind]} : « {text} »",
+                message=f"{STEP_LABELS[kind]}: {text}",
                 data={"step": kind.value},
             ),
         )
@@ -626,11 +646,11 @@ class MissionService:
         run = self._runs.get((mission_id, kind))
         self._ensure_not_cancelled(mission)
         if step is None or run is None or step.status not in ACTIVE_STATUSES | {StepStatus.waiting_for_user}:
-            raise MissionError(f"Aucun agent actif pour l'étape {kind.value}")
+            raise MissionError(f"No active agent for step {kind.value}")
         return mission, step, run
 
     def _record(self, mission: Mission, event: TraceEvent) -> None:
-        """Peut être appelé depuis un autre thread (callback d'un SDK synchrone)."""
+        """May be called from another thread by a synchronous SDK callback."""
         try:
             running = asyncio.get_running_loop()
         except RuntimeError:
@@ -644,7 +664,7 @@ class MissionService:
         try:
             self._writers[mission.id].write(event)
         except OSError:
-            logger.exception("Trace non écrite pour la mission %s", mission.id)
+            logger.exception("Trace not written for mission %s", mission.id)
         step_name = event.data.get("step")
         if step_name in StepKind._value2member_map_:
             step = mission.steps.get(StepKind(step_name))
@@ -719,7 +739,7 @@ class MissionService:
             TraceEvent(
                 source="app",
                 type="mission_done",
-                message="Agents arrêtés : à vous de jouer au portail",
+                message="Agents stopped: over to you at the handoff",
             ),
         )
 
@@ -738,7 +758,7 @@ class MissionService:
                 TraceEvent(
                     source="app",
                     type="step_started",
-                    message=f"{STEP_LABELS[kind]} : agent lancé",
+                    message=f"{STEP_LABELS[kind]}: agent launched",
                     data={"step": kind.value},
                 ),
             )
@@ -784,7 +804,7 @@ class MissionService:
                     TraceEvent(
                         source="app",
                         type="step_failed",
-                        message=f"{STEP_LABELS[kind]} : {user_error}",
+                        message=f"{STEP_LABELS[kind]}: {user_error}",
                         data={"step": kind.value},
                     ),
                 )
@@ -794,9 +814,9 @@ class MissionService:
                 self._runs.pop((mission.id, kind), None)
         step = mission.steps[kind] = self._merge_result(step, result)
         if step.status is StepStatus.stopped_before_commitment:
-            step.data["headline"] = "Prêt : à finaliser vous-même sur le site officiel"
+            step.data["headline"] = "Ready: finish it yourself on the official site"
         elif step.status is StepStatus.completed:
-            step.data["headline"] = "Terminé"
+            step.data["headline"] = "Done"
         elif step.status is StepStatus.failed and step.error:
             step.data.setdefault("error_user", friendly_error(step.error))
         self._refresh_journey(mission)
@@ -805,7 +825,7 @@ class MissionService:
             TraceEvent(
                 source="app",
                 type="step_done",
-                message=f"{STEP_LABELS[kind]} : {step.summary or step.status.value}",
+                message=f"{STEP_LABELS[kind]}: {step.summary or step.status.value}",
                 data={"step": kind.value, "status": step.status.value},
             ),
         )
@@ -827,7 +847,7 @@ class MissionService:
             return result
         if result.price_eur is None:
             result.status = StepStatus.failed
-            result.error = "Le prix total de l'hôtel n'a pas pu être vérifié."
+            result.error = "The total hotel price could not be verified."
             return result
         result.data.update(
             {
@@ -839,8 +859,8 @@ class MissionService:
         if result.price_eur > total_limit:
             result.status = StepStatus.failed
             result.error = (
-                f"HORS BUDGET : {result.price_eur:.2f} € dépasse "
-                f"{total_limit:.2f} € pour {brief.nights} nuits."
+                f"OVER BUDGET: {result.price_eur:.2f} € exceeds "
+                f"{total_limit:.2f} € for {brief.nights} nights."
             )
             result.summary = f"{result.error} {result.summary or ''}".strip()
         return result

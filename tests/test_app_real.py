@@ -102,7 +102,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     kind, task, params = runner.params
     answer = asyncio.run(
         params["tools"][0].fn(
-            question="Quel sas ?", options=["moins de 3h30", "plus de 3h30"]
+            question="Quel sas ?", options=["under 3h30", "plus de 3h30"]
         )
     )
     assert kind is StepKind.registration
@@ -114,8 +114,8 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert params["max_time_s"] == 60
     assert params["answer_schema"] is RegistrationAnswer
     assert params["tools"][0].name == "ask_user"
-    assert answer == "moins de 3h30"
-    assert answers == [("Quel sas ?", ["moins de 3h30", "plus de 3h30"])]
+    assert answer == "under 3h30"
+    assert answers == [("Quel sas ?", ["under 3h30", "plus de 3h30"])]
     assert isinstance(run, LifecycleAgentRun)
     assert run.session_id == "h-session-1"
     assert result.status is StepStatus.stopped_before_commitment

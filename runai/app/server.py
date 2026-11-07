@@ -1,4 +1,4 @@
-"""Backend FastAPI : API des missions, flux SSE et page web du portail."""
+"""FastAPI backend: mission API, SSE streams and handoff web page."""
 
 import asyncio
 import json
@@ -126,7 +126,7 @@ def candidate_search(providers: ProviderSet):
 
 
 def framing_phraser(providers: ProviderSet) -> Phraser:
-    """Holo reformule les questions en live si la clé H est là ; sinon formulation locale."""
+    """Use Holo to rephrase live questions when an H key is available, otherwise use templates."""
     key = get_settings().hai_api_key
     if providers.mode is DataMode.live and key and os.getenv("RUNAI_FRAMING_LLM", "1") != "0":
         return HoloPhraser(key)
@@ -157,7 +157,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     public_without_auth = os.getenv("RUNAI_PUBLIC") == "1" and not os.getenv("RUNAI_BASIC_AUTH")
     if public_without_auth and not selected.simulated:
         raise RuntimeError(
-            "RUNAI_PUBLIC=1 en mode réel : définissez RUNAI_BASIC_AUTH, sinon n'importe qui consomme vos crédits"
+            "RUNAI_PUBLIC=1 in live mode: set RUNAI_BASIC_AUTH or anyone can use your credits"
         )
     app = FastAPI(title="RunAI", lifespan=lifespan)
     if credentials := os.getenv("RUNAI_BASIC_AUTH"):
@@ -248,7 +248,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.post("/api/missions", status_code=410)
     async def create_mission(body: MissionRequest) -> dict:
-        raise HTTPException(410, "Créez et confirmez un cadrage via /api/framings avant de lancer les agents.")
+        raise HTTPException(410, "Create and confirm framing via /api/framings before launching agents.")
 
     @app.get("/api/missions")
     async def list_missions(
@@ -345,7 +345,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                      "pdf": (recap_adapter.render_pdf, "application/pdf"),
                      "ics": (recap_adapter.render_ics, "text/calendar")}
         if format not in renderers:
-            raise HTTPException(404, "Format d'export inconnu")
+            raise HTTPException(404, "Unknown export format")
         try:
             snapshot = get_service().get_recap(mission_id, revision)
         except MissionError as error:
@@ -353,7 +353,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         renderer, media = renderers[format]
         try:
             content = await run_in_threadpool(renderer, snapshot)
-        except Exception as error:  # noqa: BLE001 - erreur de rendu honnête, sans autre instantané
+        except Exception as error:  # noqa: BLE001 - report rendering errors without substituting another snapshot
             raise HTTPException(503, redact_secrets(str(error))) from None
         return Response(content, media_type=media, headers={
             "X-RunAI-Journey-Revision": str(snapshot.revision),
@@ -407,7 +407,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         mission_id: str, question_id: str, body: HumanAnswer
     ) -> dict:
         if not body.answer.strip():
-            raise HTTPException(status_code=422, detail="La réponse ne peut pas être vide")
+            raise HTTPException(status_code=422, detail="The answer cannot be empty")
         try:
             get_service().answer_question(mission_id, question_id, body)
             return get_service().snapshot(mission_id).model_dump(mode="json")
@@ -426,7 +426,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.post("/api/transcribe")
     async def transcribe(request: Request) -> dict:
-        too_large = HTTPException(status_code=413, detail="Audio trop volumineux")
+        too_large = HTTPException(status_code=413, detail="Audio too large")
         if int(request.headers.get("content-length") or 0) > MAX_AUDIO_BYTES:
             raise too_large
         audio = bytearray()
@@ -436,7 +436,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                 raise too_large
         audio = bytes(audio)
         if not audio:
-            raise HTTPException(status_code=400, detail="Audio vide")
+            raise HTTPException(status_code=400, detail="Empty audio")
         content_type = request.headers.get("content-type", "application/octet-stream")
         try:
             return redact_secrets({"text": await get_service().transcribe(audio, content_type), "mode": selected.providers.mode.value})

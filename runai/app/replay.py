@@ -1,7 +1,7 @@
-"""Replay : rejoue une trace enregistrée (schéma `replay.v1`), étiquetée `replay`, jamais `live`.
+"""Replay a recorded trace (replay.v1), labeled replay, never live.
 
-Aucun appel réseau : la recherche, la voix et les agents renvoient ce qui a été enregistré,
-avec `StepResult.data["provenance"]["mode"] == "replay"` et sans vue live.
+No network calls: search, voice and agents return recorded data,
+with replay provenance and no live view.
 """
 
 import asyncio
@@ -88,7 +88,7 @@ class ReplayTrace(BaseModel):
     def from_mission_snapshot(
         cls, snapshot: dict[str, Any], label: str | None = None
     ) -> "ReplayTrace":
-        """Construit une trace depuis `Mission.snapshot(include_events=True)`."""
+        """Build a trace from `Mission.snapshot(include_events=True)`."""
         snapshot = redact_secrets(snapshot)
         steps: dict[StepKind, ReplayStep] = {}
         events = [TraceEvent.model_validate(e) for e in snapshot.get("events", [])]
@@ -133,7 +133,7 @@ class ReplayRaceSearch:
     async def find_race(self, query: str) -> Race:
         if self.trace.race is None:
             raise ProviderUnavailableError(
-                "Replay : aucune fiche course dans la trace."
+                "Replay: no race sheet in the trace."
             )
         return self.trace.race.model_copy(deep=True)
 
@@ -145,7 +145,7 @@ class ReplayTranscriber:
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         if not self.trace.transcript:
             raise ProviderUnavailableError(
-                "Replay : aucune transcription dans la trace."
+                "Replay: no transcription in the trace."
             )
         return self.trace.transcript
 
@@ -220,7 +220,7 @@ class ReplayRun:
             result = StepResult(
                 kind=self.kind,
                 status=StepStatus.failed,
-                error="Étape absente de la trace rejouée.",
+                error="Step missing from the replay trace.",
             )
         else:
             for question in step.questions:

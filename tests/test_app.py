@@ -146,7 +146,7 @@ def test_observation_trace_stores_a_friendly_headline_and_keeps_raw_action(tmp_p
     )
 
     step = mission.steps[StepKind.registration]
-    assert step.data["headline"] == "Sur example.com · Title"
+    assert step.data["headline"] == "On example.com · Title"
     assert step.data["last_action"] == "Title — https://www.example.com/"
 
 
@@ -178,7 +178,7 @@ async def test_agent_question_uses_framing_phraser_with_known_context(tmp_path, 
     service.missions[mission.id] = mission
     service._writers[mission.id] = TraceWriter(mission.id, traces_dir=tmp_path)
     asking = asyncio.create_task(
-        service.ask(mission.id, StepKind.registration, "Quel sas ?", ["Découverte", "Performance"])
+        service.ask(mission.id, StepKind.registration, "Quel sas ?", ["Discovery", "Performance"])
     )
     while not mission.questions:
         await asyncio.sleep(0)
@@ -192,14 +192,14 @@ async def test_agent_question_uses_framing_phraser_with_known_context(tmp_path, 
     assert phraser.calls == [(turns, "Quel sas ?", {
         "course": "Wizz Air Milano Marathon 2027",
         "dates": "2027-04-11 ; 2027-04-03 → 2027-04-05",
-        "départ": "Paris",
-        "budget": "500 € au total, 250 € par nuit",
+        "origin": "Paris",
+        "budget": "500 € total, 250 € per night",
         "transport": "train",
     })]
     service.answer_question(
         mission.id,
         question.id,
-        HumanAnswer(answer="Découverte", revision=mission.plan.revision, idempotency_key="test-answer"),
+        HumanAnswer(answer="Discovery", revision=mission.plan.revision, idempotency_key="test-answer"),
     )
     await asking
 
@@ -269,7 +269,7 @@ def task_brief(**updates):
         "origin": "Paris", "transport_mode": "train",
         "hotel_landmarks": ["départ Corso Sempione", "retrait des dossards Via Moncucco 35"],
         "health_question": "Avez-vous une Runcard ou un certificat médical de compétition (ECG d'effort) ?",
-        "registration_platform": "Njuko", "accommodation_site": "site officiel Accor",
+        "registration_platform": "Njuko", "accommodation_site": "official Accor site",
         "accommodation_url": "https://all.accor.com", "transport_site": "trenitalia.com",
         "transport_url": "https://www.trenitalia.com",
     }
@@ -490,7 +490,7 @@ def test_hotel_budget_overrun_is_marked_failed():
     assert filtered.status is StepStatus.failed
     assert filtered.data["budget_max_total_eur"] == 300
     assert filtered.data["over_budget"] is True
-    assert "HORS BUDGET" in filtered.summary
+    assert "OVER BUDGET" in filtered.summary
 
 
 def test_hotel_choice_with_prices_per_night_does_not_raise_budget_ceiling():
@@ -528,7 +528,7 @@ def test_hotel_choice_with_prices_per_night_does_not_raise_budget_ceiling():
     assert filtered.status is StepStatus.failed
     assert filtered.data["budget_max_per_night_eur"] == 150
     assert filtered.data["over_budget"] is True
-    assert "HORS BUDGET" in filtered.summary
+    assert "OVER BUDGET" in filtered.summary
 
 
 def test_rephrased_hotel_budget_question_sets_the_per_night_ceiling():
@@ -562,6 +562,22 @@ def test_rephrased_hotel_budget_question_sets_the_per_night_ceiling():
 
 def test_every_stop_point_has_a_human_action():
     assert set(HUMAN_ACTIONS) == set(StopPoint)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("kind", [StepKind.accommodation, StepKind.registration])
+async def test_fake_summary_omits_empty_answers_and_instructions(kind):
+    async def answer(question, options):
+        return options[0]
+
+    agents = FakeBrowserAgents(delay=0)
+    run = await agents.start(kind, "test", DEMO_RACES["milan"], RunnerProfile(), lambda event: None, answer)
+    result = await run.wait()
+
+    assert ("User answers:" in result.summary) == (kind is StepKind.registration)
+    assert "Instructions applied:" not in result.summary
+    assert " : ." not in result.summary
+    assert ": ." not in result.summary
 
 
 @pytest.mark.anyio
@@ -796,10 +812,10 @@ async def test_summary_mentioning_payment_is_treated_as_stop(tmp_path):
     assert registration.status is StepStatus.stopped_before_commitment
     assert registration.stop_point is StopPoint.payment
     assert str(registration.live_view_url) == "https://live.example.org/registration"
-    assert registration.data["headline"] == "Prêt : à finaliser vous-même sur le site officiel"
+    assert registration.data["headline"] == "Ready: finish it yourself on the official site"
     assert mission.steps[StepKind.accommodation].status is StepStatus.failed
     assert mission.steps[StepKind.accommodation].error == "H indisponible"
-    assert mission.steps[StepKind.transport].data["headline"] == "Terminé"
+    assert mission.steps[StepKind.transport].data["headline"] == "Done"
     assert mission.steps[StepKind.transport].status is StepStatus.completed
     assert mission.status is MissionStatus.awaiting_human
 
@@ -825,7 +841,7 @@ async def test_step_failure_keeps_raw_error_and_publishes_friendly_copy(tmp_path
     service = make_service(tmp_path, agents=agents)
     mission = await service.wait((await create_confirmed(service, "Milan")).id)
     step = mission.steps[StepKind.accommodation]
-    user_error = "Le service d'agents est indisponible pour le moment."
+    user_error = "The agent service is currently unavailable."
 
     assert step.error == raw_error
     assert step.data["error_user"] == user_error
@@ -836,7 +852,7 @@ async def test_step_failure_keeps_raw_error_and_publishes_friendly_copy(tmp_path
         event for event in mission.events
         if event.type == "step_failed" and event.data.get("step") == "accommodation"
     )
-    assert failure.message == f"Hébergement : {user_error}"
+    assert failure.message == f"Accommodation: {user_error}"
 @pytest.mark.anyio
 async def test_partial_failure_without_stop_fails_mission(tmp_path):
     agents = ScriptedAgents(
@@ -876,7 +892,7 @@ async def test_trace_write_failure_does_not_strand_mission(tmp_path, monkeypatch
 @pytest.mark.anyio
 async def test_unconfirmed_creation_is_rejected(tmp_path):
     service = make_service(tmp_path)
-    with pytest.raises(Exception, match="cadrage confirmé"):
+    with pytest.raises(Exception, match="Confirmed framing"):
         await service.create("Milan")
     assert not service.missions
 
@@ -1015,7 +1031,7 @@ def test_api_runs_a_demo_mission_with_sse(tmp_path):
         mission = client.get(f"/api/missions/{mission_id}").json()
         session_id = mission["steps"][1]["h_session_id"]
         live = client.get(f"/api/live/{session_id}").json()
-        assert live["label"] == "Hébergement"
+        assert live["label"] == "Accommodation"
         assert live["history"]
         assert client.get("/demo/live").status_code == 200
 
