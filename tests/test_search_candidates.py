@@ -109,19 +109,19 @@ def test_only_known_slots_and_no_location():
     assert result.limitations[0].code == "no_candidate_found"
 
 
-def test_request_text_country_constraint_triggers_search_and_is_verbatim_in_prompt():
+def test_request_text_country_constraint_uses_only_place_in_prompt():
     client = FakeClient([row(city="Beijing", country="CN", distances_km=[21.1])])
     result = asyncio.run(
         LinkupCandidateSearch(client).search(
-            slots(distance_km=21.1), request_text="Un semi marathon en Chine"
+            slots(distance_km=21.1),
+            request_text="Un semi en Chine, mon email a@b.fr",
         )
     )
     assert result.candidates
     assert len(client.calls) == 1
-    assert (
-        'User request (verbatim): "Un semi marathon en Chine". '
-        "Use the country or region it mentions as a location constraint."
-    ) in client.calls[0][0]["query"]
+    query = client.calls[0][0]["query"]
+    assert 'Location constraint (country or region): "Chine".' in query
+    assert "a@b.fr" not in query
 
 
 def test_request_text_lowercase_month_does_not_trigger_search():

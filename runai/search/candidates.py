@@ -47,11 +47,18 @@ class _NextEdition(BaseModel):
     source_url: HttpUrl | None = None
 
 
-_LOCATION_REQUEST = re.compile(r"\b(?:en|au|aux|in)\s+[A-ZÀ-Ö]")
+_LOCATION_REQUEST = re.compile(
+    r"\b(?:en|au|aux|in)\s+"
+    r"([A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*"
+    r"(?:\s+[A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*){0,2})"
+)
 
 
-def has_location_request(request_text: str | None) -> bool:
-    return bool(request_text and _LOCATION_REQUEST.search(request_text))
+def location_hint(text: str | None) -> str | None:
+    if not text:
+        return None
+    match = _LOCATION_REQUEST.search(text)
+    return match.group(1) if match else None
 
 
 SEARCH_SLOTS = (
@@ -65,7 +72,7 @@ def build_candidate_prompt(
     today: date | None = None,
     *,
     relaxed: bool = False,
-    request_text: str | None = None,
+    location_constraint: str | None = None,
 ) -> str:
     known = {name.value: slots[name].value for name in SEARCH_SLOTS
              if name in slots and slots[name].is_known and slots[name].value is not None}
@@ -83,11 +90,8 @@ def build_candidate_prompt(
             " No exact match was found; also include races in nearby cities (about 50 km) "
             "and other distances or dates."
         )
-    if request_text is not None:
-        prompt += (
-            f' User request (verbatim): "{request_text}". '
-            "Use the country or region it mentions as a location constraint."
-        )
+    if location_constraint is not None:
+        prompt += f' Location constraint (country or region): "{location_constraint}".'
     return prompt
 
 
@@ -127,14 +131,17 @@ class LinkupCandidateSearch:
     async def search(
         self, slots: dict[SlotName, Slot], request_text: str | None = None
     ) -> CandidateSearchResult:
+        place = location_hint(request_text)
         if not any(name in slots and slots[name].is_known and slots[name].value
-                   for name in (SlotName.city, SlotName.race)) and not has_location_request(request_text):
+                   for name in (SlotName.city, SlotName.race)) and not place:
             return self._result([])
         today = self.today or date.today()
         try:
             response = await asyncio.to_thread(
                 self._search,
-                build_candidate_prompt(slots, today=today, request_text=request_text),
+                build_candidate_prompt(
+                    slots, today=today, location_constraint=place
+                ),
             )
             candidates = self._parse_candidates(response, slots, today=today)
         except Exception as exc:
@@ -152,7 +159,10 @@ class LinkupCandidateSearch:
             response = await asyncio.to_thread(
                 self._search,
                 build_candidate_prompt(
-                    fallback_slots, today=today, relaxed=True, request_text=request_text
+                    fallback_slots,
+                    today=today,
+                    relaxed=True,
+                    location_constraint=place,
                 ),
             )
             candidates = self._parse_candidates(
