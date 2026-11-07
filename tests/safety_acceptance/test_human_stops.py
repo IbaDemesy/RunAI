@@ -146,3 +146,11 @@ def test_question_mission_revision_and_cancellation_isolation():
         registry.answer("m1", "m1", answer)
     assert registry.get("m2").status is QuestionStatus.open
     assert registry.answer("m2", "m2", answer).status is QuestionStatus.answered
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Stopped at rules acceptance on the registration page.", "Stopped before accepting the race rules."],
+)
+def test_english_rules_acceptance_report_is_consent(text):
+    assert detect_stop_point(text, ignore_negated=True) is StopPoint.consent
