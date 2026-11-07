@@ -1,4 +1,4 @@
-"""Adaptateurs des services Linkup, H et Gladia pour l'application."""
+"""Application adapters for Linkup, H and Gladia services."""
 
 import asyncio
 import os
@@ -18,10 +18,18 @@ from runai.app.providers import (
 )
 from runai.app.tasks import extract_budget_per_night
 from runai.contracts.common import DataMode, ProvenanceKind
+from runai.h.answers import answer_schema_for, parse_answer
 from runai.h.events import to_trace_event
 from runai.h.lifecycle import HLifecycle
 from runai.h.runner import HRun, HRunner
-from runai.models import Race, RunnerProfile, StepKind, StepResult, StepStatus
+from runai.models import (
+    Race,
+    RunnerProfile,
+    StepKind,
+    StepResult,
+    StepStatus,
+    StopPoint,
+)
 from runai.safety import guard_task
 from runai.search.linkup_search import search_race
 from runai.search.models import RaceSheet
@@ -97,8 +105,41 @@ class RealAgentRun:
             self.on_event(to_trace_event(event, self.session_id, self.kind.value))
 
         result = await self.run.wait(on_event=forward, timeout_s=self.timeout_s)
+        answer = parse_answer(self.kind, result.data.get("answer"))
+        if answer is not None:
+            typed = answer.model_dump()
+            result.data["answer_typed"] = typed
+            result.data["options"] = typed.get("options", [])
+            result.price_eur = None
+            if typed.get("currency") == "EUR":
+                result.price_eur = typed.get("total_price", typed.get("price"))
+            else:
+                result.data["price_currency"] = typed.get("currency")
+            if answer.final_url:
+                result.url = answer.final_url
+            result.summary = answer.summary
+            result.stop_point = None
+            if answer.stop_screen == "blocked":
+                result.status = StepStatus.failed
+                result.error = "Blocked by the site"
+            elif answer.stop_screen == "none":
+                result.status = StepStatus.completed
+            else:
+                result.stop_point = StopPoint({
+                    "account": "account_creation",
+                    "health": "health_declaration",
+                }.get(answer.stop_screen, answer.stop_screen))
+                if result.status is not StepStatus.failed:
+                    result.status = StepStatus.stopped_before_commitment
+        if (
+            result.data.get("error_code") == "answer_validation"
+            or ("error_code" not in result.data and "answer_validation" in (result.error or ""))
+        ):
+            result.data["error_user"] = (
+                "The agent finished but its report did not match the expected format."
+            )
         if self.kind is StepKind.accommodation and result.status is not StepStatus.failed:
-            if result.price_eur is None and result.summary:
+            if answer is None and result.price_eur is None and result.summary:
                 match = _HOTEL_PRICE_TOTAL.search(result.summary)
                 if match:
                     result.price_eur = extract_budget_per_night(
@@ -108,20 +149,20 @@ class RealAgentRun:
                 result.status = StepStatus.failed
                 result.error = (
                     result.error
-                    or "Le prix total exact de l'hébergement n'est pas vérifiable."
+                    or "The exact total accommodation price cannot be verified."
                 )
         if result.status is StepStatus.completed:
             result.status = StepStatus.failed
             result.error = (
                 result.error
-                or "L'agent a terminé sans point d'arrêt avant engagement explicite."
+                or "The agent finished without an explicit stop before commitment."
             )
         result.data = {
             **result.data,
             "provenance": provenance_data(
                 DataMode.live,
                 ProvenanceKind.h_agent,
-                f"Agent H réel (session {self.session_id})",
+                f"Live H agent (session {self.session_id})",
                 url=str(result.url) if result.url else None,
             ),
         }
@@ -161,7 +202,7 @@ class LifecycleAgentRun:
 
     async def send_message(self, text):
         if self.job.run is None:
-            raise RuntimeError("Session H encore en file ; réessayez après son démarrage.")
+            raise RuntimeError("H session is still queued; retry after it starts.")
         await self.job.run.send_message(text)
 
     async def wait(self):
@@ -199,16 +240,17 @@ class RealBrowserAgents:
         brief=None,
     ) -> RealAgentRun:
         if start_url and (reason := forbidden_reason(start_url)):
-            raise RuntimeError(f"URL de départ refusée : {reason}.")
+            raise RuntimeError(f"Start URL rejected: {reason}.")
         if kind is StepKind.registration:
             if not race.registration_url or not _njuko_url(str(race.registration_url)):
                 raise RuntimeError(
-                    "Lien d'inscription Njuko manquant ; Klikego et les autres plateformes sont interdits."
+                    "Njuko registration link missing; Klikego and other platforms are forbidden."
                 )
             start_url = str(race.registration_url)
         job = self.lifecycle.submit(
             kind,
-            guard_task(task),
+            guard_task(task + "\nAnswer using the requested JSON fields."),
+            answer_schema=answer_schema_for(kind),
             mission_id=mission_id,
             start_url=start_url,
             max_steps=self.max_steps,
@@ -237,5 +279,5 @@ class RealTranscriber:
                 transcripts.append(event.text.strip())
         result = " ".join(transcripts).strip()
         if not result:
-            raise RuntimeError("Gladia n'a renvoyé aucune transcription finale.")
+            raise RuntimeError("Gladia returned no final transcription.")
         return result

@@ -21,6 +21,7 @@ from runai.app.real import (
     RealTranscriber,
 )
 from runai.app.server import build_service, create_app
+from runai.h.answers import RegistrationAnswer
 from runai.models import Race, RunnerProfile, Source, StepKind, StepResult, StepStatus
 from runai.search.models import RaceSheet
 
@@ -109,6 +110,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert params["mission_id"] == "mission-1"
     assert params["max_steps"] == 12
     assert params["max_time_s"] == 60
+    assert params["answer_schema"] is RegistrationAnswer
     assert params["tools"][0].name == "ask_user"
     assert answer == "moins de 3h30"
     assert answers == [("Quel sas ?", ["moins de 3h30", "plus de 3h30"])]
@@ -180,7 +182,77 @@ def test_real_agent_run_fails_without_a_detected_stop_point():
     )
     result = asyncio.run(run.wait())
     assert result.status is StepStatus.failed
-    assert "point d'arrêt" in result.error
+    assert "explicit stop" in result.error
+
+
+@pytest.mark.parametrize("screen,expected", [
+    ("payment", "payment"), ("account", "account_creation"),
+    ("health", "health_declaration"), ("consent", "consent"),
+    ("submission", "submission"), ("none", None), ("blocked", None),
+])
+def test_real_agent_uses_typed_answer(screen, expected):
+    class Run:
+        id = "typed-session"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.accommodation, status=StepStatus.completed,
+                data={"answer": {
+                    "stop_screen": screen, "total_price": 129, "currency": "EUR",
+                    "final_url": "https://all.accor.com/x",
+                    "options": [{"name": "Hotel", "total_price": 129}],
+                }},
+            )
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.accommodation, lambda e: None, 10).wait())
+    assert result.price_eur == 129
+    assert str(result.url) == "https://all.accor.com/x"
+    assert result.stop_point == expected
+    assert result.data["answer_typed"]["stop_screen"] == screen
+    assert result.data["options"][0]["name"] == "Hotel"
+    assert result.status is (
+        StepStatus.failed if expected is None else StepStatus.stopped_before_commitment
+    )
+    if screen == "blocked":
+        assert result.error == "Blocked by the site"
+
+
+@pytest.mark.parametrize("currency", ["USD", None, "EUR"])
+def test_typed_hotel_price_cannot_fall_back_to_summary(currency):
+    class Run:
+        id = "missing-price"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.accommodation, status=StepStatus.completed,
+                price_eur=999,
+                data={"answer": {"stop_screen": "payment", "currency": currency,
+                                 "summary": "PRIX_TOTAL_2_NUITS: 129 EUR"}},
+            )
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.accommodation, lambda e: None, 10).wait())
+    assert result.price_eur is None
+    assert result.status is StepStatus.failed
+    if currency != "EUR":
+        assert result.data["price_currency"] == currency
+
+
+@pytest.mark.parametrize("data,error", [
+    ({"error_code": "answer_validation"}, "Traceback"),
+    ({}, "answer_validation: Traceback"),
+])
+def test_answer_validation_has_readable_error(data, error):
+    class Run:
+        id = "invalid-answer"
+
+        async def wait(self, **kwargs):
+            return StepResult(kind=StepKind.transport, status=StepStatus.failed,
+                              data=data, error=error)
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.transport, lambda e: None, 10).wait())
+    assert result.data["error_user"] == (
+        "The agent finished but its report did not match the expected format."
+    )
 
 
 def test_real_transcriber_decodes_uploaded_wav_and_uses_voice_stream():
@@ -233,7 +305,7 @@ def test_real_transcriber_paces_uploaded_audio_at_recording_rate(monkeypatch, fr
     if frames:
         assert asyncio.run(transcriber.transcribe(audio.getvalue(), "audio/wav")) == "Une course"
     else:
-        with pytest.raises(RuntimeError, match="aucune transcription finale"):
+        with pytest.raises(RuntimeError, match="no final transcription"):
             asyncio.run(transcriber.transcribe(audio.getvalue(), "audio/wav"))
     assert b"".join(received) == b"\0\0" * frames
     assert sent_at == pytest.approx([0, .1, .2] if frames == 4800 else [0] if frames else [])

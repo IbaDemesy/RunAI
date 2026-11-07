@@ -90,7 +90,7 @@ def test_forbidden_platform_rejected_before_h_start(host, kind):
     race = Race(
         name="Course Nairobi", city="Nairobi", country="KE", registration_url=url
     )
-    with pytest.raises(RuntimeError, match="refusée"):
+    with pytest.raises(RuntimeError, match="rejected"):
         asyncio.run(
             agents.start(
                 kind,
