@@ -257,6 +257,30 @@ def test_blocker_detail_preserves_lifecycle_anti_bot_classification(blocker):
     assert isinstance(job.error, HAntiBotBlocked)
 
 
+@pytest.mark.parametrize("final_url,expected", [
+    ("/checkout", "https://example.com/original"),
+    ("ftp://example.com/file", "https://example.com/original"),
+    ("not a URL", "https://example.com/original"),
+    (None, "https://example.com/original"),
+    ("https://example.com/checkout", "https://example.com/checkout"),
+    ("http://example.com/checkout", "http://example.com/checkout"),
+])
+def test_typed_final_url_requires_absolute_http_url(final_url, expected):
+    class Run:
+        id = "final-url"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.transport, status=StepStatus.completed,
+                url="https://example.com/original",
+                data={"answer": {"stop_screen": "payment", "final_url": final_url}},
+            )
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.transport, lambda e: None, 10).wait())
+    assert str(result.url) == expected
+    assert result.model_dump(mode="json")["url"] == expected
+
+
 @pytest.mark.parametrize("currency", ["USD", None, "EUR"])
 def test_typed_hotel_price_cannot_fall_back_to_summary(currency):
     class Run:

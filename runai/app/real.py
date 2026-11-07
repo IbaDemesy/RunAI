@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from hai_agents.tools import Tool, tool
+from pydantic import HttpUrl, TypeAdapter, ValidationError
 
 from runai.app.ports import AskUser, EventSink
 from runai.app.providers import (
@@ -118,7 +119,10 @@ class RealAgentRun:
             else:
                 result.data["price_currency"] = typed.get("currency")
             if answer.final_url:
-                result.url = answer.final_url
+                try:
+                    result.url = TypeAdapter(HttpUrl).validate_python(answer.final_url)
+                except ValidationError:
+                    pass
             result.summary = answer.summary
             result.stop_point = None
             if answer.stop_screen == "blocked":
