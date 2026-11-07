@@ -153,6 +153,7 @@ class FakeAgentRun:
         self._resumed = asyncio.Event()
         self._resumed.set()
         self._messages: list[str] = []
+        self.received: list[str] = []
         self._task = asyncio.create_task(self._run())
 
     async def pause(self) -> None:
@@ -162,8 +163,10 @@ class FakeAgentRun:
         self._resumed.set()
 
     async def send_message(self, text: str) -> None:
-        self._messages.append(text)
-        self._emit("message_ack", f"Consigne reçue : « {text} »")
+        self.received.append(text)
+        instruction = text.split("\n\n", 1)[0]
+        self._messages.append(instruction)
+        self._emit("message_ack", f"Consigne reçue : « {instruction} »")
 
     async def wait(self) -> StepResult:
         return await self._task

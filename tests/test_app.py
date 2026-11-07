@@ -121,7 +121,8 @@ async def test_lisbon_query_picks_lisbon_demo_race():
 
 @pytest.mark.anyio
 async def test_pause_resume_and_message(tmp_path):
-    service = make_service(tmp_path, agents=FakeBrowserAgents(delay=0.02))
+    agents = FakeBrowserAgents(delay=0.02)
+    service = make_service(tmp_path, agents=agents)
     mission = await service.create("Milan")
     while mission.steps[StepKind.registration].status is not StepStatus.running:
         await asyncio.sleep(0.005)
@@ -148,6 +149,8 @@ async def test_pause_resume_and_message(tmp_path):
     assert step.status is StepStatus.stopped_before_commitment
     assert "10 km" in step.summary
     assert step.data["messages"] == ["Prends plutôt le 10 km"]
+    (run,) = [run for run in agents.runs if run.kind is StepKind.registration]
+    assert run.received == [f"Prends plutôt le 10 km\n\n{STOP_INSTRUCTIONS}"]
     assert {event.type for event in mission.events} >= {
         "pause",
         "resume",

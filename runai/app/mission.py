@@ -21,7 +21,7 @@ from runai.models import (
     TraceEvent,
     utcnow,
 )
-from runai.safety import detect_stop_point
+from runai.safety import detect_stop_point, guard_task
 from runai.tracing import TraceWriter
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
@@ -178,7 +178,7 @@ class MissionService:
 
     async def send_message(self, mission_id: str, kind: StepKind, text: str) -> None:
         mission, step, run = self._active(mission_id, kind)
-        await run.send_message(text)
+        await run.send_message(guard_task(text))
         step.data.setdefault("messages", []).append(text)
         self._record(
             mission,
