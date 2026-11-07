@@ -1,0 +1,476 @@
+{
+  "audio": {
+    "wav": "scenario_gtts.wav",
+    "tts": "gtts",
+    "duration_s": 41.072,
+    "phrases": [
+      {
+        "text": "Stop, attends une seconde.",
+        "start": 1.0,
+        "end": 3.304
+      },
+      {
+        "text": "C'est bon, reprends.",
+        "start": 15.304,
+        "end": 16.912
+      },
+      {
+        "text": "Non, cherche plutôt le semi-marathon de Paris.",
+        "start": 24.912,
+        "end": 28.296
+      },
+      {
+        "text": "Parfait, je valide.",
+        "start": 36.296,
+        "end": 38.072
+      }
+    ]
+  },
+  "started_at": "2026-11-07T14:52:44+0000",
+  "h_quota_before": {
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "waited_s": 0.5
+  },
+  "h_session_id": "25165c8c-1caa-4a07-8ed2-db1416c165c1",
+  "h_create_to_running_s": 7.0,
+  "h_status_before_voice": {
+    "status": "running",
+    "steps": 3
+  },
+  "gladia_session_id": "66697d1a-3c50-4da6-9cc4-c24cf4a4d321",
+  "gladia_init_plus_ws_connect_s": 1.552,
+  "h_status_end": [
+    "completed",
+    5
+  ],
+  "transcripts": [
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop !",
+      "start": 1.152,
+      "end": 1.478,
+      "t_rel_s": 1.865
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop !",
+      "start": 1.144,
+      "end": 1.487,
+      "t_rel_s": 2.565
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop ! A ton second !",
+      "start": 1.147,
+      "end": 2.744,
+      "t_rel_s": 3.166
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop, attends une seconde.",
+      "start": 1.145,
+      "end": 2.839,
+      "t_rel_s": 3.866
+    },
+    {
+      "id": "00_00000000",
+      "final": true,
+      "text": "Stop, attends une seconde.",
+      "start": 1.145,
+      "end": 2.839,
+      "t_rel_s": 3.871
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon !",
+      "start": 14.836,
+      "end": 15.791,
+      "t_rel_s": 16.139
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, repos !",
+      "start": 15.486,
+      "end": 16.46,
+      "t_rel_s": 16.742
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, reprends.",
+      "start": 15.481,
+      "end": 16.651,
+      "t_rel_s": 17.648
+    },
+    {
+      "id": "00_00000001",
+      "final": true,
+      "text": "C'est bon, reprends.",
+      "start": 15.481,
+      "end": 16.651,
+      "t_rel_s": 17.653
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non.",
+      "start": 25.05,
+      "end": 25.232,
+      "t_rel_s": 25.965
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, sert ce pute.",
+      "start": 25.067,
+      "end": 26.232,
+      "t_rel_s": 26.569
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi",
+      "start": 25.07,
+      "end": 26.744,
+      "t_rel_s": 27.165
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi-maraton.",
+      "start": 25.067,
+      "end": 27.236,
+      "t_rel_s": 27.566
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi-maraton de Paris.",
+      "start": 25.066,
+      "end": 27.812,
+      "t_rel_s": 28.166
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 25.065,
+      "end": 27.812,
+      "t_rel_s": 28.665
+    },
+    {
+      "id": "00_00000002",
+      "final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 25.065,
+      "end": 27.812,
+      "t_rel_s": 28.67
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Bafé",
+      "start": 36.412,
+      "end": 36.775,
+      "t_rel_s": 37.165
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "parfait, je vais aller",
+      "start": 36.412,
+      "end": 37.58,
+      "t_rel_s": 37.866
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Parfait, je valide.",
+      "start": 36.41,
+      "end": 37.795,
+      "t_rel_s": 38.867
+    },
+    {
+      "id": "00_00000003",
+      "final": true,
+      "text": "Parfait, je valide.",
+      "start": 36.41,
+      "end": 37.795,
+      "t_rel_s": 38.873
+    }
+  ],
+  "speech_start_latency_ms": [
+    368,
+    402,
+    370,
+    376
+  ],
+  "partials": {
+    "n": 16,
+    "min_ms": 282,
+    "median_ms": 406,
+    "p90_ms": 1027,
+    "max_ms": 1078
+  },
+  "keywords": [
+    {
+      "keyword": "stop",
+      "first_seen_in": "partial",
+      "text": "Stop !",
+      "word_end_audio_s": 1.478,
+      "latency_word_end_to_msg_ms": 387
+    },
+    {
+      "keyword": "reprends",
+      "first_seen_in": "partial",
+      "text": "C'est bon, reprends.",
+      "word_end_audio_s": 16.651,
+      "latency_word_end_to_msg_ms": 997
+    },
+    {
+      "keyword": "non",
+      "first_seen_in": "partial",
+      "text": "Non.",
+      "word_end_audio_s": 25.232,
+      "latency_word_end_to_msg_ms": 733
+    },
+    {
+      "keyword": "plutot",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.381,
+      "latency_word_end_to_msg_ms": 784
+    },
+    {
+      "keyword": "semi",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.744,
+      "latency_word_end_to_msg_ms": 421
+    },
+    {
+      "keyword": "valide",
+      "first_seen_in": "partial",
+      "text": "Parfait, je valide.",
+      "word_end_audio_s": 37.795,
+      "latency_word_end_to_msg_ms": 1072
+    }
+  ],
+  "finals": [
+    {
+      "text": "Stop, attends une seconde.",
+      "utt_end_audio_s": 2.839,
+      "latency_utt_end_to_final_ms": 1032
+    },
+    {
+      "text": "C'est bon, reprends.",
+      "utt_end_audio_s": 16.651,
+      "latency_utt_end_to_final_ms": 1002
+    },
+    {
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "utt_end_audio_s": 27.812,
+      "latency_utt_end_to_final_ms": 858
+    },
+    {
+      "text": "Parfait, je valide.",
+      "utt_end_audio_s": 37.795,
+      "latency_utt_end_to_final_ms": 1078
+    }
+  ],
+  "intents": [
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Stop !",
+      "msg_to_intent_ms": 0.235,
+      "phrase_end_audio_s": 3.304,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 865,
+      "last_word_end_to_intent_ms": 387
+    },
+    {
+      "intent": "resume",
+      "from_final": false,
+      "text": "C'est bon, reprends.",
+      "msg_to_intent_ms": 0.079,
+      "phrase_end_audio_s": 16.912,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2344,
+      "last_word_end_to_intent_ms": 997
+    },
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Non.",
+      "msg_to_intent_ms": 0.06,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1053,
+      "last_word_end_to_intent_ms": 733
+    },
+    {
+      "intent": "correction",
+      "from_final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "msg_to_intent_ms": 0.063,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 3759,
+      "last_word_end_to_intent_ms": 859
+    },
+    {
+      "intent": "validate",
+      "from_final": false,
+      "text": "Parfait, je valide.",
+      "msg_to_intent_ms": 0.064,
+      "phrase_end_audio_s": 38.072,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2571,
+      "last_word_end_to_intent_ms": 1072
+    }
+  ],
+  "actions": [
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.214,
+      "status_reached": "paused",
+      "call_to_status_s": 2.588,
+      "polls": 6,
+      "steps": 3
+    },
+    {
+      "intent": "resume",
+      "dry_run": false,
+      "call_s": 0.522,
+      "status_reached": "running",
+      "call_to_status_s": 0.769,
+      "polls": 1,
+      "steps": 3
+    },
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.495,
+      "status_reached": null,
+      "call_to_status_s": 60.819,
+      "polls": 140,
+      "steps": 5
+    },
+    {
+      "intent": "correction",
+      "dry_run": false,
+      "message": "Correction de l'utilisateur (dictee vocale), applique-la maintenant : cherche plutôt le semi-marathon de Paris.",
+      "error": "UnprocessableEntityError: 422 Unable to extract tag using discriminator 'type' (status_code: 422)",
+      "user_message_event_seen_after_s": null,
+      "first_policy_event_mentioning_semi_after_s": null,
+      "first_policy_event_snippet": null
+    },
+    {
+      "intent": "validate",
+      "dry_run": false,
+      "note": "validation humaine enregistree ; aucune soumission ni paiement"
+    }
+  ],
+  "h_events_timeline": [
+    {
+      "t_rel_s": -3.15,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"I'm on the Marathon de Paris Wikipedia article. I can see the \\\"Palmarès\\\" section in the table of contents on the left. Let me click on it to jump to that section.\\n\", \"content\": \"I can see th"
+    },
+    {
+      "t_rel_s": -1.94,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"click_web\", \"args\": {\"x\": 0.077, \"y\": 0.299, \"element\": \"Palmarès link in the table of contents on the left sidebar\"}, \"id\": \"chatcmpl-tool-ad7535c002f82956\"}, \"truncated\": false, \"result\":"
+    },
+    {
+      "t_rel_s": -1.7,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 3, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 32939, \"cached_tokens\": 20800, \"output_tokens\": 365, \"reasoning_tokens\": 151, \"input_cost\": 0.0056876, \"output_cost\": 0.000642, \"reasoning_cost\": 0.0004530000"
+    },
+    {
+      "t_rel_s": -1.37,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Marathon_de_Paris#Palmar%C3%A8s\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Marathon de Paris — Wikipédia\", \"page_size\": [1203, 14240], \"current_tab\""
+    },
+    {
+      "t_rel_s": 4.42,
+      "type": "AgentEvent",
+      "kind": "flow_event",
+      "snippet": "{\"kind\": \"flow_event\", \"flow\": \"pause\", \"origin\": \"user\"}"
+    },
+    {
+      "t_rel_s": 18.23,
+      "type": "AgentEvent",
+      "kind": "flow_event",
+      "snippet": "{\"kind\": \"flow_event\", \"flow\": \"resume\", \"origin\": \"user\"}"
+    },
+    {
+      "t_rel_s": 18.48,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Marathon_de_Paris#Palmar%C3%A8s\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Marathon de Paris — Wikipédia\", \"page_size\": [1203, 14240], \"current_tab\""
+    },
+    {
+      "t_rel_s": 25.89,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"I can see the Palmarès section clearly. The table shows the winners by year. The 5 most recent men's winners (from top to bottom) are:\\n\\n1. 2026 - Yemaneberhan Crippa (Italie) - 2 h 5 min 16 s"
+    },
+    {
+      "t_rel_s": 26.13,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"answer\", \"args\": {\"content\": \"Voici les 5 derniers vainqueurs hommes du Marathon de Paris (source : Wikipédia FR, section Palmarès) :\\n\\n1. **2026** – Yemaneberhan Crippa (Italie) – 2 h 5 m"
+    },
+    {
+      "t_rel_s": 26.13,
+      "type": "AgentEvent",
+      "kind": "answer_event",
+      "snippet": "{\"kind\": \"answer_event\", \"answer\": \"Voici les 5 derniers vainqueurs hommes du Marathon de Paris (source : Wikipédia FR, section Palmarès) :\\n\\n1. **2026** – Yemaneberhan Crippa (Italie) – 2 h 5 min 16 s\\n2. **2025** – Bernard Kiprotich (Ken"
+    },
+    {
+      "t_rel_s": 26.13,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 5, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 59158, \"cached_tokens\": 31200, \"output_tokens\": 3133, \"reasoning_tokens\": 2053, \"input_cost\": 0.0124312, \"output_cost\": 0.00324, \"reasoning_cost\": 0.006159, \""
+    },
+    {
+      "t_rel_s": 26.37,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 5, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 59158, \"cached_tokens\": 31200, \"output_tokens\": 3133, \"reasoning_tokens\": 2053, \"input_cost\": 0.0124312, \"output_cost\": 0.00324, \"reasoning_cost\": 0.006159, \""
+    },
+    {
+      "t_rel_s": 26.37,
+      "type": "ActiveStateChangeEvent",
+      "kind": null,
+      "snippet": "{\"state\": \"idle\", \"pending_tool_calls\": null, \"pending_approvals\": null}"
+    },
+    {
+      "t_rel_s": 28.23,
+      "type": "AgentCompletionEvent",
+      "kind": null,
+      "snippet": "{\"reason\": \"finished\"}"
+    }
+  ],
+  "h_quota_after_cancel": {
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "waited_s": 0.2
+  }
+}

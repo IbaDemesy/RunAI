@@ -1,0 +1,27 @@
+{
+  "wav": "scenario_gtts.wav",
+  "tts": "gtts",
+  "duration_s": 41.072,
+  "phrases": [
+    {
+      "text": "Stop, attends une seconde.",
+      "start": 1.0,
+      "end": 3.304
+    },
+    {
+      "text": "C'est bon, reprends.",
+      "start": 15.304,
+      "end": 16.912
+    },
+    {
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 24.912,
+      "end": 28.296
+    },
+    {
+      "text": "Parfait, je valide.",
+      "start": 36.296,
+      "end": 38.072
+    }
+  ]
+}

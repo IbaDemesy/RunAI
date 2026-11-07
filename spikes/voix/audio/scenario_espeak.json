@@ -1,0 +1,27 @@
+{
+  "wav": "scenario_espeak.wav",
+  "tts": "espeak",
+  "duration_s": 40.023,
+  "phrases": [
+    {
+      "text": "Stop, attends une seconde.",
+      "start": 1.0,
+      "end": 2.972
+    },
+    {
+      "text": "C'est bon, reprends.",
+      "start": 14.972,
+      "end": 16.475
+    },
+    {
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 24.475,
+      "end": 27.392
+    },
+    {
+      "text": "Parfait, je valide.",
+      "start": 35.392,
+      "end": 37.023
+    }
+  ]
+}

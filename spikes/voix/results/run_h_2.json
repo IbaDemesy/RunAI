@@ -1,0 +1,558 @@
+{
+  "audio": {
+    "wav": "scenario_gtts.wav",
+    "tts": "gtts",
+    "duration_s": 41.072,
+    "phrases": [
+      {
+        "text": "Stop, attends une seconde.",
+        "start": 1.0,
+        "end": 3.304
+      },
+      {
+        "text": "C'est bon, reprends.",
+        "start": 15.304,
+        "end": 16.912
+      },
+      {
+        "text": "Non, cherche plutôt le semi-marathon de Paris.",
+        "start": 24.912,
+        "end": 28.296
+      },
+      {
+        "text": "Parfait, je valide.",
+        "start": 36.296,
+        "end": 38.072
+      }
+    ]
+  },
+  "started_at": "2026-11-07T14:57:21+0000",
+  "h_quota_before": {
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "waited_s": 0.5
+  },
+  "h_session_id": "d8018b1e-3956-4cc4-841b-c66ebe564fa4",
+  "h_create_to_running_s": 5.8,
+  "h_status_before_voice": {
+    "status": "running",
+    "steps": 3
+  },
+  "gladia_session_id": "6d0c3918-d120-4bbe-a40a-4c47058050bc",
+  "gladia_init_plus_ws_connect_s": 1.413,
+  "h_status_end": [
+    "running",
+    9
+  ],
+  "transcripts": [
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop !",
+      "start": 1.152,
+      "end": 1.478,
+      "t_rel_s": 1.867
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop !",
+      "start": 1.144,
+      "end": 1.487,
+      "t_rel_s": 2.567
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop ! A ton second !",
+      "start": 1.147,
+      "end": 2.744,
+      "t_rel_s": 3.071
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop, attends une seconde.",
+      "start": 1.145,
+      "end": 2.839,
+      "t_rel_s": 3.868
+    },
+    {
+      "id": "00_00000000",
+      "final": true,
+      "text": "Stop, attends une seconde.",
+      "start": 1.145,
+      "end": 2.839,
+      "t_rel_s": 3.874
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon !",
+      "start": 14.836,
+      "end": 15.791,
+      "t_rel_s": 16.268
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, repos !",
+      "start": 15.486,
+      "end": 16.46,
+      "t_rel_s": 16.767
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, reprends.",
+      "start": 15.481,
+      "end": 16.651,
+      "t_rel_s": 17.669
+    },
+    {
+      "id": "00_00000001",
+      "final": true,
+      "text": "C'est bon, reprends.",
+      "start": 15.481,
+      "end": 16.651,
+      "t_rel_s": 17.674
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non.",
+      "start": 25.05,
+      "end": 25.232,
+      "t_rel_s": 25.934
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, sert ce pute.",
+      "start": 25.067,
+      "end": 26.232,
+      "t_rel_s": 26.569
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi",
+      "start": 25.07,
+      "end": 26.744,
+      "t_rel_s": 27.038
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi-maraton.",
+      "start": 25.067,
+      "end": 27.236,
+      "t_rel_s": 27.542
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi-maraton de Paris.",
+      "start": 25.066,
+      "end": 27.812,
+      "t_rel_s": 28.445
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 25.065,
+      "end": 27.812,
+      "t_rel_s": 28.669
+    },
+    {
+      "id": "00_00000002",
+      "final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 25.065,
+      "end": 27.812,
+      "t_rel_s": 28.674
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Bafé",
+      "start": 36.412,
+      "end": 36.775,
+      "t_rel_s": 37.173
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "parfait, je vais aller",
+      "start": 36.412,
+      "end": 37.58,
+      "t_rel_s": 37.868
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Parfait, je valide.",
+      "start": 36.41,
+      "end": 37.795,
+      "t_rel_s": 38.867
+    },
+    {
+      "id": "00_00000003",
+      "final": true,
+      "text": "Parfait, je valide.",
+      "start": 36.41,
+      "end": 37.795,
+      "t_rel_s": 38.873
+    }
+  ],
+  "speech_start_latency_ms": [
+    357,
+    368,
+    428,
+    343
+  ],
+  "partials": {
+    "n": 16,
+    "min_ms": 288,
+    "median_ms": 438,
+    "p90_ms": 1029,
+    "max_ms": 1080
+  },
+  "keywords": [
+    {
+      "keyword": "stop",
+      "first_seen_in": "partial",
+      "text": "Stop !",
+      "word_end_audio_s": 1.478,
+      "latency_word_end_to_msg_ms": 389
+    },
+    {
+      "keyword": "reprends",
+      "first_seen_in": "partial",
+      "text": "C'est bon, reprends.",
+      "word_end_audio_s": 16.651,
+      "latency_word_end_to_msg_ms": 1018
+    },
+    {
+      "keyword": "non",
+      "first_seen_in": "partial",
+      "text": "Non.",
+      "word_end_audio_s": 25.232,
+      "latency_word_end_to_msg_ms": 702
+    },
+    {
+      "keyword": "plutot",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.381,
+      "latency_word_end_to_msg_ms": 657
+    },
+    {
+      "keyword": "semi",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.744,
+      "latency_word_end_to_msg_ms": 294
+    },
+    {
+      "keyword": "valide",
+      "first_seen_in": "partial",
+      "text": "Parfait, je valide.",
+      "word_end_audio_s": 37.795,
+      "latency_word_end_to_msg_ms": 1072
+    }
+  ],
+  "finals": [
+    {
+      "text": "Stop, attends une seconde.",
+      "utt_end_audio_s": 2.839,
+      "latency_utt_end_to_final_ms": 1035
+    },
+    {
+      "text": "C'est bon, reprends.",
+      "utt_end_audio_s": 16.651,
+      "latency_utt_end_to_final_ms": 1023
+    },
+    {
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "utt_end_audio_s": 27.812,
+      "latency_utt_end_to_final_ms": 862
+    },
+    {
+      "text": "Parfait, je valide.",
+      "utt_end_audio_s": 37.795,
+      "latency_utt_end_to_final_ms": 1078
+    }
+  ],
+  "intents": [
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Stop !",
+      "msg_to_intent_ms": 0.199,
+      "phrase_end_audio_s": 3.304,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 868,
+      "last_word_end_to_intent_ms": 390
+    },
+    {
+      "intent": "resume",
+      "from_final": false,
+      "text": "C'est bon, reprends.",
+      "msg_to_intent_ms": 0.082,
+      "phrase_end_audio_s": 16.912,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2365,
+      "last_word_end_to_intent_ms": 1018
+    },
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Non.",
+      "msg_to_intent_ms": 0.068,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1022,
+      "last_word_end_to_intent_ms": 702
+    },
+    {
+      "intent": "correction",
+      "from_final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "msg_to_intent_ms": 0.091,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 3763,
+      "last_word_end_to_intent_ms": 863
+    },
+    {
+      "intent": "validate",
+      "from_final": false,
+      "text": "Parfait, je valide.",
+      "msg_to_intent_ms": 0.082,
+      "phrase_end_audio_s": 38.072,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2571,
+      "last_word_end_to_intent_ms": 1072
+    }
+  ],
+  "actions": [
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.224,
+      "status_reached": "paused",
+      "call_to_status_s": 0.439,
+      "polls": 1,
+      "steps": 3
+    },
+    {
+      "intent": "resume",
+      "dry_run": false,
+      "call_s": 0.501,
+      "status_reached": "running",
+      "call_to_status_s": 0.733,
+      "polls": 1,
+      "steps": 3
+    },
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.509,
+      "status_reached": "paused",
+      "call_to_status_s": 2.04,
+      "polls": 4,
+      "steps": 5
+    },
+    {
+      "intent": "correction",
+      "dry_run": false,
+      "message": "Correction de l'utilisateur (dictee vocale), applique-la maintenant : cherche plutôt le semi-marathon de Paris.",
+      "call_s": 0.235,
+      "status_reached": "running",
+      "call_to_status_s": 0.447,
+      "polls": 1,
+      "steps": 5,
+      "user_message_event_seen_after_s": 0.59,
+      "first_policy_event_mentioning_semi_after_s": 2.85,
+      "first_policy_event_snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The user corrected the request: they actually want the Paris Half Marathon (Semi-marathon de Paris), not the marathon. Let me navigate to the \\\"Semi-marathon de Paris\\\" Wikipedia article.\\n\", \"content\": \"Bien noté — je change d'objectif : c'est le **semi-marathon de Paris** qu'il faut. Je navigue vers cet article.\", \"tool_reqs\": [{\"tool_name\": \"go_to_web\", \"args\": {\"url\": \"https://fr.wikipedia.org/wiki/Semi-marathon_de_Paris\"}, \"id\": \"chatcmpl-tool-8d6308bc05ddef8b\"}], \"validation_errors\": []}"
+    },
+    {
+      "intent": "validate",
+      "dry_run": false,
+      "note": "validation humaine enregistree ; aucune soumission ni paiement"
+    }
+  ],
+  "h_events_timeline": [
+    {
+      "t_rel_s": -3.53,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The ctrl_f found \\\"Palmarès\\\" in the table of contents (Sommaire). I need to click on the \\\"Palmarès\\\" link in the sidebar to jump to that section.\\n\", \"content\": \"\", \"tool_reqs\": [{\"tool_name\""
+    },
+    {
+      "t_rel_s": -2.37,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"click_web\", \"args\": {\"x\": 0.078, \"y\": 0.298, \"element\": \"Lien \\\"Palmarès\\\" dans le sommaire\"}, \"id\": \"chatcmpl-tool-9c131401e7e13fa2\"}, \"truncated\": false, \"result\": null, \"output_artifact_"
+    },
+    {
+      "t_rel_s": -2.14,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 3, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 32929, \"cached_tokens\": 19200, \"output_tokens\": 264, \"reasoning_tokens\": 108, \"input_cost\": 0.006259600000000001, \"output_cost\": 0.000468, \"reasoning_cost\": 0"
+    },
+    {
+      "t_rel_s": -1.9,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Marathon_de_Paris#Palmar%C3%A8s\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Marathon de Paris — Wikipédia\", \"page_size\": [1203, 14240], \"current_tab\""
+    },
+    {
+      "t_rel_s": 2.29,
+      "type": "AgentEvent",
+      "kind": "flow_event",
+      "snippet": "{\"kind\": \"flow_event\", \"flow\": \"pause\", \"origin\": \"user\"}"
+    },
+    {
+      "t_rel_s": 18.32,
+      "type": "AgentEvent",
+      "kind": "flow_event",
+      "snippet": "{\"kind\": \"flow_event\", \"flow\": \"resume\", \"origin\": \"user\"}"
+    },
+    {
+      "t_rel_s": 18.57,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Marathon_de_Paris#Palmar%C3%A8s\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Marathon de Paris — Wikipédia\", \"page_size\": [1203, 14240], \"current_tab\""
+    },
+    {
+      "t_rel_s": 23.03,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The Palmarès (results) table is displayed. I can confirm the men's winners from 2015 to 2026:\\n\\n- 2026: Yemane Berhan Crippa (Italy)\\n- 2025: Bernard Bivott (Kenya)\\n- 2024: Mulugeata Uma (Eth"
+    },
+    {
+      "t_rel_s": 24.18,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"click_web\", \"args\": {\"x\": 0.316, \"y\": 0.168, \"element\": \"Lien \\\"Yemane Berhan Crippa\\\" dans la colonne Vainqueur (Homme) 2026\"}, \"id\": \"chatcmpl-tool-bfb4f8d06e559ce9\"}, \"truncated\": false,"
+    },
+    {
+      "t_rel_s": 24.41,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 5, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 59023, \"cached_tokens\": 29600, \"output_tokens\": 1906, \"reasoning_tokens\": 1267, \"input_cost\": 0.012953200000000002, \"output_cost\": 0.001917, \"reasoning_cost\":"
+    },
+    {
+      "t_rel_s": 24.68,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Marathon_de_Paris#Palmar%C3%A8s\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Marathon de Paris — Wikipédia\", \"page_size\": [1203, 14240], \"current_tab\""
+    },
+    {
+      "t_rel_s": 27.67,
+      "type": "AgentEvent",
+      "kind": "flow_event",
+      "snippet": "{\"kind\": \"flow_event\", \"flow\": \"pause\", \"origin\": \"user\"}"
+    },
+    {
+      "t_rel_s": 29.27,
+      "type": "AgentEvent",
+      "kind": "flow_event",
+      "snippet": "{\"kind\": \"flow_event\", \"flow\": \"resume\", \"origin\": \"user\"}"
+    },
+    {
+      "t_rel_s": 29.5,
+      "type": "AgentEvent",
+      "kind": "message_event",
+      "snippet": "{\"kind\": \"message_event\", \"caller_id\": \"user\", \"content\": [\"Correction de l'utilisateur (dictee vocale), applique-la maintenant : cherche plutôt le semi-marathon de Paris.\"]}"
+    },
+    {
+      "t_rel_s": 29.75,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Marathon_de_Paris#Palmar%C3%A8s\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Marathon de Paris — Wikipédia\", \"page_size\": [1203, 14240], \"current_tab\""
+    },
+    {
+      "t_rel_s": 31.76,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The user corrected the request: they actually want the Paris Half Marathon (Semi-marathon de Paris), not the marathon. Let me navigate to the \\\"Semi-marathon de Paris\\\" Wikipedia article.\\n\", \""
+    },
+    {
+      "t_rel_s": 33.55,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"go_to_web\", \"args\": {\"url\": \"https://fr.wikipedia.org/wiki/Semi-marathon_de_Paris\"}, \"id\": \"chatcmpl-tool-8d6308bc05ddef8b\"}, \"truncated\": false, \"result\": null, \"output_artifact_path\": nul"
+    },
+    {
+      "t_rel_s": 33.77,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 7, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 87681, \"cached_tokens\": 43200, \"output_tokens\": 2214, \"reasoning_tokens\": 1413, \"input_cost\": 0.0195204, \"output_cost\": 0.0024029999999999998, \"reasoning_cost"
+    },
+    {
+      "t_rel_s": 34.0,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Semi-marathon_de_Paris\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Semi-marathon de Paris — Wikipédia\", \"page_size\": [1185, 9084], \"current_tab\": \"0\""
+    },
+    {
+      "t_rel_s": 36.63,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The article \\\"Semi-marathon de Paris\\\" has been opened. The Palmarès (results) section is just below. Let's scroll down to check it.\\n\", \"content\": \"L'article du Semi-marathon de Paris est ouve"
+    },
+    {
+      "t_rel_s": 37.77,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"scroll_web\", \"args\": {\"direction\": \"down\", \"num_pixels\": 800, \"scroll_element\": null}, \"id\": \"chatcmpl-tool-aec6f0d6fa3a1fe2\"}, \"truncated\": false, \"result\": null, \"output_artifact_path\": n"
+    },
+    {
+      "t_rel_s": 38.09,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 8, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 102324, \"cached_tokens\": 50400, \"output_tokens\": 2314, \"reasoning_tokens\": 1448, \"input_cost\": 0.022785600000000003, \"output_cost\": 0.002598, \"reasoning_cost\""
+    },
+    {
+      "t_rel_s": 38.33,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Semi-marathon_de_Paris\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Semi-marathon de Paris — Wikipédia\", \"page_size\": [1185, 9084], \"current_tab\": \"0\""
+    },
+    {
+      "t_rel_s": 41.19,
+      "type": "AgentEvent",
+      "kind": "policy_event",
+      "snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The results table (Palmarès) for the Paris Half Marathon is displayed. Men's winners:\\n- 2026: Kennedy Kimutai (Kenya)\\n- 2025: Kennedy Kimutai (Kenya)\\n- 2024: Bernard Koech (Kenya)\\n- 2023: R"
+    },
+    {
+      "t_rel_s": 42.29,
+      "type": "AgentEvent",
+      "kind": "tool_result",
+      "snippet": "{\"kind\": \"tool_result\", \"tool_req\": {\"tool_name\": \"scroll_web\", \"args\": {\"direction\": \"down\", \"num_pixels\": 500, \"scroll_element\": null}, \"id\": \"chatcmpl-tool-93623b1616fc2863\"}, \"truncated\": false, \"result\": null, \"output_artifact_path\": n"
+    },
+    {
+      "t_rel_s": 42.52,
+      "type": "MetricsUpdateEvent",
+      "kind": null,
+      "snippet": "{\"metrics\": {\"steps\": 9, \"cost_per_model\": [{\"name\": \"holo4-27b\", \"input_tokens\": 117203, \"cached_tokens\": 57600, \"output_tokens\": 2643, \"reasoning_tokens\": 1674, \"input_cost\": 0.0261452, \"output_cost\": 0.002907, \"reasoning_cost\": 0.0050219"
+    },
+    {
+      "t_rel_s": 42.86,
+      "type": "AgentEvent",
+      "kind": "observation_event",
+      "snippet": "{\"kind\": \"observation_event\", \"type\": \"web\", \"metadata\": {\"url\": \"https://fr.wikipedia.org/wiki/Semi-marathon_de_Paris\", \"tabs\": [\"0\"], \"text\": \"\", \"title\": \"Semi-marathon de Paris — Wikipédia\", \"page_size\": [1185, 9084], \"current_tab\": \"0\""
+    }
+  ],
+  "h_quota_after_cancel": {
+    "limit": 3,
+    "active": 2,
+    "available": 1,
+    "waited_s": 0.2
+  }
+}

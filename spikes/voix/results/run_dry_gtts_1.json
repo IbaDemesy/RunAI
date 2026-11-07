@@ -1,0 +1,352 @@
+{
+  "audio": {
+    "wav": "scenario_gtts.wav",
+    "tts": "gtts",
+    "duration_s": 41.072,
+    "phrases": [
+      {
+        "text": "Stop, attends une seconde.",
+        "start": 1.0,
+        "end": 3.304
+      },
+      {
+        "text": "C'est bon, reprends.",
+        "start": 15.304,
+        "end": 16.912
+      },
+      {
+        "text": "Non, cherche plutôt le semi-marathon de Paris.",
+        "start": 24.912,
+        "end": 28.296
+      },
+      {
+        "text": "Parfait, je valide.",
+        "start": 36.296,
+        "end": 38.072
+      }
+    ]
+  },
+  "started_at": "2026-11-07T14:51:55+0000",
+  "gladia_session_id": "a11d8726-c5a6-4b36-9f78-4acf33fd81e7",
+  "gladia_init_plus_ws_connect_s": 1.095,
+  "transcripts": [
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop !",
+      "start": 1.152,
+      "end": 1.478,
+      "t_rel_s": 1.868
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop !",
+      "start": 1.144,
+      "end": 1.487,
+      "t_rel_s": 2.566
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop ! A ton second !",
+      "start": 1.147,
+      "end": 2.744,
+      "t_rel_s": 3.066
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop, attends une seconde.",
+      "start": 1.145,
+      "end": 2.839,
+      "t_rel_s": 3.866
+    },
+    {
+      "id": "00_00000000",
+      "final": true,
+      "text": "Stop, attends une seconde.",
+      "start": 1.145,
+      "end": 2.839,
+      "t_rel_s": 3.872
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon !",
+      "start": 14.836,
+      "end": 15.791,
+      "t_rel_s": 16.166
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, repos !",
+      "start": 15.486,
+      "end": 16.46,
+      "t_rel_s": 16.766
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, reprends.",
+      "start": 15.481,
+      "end": 16.651,
+      "t_rel_s": 17.668
+    },
+    {
+      "id": "00_00000001",
+      "final": true,
+      "text": "C'est bon, reprends.",
+      "start": 15.481,
+      "end": 16.651,
+      "t_rel_s": 17.673
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non.",
+      "start": 25.05,
+      "end": 25.232,
+      "t_rel_s": 25.938
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, sert ce pute.",
+      "start": 25.067,
+      "end": 26.232,
+      "t_rel_s": 26.539
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi",
+      "start": 25.07,
+      "end": 26.744,
+      "t_rel_s": 27.139
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi-maraton.",
+      "start": 25.067,
+      "end": 27.236,
+      "t_rel_s": 27.639
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cher que plutôt le semi-maraton de Paris.",
+      "start": 25.066,
+      "end": 27.812,
+      "t_rel_s": 28.24
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 25.065,
+      "end": 27.812,
+      "t_rel_s": 28.668
+    },
+    {
+      "id": "00_00000002",
+      "final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 25.065,
+      "end": 27.812,
+      "t_rel_s": 28.672
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Bafé",
+      "start": 36.412,
+      "end": 36.775,
+      "t_rel_s": 37.164
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "parfait, je vais aller",
+      "start": 36.412,
+      "end": 37.58,
+      "t_rel_s": 37.867
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Parfait, je valide.",
+      "start": 36.41,
+      "end": 37.795,
+      "t_rel_s": 38.867
+    },
+    {
+      "id": "00_00000003",
+      "final": true,
+      "text": "Parfait, je valide.",
+      "start": 36.41,
+      "end": 37.795,
+      "t_rel_s": 38.872
+    }
+  ],
+  "speech_start_latency_ms": [
+    363,
+    381,
+    432,
+    436
+  ],
+  "partials": {
+    "n": 16,
+    "min_ms": 287,
+    "median_ms": 399,
+    "p90_ms": 1027,
+    "max_ms": 1079
+  },
+  "keywords": [
+    {
+      "keyword": "stop",
+      "first_seen_in": "partial",
+      "text": "Stop !",
+      "word_end_audio_s": 1.478,
+      "latency_word_end_to_msg_ms": 390
+    },
+    {
+      "keyword": "reprends",
+      "first_seen_in": "partial",
+      "text": "C'est bon, reprends.",
+      "word_end_audio_s": 16.651,
+      "latency_word_end_to_msg_ms": 1017
+    },
+    {
+      "keyword": "non",
+      "first_seen_in": "partial",
+      "text": "Non.",
+      "word_end_audio_s": 25.232,
+      "latency_word_end_to_msg_ms": 706
+    },
+    {
+      "keyword": "plutot",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.381,
+      "latency_word_end_to_msg_ms": 758
+    },
+    {
+      "keyword": "semi",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.744,
+      "latency_word_end_to_msg_ms": 395
+    },
+    {
+      "keyword": "valide",
+      "first_seen_in": "partial",
+      "text": "Parfait, je valide.",
+      "word_end_audio_s": 37.795,
+      "latency_word_end_to_msg_ms": 1072
+    }
+  ],
+  "finals": [
+    {
+      "text": "Stop, attends une seconde.",
+      "utt_end_audio_s": 2.839,
+      "latency_utt_end_to_final_ms": 1033
+    },
+    {
+      "text": "C'est bon, reprends.",
+      "utt_end_audio_s": 16.651,
+      "latency_utt_end_to_final_ms": 1022
+    },
+    {
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "utt_end_audio_s": 27.812,
+      "latency_utt_end_to_final_ms": 860
+    },
+    {
+      "text": "Parfait, je valide.",
+      "utt_end_audio_s": 37.795,
+      "latency_utt_end_to_final_ms": 1077
+    }
+  ],
+  "intents": [
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Stop !",
+      "msg_to_intent_ms": 0.186,
+      "phrase_end_audio_s": 3.304,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 868,
+      "last_word_end_to_intent_ms": 390
+    },
+    {
+      "intent": "resume",
+      "from_final": false,
+      "text": "C'est bon, reprends.",
+      "msg_to_intent_ms": 0.087,
+      "phrase_end_audio_s": 16.912,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2364,
+      "last_word_end_to_intent_ms": 1017
+    },
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Non.",
+      "msg_to_intent_ms": 0.065,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1026,
+      "last_word_end_to_intent_ms": 706
+    },
+    {
+      "intent": "correction",
+      "from_final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "msg_to_intent_ms": 0.1,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 3760,
+      "last_word_end_to_intent_ms": 860
+    },
+    {
+      "intent": "validate",
+      "from_final": false,
+      "text": "Parfait, je valide.",
+      "msg_to_intent_ms": 0.074,
+      "phrase_end_audio_s": 38.072,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2571,
+      "last_word_end_to_intent_ms": 1072
+    }
+  ],
+  "actions": [
+    {
+      "intent": "pause",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    },
+    {
+      "intent": "resume",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    },
+    {
+      "intent": "pause",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    },
+    {
+      "intent": "correction",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    },
+    {
+      "intent": "validate",
+      "dry_run": true,
+      "note": "validation humaine enregistree ; aucune soumission ni paiement"
+    }
+  ]
+}

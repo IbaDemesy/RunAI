@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>RunAI - voix comme télécommande (spike)</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 960px; color: #111; }
+  button { font-size: 1rem; padding: .5rem 1rem; margin: .2rem; cursor: pointer; }
+  #live { font-size: 1.6rem; min-height: 2.4rem; padding: .6rem; background: #f4f4f5; border-radius: 8px; }
+  #live .partial { color: #888; font-style: italic; }
+  .row { display: flex; gap: 1rem; }
+  .col { flex: 1; }
+  ul { list-style: none; padding: 0; font-size: .9rem; max-height: 320px; overflow: auto; }
+  li { padding: .25rem .4rem; border-bottom: 1px solid #eee; }
+  .pause { background: #fee2e2; } .resume { background: #dcfce7; }
+  .validate { background: #dbeafe; } .correction { background: #fef9c3; }
+  #h { font-weight: bold; }
+  small { color: #666; }
+</style>
+</head>
+<body>
+<h1>Dis-le, l'agent obéit</h1>
+<p><small>« stop / attends / non… » → pause H · « reprends » → resume · « je valide » → validation humaine (aucune soumission) ·
+  phrase de correction (« plutôt… ») → send_message à l'agent H.</small></p>
+<div>
+  <button id="mic">🎙️ Micro</button>
+  <button id="inject">▶ Injecter l'audio de test</button>
+  <button id="hstart">Démarrer une session H (lecture seule)</button>
+  <button id="hcancel">Annuler la session H</button>
+  <span id="h">H : aucune session (dry-run)</span>
+</div>
+<h3>Transcription en direct (Gladia live, fr)</h3>
+<div id="live"></div>
+<div class="row">
+  <div class="col"><h3>Intentions</h3><ul id="intents"></ul></div>
+  <div class="col"><h3>Actions H</h3><ul id="actions"></ul></div>
+</div>
+<h3>Journal</h3><ul id="log"></ul>
+<script>
+const $ = (id) => document.getElementById(id);
+const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
+ws.binaryType = "arraybuffer";
+const send = (cmd) => ws.send(JSON.stringify({ cmd }));
+const add = (list, html, cls = "") => {
+  const li = document.createElement("li"); li.innerHTML = html; if (cls) li.className = cls;
+  $(list).prepend(li);
+};
+let finals = [];
+ws.onmessage = (e) => {
+  const ev = JSON.parse(e.data);
+  switch (ev.type) {
+    case "transcript":
+      if (ev.final) finals.push(ev.text);
+      $("live").innerHTML = finals.slice(-2).join(" ") +
+        (ev.final ? "" : ` <span class="partial">${ev.text}</span>`);
+      break;
+    case "intent":
+      add("intents", `<b>${ev.intent}</b> « ${ev.text} » <small>${ev.from_final ? "final" : "partiel"},
+        t=${ev.t ?? "?"} s, détection ${ev.detect_after_msg_ms} ms</small>`, ev.intent);
+      break;
+    case "action": {
+      const d = ev.dry_run ? "dry-run" : `${ev.status_reached ?? ev.error ?? ""} en ${ev.call_to_status_s ?? "?"} s`;
+      add("actions", `<b>${ev.intent}</b> → ${ev.note || d}`, ev.intent);
+      break;
+    }
+    case "h_open": $("h").textContent = `H : ${ev.session_id}`; break;
+    case "h_status": $("h").textContent = `H : ${ev.status} (${ev.steps ?? 0} étapes)`; break;
+    case "h_closed": $("h").textContent = "H : annulée"; break;
+    default: add("log", `${ev.type} ${JSON.stringify(ev).slice(0, 200)}`);
+  }
+};
+$("inject").onclick = () => send("inject");
+$("hstart").onclick = () => send("h_start");
+$("hcancel").onclick = () => send("h_cancel");
+
+let audioCtx = null, stream = null;
+$("mic").onclick = async () => {
+  if (audioCtx) {
+    send("mic_stop"); stream.getTracks().forEach((t) => t.stop()); await audioCtx.close();
+    audioCtx = null; $("mic").textContent = "🎙️ Micro"; return;
+  }
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true } });
+  audioCtx = new AudioContext();
+  const worklet = `class P extends AudioWorkletProcessor {
+    constructor(){ super(); this.buf = []; this.ratio = sampleRate / 16000; this.pos = 0; }
+    process(inputs){ const ch = inputs[0][0]; if (!ch) return true;
+      for (; this.pos < ch.length; this.pos += this.ratio) {
+        const s = Math.max(-1, Math.min(1, ch[Math.floor(this.pos)])); this.buf.push(s < 0 ? s * 0x8000 : s * 0x7fff); }
+      this.pos -= ch.length;
+      if (this.buf.length >= 1600) { this.port.postMessage(Int16Array.from(this.buf.splice(0, 1600)).buffer); }
+      return true; } }
+    registerProcessor("pcm16", P);`;
+  await audioCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([worklet], { type: "application/javascript" })));
+  const node = new AudioWorkletNode(audioCtx, "pcm16");
+  node.port.onmessage = (m) => { if (ws.readyState === 1) ws.send(m.data); };
+  audioCtx.createMediaStreamSource(stream).connect(node);
+  send("mic_start"); $("mic").textContent = "⏹ Couper le micro";
+};
+</script>
+</body>
+</html>

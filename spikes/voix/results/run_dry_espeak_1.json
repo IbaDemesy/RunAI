@@ -1,0 +1,307 @@
+{
+  "audio": {
+    "wav": "scenario.wav",
+    "duration_s": 40.023,
+    "phrases": [
+      {
+        "text": "Stop, attends une seconde.",
+        "start": 1.0,
+        "end": 2.972
+      },
+      {
+        "text": "C'est bon, reprends.",
+        "start": 14.972,
+        "end": 16.475
+      },
+      {
+        "text": "Non, cherche plutôt le semi-marathon de Paris.",
+        "start": 24.475,
+        "end": 27.392
+      },
+      {
+        "text": "Parfait, je valide.",
+        "start": 35.392,
+        "end": 37.023
+      }
+    ]
+  },
+  "started_at": "2026-11-07T14:50:44+0000",
+  "gladia_session_id": "440f4ce1-d561-4d1a-a865-0a9417740b26",
+  "gladia_init_plus_ws_connect_s": 1.593,
+  "transcripts": [
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "So...",
+      "start": 1.054,
+      "end": 1.196,
+      "t_rel_s": 1.866
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop ! A ton dude !",
+      "start": 1.051,
+      "end": 2.156,
+      "t_rel_s": 2.572
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop ! A ton une c'est le monde !",
+      "start": 1.053,
+      "end": 2.587,
+      "t_rel_s": 2.967
+    },
+    {
+      "id": "00_00000000",
+      "final": false,
+      "text": "Stop Attends une seconde",
+      "start": 1.053,
+      "end": 2.627,
+      "t_rel_s": 3.771
+    },
+    {
+      "id": "00_00000000",
+      "final": true,
+      "text": "Stop Attends une seconde",
+      "start": 1.053,
+      "end": 2.627,
+      "t_rel_s": 3.775
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est beau.",
+      "start": 15.023,
+      "end": 15.367,
+      "t_rel_s": 15.738
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est bon, au moins !",
+      "start": 15.025,
+      "end": 15.98,
+      "t_rel_s": 16.24
+    },
+    {
+      "id": "00_00000001",
+      "final": false,
+      "text": "C'est beau, hein ?",
+      "start": 15.018,
+      "end": 15.902,
+      "t_rel_s": 17.243
+    },
+    {
+      "id": "00_00000001",
+      "final": true,
+      "text": "C'est beau, hein ?",
+      "start": 15.018,
+      "end": 15.902,
+      "t_rel_s": 17.248
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non",
+      "start": 24.524,
+      "end": 24.666,
+      "t_rel_s": 25.665
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, chèche-l'une.",
+      "start": 24.515,
+      "end": 25.58,
+      "t_rel_s": 26.167
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, chèche l'outore semi-mèche.",
+      "start": 24.519,
+      "end": 26.156,
+      "t_rel_s": 26.471
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, chèche l'outore semi-mara tombe.",
+      "start": 24.516,
+      "end": 26.608,
+      "t_rel_s": 27.069
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Nous, chèche l'outon récemment marat de Paris.",
+      "start": 24.514,
+      "end": 26.959,
+      "t_rel_s": 27.567
+    },
+    {
+      "id": "00_00000002",
+      "final": false,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 24.517,
+      "end": 26.974,
+      "t_rel_s": 27.971
+    },
+    {
+      "id": "00_00000002",
+      "final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "start": 24.517,
+      "end": 26.974,
+      "t_rel_s": 27.976
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Bonne fête !",
+      "start": 35.425,
+      "end": 35.811,
+      "t_rel_s": 36.168
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Bon, fait, je le m...",
+      "start": 35.419,
+      "end": 36.344,
+      "t_rel_s": 36.668
+    },
+    {
+      "id": "00_00000003",
+      "final": false,
+      "text": "Parfait, je m'allide.",
+      "start": 35.421,
+      "end": 36.651,
+      "t_rel_s": 37.67
+    },
+    {
+      "id": "00_00000003",
+      "final": true,
+      "text": "Parfait, je m'allide.",
+      "start": 35.421,
+      "end": 36.651,
+      "t_rel_s": 37.674
+    }
+  ],
+  "speech_start_latency_ms": [
+    410,
+    418,
+    472,
+    354
+  ],
+  "partials": {
+    "n": 16,
+    "min_ms": 260,
+    "median_ms": 524,
+    "p90_ms": 1019,
+    "max_ms": 1341
+  },
+  "keywords": [
+    {
+      "keyword": "stop",
+      "first_seen_in": "partial",
+      "text": "Stop ! A ton dude !",
+      "word_end_audio_s": 1.312,
+      "latency_word_end_to_msg_ms": 1260
+    },
+    {
+      "keyword": "non",
+      "first_seen_in": "partial",
+      "text": "Non",
+      "word_end_audio_s": 24.666,
+      "latency_word_end_to_msg_ms": 999
+    },
+    {
+      "keyword": "plutot",
+      "first_seen_in": "partial",
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "word_end_audio_s": 25.685,
+      "latency_word_end_to_msg_ms": 2286
+    },
+    {
+      "keyword": "semi",
+      "first_seen_in": "partial",
+      "text": "Non, chèche l'outore semi-mèche.",
+      "word_end_audio_s": 26.156,
+      "latency_word_end_to_msg_ms": 315
+    }
+  ],
+  "finals": [
+    {
+      "text": "Stop Attends une seconde",
+      "utt_end_audio_s": 2.627,
+      "latency_utt_end_to_final_ms": 1148
+    },
+    {
+      "text": "C'est beau, hein ?",
+      "utt_end_audio_s": 15.902,
+      "latency_utt_end_to_final_ms": 1346
+    },
+    {
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "utt_end_audio_s": 26.974,
+      "latency_utt_end_to_final_ms": 1002
+    },
+    {
+      "text": "Parfait, je m'allide.",
+      "utt_end_audio_s": 36.651,
+      "latency_utt_end_to_final_ms": 1023
+    }
+  ],
+  "intents": [
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Stop ! A ton dude !",
+      "msg_to_intent_ms": 0.122,
+      "phrase_end_audio_s": 2.972,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1572,
+      "last_word_end_to_intent_ms": 416
+    },
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Non",
+      "msg_to_intent_ms": 0.068,
+      "phrase_end_audio_s": 27.392,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1190,
+      "last_word_end_to_intent_ms": 999
+    },
+    {
+      "intent": "correction",
+      "from_final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "msg_to_intent_ms": 0.084,
+      "phrase_end_audio_s": 27.392,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 3501,
+      "last_word_end_to_intent_ms": 1002
+    }
+  ],
+  "actions": [
+    {
+      "intent": "pause",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    },
+    {
+      "intent": "pause",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    },
+    {
+      "intent": "correction",
+      "dry_run": true,
+      "note": "dry-run (pas de session H)"
+    }
+  ]
+}

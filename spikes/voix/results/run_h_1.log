@@ -1,0 +1,162 @@
+[H] quota: limit=3 active=1 available=2
+[H] session creee 25165c8c-1caa-4a07-8ed2-db1416c165c1 https://platform.hcompany.ai/agents/sessions/25165c8c-1caa-4a07-8ed2-db1416c165c1
+[H] session 25165c8c-1caa-4a07-8ed2-db1416c165c1 annulee
+[H] quota: limit=3 active=1 available=2
+{
+  "h_session_id": "25165c8c-1caa-4a07-8ed2-db1416c165c1",
+  "gladia_session_id": "66697d1a-3c50-4da6-9cc4-c24cf4a4d321",
+  "gladia_init_plus_ws_connect_s": 1.552,
+  "speech_start_latency_ms": [
+    368,
+    402,
+    370,
+    376
+  ],
+  "partials": {
+    "n": 16,
+    "min_ms": 282,
+    "median_ms": 406,
+    "p90_ms": 1027,
+    "max_ms": 1078
+  },
+  "keywords": [
+    {
+      "keyword": "stop",
+      "first_seen_in": "partial",
+      "text": "Stop !",
+      "word_end_audio_s": 1.478,
+      "latency_word_end_to_msg_ms": 387
+    },
+    {
+      "keyword": "reprends",
+      "first_seen_in": "partial",
+      "text": "C'est bon, reprends.",
+      "word_end_audio_s": 16.651,
+      "latency_word_end_to_msg_ms": 997
+    },
+    {
+      "keyword": "non",
+      "first_seen_in": "partial",
+      "text": "Non.",
+      "word_end_audio_s": 25.232,
+      "latency_word_end_to_msg_ms": 733
+    },
+    {
+      "keyword": "plutot",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.381,
+      "latency_word_end_to_msg_ms": 784
+    },
+    {
+      "keyword": "semi",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.744,
+      "latency_word_end_to_msg_ms": 421
+    },
+    {
+      "keyword": "valide",
+      "first_seen_in": "partial",
+      "text": "Parfait, je valide.",
+      "word_end_audio_s": 37.795,
+      "latency_word_end_to_msg_ms": 1072
+    }
+  ],
+  "intents": [
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Stop !",
+      "msg_to_intent_ms": 0.235,
+      "phrase_end_audio_s": 3.304,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 865,
+      "last_word_end_to_intent_ms": 387
+    },
+    {
+      "intent": "resume",
+      "from_final": false,
+      "text": "C'est bon, reprends.",
+      "msg_to_intent_ms": 0.079,
+      "phrase_end_audio_s": 16.912,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2344,
+      "last_word_end_to_intent_ms": 997
+    },
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Non.",
+      "msg_to_intent_ms": 0.06,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1053,
+      "last_word_end_to_intent_ms": 733
+    },
+    {
+      "intent": "correction",
+      "from_final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "msg_to_intent_ms": 0.063,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 3759,
+      "last_word_end_to_intent_ms": 859
+    },
+    {
+      "intent": "validate",
+      "from_final": false,
+      "text": "Parfait, je valide.",
+      "msg_to_intent_ms": 0.064,
+      "phrase_end_audio_s": 38.072,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2571,
+      "last_word_end_to_intent_ms": 1072
+    }
+  ],
+  "actions": [
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.214,
+      "status_reached": "paused",
+      "call_to_status_s": 2.588,
+      "polls": 6,
+      "steps": 3
+    },
+    {
+      "intent": "resume",
+      "dry_run": false,
+      "call_s": 0.522,
+      "status_reached": "running",
+      "call_to_status_s": 0.769,
+      "polls": 1,
+      "steps": 3
+    },
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.495,
+      "status_reached": null,
+      "call_to_status_s": 60.819,
+      "polls": 140,
+      "steps": 5
+    },
+    {
+      "intent": "correction",
+      "dry_run": false,
+      "message": "Correction de l'utilisateur (dictee vocale), applique-la maintenant : cherche plutôt le semi-marathon de Paris.",
+      "error": "UnprocessableEntityError: 422 Unable to extract tag using discriminator 'type' (status_code: 422)",
+      "user_message_event_seen_after_s": null,
+      "first_policy_event_mentioning_semi_after_s": null,
+      "first_policy_event_snippet": null
+    },
+    {
+      "intent": "validate",
+      "dry_run": false,
+      "note": "validation humaine enregistree ; aucune soumission ni paiement"
+    }
+  ]
+}
+-> spikes/voix/results/run_h_1.json

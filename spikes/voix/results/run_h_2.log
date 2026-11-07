@@ -1,0 +1,166 @@
+[H] quota: limit=3 active=1 available=2
+[H] session creee d8018b1e-3956-4cc4-841b-c66ebe564fa4 https://platform.hcompany.ai/agents/sessions/d8018b1e-3956-4cc4-841b-c66ebe564fa4
+[H] session d8018b1e-3956-4cc4-841b-c66ebe564fa4 annulee
+[H] quota: limit=3 active=2 available=1
+{
+  "h_session_id": "d8018b1e-3956-4cc4-841b-c66ebe564fa4",
+  "gladia_session_id": "6d0c3918-d120-4bbe-a40a-4c47058050bc",
+  "gladia_init_plus_ws_connect_s": 1.413,
+  "speech_start_latency_ms": [
+    357,
+    368,
+    428,
+    343
+  ],
+  "partials": {
+    "n": 16,
+    "min_ms": 288,
+    "median_ms": 438,
+    "p90_ms": 1029,
+    "max_ms": 1080
+  },
+  "keywords": [
+    {
+      "keyword": "stop",
+      "first_seen_in": "partial",
+      "text": "Stop !",
+      "word_end_audio_s": 1.478,
+      "latency_word_end_to_msg_ms": 389
+    },
+    {
+      "keyword": "reprends",
+      "first_seen_in": "partial",
+      "text": "C'est bon, reprends.",
+      "word_end_audio_s": 16.651,
+      "latency_word_end_to_msg_ms": 1018
+    },
+    {
+      "keyword": "non",
+      "first_seen_in": "partial",
+      "text": "Non.",
+      "word_end_audio_s": 25.232,
+      "latency_word_end_to_msg_ms": 702
+    },
+    {
+      "keyword": "plutot",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.381,
+      "latency_word_end_to_msg_ms": 657
+    },
+    {
+      "keyword": "semi",
+      "first_seen_in": "partial",
+      "text": "Non, cher que plutôt le semi",
+      "word_end_audio_s": 26.744,
+      "latency_word_end_to_msg_ms": 294
+    },
+    {
+      "keyword": "valide",
+      "first_seen_in": "partial",
+      "text": "Parfait, je valide.",
+      "word_end_audio_s": 37.795,
+      "latency_word_end_to_msg_ms": 1072
+    }
+  ],
+  "intents": [
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Stop !",
+      "msg_to_intent_ms": 0.199,
+      "phrase_end_audio_s": 3.304,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 868,
+      "last_word_end_to_intent_ms": 390
+    },
+    {
+      "intent": "resume",
+      "from_final": false,
+      "text": "C'est bon, reprends.",
+      "msg_to_intent_ms": 0.082,
+      "phrase_end_audio_s": 16.912,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2365,
+      "last_word_end_to_intent_ms": 1018
+    },
+    {
+      "intent": "pause",
+      "from_final": false,
+      "text": "Non.",
+      "msg_to_intent_ms": 0.068,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": true,
+      "phrase_start_to_intent_ms": 1022,
+      "last_word_end_to_intent_ms": 702
+    },
+    {
+      "intent": "correction",
+      "from_final": true,
+      "text": "Non, cherche plutôt le semi-marathon de Paris.",
+      "msg_to_intent_ms": 0.091,
+      "phrase_end_audio_s": 28.296,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 3763,
+      "last_word_end_to_intent_ms": 863
+    },
+    {
+      "intent": "validate",
+      "from_final": false,
+      "text": "Parfait, je valide.",
+      "msg_to_intent_ms": 0.082,
+      "phrase_end_audio_s": 38.072,
+      "intent_before_phrase_end": false,
+      "phrase_start_to_intent_ms": 2571,
+      "last_word_end_to_intent_ms": 1072
+    }
+  ],
+  "actions": [
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.224,
+      "status_reached": "paused",
+      "call_to_status_s": 0.439,
+      "polls": 1,
+      "steps": 3
+    },
+    {
+      "intent": "resume",
+      "dry_run": false,
+      "call_s": 0.501,
+      "status_reached": "running",
+      "call_to_status_s": 0.733,
+      "polls": 1,
+      "steps": 3
+    },
+    {
+      "intent": "pause",
+      "dry_run": false,
+      "call_s": 0.509,
+      "status_reached": "paused",
+      "call_to_status_s": 2.04,
+      "polls": 4,
+      "steps": 5
+    },
+    {
+      "intent": "correction",
+      "dry_run": false,
+      "message": "Correction de l'utilisateur (dictee vocale), applique-la maintenant : cherche plutôt le semi-marathon de Paris.",
+      "call_s": 0.235,
+      "status_reached": "running",
+      "call_to_status_s": 0.447,
+      "polls": 1,
+      "steps": 5,
+      "user_message_event_seen_after_s": 0.59,
+      "first_policy_event_mentioning_semi_after_s": 2.85,
+      "first_policy_event_snippet": "{\"kind\": \"policy_event\", \"reasoning_content\": \"The user corrected the request: they actually want the Paris Half Marathon (Semi-marathon de Paris), not the marathon. Let me navigate to the \\\"Semi-marathon de Paris\\\" Wikipedia article.\\n\", \"content\": \"Bien noté — je change d'objectif : c'est le **semi-marathon de Paris** qu'il faut. Je navigue vers cet article.\", \"tool_reqs\": [{\"tool_name\": \"go_to_web\", \"args\": {\"url\": \"https://fr.wikipedia.org/wiki/Semi-marathon_de_Paris\"}, \"id\": \"chatcmpl-tool-8d6308bc05ddef8b\"}], \"validation_errors\": []}"
+    },
+    {
+      "intent": "validate",
+      "dry_run": false,
+      "note": "validation humaine enregistree ; aucune soumission ni paiement"
+    }
+  ]
+}
+-> spikes/voix/results/run_h_2.json
