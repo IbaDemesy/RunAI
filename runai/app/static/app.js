@@ -62,7 +62,7 @@
       node.target = "_blank"; node.rel = "noopener noreferrer"; parent.append(node);
     } catch (_) { /* Une source invalide ne devient pas un lien. */ }
   }
-  function announce(text) { feedback.textContent = text; feedback.className = ""; }
+  function announce(text, quiet) { feedback.textContent = text; feedback.className = quiet ? "quiet" : ""; }
   function mode(value) {
     document.getElementById("mode").className = "badge" + (value === "live" ? " real" : "");
     document.getElementById("mode").textContent = ({ live: "Réel · live", demo: "Démonstration · demo", replay: "Relecture · replay" })[value] || "Mode non vérifié";
@@ -133,11 +133,11 @@
     if (busy) return;
     let accepted = false;
     busy = true; screen.querySelectorAll("button").forEach((b) => { b.disabled = true; });
-    announce("Envoi en cours…");
-    try { await action(); accepted = true; persist(); announce("Demande acceptée."); }
+    announce("Envoi en cours…", true);
+    try { await action(); accepted = true; persist(); announce("Demande acceptée.", true); }
     catch (error) {
       if (error.status === 409 && reload) {
-        try { await reload(); announce("Conversation mise à jour."); }
+        try { await reload(); announce("Conversation mise à jour.", true); }
         catch (_) { announce("Actualisation impossible. Rechargez la page pour reprendre sans relancer."); }
       } else { announce(error.message || "Connexion indisponible. Réessayez."); feedback.className = "error"; }
     } finally { busy = false; render(); }
@@ -227,7 +227,7 @@
       if (!view) throw new Error("Ouvrez Explorer pour commander la caméra.");
       return view[method](...args);
     }])),
-    onStateChange: state => { voiceState = state.state; if (!busy) render(); announce(state.message || ({ listening: "Microphone actif.", transcribing: "Transcription en cours…", idle: "Microphone arrêté." }[state.state] || state.state)); },
+    onStateChange: state => { voiceState = state.state; if (!busy) render(); announce(state.message || ({ listening: "Microphone actif.", transcribing: "Transcription en cours…", idle: "Microphone arrêté." }[state.state] || state.state), !state.message); },
   });
   function voiceControls() {
     if (!voice) return;

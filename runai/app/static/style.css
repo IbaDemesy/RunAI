@@ -377,7 +377,7 @@ body.dawn .typing span:nth-child(3) { animation-delay: .4s; }
 /* Chat épuré : Courier Prime, réplique unique, coureur d'Iba */
 body.dawn, body.dawn *:not(code) { font-family: "Courier Prime", "Courier New", ui-monospace, monospace !important; font-stretch: normal !important; }
 body.dawn h1, body.dawn h2, body.dawn .say, body.dawn button { font-weight: 700; }
-body.dawn #feedback:not(.error) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.dawn #feedback.quiet, body.dawn #feedback:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 body.dawn #feedback.error { color: #ffb4a8; }
 body.dawn .say { font-size: clamp(1.35rem, 2.6vw, 1.85rem); line-height: 1.4; max-width: 36ch; margin: 28px 0 22px; min-height: 2.8em; }
 body.dawn .say::after { content: ""; display: inline-block; width: .55em; height: 1.05em; margin-left: 3px; vertical-align: -.15em; background: var(--sun); animation: dawn-caret 1s steps(1) infinite; }
