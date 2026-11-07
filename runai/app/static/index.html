@@ -5,11 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RunAI · Préparer ma course</title>
   <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Geist:wght@300..700&display=swap">
   <link rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/flyover/journey.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
 </head>
 <body>
+  <div class="dawn-sky" aria-hidden="true"><svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice"><g id="dawn-rings"></g><path class="dawn-route" d="M-20 820 C 220 760, 300 640, 470 660 S 720 790, 860 690 S 1040 470, 1180 520 S 1380 600, 1460 430"/><circle cx="1460" cy="430" r="6"/></svg></div>
+  <script>
+    (function () {
+      var g = document.getElementById("dawn-rings"), seed = 7;
+      var rnd = function () { seed = seed * 16807 % 2147483647; return seed / 2147483647; };
+      [[380, 300, .9], [1150, 700, 1.1], [1350, 180, .7]].forEach(function (peak) {
+        var ph = [rnd() * 6, rnd() * 6, rnd() * 6];
+        for (var k = 1; k <= 16; k++) {
+          var r = k * 34 * peak[2], d = "";
+          for (var i = 0; i <= 96; i++) {
+            var a = i / 96 * Math.PI * 2, w = 1 + .13 * Math.sin(3 * a + ph[0]) + .08 * Math.sin(5 * a + ph[1] + k * .15) + .05 * Math.sin(7 * a + ph[2]);
+            d += (i ? "L" : "M") + (peak[0] + Math.cos(a) * r * w).toFixed(1) + " " + (peak[1] + Math.sin(a) * r * w * .78).toFixed(1);
+          }
+          var path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", d + "Z"); g.appendChild(path);
+        }
+      });
+    })();
+  </script>
   <header class="top"><a class="brand" href="/" aria-label="RunAI, accueil"><span class="brand-mark" aria-hidden="true"></span>RunAI</a><span id="mode" class="badge">Mode en vérification</span></header>
   <main id="shell"><p id="feedback" role="status" aria-live="polite"></p><section id="screen"></section></main>
   <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin="anonymous"></script>
