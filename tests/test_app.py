@@ -186,6 +186,34 @@ def test_hotel_budget_overrun_is_marked_failed():
     assert "HORS BUDGET" in filtered.summary
 
 
+def test_rephrased_hotel_budget_question_sets_the_per_night_ceiling():
+    mission = Mission(
+        id="rephrased-budget-test",
+        query="Marathon de Milan",
+        steps={kind: StepResult(kind=kind) for kind in AGENT_KINDS},
+        questions=[
+            AgentQuestion(
+                id="budget",
+                kind=StepKind.accommodation,
+                question="Quel prix maximum par nuit ?",
+                options=[],
+                answer="120",
+            )
+        ],
+    )
+    result = StepResult(
+        kind=StepKind.accommodation,
+        status=StepStatus.stopped_before_commitment,
+        summary="Hôtel disponible.",
+        price_eur=230,
+    )
+
+    filtered = MissionService._validate_hotel_budget(mission, result)
+
+    assert filtered.status is StepStatus.stopped_before_commitment
+    assert filtered.data["budget_max_per_night_eur"] == 120
+
+
 def test_every_stop_point_has_a_human_action():
     assert set(HUMAN_ACTIONS) == set(StopPoint)
 

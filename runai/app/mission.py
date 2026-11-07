@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import re
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -34,6 +35,9 @@ from runai.tracing import TraceWriter
 
 logger = logging.getLogger(__name__)
 
+_BUDGET_QUESTION = re.compile(
+    r"budget|prix\s+max|maximum|par\s+nuit|per\s+night", re.IGNORECASE
+)
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
 
@@ -504,7 +508,7 @@ class MissionService:
                 parsed
                 for question in reversed(mission.questions)
                 if question.kind is StepKind.accommodation
-                and "budget" in question.question.casefold()
+                and _BUDGET_QUESTION.search(question.question)
                 and question.answer
                 and (parsed := extract_budget_per_night(question.answer)) is not None
             ),
