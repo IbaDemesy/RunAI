@@ -393,7 +393,7 @@ def test_changing_date_window_while_candidates_are_shown_searches_again():
 
 def test_selection_survives_filling_a_previously_unknown_date_window():
     class DateWindowFiller:
-        async def extract(self, text, known):
+        async def extract(self, text, known, turns=()):
             return {"date_window": "avril 2028"} if text == "ma période" else {}
 
         async def phrase(self, turns, question, known):
