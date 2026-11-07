@@ -446,6 +446,57 @@ def test_changing_a_known_distance_invalidates_the_selected_candidate():
     asyncio.run(run())
 
 
+def test_correcting_selected_candidate_edition_runs_search_again():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search, DataMode.demo)
+        session = await ready(engine)
+        assert session.slots[SlotName.edition].value == "2028"
+
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                corrections={SlotName.edition: "2030"},
+            ),
+        )
+
+        assert len(search.calls) == 2
+        assert session.selected_candidate_id is None
+        assert session.status == FramingStatus.choosing_candidate
+        assert session.open_questions[0].choices[0].candidate_id == "c0"
+
+    asyncio.run(run())
+
+
+def test_changing_preferences_while_candidates_are_shown_runs_search_again():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, avion"
+                )
+            )
+        )
+
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                corrections={SlotName.preferences: "parcours ombragé"},
+            ),
+        )
+
+        assert len(search.calls) == 2
+        assert session.status == FramingStatus.choosing_candidate
+        assert session.open_questions[0].choices[0].candidate_id == "c0"
+
+    asyncio.run(run())
+
+
 def test_named_race_request_skips_location_distance_and_period_questions():
     async def run():
         search = Search(1, distances=(42.195,))

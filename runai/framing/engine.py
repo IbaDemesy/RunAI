@@ -191,6 +191,7 @@ class FramingEngine:
             )
             if discovery_changed:
                 self._manual.discard(framing_id)
+                self._search_keys.pop(framing_id, None)
                 session.selected_candidate_id = None
                 session.candidates = []
                 for name, old in list(session.slots.items()):
@@ -381,6 +382,8 @@ class FramingEngine:
                     date_window.value,
                     date_window.status,
                     session.slots[SlotName.race_date].value,
+                    session.slots[SlotName.edition].value,
+                    session.slots[SlotName.preferences].value,
                     place,
                 )
                 if self._search_keys.get(session.id) != search_key:
