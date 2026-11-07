@@ -99,6 +99,7 @@
     if (mission && page === "progress" && steps?.dataset.context === agentContext() &&
         (screen.querySelector(".agent-live[open]") || screen.querySelector(".agent-history[open]"))) {
       renderAgentSteps(steps);
+      screen.querySelectorAll("button").forEach(node => { node.disabled = busy; });
       pendingFocus = null;
       return;
     }

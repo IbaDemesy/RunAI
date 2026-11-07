@@ -38,7 +38,9 @@ async function setup(status = "running", questions = [], step = {}) {
     addEventListener(name, callback) { this.handlers.set(name, callback); }
     close() { this.closed = true; }
   }
-  const window = { RunAIShellCore: core, EventSource: Source, addEventListener() {} };
+  let voiceOptions;
+  const window = { RunAIShellCore: core, EventSource: Source, addEventListener() {},
+    RunAIVoiceInput: { createVoiceInput(options) { voiceOptions = options; return { state: "idle", start() {}, stop() {} }; } } };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../app.js"), "utf8"), {
     window, EventSource: Source, location: { search: "", href: "http://runai.test/" }, URLSearchParams, URL,
     sessionStorage: { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) },
@@ -50,7 +52,7 @@ async function setup(status = "running", questions = [], step = {}) {
     },
   });
   await new Promise(resolve => setImmediate(resolve));
-  return { screen, feedback, sources, requests, update: changes => { mission = { ...mission, ...changes }; } };
+  return { screen, feedback, sources, requests, voiceOptions, update: changes => { mission = { ...mission, ...changes }; } };
 }
 
 test("arrêt hôtel avant paiement sans question : action manuelle et lien officiel, aucun suivi terminal rouvert", async () => {
@@ -138,3 +140,12 @@ for (const url of [null, "http://live.example.org/browser", "javascript:alert(1)
     assert.equal(screen.querySelectorAll("a").some(node => node.href.startsWith("javascript:")), false);
   });
 }
+
+test("commande vocale avec fenêtre live ouverte : les boutons restent utilisables après la mutation", async () => {
+  const { screen, voiceOptions } = await setup("running", [], { status: "running", live_view_url: "https://live.example.org/browser" });
+  const panel = screen.querySelector(".agent-live"); panel.open = true; panel.ontoggle();
+  screen.querySelectorAll("button").find(node => node.textContent === "Parler").onclick();
+  await voiceOptions.onAgentsCommand("pause");
+  assert.ok(screen.querySelectorAll("button").every(node => !node.disabled));
+  assert.equal(screen.querySelector(".agent-live"), panel);
+});
