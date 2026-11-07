@@ -1,0 +1,94 @@
+{
+  "cible": "njuko_hyeres_10k",
+  "plateforme": "njuko",
+  "course": "Semi Marathon de Hyères 2027",
+  "epreuve": "10 KM DE HYERES LES PALMIERS (21/03/2027)",
+  "url": "https://in.njuko.com/semi-marathon-de-hyeres-2027?currentPage=select-competition",
+  "session_id": "3c2947ae-fea1-4476-bd44-6b013d22eeab",
+  "agent": "h/web-surfer-pro",
+  "quota_avant": {
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "attente_s": 1
+  },
+  "created_at": "2026-11-07 14:31:49.953861+00:00",
+  "started_at": "2026-11-07 14:31:55.094616+00:00",
+  "finished_at": "2026-11-07 14:44:37.925455+00:00",
+  "duree_client_s": 767.2,
+  "statut_avant_cancel": "completed (réponse reçue ; validation pydantic échouée côté client : options_payantes_vues=null)",
+  "statut_final": "interrupted",
+  "outcome": null,
+  "erreur": null,
+  "etapes_h": 57,
+  "usage_tokens": [
+    {
+      "name": "holo4-27b",
+      "input_tokens": 3192815,
+      "cached_tokens": 2697600,
+      "output_tokens": 191125,
+      "reasoning_tokens": 177323
+    }
+  ],
+  "nb_evenements": 198,
+  "types_evenements": {
+    "RequestStartEvent": 1,
+    "RequestStartDispatchedEvent": 1,
+    "AgentStartedEvent": 1,
+    "AgentEvent": 147,
+    "MetricsUpdateEvent": 46,
+    "ActiveStateChangeEvent": 1,
+    "AgentCompletionEvent": 1
+  },
+  "nb_captures_disponibles": 32,
+  "captures": [
+    "capture_00_sur_32.jpg",
+    "capture_10_sur_32.jpg",
+    "capture_21_sur_32.jpg",
+    "capture_30_sur_32.jpg",
+    "capture_31_sur_32.jpg"
+  ],
+  "annulee": true,
+  "answer": {
+    "prix": "21.00 €",
+    "course": "Semi Marathon de Hyères 2027",
+    "statut": "echec",
+    "epreuve": "10 KM DE HYERES LES PALMIERS (21/03/2027)",
+    "url_finale": "https://in.njuko.com/semi-marathon-de-hyeres-2027?currentPage=form_formulaire-participant",
+    "commentaire": "STATUT RÉEL : case obligatoire bloquante (succès Attendu, l'humain prend la main). Formulaire coureur entièrement rempli avec le profil fictif. Le bouton SUIVANT est bloqué par le champ obligatoire \"Votre justificatif (Majeur) *\" qui n'offre que deux options interdites : Licence FFA (non licenciée) et Numéro PPS (santé). L'humain doit cocher l'une de ces cases puis cliquer SUIVANT pour continuer vers le panier.",
+    "champs_remplis": [
+      "Nom: Martin",
+      "Prénom: Camille",
+      "Genre: Femme",
+      "Date de naissance: 12/05/1994",
+      "Nationalité: Français",
+      "Email: camille.martin@example.com",
+      "Téléphone: 06 12 34 56 78",
+      "N° et nom de rue: 10 rue de la Paix",
+      "Code postal: 75002",
+      "Ville: Paris",
+      "Pays: France",
+      "Résultats: Oui",
+      "Contact d'urgence Nom Prénom: Paul Martin",
+      "Contact d'urgence Téléphone: 06 98 76 54 32"
+    ],
+    "cases_sensibles": [
+      {
+        "type": "autre",
+        "texte": "Licence FFA (Compétition, Running, Entreprise)",
+        "cochee": false,
+        "obligatoire": true
+      },
+      {
+        "type": "sante_pps_certificat",
+        "texte": "Numéro PPS.",
+        "cochee": false,
+        "obligatoire": true
+      }
+    ],
+    "champs_manquants": [
+      "Votre justificatif (Majeur) * — obligatoire : Licence FFA (profil non licenciée) ou Numéro PPS (case santé interdite par les règles)"
+    ],
+    "options_payantes_vues": null
+  }
+}

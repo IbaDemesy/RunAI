@@ -1,0 +1,92 @@
+{
+  "cible": "njuko_cadourques_15k",
+  "plateforme": "njuko",
+  "course": "Grand Trail des Cadourques 2027 (Cahors)",
+  "epreuve": "Valentré (15 km) (03/04/2027)",
+  "url": "https://in.njuko.com/grand-trail-des-cadourques-2027?currentPage=select-competition",
+  "session_id": "d56006bc-2dd8-4e2a-ac0d-7e3bfcce6129",
+  "agent": "h/web-surfer-pro",
+  "quota_avant": {
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "attente_s": 1
+  },
+  "created_at": "2026-11-07 14:50:12.221884+00:00",
+  "started_at": "2026-11-07 14:50:17.122814+00:00",
+  "finished_at": "2026-11-07 14:57:50.405429+00:00",
+  "duree_client_s": 457.1,
+  "statut_avant_cancel": "idle",
+  "statut_final": "interrupted",
+  "outcome": null,
+  "erreur": null,
+  "etapes_h": 69,
+  "usage_tokens": [
+    {
+      "name": "holo4-27b",
+      "input_tokens": 2278567,
+      "cached_tokens": 1760000,
+      "output_tokens": 35104,
+      "reasoning_tokens": 21653
+    }
+  ],
+  "nb_evenements": 261,
+  "types_evenements": {
+    "RequestStartEvent": 1,
+    "RequestStartDispatchedEvent": 1,
+    "AgentStartedEvent": 1,
+    "AgentEvent": 190,
+    "MetricsUpdateEvent": 66,
+    "ActiveStateChangeEvent": 1,
+    "AgentCompletionEvent": 1
+  },
+  "nb_captures_disponibles": 51,
+  "captures": [
+    "capture_00_sur_51.jpg",
+    "capture_17_sur_51.jpg",
+    "capture_34_sur_51.jpg",
+    "capture_49_sur_51.jpg",
+    "capture_50_sur_51.jpg"
+  ],
+  "annulee": true,
+  "answer": {
+    "course": "Grand Trail des Cadourques 2027",
+    "epreuve": "Valentré (15 km)",
+    "prix": "20,00 EUR",
+    "champs_remplis": [
+      "Nom: Martin",
+      "Prenom: Camille",
+      "Genre: Femme",
+      "Date: 12/05/1994",
+      "Nationalite: Francais",
+      "Email: camille.martin@example.com",
+      "Tel: 06 12 34 56 78",
+      "Adresse: 10 rue de la Paix 75002 Paris France",
+      "Resultats: Oui",
+      "Urgence: Paul Martin 06 98 76 54 32",
+      "Licence: Non licencie PPS vide"
+    ],
+    "champs_manquants": [],
+    "cases_sensibles": [
+      {
+        "texte": "J'accepte le règlement et les conditions générales d'utilisation",
+        "type": "reglement_cgv",
+        "obligatoire": true,
+        "cochee": false
+      }
+    ],
+    "options_payantes_vues": [
+      "Pasta party 15 EUR",
+      "Burger 10.50 EUR",
+      "Thai 11 EUR",
+      "Pizza on-site",
+      "Burger variant 10.50 EUR",
+      "Thai variant 11 EUR",
+      "Chalet 190 EUR",
+      "Mobil-home 230 EUR"
+    ],
+    "url_finale": "https://in.njuko.com/grand-trail-des-cadourques-2027?currentPage=form_h%C3%A9bergement",
+    "statut": "echec",
+    "commentaire": "STATUT REEL: blocage case obligatoire (CGV). Le formulaire est rempli jusqu'a l'etape REGLEMENT. La case obligatoire 'J'accepte le reglement et les conditions generale d'utilisation' n'est PAS cochee (regle 4 - c'est l'humain qui signe). Le bouton SUIVANT est desactive. L'humain doit cocher cette case puis cliquer SUIVANT pour continuer vers le panier. Aucun paiement effectue."
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "cible": "klikego_boucle_seine_semi",
+  "plateforme": "klikego",
+  "course": "Semi Marathon Boucle de Seine 2027 (Chatou)",
+  "epreuve": "Semi-Marathon en individuel 21,1 km (21/03/2027)",
+  "url": "https://www.klikego.com/inscription/semi-marathon-boucle-de-seine-2027/course-a-pied-running/1790283994662-1",
+  "session_id": "501f4316-4bb6-4762-a69f-8aebea3196ab",
+  "agent": "h/web-surfer-pro",
+  "quota_avant": {
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "attente_s": 0
+  },
+  "created_at": "2026-11-07 14:45:46.351615+00:00",
+  "started_at": "2026-11-07 14:45:52.628466+00:00",
+  "finished_at": "2026-11-07 14:49:05.994162+00:00",
+  "duree_client_s": 199.6,
+  "statut_avant_cancel": "idle",
+  "statut_final": "interrupted",
+  "outcome": null,
+  "erreur": null,
+  "etapes_h": 40,
+  "usage_tokens": [
+    {
+      "name": "holo4-27b",
+      "input_tokens": 834254,
+      "cached_tokens": 541600,
+      "output_tokens": 15113,
+      "reasoning_tokens": 10498
+    }
+  ],
+  "nb_evenements": 167,
+  "types_evenements": {
+    "RequestStartEvent": 1,
+    "RequestStartDispatchedEvent": 1,
+    "AgentStartedEvent": 1,
+    "AgentEvent": 121,
+    "MetricsUpdateEvent": 41,
+    "ActiveStateChangeEvent": 1,
+    "AgentCompletionEvent": 1
+  },
+  "nb_captures_disponibles": 40,
+  "captures": [
+    "capture_00_sur_40.jpg",
+    "capture_13_sur_40.jpg",
+    "capture_26_sur_40.jpg",
+    "capture_38_sur_40.jpg",
+    "capture_39_sur_40.jpg"
+  ],
+  "annulee": true,
+  "answer": {
+    "course": "Semi Marathon Boucle de Seine 2027 (Chatou)",
+    "epreuve": "Semi-Marathon en individuel 21,1 km (21/03/2027)",
+    "prix": "43 € (Palier 2 - Non licencié FFA) + 2,50 € frais de gestion = 45,50 €",
+    "champs_remplis": [
+      "Nom: Martin",
+      "Prénom: Camille",
+      "Date de naissance: 12/05/1994",
+      "Sexe: Féminin",
+      "Email: camille.martin@example.com",
+      "Adresse: 10 rue de la Paix",
+      "Code Postal: 75002",
+      "Ville: Paris",
+      "Tél portable: 06 12 34 56 78",
+      "Pays: FRANCE",
+      "Nationalité: FRANCE",
+      "Licence FFA: Non",
+      "Contact d'urgence (nom): Paul Martin",
+      "Contact d'urgence (téléphone): 06 98 76 54 32",
+      "Tarif sélectionné: 43 € Palier 2 - Non licencié FFA"
+    ],
+    "champs_manquants": [
+      "SAS de départ (obligatoire, non présent dans le profil — options : Moins de 1h15 / Entre 1h15 et 1h30 / Entre 1h30 et 1h45 / Entre 1h45 et 2h00 / Plus de 2h)",
+      "Mot de passe / Confirmation mot de passe (création de compte Klikego requise — non rempli par règle)"
+    ],
+    "cases_sensibles": [
+      {
+        "texte": "Numéro de PPS",
+        "type": "sante_pps_certificat",
+        "obligatoire": null,
+        "cochee": false
+      },
+      {
+        "texte": "Règlement à accepter",
+        "type": "reglement_cgv",
+        "obligatoire": true,
+        "cochee": false
+      },
+      {
+        "texte": "J'autorise l'organisateur à communiquer mes coordonnées aux partenaires de l'événement",
+        "type": "rgpd_image",
+        "obligatoire": null,
+        "cochee": false
+      },
+      {
+        "texte": "J'accepte les nouvelles Conditions Générales d'Utilisation de Klikego (cliquez sur le bouton en début de ligne)",
+        "type": "reglement_cgv",
+        "obligatoire": true,
+        "cochee": false
+      }
+    ],
+    "options_payantes_vues": [
+      "Envoi à domicile (dossier) - 13 €",
+      "Tshirt Collector - 20 €",
+      "Cadre finisher personnalisé - Livraison en France - 34 €",
+      "Cadre finisher personnalisé - Livraison en Europe - 36 €",
+      "Cadre finisher personnalisé - Livraison international hors Europe - 40 €",
+      "Garantie remboursement - 8 €",
+      "Résultat par SMS à la fin de la course - 1 €"
+    ],
+    "url_finale": "https://www.klikego.com/types/generic/custo/x.running2/formulaire-1.jsp?version=v6",
+    "statut": "compte_requis",
+    "commentaire": "Formulaire d'inscription rempli (coordonnées, contact d'urgence, tarif 43 € non licencié FFA). Le parcours inviteur Klikego demande la création d'un compte Klikego avec mot de passe pour finaliser l'inscription : « Un compte KLIKEGO va vous être créé gratuitement. Ce compte vous permettra de retrouver lors de votre prochaine connexion toutes vos informations personnelles. Ces informations sont confidentielles et ne sont transmises à aucun tiers. » Arrêté conformément aux règles. Le champ « SAS de départ » (obligatoire) est resté vide car non présent dans le profil. Le dropdown « Souhaitez-vous apparaître dans les résultats ? » est pré-sélectionné sur « Oui, je souhaite apparaître dans les inscrits et dans les résultats » — à vérifier par l'humain."
+  }
+}
