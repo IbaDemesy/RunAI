@@ -213,10 +213,12 @@ class ReplayRun:
             for question in step.questions:
                 await self._ask_user(question.question, question.options)
             frames = iter(step.screenshots)
+            observation_types = {"browser_observation", "AgentEvent.observation_event"}
+            has_observations = any(event.type in observation_types for event in step.events)
             for event in step.events:
                 await asyncio.sleep(self._delay)
                 await self._resumed.wait()
-                if (frame := next(frames, None)) is not None:
+                if (not has_observations or event.type in observation_types) and (frame := next(frames, None)) is not None:
                     self._show_frame(frame)
                 self._on_event(
                     event.model_copy(

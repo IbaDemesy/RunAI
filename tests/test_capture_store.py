@@ -144,7 +144,8 @@ def test_capture_drops_frame_when_revision_changes_during_fetch(tmp_path):
         release = asyncio.Event()
 
         class SlowRun(FakeRun):
-            browser_observation = {"revision": 1}
+            def __init__(self):
+                self.browser_observation = {"revision": 1}
 
             async def get_screenshot(self):
                 started.set()
@@ -203,3 +204,34 @@ def test_replay_frames_and_existing_endpoint(tmp_path, inline):
         response = client.get("/api/missions/mission1/steps/accommodation/screenshot")
         assert response.status_code == 200
         assert response.content == PNG
+
+
+@pytest.mark.parametrize("observation_type", ["AgentEvent.observation_event", "browser_observation"])
+def test_replay_advances_frames_only_at_recorded_observations(observation_type):
+    async def scenario():
+        step = ReplayStep(
+            result=StepResult(kind=KIND),
+            events=[TraceEvent(source="h", type=event_type, message=str(index))
+                    for index, event_type in enumerate(("navigation", observation_type, "navigation", observation_type))],
+            screenshots=[{"revision": revision, "path": "unused.png"} for revision in (1, 2, 3)],
+        )
+        trace = ReplayTrace(label="Observation order", steps={KIND: step})
+        recorded = []
+        frames = []
+
+        def on_event(event):
+            revision = (run.browser_observation or {}).get("revision")
+            if event.message is not None:
+                recorded.append((event.message, revision))
+            else:
+                frames.append(revision)
+
+        async def ask(*args):
+            return ""
+
+        run = ReplayRun(trace, KIND, on_event, ask, 0)
+        await run.wait()
+        assert recorded == [("0", None), ("1", 1), ("2", 1), ("3", 2)]
+        assert frames == [1, 2, 3]
+
+    asyncio.run(scenario())
