@@ -1,0 +1,21 @@
+# Secret scan for RunAI (run in CI on the full git history).
+title = "RunAI gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "h-company-api-key"
+description = "H Company API key"
+regex = '''hk-[A-Za-z0-9]{16,}'''
+keywords = ["hk-"]
+
+[allowlist]
+description = "Documented placeholders"
+regexes = [
+  '''hk-EXAMPLE_KEY_REDACTED''',
+  '''sk_(live|test)_x+''',
+]
+paths = [
+  '''(^|/)\.env\.example$''',
+]
