@@ -177,6 +177,17 @@ Bonnes idées à reprendre : lire le plan à voix haute avant d'agir, et prépar
   - [Holo Forge](https://github.com/exemplary-citizen/computer-use-hackathon) (Hackathon SF) : un expert filme une tâche en la commentant et envoie la vidéo sur Telegram. Gradium transcrit, puis NemoClaw et Hermes en font une automatisation versionnée, que l'expert relit et approuve. HoloDesktop l'exécute ensuite sur macOS, y compris dans des applis anciennes sans API. Les entrées, validations et statuts passent par des boutons Telegram. Démo : traiter des demandes de retour reçues dans Apple Mail via une appli interne ancienne.
     *À reprendre pour RunAI* : piloter l'agent à distance depuis une messagerie (Telegram ou WhatsApp), avec des boutons de validation, par exemple pour l'étape avant le paiement.
 - **Agents métier ou applis desktop** : ArcFlash Copilot, Claw-DJ (Mixxx), Cloud CUA (console AWS), Holodev (Roblox Studio), CUA Molecular Visualizer, AI Teaching Assistant.
+  - [Cloud CUA](https://github.com/Jiyungi/cloud_CUA) (Hackathon SF) : un serveur MCP qui prend un repo terminé et le déploie en pilotant la vraie console AWS.
+    1. Codex étudie le repo et rédige un « contrat de déploiement » précis.
+    2. Un agent H pilote la console comme le ferait une personne, et s'adapte quand AWS affiche un parcours différent.
+    3. Le déploiement est vérifié de façon indépendante via les API AWS, CloudTrail, des requêtes HTTP et Playwright, avec validation humaine et contrôle des coûts.
+    4. Chaque erreur devient une règle relue, ajoutée à une bibliothèque de skills hébergée chez H. La session suivante ne refait pas la même erreur.
+
+    Voix : Gradium (transcription en direct et explications parlées).
+    *À reprendre pour RunAI* :
+    - Faire préparer à un agent de code (Devin pour nous) un « contrat » que l'agent H exécute. Ça montre Devin *dans* le produit, un bon argument pour le prix « Best Use of Devin ».
+    - Vérifier le résultat par un autre canal que l'agent lui-même.
+    - Transformer les erreurs de l'agent sur une plateforme d'inscription en skills réutilisables (par exemple « sur Njuko, le certificat se téléverse à l'étape 3 »).
 - **Divers** : HoloMobile (mobile), Halo (panneau Chrome), Privacy Layer, Snowglobe, FollowThrough, Agent Kalshi, Glassbox, HoloBlocks et HoloBricks.
 - **Démos « From H » sous forme d'app web** : [HoloBlocks](https://blocks.hcompany.ai/) ([code](https://github.com/hcompai/holoblocks)). On décrit une construction ou on donne une photo, Holo la bâtit bloc par bloc en 3D, puis on peut l'exporter vers Minecraft. [HoloBricks](https://bricks.hcompany.ai/) ([code](https://github.com/hcompai/holobricks)) fait la même chose en vraies briques, et fournit la liste des pièces à commander pour la monter chez soi. Les deux sont des exemples open source d'apps web complètes (serveur Python + front npm) construites autour de l'API Agents.
 
