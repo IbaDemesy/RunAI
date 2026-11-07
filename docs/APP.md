@@ -15,7 +15,7 @@ Parcours : on tape la course ou on clique sur **Dire la course** (micro → `/ap
 
 ## Héberger le POC (Render)
 
-`render.yaml` décrit un service web Render : une seule instance (les missions vivent en mémoire), `RUNAI_MODE=live`, démarrage `uvicorn runai.app.server:create_app --factory`, sonde `/api/health`.
+`render.yaml` configures a single-process Render service with `RUNAI_MODE=live`, `uvicorn runai.app.server:create_app --factory` and the `/api/health` probe. Mission snapshots, SSE envelopes, framing context, launch plans and the latest journey are saved atomically as redacted `mission-store.v1` JSON documents in `<RUNAI_TRACES_DIR>/missions/<mission_id>.json`. Active updates are coalesced to at most one write every 0.5 seconds; terminal states are flushed immediately. On startup, saved missions are restored read-only, including the latest recap exports and `Last-Event-ID` replay (the terminal event stream then closes). Interrupted missions become failed with the `server_restarted` limitation; agents are never resumed automatically. Storage is local to this one process: configure `RUNAI_TRACES_DIR` on a persistent Render disk to retain data across deployments; ephemeral disks and lost volumes cannot be recovered.
 
 1. Render → **New → Blueprint**, choisir ce dépôt et la branche `main`.
 2. Renseigner `RUNAI_BASIC_AUTH` (obligatoire : `render.yaml` fixe `RUNAI_PUBLIC=1` et l'app refuse alors de démarrer en mode live sans mot de passe), `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY` (facultative, voix).
@@ -68,6 +68,6 @@ Contrat côté H (`BrowserAgents.start`) :
 ## Limites connues
 
 - Mode démo uniquement : aucune vraie brique n'est encore branchée, aucun appel H, Gladia ou Linkup.
-- Missions en mémoire (perdues au redémarrage) ; la trace JSONL reste sur disque.
+- Mission recovery requires the same persistent traces volume; a process crash can lose up to 0.5 seconds of active updates. Older recap revisions remain in-memory only.
 - Pas encore vérifié : affichage de la vue live H réelle dans une `iframe` (en-têtes de la plateforme H), lien « Ouvrir la vue live » prévu en repli.
 - Transcription par enregistrement court ; les partiels Gladia en direct et les commandes vocales relèvent de la brique voix.
