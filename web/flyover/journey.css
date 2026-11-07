@@ -1,0 +1,79 @@
+/* Scoped to C3. Reuse the portal's tokens without redefining the shell palette. */
+.journey-fallback {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: clamp(12px, 3vw, 24px);
+  color: var(--ink, #0b0b0c);
+  background: var(--card, #fcfcfd);
+  font-family: var(--text, system-ui, sans-serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.journey-fallback [hidden],
+.journey-fallback[hidden] { display: none !important; }
+.journey-fallback *, .journey-fallback *::before { box-sizing: border-box; }
+.journey-fallback h2, .journey-fallback h3 { font-family: var(--display, system-ui, sans-serif); line-height: 1.25; }
+.journey-fallback h2 { margin: 0 0 12px; font-size: clamp(1.5rem, 4vw, 2rem); }
+.journey-fallback h3 { margin: 0 0 8px; font-size: 1.15rem; }
+.journey-fallback p { margin: 8px 0; max-width: 75ch; }
+.journey-fallback a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.journey-fallback :focus-visible { outline: 3px solid var(--ink, #0b0b0c); outline-offset: 3px; }
+.journey-fallback button {
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--ink-2, #3a3a3d);
+  border-radius: 8px;
+  color: var(--ink, #0b0b0c);
+  background: var(--card, #fcfcfd);
+  font: inherit;
+  font-weight: 600;
+  white-space: normal;
+  text-align: left;
+  cursor: pointer;
+}
+.journey-fallback button:disabled { opacity: 1; color: var(--ink-2, #3a3a3d); border-style: dashed; cursor: default; }
+.journey-fallback button[aria-current="step"] { border-width: 2px; background: var(--accent, #ffd84d); }
+.journey-fallback .journey-mode { display: inline-block; padding: 4px 10px; border: 1px solid currentColor; font-weight: 700; }
+.journey-fallback .journey-status { margin: 0 0 20px; padding: 10px 14px; border-inline-start: 4px solid currentColor; background: var(--paper, #f0eee9); }
+.journey-fallback .journey-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 16px; }
+.journey-fallback .journey-chapters { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; list-style: none; }
+.journey-fallback .journey-legend { margin: 20px 0; padding-inline-start: 24px; color: var(--ink-2, #3a3a3d); }
+.journey-fallback .journey-legend li { margin-block: 6px; padding-inline-start: 6px; }
+.journey-fallback [data-geometry="verified"] { border-inline-start: 3px solid currentColor; }
+.journey-fallback [data-geometry="approximate"] { border-inline-start: 3px dotted currentColor; }
+.journey-fallback [data-geometry="illustrative"] { border-inline-start: 3px dashed currentColor; }
+.journey-fallback [data-geometry="unavailable"] { border-inline-start: 3px double currentColor; }
+.journey-fallback .journey-timeline { padding-inline-start: 28px; margin-block: 24px; }
+.journey-fallback .journey-timeline > li { padding: 0 0 24px 10px; }
+.journey-fallback .journey-timeline > li::marker { font-weight: 700; }
+.journey-fallback article { padding: 16px; border: 1px solid var(--line, #dcd8d0); }
+.journey-fallback article[data-selected="true"] { border: 2px solid var(--ink, #0b0b0c); }
+.journey-fallback .journey-stop, .journey-fallback .journey-chapter-state { font-weight: 600; }
+.journey-fallback .journey-segment { padding-inline-start: 14px; margin-block: 18px; }
+.journey-fallback .journey-budget, .journey-fallback .journey-sources { margin-block: 24px; padding-block-start: 20px; border-block-start: 1px solid var(--line, #dcd8d0); }
+.journey-fallback .journey-warning, .journey-fallback .journey-limitation { padding-inline-start: 12px; border-inline-start: 3px solid currentColor; }
+
+@media (max-width: 480px) {
+  .journey-fallback .journey-controls, .journey-fallback .journey-chapters { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .journey-fallback .journey-chapters button, .journey-fallback .journey-controls button { width: 100%; }
+  .journey-fallback .journey-timeline { padding-inline-start: 20px; }
+  .journey-fallback .journey-timeline > li { padding-inline-start: 2px; }
+  .journey-fallback article { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-fallback *, .journey-fallback *::before, .journey-fallback *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .journey-fallback button[aria-current="step"] { outline: 2px solid Highlight; outline-offset: -4px; }
+}
