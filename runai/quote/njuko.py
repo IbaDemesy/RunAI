@@ -38,7 +38,7 @@ _WINDOWS_TZ = {
 }
 _INCLUS = re.compile(r"inclus|compris|included", re.IGNORECASE)
 _NON_INCLUS = re.compile(
-    r"\b(?:non|pas)\s+(?:inclus|compris)|not\s+included|en\s+sus|en\s+plus|excluded",
+    r"\b(?:non|pas)\s+(?:inclus|compris)|not\s+included|en\s+sus|excluded",
     re.IGNORECASE,
 )
 

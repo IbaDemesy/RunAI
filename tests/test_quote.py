@@ -380,6 +380,10 @@ def test_njuko_fee_inclusion_negation():
         False,
     )
     assert _frais(["frais de service inclus (5 euros)"]) == (5.0, True)
+    assert _frais(["frais de service inclus (5 euros), en plus des options"]) == (
+        5.0,
+        True,
+    )
 
 
 def test_njuko_hidden_sections_and_free_choices():
