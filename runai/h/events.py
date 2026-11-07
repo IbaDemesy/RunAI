@@ -12,7 +12,11 @@ def safe_text(value: str | None) -> str | None:
     """Bound untrusted agent text and remove invisible control/format characters."""
     if value is None:
         return None
-    return "".join(char for char in value if unicodedata.category(char) not in {"Cc", "Cf", "Cs"})[:2000]
+    return "".join(
+        " " if char.isspace() else char
+        for char in value
+        if char.isspace() or unicodedata.category(char) not in {"Cc", "Cf", "Cs"}
+    )[:2000]
 
 
 def as_dict(event: Any) -> dict[str, Any]:

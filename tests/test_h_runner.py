@@ -294,6 +294,14 @@ def test_agent_text_is_sanitized_and_bounded():
     assert event_summary(event) == expected[:200] + "…"
 
 
+@pytest.mark.parametrize("separator", ["\n", "\r\n", "\t", "\v", "\f"])
+def test_control_whitespace_preserves_stop_evidence(separator):
+    result = build_step_result(StepKind.registration, "completed", answer=f"Stopped before{separator}payment")
+    assert result.status is StepStatus.stopped_before_commitment
+    assert result.stop_point is StopPoint.payment
+    assert result.summary == "Stopped before" + " " * len(separator) + "payment"
+
+
 @pytest.mark.parametrize("host", ["stripe.com", "adyen.com", "paypal.com", "checkout.com", "ingenico.com", "worldline.com", "mollie.com"])
 def test_payment_provider_is_rejected_even_if_allowlisted(tmp_path, host):
     events = scripted_events("Stopped before payment")
