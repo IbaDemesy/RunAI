@@ -134,7 +134,7 @@ Test avec l'agent **`h/web-surfer-pro`**, un **faux profil** et **5 sessions en 
 ### Conclusions et décisions de l'équipe
 
 - **Course + hôtel + vol est faisable : le périmètre est confirmé.**
-- **PPS obligatoire pour les non-licenciés** sur Njuko et Klikego : le profil coureur doit contenir le numéro PPS.
+- **PPS obligatoire pour les non-licenciés** sur Njuko et Klikego. Le PPS touche à la santé, donc l'agent ne le fait jamais à la place de l'utilisateur : il l'avertit et le guide (quoi faire sur pps.athle.fr), puis l'utilisateur fournit lui-même son numéro PPS, qui est ensuite réutilisé dans son profil coureur.
 - **Si un site exige un compte, l'utilisateur crée son compte lui-même**, puis l'agent reprend (décision de l'équipe).
 - **Point à surveiller : le temps.** 40 à 64 étapes par session, environ 10 à 15 min chacune. Pistes : agents en parallèle, consignes ciblées, sessions préchauffées / démo préparée.
 
