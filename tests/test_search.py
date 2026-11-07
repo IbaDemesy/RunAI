@@ -285,9 +285,9 @@ def test_official_site_registration_page_can_replace_a_bad_url():
     assert sheet.is_reliable
 
 
-def test_known_platform_link_is_preferred_over_official_site_page():
+def test_first_registration_link_of_the_official_page_wins():
     data = {**MILAN, "registration_url": "https://cheap-bibs.example.com/milan"}
-    page = "[Register](https://www.milanomarathon.it/en/marathon/register/) [Njuko](https://in.njuko.com/milan-2027)"
+    page = "[Register](https://www.milanomarathon.it/en/marathon/register/) [Kids](https://in.njuko.com/kids-run-2027)"
     client = FakeLinkup([_response(data)], pages={MILAN["official_url"]: page})
     sheet = search_race("marathon de Milan 2027", client=client, follow_up=False, today=TODAY)
-    assert str(sheet.registration_url) == "https://in.njuko.com/milan-2027"
+    assert str(sheet.registration_url) == "https://www.milanomarathon.it/en/marathon/register/"

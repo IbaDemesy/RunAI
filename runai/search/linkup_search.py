@@ -281,16 +281,13 @@ def links_on_page(client: SearchClient, url: str) -> list[str]:
     return list(dict.fromkeys(link.rstrip(".,;") for link in _LINK.findall(markdown)))
 
 
-def _registration_rank(link: str, official_host: str) -> int | None:
-    """Priorité d'un lien de la page officielle : plateforme connue, puis lien externe, puis page du site officiel."""
+def _is_registration_link(link: str) -> bool:
     host = host_of(link)
     if is_aggregator(host):
-        return None
-    if any(on_domain(host, domain) for domain in KNOWN_REGISTRATION_PLATFORMS):
-        return 0
-    if not _REGISTRATION_HINT.search(link):
-        return None
-    return 2 if host == official_host else 1
+        return False
+    return any(on_domain(host, domain) for domain in KNOWN_REGISTRATION_PLATFORMS) or bool(
+        _REGISTRATION_HINT.search(link)
+    )
 
 
 def verify_registration_link(sheet: RaceSheet, client: SearchClient, today: date | None = None) -> RaceSheet:
@@ -300,9 +297,7 @@ def verify_registration_link(sheet: RaceSheet, client: SearchClient, today: date
     links = links_on_page(client, str(sheet.official_url))
     registration_host = host_of(sheet.registration_url)
     if not any(host_of(link) == registration_host for link in links):
-        official_host = host_of(sheet.official_url)
-        ranked = [(rank, link) for link in links if (rank := _registration_rank(link, official_host)) is not None]
-        candidates = [link for _, link in sorted(ranked, key=lambda item: item[0])]
+        candidates = [link for link in links if _is_registration_link(link)]
         if not candidates:
             return sheet
         sheet._notes.append(
