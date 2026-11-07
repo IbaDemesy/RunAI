@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>RunAI · {{ r.race_name }}</title>
+<style>
+@page { size: A4; margin: 14mm 13mm; }
+* { box-sizing: border-box; }
+body { font-family: "Liberation Sans", Arial, Helvetica, sans-serif; color: #111827; font-size: 9.5pt; margin: 0; }
+.notice { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 6px 9px; font-size: 7.5pt; color: #78350f; margin-bottom: 10px; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.brand { font-weight: 700; font-size: 12pt; } .brand span { color: #4f46e5; }
+h1 { font-size: 20pt; margin: 4px 0; }
+.sub { color: #4b5563; font-size: 8.5pt; line-height: 1.45; }
+.dossier { text-align: right; font-size: 7.5pt; color: #6b7280; max-width: 60mm; }
+.dossier i { display: block; margin-top: 2px; }
+.kpis { display: flex; gap: 8px; margin: 12px 0 4px; }
+.kpi { flex: 1; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; }
+.kpi b { display: block; font-size: 15pt; } .kpi small { font-size: 8pt; }
+.kpi.zero { border: 2px solid #047857; background: #ecfdf5; }
+.green { color: #047857; } .orange { color: #b45309; }
+.fine { font-size: 7pt; color: #6b7280; }
+h2 { font-size: 12pt; margin: 16px 0 6px; padding-bottom: 5px; border-bottom: 2px solid #111827; overflow: hidden; break-after: avoid; }
+h2.first { margin-top: 12px; }
+h2 small { float: right; margin-top: 4px; font-weight: 400; font-size: 7.5pt; color: #6b7280; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fact { background: #f9fafb; border-radius: 6px; padding: 7px 9px; }
+.fact .l { font-size: 6.5pt; letter-spacing: .05em; color: #6b7280; text-transform: uppercase; }
+.fact .v { font-weight: 700; margin: 2px 0; }
+sup.src { font-size: 6pt; color: #4f46e5; background: #eef2ff; padding: 0 3px; border-radius: 3px; }
+.day { color: #4f46e5; font-weight: 700; font-size: 8pt; letter-spacing: .04em; margin: 10px 0 3px 6px; text-transform: uppercase; }
+.tl { display: flex; align-items: center; padding: 3.5px 6px; gap: 8px; break-inside: avoid; }
+.tl .t { width: 46px; text-align: right; font-weight: 700; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #4f46e5; flex: none; }
+.dot.a_payer { background: #0ea5e9; } .dot.course { background: #dc2626; } .dot.info { background: #10b981; }
+.tl .x { flex: 1; }
+.tag { font-size: 6.5pt; padding: 1px 6px; border-radius: 8px; background: #eef2ff; color: #4338ca; white-space: nowrap; }
+.tag.a_payer { background: #fef3c7; color: #92400e; } .tag.course { background: #fee2e2; color: #991b1b; }
+.page { break-before: page; }
+.mission { border: 1px solid #e5e7eb; border-radius: 8px; padding: 9px; margin-bottom: 9px; display: flex; gap: 10px; break-inside: avoid; }
+.mission .left { flex: 1.2; min-width: 0; } .mission .right { flex: 1; min-width: 0; max-width: 45%; }
+.mt { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; gap: 6px; }
+.pill { font-size: 6.5pt; font-weight: 400; background: #fef3c7; color: #92400e; padding: 1px 7px; border-radius: 8px; white-space: nowrap; }
+.pill.failed { background: #fee2e2; color: #991b1b; } .pill.pending, .pill.running, .pill.paused { background: #f3f4f6; color: #374151; }
+table.kv { width: 100%; border-collapse: collapse; font-size: 8pt; }
+table.kv td { padding: 3.5px 4px; border-bottom: 1px solid #f3f4f6; vertical-align: top; overflow-wrap: anywhere; }
+table.kv td:first-child { color: #6b7280; width: 34%; }
+.btn { display: inline-block; vertical-align: middle; background: #111827; color: #fff; text-decoration: none; padding: 5px 9px; border-radius: 5px; font-size: 7.5pt; font-weight: 700; margin-top: 6px; }
+.browser { border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
+.bar { background: #f3f4f6; padding: 3px 6px; font-size: 6.5pt; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shot { position: relative; min-height: 30mm; background: #fafafa; }
+.shot img { width: 100%; display: block; max-height: 62mm; object-fit: cover; object-position: top; }
+.stopline { display: inline-block; background: #dc2626; color: #fff; font-size: 6.5pt; font-weight: 700; padding: 3px 7px; border-radius: 3px; margin: 6px 6px 0 0; vertical-align: middle; }
+.stop { position: absolute; right: 6px; bottom: 6px; background: #dc2626; color: #fff; font-size: 6.5pt; font-weight: 700; padding: 2px 6px; border-radius: 3px; transform: rotate(-4deg); }
+ol.todo { margin: 0; padding-left: 18px; } ol.todo li { padding: 4px 0; border-bottom: 1px solid #f3f4f6; break-inside: avoid; }
+ol.todo .p { float: right; font-weight: 700; }
+table.grid { width: 100%; border-collapse: collapse; font-size: 8pt; }
+table.grid th { text-align: left; font-size: 6.5pt; color: #6b7280; text-transform: uppercase; padding: 3px; border-bottom: 1px solid #e5e7eb; }
+table.grid td { padding: 3.5px 3px; border-bottom: 1px solid #f3f4f6; overflow-wrap: anywhere; }
+.never { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 10px; margin-top: 10px; font-size: 8pt; break-inside: avoid; }
+.foot { display: flex; justify-content: space-between; font-size: 6.5pt; color: #6b7280; border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 4px; }
+a { color: #4f46e5; }
+</style></head>
+<body>
+{% if r.notice %}<div class="notice">{{ r.notice }}</div>{% endif %}
+<div class="head">
+  <div>
+    <div class="brand">Run<span>AI</span></div>
+    <h1>Ton week-end de course est prêt</h1>
+    <div class="sub">{{ r.race_name }} · {{ r.race_city }}{% if r.race_date %} · {{ r.race_date | date_long }}{% endif %}<br>
+    Préparé pour <b>{{ r.runner_name }}</b>{% if r.runner_fictive %} (profil fictif){% endif %}{% if r.goal %} · objectif <b>{{ r.goal }}</b>{% endif %} · généré le {{ generated | dt_short }}</div>
+  </div>
+  <div class="dossier">Dossier {{ r.id | upper }}{% if r.voice_request %}<br>Demande vocale :<i>« {{ r.voice_request }} »</i>{% endif %}</div>
+</div>
+<div class="kpis">
+  <div class="kpi"><b class="green">{{ r.ready_count }} / {{ r.missions | length }}</b><small>missions prêtes</small></div>
+  <div class="kpi"><b class="orange">{{ r.payments_to_do }}</b><small>paiements à faire par toi</small></div>
+  <div class="kpi"><b>≈ {{ r.total_eur | eur0 }}</b><small>total estimé, à payer par toi</small></div>
+  <div class="kpi zero"><b class="green">0 € payé par RunAI</b><small>les agents se sont arrêtés avant chaque paiement</small></div>
+</div>
+<div class="fine">Rien n'est acquis tant que tu n'as pas payé toi-même. Les prix et disponibilités peuvent évoluer.</div>
+
+<h2 class="first">Ce qui reste à faire par toi <small>RunAI ne paie, ne coche et ne signe rien à ta place</small></h2>
+<ol class="todo">
+{% for m in r.missions %}<li>{% if m.price_eur is not none %}<span class="p">{{ m.price_eur | eur }}</span>{% endif %}<b>{{ m.title }}</b> : {{ m.human_action }}{% if m.finalize_url %} <a href="{{ m.finalize_url }}">Lien</a>{% endif %}</li>{% endfor %}
+{% for c in r.checklist %}<li>{{ c }}</li>{% endfor %}
+</ol>
+
+{% if r.key_facts %}<h2>L'essentiel de la course <small>infos trouvées par Linkup, sources en fin de document</small></h2>
+<div class="facts">
+{% for f in r.key_facts %}<div class="fact"><div class="l">{{ f.label }}</div><div class="v">{{ f.value }}{% if f.source and not f.detail %} <sup class="src">[{{ f.source }}]</sup>{% endif %}</div>{% if f.detail %}<div>{{ f.detail }}{% if f.source %} <sup class="src">[{{ f.source }}]</sup>{% endif %}</div>{% endif %}</div>{% endfor %}
+</div>{% endif %}
+
+{% if days %}<h2>Ta timeline du week-end <small>heures locales du lieu</small></h2>
+{% for day, items in days %}<div class="day">{{ day }}</div>
+{% for it in items %}<div class="tl"><span class="t">{{ it.start | hm if it.time_known else "–" }}</span><span class="dot {{ it.tag }}"></span><span class="x"><b>{{ it.title }}</b>{% if it.detail %} · {{ it.detail }}{% endif %}{% if it.location %} · <span class="fine">{{ it.location }}</span>{% endif %}</span><span class="tag {{ it.tag }}">{{ tag_labels[it.tag] }}</span></div>{% endfor %}
+{% endfor %}
+<div class="fine" style="margin-top:6px">Le fichier <b>week-end.ics</b> joint ajoute {{ n_calendar }} étape{{ "s" if n_calendar > 1 }} à ton agenda.</div>{% endif %}
+
+{% if r.missions %}<div class="page"></div>
+<h2>Les missions des agents <small>chaque agent s'est arrêté avant de s'engager</small></h2>
+{% for m in r.missions %}<div class="mission">
+  <div class="left">
+    <div class="mt"><span>{{ loop.index }} · {{ m.title }}</span><span class="pill {{ m.status.value }}">{{ status_label(m.status, m.price_eur is not none) }}</span></div>
+    <table class="kv">
+      {% for f in m.fields %}<tr><td>{{ f.label }}</td><td>{{ f.value }}</td></tr>{% endfor %}
+      {% if m.price_eur is not none %}<tr><td>Prix affiché</td><td><b>{{ m.price_label or (m.price_eur | eur) }}</b> · à payer par toi</td></tr>{% endif %}
+      {% if m.h_session_id %}<tr><td>Session H</td><td>{% if m.live_view_url %}<a href="{{ m.live_view_url }}">{{ m.h_session_id }}</a>{% else %}{{ m.h_session_id }}{% endif %}</td></tr>{% endif %}
+    </table>
+    {% if m.stop_point and not m.capture_data_uri %}<span class="stopline">AGENT ARRÊTÉ ICI</span>{% endif %}
+    {% if m.finalize_url %}<a class="btn" href="{{ m.finalize_url }}">Ouvrir la page où l'agent s'est arrêté →</a>{% endif %}
+  </div>
+  {% if m.capture_data_uri %}<div class="right">
+    <div class="browser"><div class="bar">● ● ● &nbsp; {{ m.finalize_url or "" }}</div>
+      <div class="shot"><img src="{{ m.capture_data_uri }}" alt="Dernière vue de l'agent">
+      {% if m.stop_point %}<span class="stop">AGENT ARRÊTÉ ICI</span>{% endif %}</div>
+    </div>
+    <div class="fine">Dernière page vue par l'agent, juste avant l'étape que tu dois faire toi-même.</div>
+  </div>{% endif %}
+</div>{% endfor %}{% endif %}
+
+<h2>Sources et traçabilité <small>d'où vient chaque information</small></h2>
+{% if r.sources %}<table class="grid"><tr><th>#</th><th>source</th><th>trouvée par</th><th>utilisée pour</th></tr>
+{% for s in r.sources %}<tr><td>[{{ loop.index }}]</td><td>{% if s.url %}<a href="{{ s.url }}">{{ s.label }}</a><br><span class="fine">{{ s.url }}</span>{% else %}{{ s.label }}{% endif %}</td><td>{{ s.found_by }}</td><td>{{ s.used_for }}</td></tr>{% endfor %}</table>
+{% else %}<div class="fine">Aucune source enregistrée : vérifie chaque information sur le site officiel.</div>{% endif %}
+<div class="never"><b>Ce que RunAI n'a pas fait, volontairement</b><br>Aucun paiement (0 € payé par RunAI). Aucune case santé, règlement ou consentement cochée à ta place. Aucun compte créé, aucun mot de passe saisi. Aucune soumission définitive. Les liens ci-dessus te ramènent à la page où l'agent s'est arrêté.</div>
+<div class="foot"><span>RunAI · Gladia (voix), Linkup (recherche), H Company (agents web)</span><span>Dossier {{ r.id | upper }}</span></div>
+</body></html>
