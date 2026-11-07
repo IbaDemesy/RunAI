@@ -213,7 +213,7 @@ Keep race names and official place names as supplied by their source. Preserve p
 | app.116 | Mission status:  | Trip preparation: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
 | app.117 | Updates interrupted. Reconnecting does not restart the agents. | Progress updates interrupted. Reconnecting will not restart the agents. | Request / trip | 200 | — |
 | app.118 | Trip prepared · nothing committed automatically | Trip prepared · nothing committed automatically. | Request / trip | 80 | — |
-| app.119 | Finish recording | Stop recording | Request / trip | 32 | — |
+| app.119 | Stop recording | Stop recording | Request / trip | 32 | — |
 | app.120 | Page title unavailable | Page title unavailable | Request / trip | 32 | — |
 | app.121 | Everything is ready. Check the summary before starting the search. | Your plan is ready. Review the summary before starting preparation. | Request / trip | 200 | — |
 | app.122 | Train | Train | Request / trip | 32 | — |

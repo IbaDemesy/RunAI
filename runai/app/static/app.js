@@ -128,6 +128,7 @@
         if (heading) { heading.tabIndex = -1; heading.focus(); }
       }
     }
+    window.RunAIPartners?.decorate(screen, { framing, mission, voiceState });
   }
   async function mutate(action, reload) {
     if (busy) return;
@@ -231,13 +232,19 @@
   });
   function voiceControls() {
     if (!voice) return;
+    const state = voice.getState?.() || { state: voiceState };
     const controls = el("div", null, "question-options voice-controls");
     if (mission || voiceState !== "listening") controls.append(button("Speak", () => {
       voiceFraming = framing?.id; voiceMission = mission?.mission_id; voice.start();
     }));
     if (mission || voiceState === "listening") {
-      const stop = button("Finish recording", () => voice.stop()); stop.className += " rec"; controls.append(stop);
+      const stop = button("Stop recording", () => voice.stop()); stop.className += " rec"; controls.append(stop);
     }
+    if (state.state === "listening" && state.partial) {
+      const partial = el("p", state.partial, "voice-partial"); partial.setAttribute("aria-live", "polite"); controls.append(partial);
+    }
+    const badge = el("p", "Voice by Gladia solaria-1 · live", "partner-badge");
+    badge.setAttribute("data-partner", "gladia"); controls.append(badge);
     (screen.querySelector(".ask") || screen).append(controls);
   }
   function slotText(name, slot) {
