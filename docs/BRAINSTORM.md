@@ -132,6 +132,19 @@ Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents con
 | **Hiking Routes in Google Maps** (Hackathon SF) | Planifie des randonnées urbaines et les trace dans Google Maps | Seul projet lié au sport ou à l'outdoor |
 | **Add to cart**, **Product availability**, **Price Check**, **Pricehunter** | Démos e-commerce : panier, stock, prix, codes promo | Briques de navigation e-commerce, sans orchestration |
 
+**Zoom sur [Life-Admin Operator](https://github.com/chinesepowered/hack-h)** (Hackathon SF), **le projet le plus proche du nôtre** : un agent pensé pour les personnes qui ne voient pas l'écran, qui fonctionne entièrement à la voix. On dit « annule mon abonnement » ou « inscris-moi à cet événement », et il le fait sur le vrai site.
+- Un planificateur découpe l'objectif en étapes et les lit à voix haute avant de commencer.
+- L'agent annonce chaque étape à voix haute et gère les connexions, les formulaires, les pop-ups et les boutons de confirmation.
+- Il attend un « oui » prononcé avant toute action irréversible (acheter, supprimer, valider). La sécurité fait partie de l'architecture.
+- Démo principale : **l'inscription à un vrai événement Luma, avec un arrêt avant le bouton Register**. Il existe aussi un mode de secours (remplir un formulaire), une démo hors ligne des trois garde-fous de sécurité, et une vérification du micro.
+
+*Ce que ça implique pour RunAI* : « inscris-moi, à la voix, avec un arrêt avant de valider » **a déjà été montré au jury de SF**. Notre originalité ne peut pas reposer là-dessus. Elle doit venir de :
+1. **La verticale course à pied** : le profil coureur réutilisé (PPS ou certificat à téléverser, taille de t-shirt, club, contact d'urgence) et les plateformes spécifiques (Njuko, Klikego…).
+2. **Une seule intention, plusieurs agents coordonnés** (course, hôtel, transport), en parallèle avec une vue live. Life-Admin Operator ne fait qu'une tâche à la fois.
+3. **La vérification avant paiement** par un agent indépendant (voir Houston) et la chaîne Linkup → H.
+
+Bonnes idées à reprendre : lire le plan à voix haute avant d'agir, et préparer une démo de secours hors ligne qui montre les garde-fous.
+
 **Zoom sur [Price Check](https://showcase.hcompany.ai/a/price-check-test/)** (From H) : un seul agent `h/browser` ouvre la page de tarifs d'un éditeur (dans l'exemple, linear.app/pricing) et donne le prix du moins cher des plans payants. La fiche affiche la trace du run étape par étape (« ouvre linear.app », « clique sur le bouton Billed yearly », « répond »), avec le raisonnement de l'agent à chaque étape. Dans l'exemple, l'agent remarque que le tarif annuel est affiché par défaut et bascule sur le mensuel : 12 $ au lieu de 10 $.
 *À reprendre pour RunAI* : afficher ce genre de trace étape par étape dans notre vue de supervision. Et prévoir que l'agent vérifie les options qui changent un prix (annuel ou mensuel, distance de course, options payantes) avant de présenter le récap au coureur.
 
