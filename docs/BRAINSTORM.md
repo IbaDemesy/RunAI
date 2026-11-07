@@ -41,6 +41,8 @@ Le formulaire du [dashboard](https://builderbase.com/track-dashboard/h-company-4
 
 Le jury voit un aperçu de la soumission (« Review what judges will see ») : à relire avant d'envoyer.
 
+Le déroulé de la démo, le planning de dimanche, les brouillons des livrables 3, 5 et 6 et la procédure vidéo sont dans [DEMO_ET_LIVRABLES.md](DEMO_ET_LIVRABLES.md).
+
 **Deadline** : la page de l'événement indique un rendu à 14h00, le dashboard une clôture des soumissions à 14h30 (GMT+1). On vise **14h00**.
 
 ### Grille du jury
@@ -92,6 +94,8 @@ Un seul outil qui accompagne le coureur de l'objectif jusqu'à la ligne d'arriv�
   Stratégie pour le prix « Best Use of Devin » : [DEVIN.md](DEVIN.md), avec Devin dans la boucle du produit.
 
 ### Scénario de démo (environ 3 min)
+
+> **Dépassé** : le semi de Lisbonne 2027 est complet et Booking interdit les assistants IA. Le scénario à jour est dans [DEMO_ET_LIVRABLES.md](DEMO_ET_LIVRABLES.md#démo-live).
 
 1. « Je veux courir le semi de Lisbonne en mars, objectif moins d'1h45. »
 2. Linkup trouve la course et ses infos, et RunAI propose un plan.
