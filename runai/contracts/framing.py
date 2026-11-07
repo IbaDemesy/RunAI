@@ -203,7 +203,9 @@ class FramingConfirm(BaseModel):
 class CandidateSearch(Protocol):
     """Recherche générique sourcée (B1) : aucun filtre par liste de villes ; [] si rien trouvé."""
 
-    async def find_candidates(self, slots: dict[SlotName, Slot]) -> list[RaceCandidate]: ...
+    async def find_candidates(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> list[RaceCandidate]: ...
 
 
 class FramingError(Exception):

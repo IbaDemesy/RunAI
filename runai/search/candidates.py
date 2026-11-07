@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 import json
+import re
 from datetime import date
 from typing import Annotated, Any
 
@@ -46,6 +47,13 @@ class _NextEdition(BaseModel):
     source_url: HttpUrl | None = None
 
 
+_LOCATION_REQUEST = re.compile(r"\b(?:en|au|aux|in)\s+[A-ZÀ-Ö]")
+
+
+def has_location_request(request_text: str | None) -> bool:
+    return bool(request_text and _LOCATION_REQUEST.search(request_text))
+
+
 SEARCH_SLOTS = (
     SlotName.city, SlotName.race, SlotName.edition, SlotName.race_date,
     SlotName.date_window, SlotName.distance_km, SlotName.preferences,
@@ -57,6 +65,7 @@ def build_candidate_prompt(
     today: date | None = None,
     *,
     relaxed: bool = False,
+    request_text: str | None = None,
 ) -> str:
     known = {name.value: slots[name].value for name in SEARCH_SLOTS
              if name in slots and slots[name].is_known and slots[name].value is not None}
@@ -73,6 +82,11 @@ def build_candidate_prompt(
         prompt += (
             " No exact match was found; also include races in nearby cities (about 50 km) "
             "and other distances or dates."
+        )
+    if request_text is not None:
+        prompt += (
+            f' User request (verbatim): "{request_text}". '
+            "Use the country or region it mentions as a location constraint."
         )
     return prompt
 
@@ -105,17 +119,22 @@ class LinkupCandidateSearch:
         self._client = client
         self.today = today
 
-    async def find_candidates(self, slots: dict[SlotName, Slot]) -> list[RaceCandidate]:
-        return (await self.search(slots)).candidates
+    async def find_candidates(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> list[RaceCandidate]:
+        return (await self.search(slots, request_text=request_text)).candidates
 
-    async def search(self, slots: dict[SlotName, Slot]) -> CandidateSearchResult:
+    async def search(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> CandidateSearchResult:
         if not any(name in slots and slots[name].is_known and slots[name].value
-                   for name in (SlotName.city, SlotName.race)):
+                   for name in (SlotName.city, SlotName.race)) and not has_location_request(request_text):
             return self._result([])
         today = self.today or date.today()
         try:
             response = await asyncio.to_thread(
-                self._search, build_candidate_prompt(slots, today=today)
+                self._search,
+                build_candidate_prompt(slots, today=today, request_text=request_text),
             )
             candidates = self._parse_candidates(response, slots, today=today)
         except Exception as exc:
@@ -132,7 +151,9 @@ class LinkupCandidateSearch:
         try:
             response = await asyncio.to_thread(
                 self._search,
-                build_candidate_prompt(fallback_slots, today=today, relaxed=True),
+                build_candidate_prompt(
+                    fallback_slots, today=today, relaxed=True, request_text=request_text
+                ),
             )
             candidates = self._parse_candidates(
                 response, fallback_slots, today=today, close_match=True

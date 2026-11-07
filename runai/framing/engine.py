@@ -31,7 +31,7 @@ from runai.framing.interpret import extract_slots
 from runai.journey import public_origin
 from runai.models import Race
 from runai.redaction import redact_secrets
-from runai.search.candidates import CandidateSearchError
+from runai.search.candidates import CandidateSearchError, has_location_request
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
 
@@ -273,6 +273,9 @@ class FramingEngine:
 
     async def _advance(self, session: FramingSession, *, search: bool) -> None:
         session.open_questions = []
+        request_text = " / ".join(
+            turn.text for turn in session.turns if turn.role == "user" and turn.text
+        )
         if (
             search
             and not session.selected_candidate_id
@@ -280,6 +283,7 @@ class FramingEngine:
             and (
                 session.slots[SlotName.city].is_known
                 or session.slots[SlotName.race].is_known
+                or has_location_request(request_text)
             )
         ):
             session.limitations = [l for l in session.limitations if l.code not in {
@@ -287,11 +291,15 @@ class FramingEngine:
             }]
             try:
                 if hasattr(self.search, "search"):
-                    result = await self.search.search(session.slots)
+                    result = await self.search.search(
+                        session.slots, request_text=request_text
+                    )
                     session.candidates = result.candidates
                     session.limitations.extend(result.limitations)
                 else:
-                    session.candidates = await self.search.find_candidates(session.slots)
+                    session.candidates = await self.search.find_candidates(
+                        session.slots, request_text=request_text
+                    )
             except CandidateSearchError as exc:
                 session.candidates = []
                 session.limitations.append(Limitation(

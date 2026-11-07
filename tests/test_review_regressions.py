@@ -16,7 +16,7 @@ from runai.framing.launch import plan_launch
 
 
 class Search:
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         return [RaceCandidate(id="race", name="Course de Rome", city="Rome", country="IT",
                               race_date=date(2028, 6, 12), distances_km=[10],
                               registration_url="https://in.njuko.com/race", provenance={"kind": "fixture"})]
@@ -68,7 +68,7 @@ def test_dated_candidate_button_label_is_not_a_date_correction():
 @pytest.mark.parametrize("city", ["", "   "])
 def test_candidate_without_city_keeps_city_unknown_and_requests_it(city):
     class MissingCitySearch(Search):
-        async def find_candidates(self, slots):
+        async def find_candidates(self, slots, request_text: str | None = None):
             candidates = await super().find_candidates(slots)
             candidates[0].city = city
             return candidates

@@ -27,7 +27,7 @@ class Search:
         self.distances = distances
         self.calls = []
 
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         self.calls.append(slots)
         if self.fail:
             raise RuntimeError("Service indisponible")
@@ -135,6 +135,47 @@ def test_named_race_capture_and_numeric_location_boundary():
 
     origin = extract_slots("course à Tokyo depuis 20 km de Lyon")
     assert SlotName.origin not in origin
+
+
+def test_country_request_searches_before_asking_for_city_but_month_does_not():
+    class CountrySearch:
+        def __init__(self):
+            self.calls = []
+
+        async def find_candidates(self, slots, request_text: str | None = None):
+            self.calls.append(request_text)
+            return [
+                RaceCandidate(
+                    id="china-half",
+                    name="Beijing Half-Marathon",
+                    city="Beijing",
+                    country="CN",
+                    race_date=date(2027, 10, 10),
+                    distances_km=[21.0975],
+                    sources=[Source(url="https://example.org/race")],
+                    provenance=Provenance(
+                        kind="fixture", url="https://example.org/race"
+                    ),
+                )
+            ]
+
+    async def run():
+        finder = CountrySearch()
+        session = await FramingEngine(finder, DataMode.demo).create(
+            FramingCreate(text="Un semi marathon en Chine")
+        )
+        assert finder.calls == ["Un semi marathon en Chine"]
+        assert session.open_questions[0].slots == [SlotName.race]
+        assert session.open_questions[0].choices[0].candidate_id == "china-half"
+
+        month_finder = Search()
+        month = await FramingEngine(month_finder, DataMode.demo).create(
+            FramingCreate(text="un semi en décembre")
+        )
+        assert month_finder.calls == []
+        assert month.open_questions[0].slots == [SlotName.city]
+
+    asyncio.run(run())
 
 
 @pytest.mark.parametrize(

@@ -12,7 +12,7 @@ TURNS = [FramingTurn(role="user", text="Un marathon au printemps", revision=1)]
 
 
 class NoCandidates:
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         return []
 
 

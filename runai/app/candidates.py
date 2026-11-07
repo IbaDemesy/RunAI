@@ -19,10 +19,14 @@ class FixtureCandidateSearch:
         self.races = races
         self.mode = mode
 
-    async def find_candidates(self, slots: dict[SlotName, Slot]) -> list[RaceCandidate]:
-        return (await self.search(slots)).candidates
+    async def find_candidates(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> list[RaceCandidate]:
+        return (await self.search(slots, request_text=request_text)).candidates
 
-    async def search(self, slots: dict[SlotName, Slot]) -> CandidateSearchResult:
+    async def search(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> CandidateSearchResult:
         def value(name):
             slot = slots.get(name)
             return slot.value if slot and slot.is_known else None
@@ -61,5 +65,5 @@ class UnavailableCandidateSearch:
     def __init__(self, message: str):
         self.message = message
 
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         raise CandidateSearchError(self.message)

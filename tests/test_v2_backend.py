@@ -129,7 +129,7 @@ def test_live_missing_keys_and_linkup_failure_are_honest(monkeypatch, tmp_path):
         monkeypatch.setenv("LINKUP_API_KEY", secret)
 
         class BrokenSearch:
-            async def find_candidates(self, slots):
+            async def find_candidates(self, slots, request_text: str | None = None):
                 raise CandidateSearchError(f"Linkup indisponible : {secret}")
 
         app.state.framing.search = BrokenSearch()
@@ -311,7 +311,7 @@ def test_live_lifecycle_preserves_guards_errors_and_closes_idle(tmp_path, outcom
             pass
 
     class Search(FixtureCandidateSearch):
-        async def search(self, slots):
+        async def search(self, slots, request_text: str | None = None):
             result = await super().search(slots)
             for candidate in result.candidates:
                 candidate.provenance.kind = ProvenanceKind.linkup

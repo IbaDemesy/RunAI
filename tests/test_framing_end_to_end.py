@@ -23,7 +23,7 @@ class OneCandidate:
     def __init__(self, candidate):
         self.candidate = candidate
 
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         return [self.candidate]
 
 
