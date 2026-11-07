@@ -1,0 +1,12 @@
+{
+  "session_id": "d659ae18-6faa-4681-8e90-60bcee1d1db2",
+  "status": "completed",
+  "steps": 29,
+  "duration_s": 1356,
+  "capture_at": "2026-11-07T14:11:19.602869Z",
+  "page_url": "https://booking.flytap.com/booking/passengers",
+  "page_title": "Paiement",
+  "bytes": 91411,
+  "content_type": "image/png",
+  "agent_view_url": "https://platform.hcompany.ai/agents/sessions/d659ae18-6faa-4681-8e90-60bcee1d1db2"
+}

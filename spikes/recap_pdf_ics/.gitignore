@@ -1,0 +1,5 @@
+out/*.png
+out/*.html
+out/*.chrome_cli.pdf
+__pycache__/
+.pytest_cache/

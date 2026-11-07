@@ -1,0 +1,12 @@
+{
+  "session_id": "ea01ea80-ea2a-4efb-8885-8c123acc509a",
+  "status": "completed",
+  "steps": 32,
+  "duration_s": 1374,
+  "capture_at": "2026-11-07T14:11:36.615328Z",
+  "page_url": "https://all.accor.com/booking/pt/accor/summary?destination=lisbon-portugal&compositions=1&dateIn=2027-03-06&dateOut=2027-03-08&nights=2&hideWDR=false&accessibleRoom=false&rid=3137&basketId=2ac7a3b8-c447-4f89-9671-b5b819aca439",
+  "page_title": "ALL Accor",
+  "bytes": 117488,
+  "content_type": "image/png",
+  "agent_view_url": "https://platform.hcompany.ai/agents/sessions/ea01ea80-ea2a-4efb-8885-8c123acc509a"
+}

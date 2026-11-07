@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>RunAI — Ton week-end de course</title>
+<style>
+@page { size: A4; margin: 14mm 13mm 14mm 13mm; }
+* { box-sizing: border-box; }
+body { font-family: "Liberation Sans", Arial, Helvetica, sans-serif; color: #111827; font-size: 9.5pt; margin: 0; }
+.notice { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 6px 9px; font-size: 7.5pt; color: #78350f; margin-bottom: 10px; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; }
+.brand { font-weight: 700; font-size: 12pt; } .brand span { color: #4f46e5; }
+h1 { font-size: 20pt; margin: 4px 0 4px; }
+.sub { color: #4b5563; font-size: 8.5pt; line-height: 1.45; }
+.dossier { text-align: right; font-size: 7.5pt; color: #6b7280; max-width: 52mm; }
+.dossier i { display: block; margin-top: 2px; }
+.kpis { display: flex; gap: 8px; margin: 12px 0 4px; }
+.kpi { flex: 1; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; }
+.kpi b { display: block; font-size: 15pt; } .kpi small { font-size: 8pt; }
+.green { color: #047857; } .orange { color: #b45309; }
+.fine { font-size: 7pt; color: #6b7280; }
+h2 { font-size: 12pt; margin: 18px 0 6px; padding-bottom: 5px; border-bottom: 2px solid #111827; overflow: hidden; }
+h2 small { float: right; margin-top: 4px; font-weight: 400; font-size: 7.5pt; color: #6b7280; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fact { background: #f9fafb; border-radius: 6px; padding: 7px 9px; }
+.fact .l { font-size: 6.5pt; letter-spacing: .05em; color: #6b7280; text-transform: uppercase; }
+.fact .v { font-weight: 700; margin: 2px 0; }
+sup.src { font-size: 6pt; color: #4f46e5; background: #eef2ff; padding: 0 3px; border-radius: 3px; vertical-align: 1px; }
+.day { color: #4f46e5; font-weight: 700; font-size: 8pt; letter-spacing: .04em; margin: 10px 0 3px 6px; text-transform: uppercase; }
+.tl { display: flex; align-items: center; padding: 3.5px 6px; gap: 8px; }
+.tl .t { width: 34px; text-align: right; font-weight: 700; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #4f46e5; flex: none; }
+.dot.a_payer { background: #0ea5e9; } .dot.inscription_prete { background: #dc2626; } .dot.info { background: #10b981; }
+.tl .x { flex: 1; } .tag { font-size: 6.5pt; padding: 1px 6px; border-radius: 8px; background: #eef2ff; color: #4338ca; }
+.tag.a_payer { background: #fef3c7; color: #92400e; } .tag.inscription_prete { background: #dcfce7; color: #166534; }
+.page { break-before: page; }
+.mission { border: 1px solid #e5e7eb; border-radius: 8px; padding: 9px; margin-bottom: 9px; display: flex; gap: 10px; break-inside: avoid; }
+.mission .left { flex: 1.1; min-width: 0; } .mission .right { flex: 1; min-width: 0; max-width: 50%; overflow: hidden; }
+.mt { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; }
+.pill { font-size: 6.5pt; font-weight: 400; background: #fef3c7; color: #92400e; padding: 1px 7px; border-radius: 8px; }
+.pill.bloque { background: #fee2e2; color: #991b1b; }
+table.kv { width: 100%; border-collapse: collapse; font-size: 8pt; }
+table.kv td { padding: 3.5px 4px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+table.kv td:first-child { color: #6b7280; width: 38%; }
+.valid { background: #ecfdf5; border-left: 3px solid #10b981; padding: 4px 7px; font-size: 7.5pt; margin: 6px 0; }
+.btn { display: inline-block; background: #111827; color: #fff; text-decoration: none; padding: 5px 9px; border-radius: 5px; font-size: 7.5pt; font-weight: 700; margin-top: 6px; }
+.browser { border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
+.bar { background: #f3f4f6; padding: 3px 6px; font-size: 6.5pt; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shot { position: relative; } .shot img { width: 100%; max-width: 100%; display: block; max-height: 62mm; object-fit: cover; object-position: top; }
+.stop { position: absolute; right: 6px; bottom: 6px; background: #dc2626; color: #fff; font-size: 6.5pt; font-weight: 700; padding: 2px 6px; border-radius: 3px; transform: rotate(-4deg); }
+.fake { padding: 8px; font-size: 7pt; min-height: 40mm; } .fake .row { border: 1px solid #e5e7eb; border-radius: 3px; padding: 3px 5px; margin: 3px 0; }
+.fake .pay { background: #e5e7eb; text-align: center; padding: 4px; margin-top: 6px; font-weight: 700; }
+.cap { font-size: 6.5pt; color: #6b7280; margin-top: 3px; }
+.cap.real { color: #047857; font-weight: 700; }
+.card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 9px; }
+.cols { display: flex; gap: 10px; } .cols > div { flex: 1; }
+.profile .ax { font-size: 8px; fill: #6b7280; } .profile .aid { font-size: 8px; fill: #fff; font-weight: 700; }
+.profile .climb { font-size: 9px; fill: #c2410c; font-weight: 700; } .profile .annot { font-size: 8px; fill: #7c3aed; }
+table.grid { width: 100%; border-collapse: collapse; font-size: 8pt; }
+table.grid th { text-align: left; font-size: 6.5pt; color: #6b7280; text-transform: uppercase; padding: 3px; border-bottom: 1px solid #e5e7eb; }
+table.grid td { padding: 3.5px 3px; border-bottom: 1px solid #f3f4f6; }
+.check { columns: 2; font-size: 8.5pt; } .check div { padding: 2px 0; }
+.never { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 10px; margin-top: 10px; font-size: 8pt; }
+.foot { display: flex; justify-content: space-between; font-size: 6.5pt; color: #6b7280; border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 4px; }
+a { color: #4f46e5; }
+</style></head>
+<body>
+{% if r.mockup_notice %}<div class="notice">{{ r.mockup_notice }}</div>{% endif %}
+<div class="head">
+  <div>
+    <div class="brand">Run<span>AI</span></div>
+    <h1>Ton week-end de course est prêt</h1>
+    <div class="sub">{{ r.race_name }} · {{ r.race_city }} · {{ r.race_date | date_long }}<br>
+    Préparé pour <b>{{ r.runner.full_name }}</b>{% if r.runner.fictive %} (profil fictif){% endif %}{% if r.runner.goal %} · objectif <b>{{ r.runner.goal }}</b>{% endif %} · généré le {{ r.generated_at | dt_short }}</div>
+  </div>
+  <div class="dossier">Dossier {{ r.id | upper }}<br>Demande vocale :<i>« {{ r.voice_request }} »</i></div>
+</div>
+<div class="kpis">
+  <div class="kpi"><b class="green">{{ r.ready_count }} / {{ r.missions | length }}</b><small>missions prêtes</small></div>
+  <div class="kpi"><b class="orange">{{ r.payments_to_do }}</b><small>paiements à faire par toi</small></div>
+  <div class="kpi"><b>≈ {{ r.total_eur | eur0 }}</b><small>total estimé</small></div>
+  <div class="kpi"><b class="green">0 €</b><small>payé par RunAI</small></div>
+</div>
+<div class="fine">Rien n'est acquis tant que tu n'as pas payé : les agents se sont arrêtés juste avant chaque paiement. Les prix peuvent évoluer.</div>
+
+<h2>L'essentiel de la course <small>extrait du règlement par Linkup</small></h2>
+<div class="facts">
+{% for f in r.key_facts %}<div class="fact"><div class="l">{{ f.label }}</div><div class="v">{{ f.value | replace("{dplus}", dplus) }}</div>{% if f.detail %}<div>{{ f.detail }}{% if f.source %} <sup class="src">[{{ f.source }}]</sup>{% endif %}</div>{% endif %}</div>{% endfor %}
+</div>
+
+<h2>Ta timeline du week-end <small>calée sur le retrait des dossards et l'heure de départ</small></h2>
+{% for day, items in days %}<div class="day">{{ day }}</div>
+{% for it in items %}<div class="tl"><span class="t">{{ it.start | hm }}</span><span class="dot {{ it.tag }}"></span><span class="x"><b>{{ it.title }}</b>{% if it.detail %} · {{ it.detail }}{% endif %}</span><span class="tag {{ it.tag }}">{{ tag_labels[it.tag] }}</span></div>{% endfor %}
+{% endfor %}
+<div class="fine" style="margin-top:6px">Le fichier <b>week-end.ics</b> est joint : {{ n_cal }} étapes s'ajoutent à ton agenda en un clic.</div>
+
+<div class="page"></div>
+<h2>Les {{ r.missions | length }} missions des agents H <small>chaque agent s'est arrêté avant le paiement</small></h2>
+{% for m in r.missions %}<div class="mission">
+  <div class="left">
+    <div class="mt"><span>{{ loop.index }} · {{ m.title }}</span><span class="pill {{ m.status }}">{{ status_labels[m.status] }}</span></div>
+    <table class="kv">
+      {% for f in m.fields %}<tr><td>{{ f.label }}</td><td>{{ f.value }}</td></tr>{% endfor %}
+      {% if m.price_label %}<tr><td>Prix</td><td><b>{{ m.price_label }}</b></td></tr>{% endif %}
+      {% if m.run.steps %}<tr><td>Run de l'agent</td><td>{{ m.run.duration_s | duration }} · {{ m.run.steps }} étapes{% if m.run.agent_view_url %} · <a href="{{ m.run.agent_view_url }}">voir le replay H</a>{% else %} · voir le replay H{% endif %}{% if m.run.session_id %}<br><span class="fine">session {{ m.run.session_id }}</span>{% endif %}</td></tr>{% endif %}
+    </table>
+    {% for v in m.validations %}<div class="valid">✔ <b>Validé par toi {{ "à la voix" if v.channel == "voix" else "d'un clic" }}</b>, {{ v.at | hms }} : {{ v.what }}.{% if m.note and loop.last %}<br>{{ m.note }}{% endif %}</div>{% endfor %}
+    {% if m.note and not m.validations %}<div class="fine" style="margin-top:5px">{{ m.note }}</div>{% endif %}
+    {% if m.finalize_url %}<a class="btn" href="{{ m.finalize_url }}">{{ m.finalize_label }} →</a>{% endif %}
+  </div>
+  <div class="right">
+    {% if m.capture.image_path or m.capture.stop_button_label %}
+    <div class="browser"><div class="bar">● ● ● &nbsp; {{ m.capture.page_url or "" }}</div>
+      <div class="shot">
+      {% if m.capture.image_path %}<img src="{{ images[m.key] }}" alt="capture H">
+      {% else %}<div class="fake"><div><b>{{ m.title }}</b></div>{% for f in m.fields[:3] %}<div class="row">{{ f.value }}</div>{% endfor %}
+        {% if m.price_eur %}<div class="row"><b>Total</b> <span style="float:right"><b>{{ m.price_eur | eur }}</b></span></div>{% endif %}
+        <div class="pay">{{ m.capture.stop_button_label }}</div></div>{% endif %}
+      <span class="stop">AGENT ARRÊTÉ ICI</span></div>
+    </div>
+    <div class="cap {{ 'real' if m.capture.real }}">{{ m.capture.caption }}{% if m.capture.taken_at %} · {{ m.capture.taken_at | dt_short }}{% endif %}</div>
+    {% else %}<div class="fine">Pas de capture : agent non lancé.</div>{% endif %}
+  </div>
+</div>{% endfor %}
+
+{% if r.profile or r.pace_plan or r.morning %}
+<div class="page"></div>
+<h2>Ton parcours et ta stratégie <small>tracé récupéré par l'agent H éclaireur, calculs RunAI</small></h2>
+{% if profile_svg %}<div class="card">{{ profile_svg | safe }}
+<div class="fine"><span style="color:#4338ca">━ altitude</span> · <span style="color:#0ea5e9">● R = ravitaillement</span> · <span style="color:#c2410c">▮ côte</span> · {{ r.profile.note or "" }}</div></div>{% endif %}
+<div class="cols" style="margin-top:8px">
+  {% if r.pace_plan %}<div class="card"><b>Allure par segment{% if r.runner.goal %}, objectif {{ r.runner.goal }}{% endif %}</b>
+    <table class="grid"><tr><th>km</th><th>profil</th><th>allure</th><th>conseil</th></tr>
+    {% for p in r.pace_plan %}<tr><td>{{ p.km }}</td><td>{{ p.profile }}</td><td>{{ p.pace }}</td><td>{{ p.advice }}</td></tr>{% endfor %}</table>
+    {% if r.pace_note %}<div class="fine">{{ r.pace_note }}</div>{% endif %}</div>{% endif %}
+  {% if r.morning %}<div class="card"><b>Le matin de la course</b><table class="kv">{% for f in r.morning %}<tr><td>{{ f.label }}</td><td>{{ f.value }}</td></tr>{% endfor %}</table>
+    {% if r.flyover_url %}<p><b>Survol 3D</b><br><span class="fine">Gare → village → hôtel → départ → parcours → arrivée. <a href="{{ r.flyover_url }}">Ouvrir le survol</a></span></p>{% endif %}</div>{% endif %}
+</div>
+{% endif %}
+
+<h2>Check-list avant de partir</h2>
+<div class="check">{% for c in r.checklist %}<div>{{ "☑" if c.done else "☐" }} {{ c.text }}</div>{% endfor %}</div>
+
+<h2>Sources et traçabilité <small>chaque info du PDF renvoie à sa source</small></h2>
+<table class="grid"><tr><th>#</th><th>source</th><th>trouvée par</th><th>utilisée pour</th></tr>
+{% for s in r.sources %}<tr><td>[{{ loop.index }}]</td><td>{% if s.url %}<a href="{{ s.url }}">{{ s.label }}</a>{% else %}{{ s.label }}{% endif %}</td><td>{{ s.found_by }}</td><td>{{ s.used_for }}</td></tr>{% endfor %}</table>
+<div class="never"><b>Ce que RunAI n'a pas fait, volontairement</b><br>Aucun paiement. Aucune case santé cochée à ta place. Aucune soumission définitive. Aucune donnée envoyée sans ta validation vocale. Les liens ci-dessus te ramènent exactement à la page où l'agent s'est arrêté.</div>
+<div class="foot"><span>RunAI · Gladia (voix), Linkup (recherche), H Company (agents web)</span><span>Dossier {{ r.id | upper }}{% if r.is_mockup %} · maquette, données d'exemple{% endif %}</span></div>
+</body></html>
