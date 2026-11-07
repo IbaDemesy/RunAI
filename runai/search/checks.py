@@ -45,6 +45,10 @@ HALF_MARATHON_KM = 21.0975
 MARATHON_KM = 42.195
 MAX_PICKUP_DAYS_BEFORE_RACE = 10
 
+_SECOND_LEVEL_SUFFIXES = frozenset(
+    {"co", "com", "org", "net", "gov", "gouv", "edu", "ac", "or", "ne", "go", "asso", "nom"}
+)
+
 _TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 _YEAR = re.compile(r"\b(20\d{2})\b")
 _HALF = re.compile(r"\b(semi|half|meia|mezza|media)\b", re.IGNORECASE)
@@ -58,7 +62,7 @@ def host_of(url: object) -> str:
 
 def base_domain(host: str) -> str:
     labels = host.split(".")
-    if len(labels) >= 3 and len(labels[-1]) == 2 and labels[-2] in {"co", "com", "org", "net"}:
+    if len(labels) >= 3 and len(labels[-1]) == 2 and labels[-2] in _SECOND_LEVEL_SUFFIXES:
         return ".".join(labels[-3:])
     return ".".join(labels[-2:])
 

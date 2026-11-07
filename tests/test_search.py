@@ -13,6 +13,7 @@ from runai.search import (
     parse_response,
     search_race,
 )
+from runai.search.checks import base_domain
 from runai.search.geo import geocode_queries
 from runai.search.linkup_search import RACE_SCHEMA
 
@@ -242,3 +243,9 @@ def test_nominatim_geocoder_parses_and_caches():
     assert geocoder.geocode("Corso Sempione", "IT") == point
     assert len(calls) == 1
     assert calls[0].url.params["countrycodes"] == "it"
+
+
+def test_base_domain_keeps_second_level_public_suffixes():
+    assert base_domain("events.club.org.au") == "club.org.au"
+    assert base_domain("www.sport.gouv.fr") == "sport.gouv.fr"
+    assert base_domain("in.njuko.com") == "njuko.com"
