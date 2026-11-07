@@ -148,6 +148,14 @@ Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents con
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
+  - [Houston](https://github.com/nossa-y/houston-hackathon) (Hackathon SF) : une « tour de contrôle » qui ne croit jamais un agent sur parole quand il dit avoir fini. Chaque mission suit quatre étapes :
+    1. **Exécution** : une session H réalise la tâche, demandée à la voix ou par écrit.
+    2. **Audit** : une seconde session H, indépendante, refait la vérification sur le site en ligne et renvoie un verdict typé.
+    3. **Correction et arbitrage** : si le résultat est rejeté, l'agent est relancé dans la même session en cours (steering). Si sa réponse change, un arbitre tranche en inspectant la page.
+    4. **Preuve** : un reçu chaîné par hash, avec des replays publics étape par étape, résumé à voix haute.
+
+    Stack : sessions H et steering, Gradium pour la voix (transcription et synthèse), Holo 3.1 en local, NVIDIA NemoClaw.
+    *À reprendre pour RunAI* : c'est la réponse la plus directe au critère « fiabilité » (25 % de la note). Une fois le formulaire rempli, un **agent vérificateur H** relit la page avant le paiement : bonne course, bonne distance, bonnes infos du coureur. En cas d'écart, on corrige l'agent dans la même session plutôt que de tout relancer. Et chaque mission se termine par un récap rejouable.
   - [QA any web UI](https://github.com/hcompai/agents-api-demos/tree/main/examples/qa) (From H) : un serveur FastMCP expose un agent navigateur H sous forme de deux outils. `review_web_ui` fait une revue complète d'une URL (usabilité, accessibilité, liens cassés) et renvoie `{verdict, summary, findings, steps_taken}`. `visual_check` répond à une question sur une page. Le même agent existe aussi en CLI, avec un skill Claude Code. Il tourne sur `holo4-27b` avec `h/browser`, un skill maison `design-qa-checklist` et `h/planning`.
     *À reprendre pour RunAI* : c'est le modèle pour **exposer un agent H comme outil MCP**. On pourrait l'utiliser pour faire vérifier notre faux site d'inscription par Devin avant la démo, ce qui ferait aussi un argument pour le prix « Best Use of Devin ». Autre idée : écrire nos propres skills dans l'`agent.json` (par exemple une checklist « formulaire d'inscription »).
   - [GrannySmith](https://github.com/ducnguyen67201/AngryGrandmy) (Hackathon SF) : des agents qui jouent des utilisateurs prudents parcourent un produit (inscription, checkout). Ils hésitent, reviennent en arrière et réfléchissent à voix haute. Tout est enregistré (captures, actions, trajet du curseur, réactions vocales, heatmaps) en trajectoires rejouables, puis transformé en constats d'utilisabilité et en propositions de correctifs. Stack : sessions H, Gradium pour la voix (un concurrent de Gladia), NVIDIA Nemotron et VSS pour l'analyse visuelle.
