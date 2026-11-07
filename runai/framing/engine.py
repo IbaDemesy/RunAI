@@ -198,6 +198,24 @@ class FramingEngine:
                     c for c in session.candidates if c.id == choice.candidate_id
                 )
                 session.selected_candidate_id = candidate.id
+                distance = session.slots[SlotName.distance_km]
+                if (
+                    distance.is_known
+                    and distance.value is not None
+                    and candidate.distances_km
+                    and matching_distance(
+                        candidate.distances_km, float(distance.value)
+                    )
+                    is None
+                ):
+                    if len(candidate.distances_km) == 1:
+                        distance.value = candidate.distances_km[0]
+                        distance.status = SlotStatus.sourced
+                        distance.provenance = candidate.provenance
+                    else:
+                        session.slots[SlotName.distance_km] = Slot(
+                            name=SlotName.distance_km
+                        )
                 sourced = {
                     SlotName.race: candidate.name,
                     SlotName.city: candidate.city,

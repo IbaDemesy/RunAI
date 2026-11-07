@@ -20,10 +20,11 @@ from runai.models import Source
 
 
 class Search:
-    def __init__(self, count=0, fail=False, close_match=False):
+    def __init__(self, count=0, fail=False, close_match=False, distances=(10,)):
         self.count = count
         self.fail = fail
         self.close_match = close_match
+        self.distances = distances
         self.calls = []
 
     async def find_candidates(self, slots):
@@ -37,7 +38,7 @@ class Search:
                 city=slots[SlotName.city].value,
                 country="",
                 race_date=date(2028, 6, 12),
-                distances_km=[10],
+                distances_km=list(self.distances),
                 sources=[Source(url="https://example.org/race")],
                 provenance=Provenance(kind="fixture", url="https://example.org/race"),
                 limitations=[
@@ -204,6 +205,37 @@ def test_close_candidates_use_close_match_choice_copy():
         )
         assert question.choices[-1].id == "none"
         assert question.choices[-1].label == "Aucune, je précise"
+
+    asyncio.run(run())
+
+
+def test_close_match_distance_selection_uses_only_available_distance_or_asks():
+    async def run():
+        requested = "une course à Tokyo, 21.1 km"
+        engine = FramingEngine(
+            Search(1, close_match=True, distances=[10]), DataMode.demo
+        )
+        single = await engine.create(FramingCreate(text=requested))
+        single = await engine.reply(
+            single.id, FramingReply(revision=single.revision, choice_id="c0")
+        )
+        assert single.slots[SlotName.distance_km].value == 10
+
+        multiple_engine = FramingEngine(
+            Search(1, close_match=True, distances=[10, 21]), DataMode.demo
+        )
+        multiple = await multiple_engine.create(
+            FramingCreate(text="une course à Tokyo, 42.195 km")
+        )
+        multiple = await multiple_engine.reply(
+            multiple.id,
+            FramingReply(revision=multiple.revision, choice_id="c0"),
+        )
+        assert not multiple.slots[SlotName.distance_km].is_known
+        assert any(
+            question.slots == [SlotName.distance_km]
+            for question in multiple.open_questions
+        )
 
     asyncio.run(run())
 
