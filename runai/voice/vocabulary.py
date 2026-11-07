@@ -8,6 +8,7 @@ class City:
     name: str
     country: str
     aliases: tuple[str, ...]
+    vocabulary: bool = True
 
 
 @dataclass(frozen=True)
@@ -30,24 +31,25 @@ HALF_MARATHON_KM = 21.0975
 MARATHON_KM = 42.195
 
 CITIES: tuple[City, ...] = (
-    City("Lisbonne", "PT", ("lisbonne", "lisboa", "lisbon")),
+    City("Lisbon", "PT", ("lisbonne", "lisboa", "lisbon")),
     City("Porto", "PT", ("porto", "oporto")),
     City("Milan", "IT", ("milan", "milano")),
     City("Rome", "IT", ("rome", "roma")),
     City("Paris", "FR", ("paris",)),
-    City("Barcelone", "ES", ("barcelone", "barcelona")),
+    City("Barcelona", "ES", ("barcelone", "barcelona")),
     City("Madrid", "ES", ("madrid",)),
-    City("Valence", "ES", ("valence", "valencia")),
+    City("Valencia", "ES", ("valence", "valencia")),
     City("Berlin", "DE", ("berlin",)),
-    City("Londres", "GB", ("londres", "london")),
+    City("London", "GB", ("londres", "london")),
+    City("Tokyo", "JP", ("tokyo", "toquio"), vocabulary=False),
 )
 
 # Seuls les noms officiels dits explicitement fixent `RaceQuery.name` : « le semi de Lisbonne »
 # reste une ville + une distance, car plusieurs semis ont lieu à Lisbonne.
 RACES: tuple[RaceName, ...] = (
-    RaceName("Meia Maratona de Lisboa", "Lisbonne", HALF_MARATHON_KM,
+    RaceName("Meia Maratona de Lisboa", "Lisbon", HALF_MARATHON_KM,
              ("meia maratona de lisboa", "lisbon half marathon"), "pt"),
-    RaceName("Maratona de Lisboa", "Lisbonne", MARATHON_KM,
+    RaceName("Maratona de Lisboa", "Lisbon", MARATHON_KM,
              ("maratona de lisboa", "lisbon marathon"), "pt"),
     RaceName("Milano Marathon", "Milan", MARATHON_KM,
              ("milano marathon", "maratona di milano", "milan marathon"), "it"),
@@ -78,9 +80,12 @@ def gladia_vocabulary() -> list[dict]:
     for race in RACES:
         entries.append(_entry(race.name, race.language))
     for city in CITIES:
-        local = city.aliases[1] if len(city.aliases) > 1 else city.name
-        entries.append(_entry(city.name, "fr"))
-        if local.lower() != city.name.lower():
+        if not city.vocabulary:
+            continue
+        display = city.aliases[0].title()
+        local = city.aliases[1] if len(city.aliases) > 1 else display
+        entries.append(_entry(display, "fr"))
+        if local.lower() != display.lower():
             entries.append(_entry(local.title(), _CITY_LANGUAGE.get(city.country)))
     for term in TERMS:
         entries.append(_entry(term.value, term.language, term.pronunciations))
