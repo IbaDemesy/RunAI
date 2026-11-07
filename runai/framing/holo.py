@@ -19,6 +19,7 @@ from runai.redaction import redact_secrets
 
 H_MODELS_URL = "https://api.hcompany.ai/v1/chat/completions"
 MAX_REPLY_CHARS = 420
+HISTORY_TURNS = 30
 
 SYSTEM_PROMPT = """Tu es RunAI, un assistant chaleureux qui aide un coureur à préparer sa course (inscription, hôtel, transport).
 On te donne la conversation, ce qui est déjà compris et la prochaine question à poser.
@@ -50,7 +51,9 @@ class Phraser(Protocol):
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> str: ...
 
-    async def extract(self, text: str, known: Mapping[str, str]) -> dict[str, object]: ...
+    async def extract(
+        self, text: str, known: Mapping[str, str], turns: Sequence[FramingTurn] = ()
+    ) -> dict[str, object]: ...
 
 
 def clean_extraction(raw: object) -> dict[str, object]:
@@ -79,6 +82,13 @@ def _user_turns(turns: Sequence[FramingTurn]) -> int:
     return sum(turn.role == "user" for turn in turns)
 
 
+def _history(turns: Sequence[FramingTurn]) -> str:
+    return "\n".join(
+        ("Coureur : " if turn.role == "user" else "RunAI : ") + turn.text
+        for turn in list(turns)[-HISTORY_TURNS:]
+    ) or "(début de conversation)"
+
+
 class TemplatePhraser:
     """Formulation locale, sans réseau : démo et repli de Holo."""
 
@@ -91,7 +101,9 @@ class TemplatePhraser:
             opener = "C'est noté."
         return f"{opener} {question}"
 
-    async def extract(self, text: str, known: Mapping[str, str]) -> dict[str, object]:
+    async def extract(
+        self, text: str, known: Mapping[str, str], turns: Sequence[FramingTurn] = ()
+    ) -> dict[str, object]:
         return {}
 
 
@@ -133,10 +145,17 @@ class HoloPhraser:
             return ""
         return content if isinstance(content, str) else ""
 
-    async def extract(self, text: str, known: Mapping[str, str]) -> dict[str, object]:
+    async def extract(
+        self, text: str, known: Mapping[str, str], turns: Sequence[FramingTurn] = ()
+    ) -> dict[str, object]:
+        context = "\n".join(f"- {name} : {value}" for name, value in known.items()) or "- rien encore"
         content = await self._complete([
             {"role": "system", "content": EXTRACT_PROMPT},
-            {"role": "user", "content": f"Date du jour : {date.today().isoformat()}\nMessage : {text}"},
+            {"role": "user", "content": (
+                f"Date du jour : {date.today().isoformat()}\n"
+                f"Conversation récente :\n{_history(turns)}\n\nDéjà compris :\n{context}\n\n"
+                f"Nouveau message à analyser : {text}"
+            )},
         ], 200)
         match = re.search(r"\{.*\}", content, re.DOTALL)
         try:
@@ -147,10 +166,7 @@ class HoloPhraser:
     def _messages(
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> list[dict[str, str]]:
-        history = "\n".join(
-            ("Coureur : " if turn.role == "user" else "RunAI : ") + turn.text
-            for turn in turns[-8:]
-        )
+        history = _history(turns)
         context = "\n".join(f"- {name} : {value}" for name, value in known.items()) or "- rien encore"
         return [
             {"role": "system", "content": SYSTEM_PROMPT},

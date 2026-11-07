@@ -284,9 +284,9 @@ body.dawn .voice-controls button { background: rgba(245, 247, 251, .1); color: v
 body.dawn .voice-controls button { position: relative; flex: none; width: 44px; height: 44px; padding: 0; font-size: 0; }
 body.dawn .voice-controls button::before { content: ""; position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; transform: translate(-50%, -50%); background: currentColor;
   -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
-body.dawn .voice-controls button:first-child { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Crect x='9' y='3' width='6' height='12' rx='3'/%3E%3Cpath d='M5 11a7 7 0 0 0 14 0M12 18v3'/%3E%3C/svg%3E"); }
-body.dawn .voice-controls button:last-child { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='6' width='12' height='12' rx='2'/%3E%3C/svg%3E"); }
-body.dawn .voice-controls button:last-child::before { width: 14px; height: 14px; }
+body.dawn .voice-controls button:not(.rec) { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Crect x='9' y='3' width='6' height='12' rx='3'/%3E%3Cpath d='M5 11a7 7 0 0 0 14 0M12 18v3'/%3E%3C/svg%3E"); }
+body.dawn .voice-controls button.rec { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='6' width='12' height='12' rx='2'/%3E%3C/svg%3E"); }
+body.dawn .voice-controls button.rec::before { width: 20px; height: 20px; }
 body.dawn .ideas { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
 body.dawn .ideas button { background: none; border: 1px solid rgba(245, 247, 251, .2); color: var(--mist); border-radius: 999px; padding: 8px 16px; font-weight: 400; font-size: .9rem; }
 body.dawn .ideas button:hover:not(:disabled) { color: var(--chalk); border-color: var(--haze); }
@@ -374,3 +374,30 @@ body.dawn .typing span:nth-child(3) { animation-delay: .4s; }
 @keyframes dawn-bubble { from { transform: translateY(14px) scale(.96); opacity: 0; } }
 @keyframes dawn-blink { 50% { opacity: .25; transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { body.dawn .dawn-sky svg, body.dawn .dawn-sky .dawn-route, body.dawn .chip, body.dawn .badge::before, body.dawn .ask, body.dawn .ask *, body.dawn .ask::after, body.dawn .hero *, body.dawn .thread li, body.dawn .candidate, body.dawn .typing span { animation: none !important; transition: none !important; } }
+/* Chat épuré : Courier Prime, réplique unique, coureur d'Iba */
+body.dawn, body.dawn *:not(code) { font-family: "Courier Prime", "Courier New", ui-monospace, monospace !important; font-stretch: normal !important; }
+body.dawn h1, body.dawn h2, body.dawn .say, body.dawn button { font-weight: 700; }
+body.dawn #feedback.quiet, body.dawn #feedback:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.dawn #feedback.error { color: #ffb4a8; }
+body.dawn .say { font-size: clamp(1.35rem, 2.6vw, 1.85rem); line-height: 1.4; max-width: 36ch; margin: 28px 0 22px; min-height: 2.8em; }
+body.dawn .say::after { content: ""; display: inline-block; width: .55em; height: 1.05em; margin-left: 3px; vertical-align: -.15em; background: var(--sun); animation: dawn-caret 1s steps(1) infinite; }
+@keyframes dawn-caret { 50% { opacity: 0; } }
+body.dawn .candidate.picked { border-color: var(--sun); box-shadow: 0 0 0 2px var(--sun), 0 18px 40px -12px rgba(255, 216, 77, .6); transform: translateY(-2px); transition: transform .25s, box-shadow .25s; }
+body.dawn .candidate.dim { opacity: .35; transition: opacity .3s; }
+body.dawn.thinking .say, body.dawn .thinking .say, #screen.thinking > .say, #screen.thinking > .replies, #screen.thinking > .candidates, #screen.thinking > .corrections, #screen.thinking > .ready, #screen.thinking > .ideas, #screen.thinking > .hero-sub { display: none; }
+body.dawn .thinking-box { display: grid; justify-items: center; gap: 10px; margin: 26px auto; }
+body.dawn .think { color: var(--mist); letter-spacing: .04em; }
+body.dawn .runner { position: relative; width: 220px; height: 170px; overflow: hidden; isolation: isolate; }
+body.dawn .runner-photo { position: absolute; inset: 6px 30px 20px; background: url("/static/runner.png") center / contain no-repeat; filter: drop-shadow(0 0 12px rgba(143, 179, 232, .45)); animation: runner-bob .42s ease-in-out infinite alternate; }
+body.dawn .runner-sheen { position: absolute; inset: 6px 30px 20px; background: linear-gradient(105deg, transparent 35%, rgba(255, 216, 77, .55) 50%, transparent 65%) -220px 0 / 200% 100% no-repeat; mix-blend-mode: screen; -webkit-mask: url("/static/runner.png") center / contain no-repeat; mask: url("/static/runner.png") center / contain no-repeat; animation: runner-sheen 1.8s linear infinite, runner-bob .42s ease-in-out infinite alternate; }
+body.dawn .runner-floor { position: absolute; left: 50%; bottom: 8px; width: 120px; height: 10px; margin-left: -60px; border-radius: 50%; background: radial-gradient(rgba(255, 216, 77, .45), transparent 70%); animation: runner-floor .42s ease-in-out infinite alternate; }
+body.dawn .runner-streaks i { position: absolute; left: 0; height: 2px; width: 70px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255, 216, 77, .7)); animation: runner-streak .9s linear infinite; }
+body.dawn .runner-streaks i:nth-child(1) { top: 40px; } body.dawn .runner-streaks i:nth-child(2) { top: 72px; animation-delay: .3s; width: 50px; }
+body.dawn .runner-streaks i:nth-child(3) { top: 104px; animation-delay: .55s; } body.dawn .runner-streaks i:nth-child(4) { top: 128px; animation-delay: .15s; width: 40px; background: linear-gradient(90deg, transparent, rgba(143, 179, 232, .7)); }
+@keyframes runner-bob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+@keyframes runner-sheen { to { background-position: 220px 0; } }
+@keyframes runner-floor { to { transform: scaleX(.85); opacity: .7; } }
+@keyframes runner-streak { from { transform: translateX(160px); opacity: 0; } 30% { opacity: 1; } to { transform: translateX(-80px); opacity: 0; } }
+body.dawn .voice-controls button.rec { width: 58px; height: 58px; min-width: 58px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff8a80, #e5393b); color: #fff; box-shadow: 0 4px 0 #8f1d1f, 0 0 0 0 rgba(229, 57, 59, .6); animation: rec-pulse 1.4s ease-out infinite; }
+@keyframes rec-pulse { 70% { box-shadow: 0 4px 0 #8f1d1f, 0 0 0 16px rgba(229, 57, 59, 0); } 100% { box-shadow: 0 4px 0 #8f1d1f, 0 0 0 0 rgba(229, 57, 59, 0); } }
+@media (prefers-reduced-motion: reduce) { body.dawn .say::after, body.dawn .runner *, body.dawn .voice-controls button.rec, body.dawn .candidate.picked, body.dawn .candidate.dim { animation: none !important; transition: none !important; } }
