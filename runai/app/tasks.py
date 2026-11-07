@@ -25,9 +25,10 @@ HUMAN_ACTIONS: dict[StopPoint, str] = {
 }
 
 ASK_USER_RULES = (
-    "Si une information manque ou qu'il faut choisir entre plusieurs options "
-    "(distance, sas, taille de t-shirt, hôtel, horaire, tarif), appelle l'outil "
-    "ask_user au lieu de deviner ; pose au plus 2 questions."
+    "Ne redemande jamais une information déjà donnée ci-dessus (dates, budget, ville "
+    "de départ, distance, mode de transport). Utilise ask_user uniquement pour un choix "
+    "qui dépend du site (sas, taille de t-shirt, hôtel parmi plusieurs offres, horaire, "
+    "tarif) ; pose au plus 2 questions."
 )
 STOP_RULES = (
     "Arrête-toi avant tout paiement, réservation, soumission définitive ou "
@@ -109,6 +110,7 @@ class TripBrief(BaseModel):
     origin: str | None = None
     budget_total_eur: float | None = None
     budget_per_night_eur: float | None = None
+    budget_open: bool = False
     transport_mode: str | None = None
     preferences: str | None = None
     hotel_landmarks: list[str] = Field(default_factory=list)
@@ -164,7 +166,6 @@ def _registration_task(race: Race, brief: TripBrief, profile: RunnerProfile) -> 
         if distance
         else " (distance inconnue : demande-la avec ask_user avant de choisir)"
     )
-    question = brief.health_question or DEFAULT_HEALTH_QUESTION
     return (
         f"Prépare l'inscription à {brief.race_label} sur {platform}, "
         f"à partir du lien officiel fourni : {url}{distance_text}. "
@@ -173,7 +174,8 @@ def _registration_task(race: Race, brief: TripBrief, profile: RunnerProfile) -> 
         "Continue en invité. Utilise uniquement le profil fictif ci-dessous et "
         "remplis seulement les champs nécessaires. Si l'inscription en invité "
         "n'est pas possible, arrête-toi avant toute création de compte. "
-        f"Avant de poursuivre, demande exactement avec ask_user : « {question} » "
+        "Ne pose aucune question de santé : le certificat médical ou le PPS sera fourni "
+        "par l'utilisateur lui-même. "
         "Ne coche aucune case de santé, ne fournis aucun numéro et ne téléverse aucun "
         "document ; arrête-toi à la déclaration de santé si elle apparaît, sinon au "
         f"paiement. {_profile_lines(profile)} {ASK_USER_RULES} {STOP_RULES}"
@@ -195,6 +197,11 @@ def _stay_text(brief: TripBrief) -> str:
 
 def _budget_text(brief: TripBrief, nights: int | None) -> str:
     stay = f"les {nights} nuits" if nights else "le séjour"
+    if brief.budget_open:
+        return (
+            "Pas de plafond de budget : propose les meilleures options qualité-prix "
+            "et donne leur prix."
+        )
     if brief.budget_per_night_eur is not None:
         per_night = brief.budget_per_night_eur
         total = f", soit {per_night * nights:g} € maximum pour {stay}" if nights else ""

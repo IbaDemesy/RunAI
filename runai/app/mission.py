@@ -21,11 +21,13 @@ from runai.app.tasks import (
     human_action,
 )
 from runai.contracts.common import DataMode, Limitation
-from runai.contracts.framing import FramingError, FramingSummary
+from runai.contracts.framing import FramingError, FramingSummary, FramingTurn
 from runai.contracts.journey import JourneyPlan
 from runai.contracts.mission import EventEnvelope, HumanAnswer, MissionSnapshot
+from runai.framing.holo import Phraser
 from runai.framing.launch import LaunchPlan, plan_launch
 from runai.h.human_questions import HumanQuestionRegistry
+from runai.h.narrate import friendly_error, headline
 from runai.models import (
     AgentQuestion,
     Race,
@@ -79,6 +81,7 @@ class Mission(BaseModel):
     envelopes: list[EventEnvelope] = Field(default_factory=list, exclude=True)
     limitations: list[Limitation] = Field(default_factory=list)
     framing_summary: FramingSummary | None = Field(default=None, exclude=True)
+    framing_turns: list[FramingTurn] = Field(default_factory=list, exclude=True)
     journey: JourneyPlan | None = Field(default=None, exclude=True)
 
     @property
@@ -116,6 +119,7 @@ class MissionService:
         transcriber: Transcriber,
         *,
         profile: RunnerProfile | None = None,
+        phraser: Phraser | None = None,
         traces_dir: Path | None = None,
         max_concurrency: int | None = 3,
         simulated: bool = False,
@@ -125,6 +129,7 @@ class MissionService:
         self.agents = agents
         self.transcriber = transcriber
         self.profile = profile or RunnerProfile()
+        self.phraser = phraser
         self.traces_dir = traces_dir
         self.simulated = simulated
         self.question_timeout_s = (
@@ -156,10 +161,18 @@ class MissionService:
             raise FramingError(
                 f"Pas de fixture {plan.mode.value} pour cet événement ; préparation manuelle uniquement, aucun agent lancé."
             )
-        mission = await self.create(plan, summary=session.summary)
+        mission = await self.create(
+            plan, summary=session.summary, turns=session.turns
+        )
         return self.snapshot(mission.id)
 
-    async def create(self, plan: LaunchPlan, *, summary: FramingSummary | None = None) -> Mission:
+    async def create(
+        self,
+        plan: LaunchPlan,
+        *,
+        summary: FramingSummary | None = None,
+        turns: list[FramingTurn] | None = None,
+    ) -> Mission:
         if not isinstance(plan, LaunchPlan):
             raise MissionError("Un cadrage confirmé est obligatoire : /api/framings")
         self._loop = asyncio.get_running_loop()
@@ -167,6 +180,7 @@ class MissionService:
             id=uuid.uuid4().hex[:12], query=plan.brief.race_label,
             race=plan.race, plan=plan, limitations=list(plan.limitations),
             framing_summary=summary.model_copy(deep=True) if summary else None,
+            framing_turns=list(turns or []),
             steps={kind: StepResult(
                 kind=kind,
                 status=StepStatus.pending if kind in plan.automated_steps() else StepStatus.completed,
@@ -322,11 +336,56 @@ class MissionService:
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         return await self.transcriber.transcribe(audio, content_type)
 
+    @staticmethod
+    def _question_context(mission: Mission) -> dict[str, str]:
+        if mission.plan is None:
+            return {}
+        brief = mission.plan.brief
+        known = {"course": brief.race_label}
+        dates = []
+        if brief.race_date:
+            dates.append(brief.race_date.isoformat())
+        if brief.arrival and brief.departure:
+            dates.append(f"{brief.arrival.isoformat()} → {brief.departure.isoformat()}")
+        if dates:
+            known["dates"] = " ; ".join(dates)
+        if brief.origin:
+            known["départ"] = brief.origin
+        if brief.budget_open:
+            known["budget"] = "sans plafond"
+        else:
+            budget = []
+            if brief.budget_total_eur is not None:
+                budget.append(f"{brief.budget_total_eur:g} € au total")
+            if brief.budget_per_night_eur is not None:
+                budget.append(f"{brief.budget_per_night_eur:g} € par nuit")
+            if budget:
+                known["budget"] = ", ".join(budget)
+        if brief.transport_mode:
+            known["transport"] = brief.transport_mode
+        return known
+
     async def ask(self, mission_id: str, kind: StepKind, question: str, options: list[str]) -> str:
         mission = self.get(mission_id)
         if mission.status is MissionStatus.cancelled:
             raise MissionError("Mission annulée")
-        question_model = AgentQuestion(id=uuid.uuid4().hex, kind=kind, question=question, options=options)
+        display_text = question
+        if self.phraser:
+            try:
+                phrased = await self.phraser.phrase(
+                    mission.framing_turns, question, self._question_context(mission)
+                )
+                if isinstance(phrased, str) and phrased.strip():
+                    display_text = phrased
+            except Exception:  # noqa: BLE001
+                display_text = question
+        question_model = AgentQuestion(
+            id=uuid.uuid4().hex,
+            kind=kind,
+            question=question,
+            display_text=display_text,
+            options=options,
+        )
         mission.questions.append(question_model)
         step = mission.steps[kind]
         run = self._runs.get((mission_id, kind))
@@ -475,20 +534,23 @@ class MissionService:
         except OSError:
             logger.exception("Trace non écrite pour la mission %s", mission.id)
         step_name = event.data.get("step")
-        if step_name in StepKind._value2member_map_ and (event.source == "h" or event.source.startswith("agent")):
+        if step_name in StepKind._value2member_map_:
             step = mission.steps.get(StepKind(step_name))
             if step is not None:
-                if session_id := event.data.get("h_session_id"):
-                    step.h_session_id = session_id
-                if event.message and event.type != "AgentRunStatusChangeEvent":
-                    step.data["last_action"] = event.message
-                if run := self._runs.get((mission.id, StepKind(step_name))):
-                    self._set_agent_views(step, run)
-                    if observation := getattr(run, "browser_observation", None):
-                        step.data["browser_observation"] = observation
-                        self._capture_runs[(mission.id, StepKind(step_name))] = run
-                if event.data.get("url"):
-                    step.data["current_url"] = event.data["url"]
+                if text := headline(event):
+                    step.data["headline"] = text
+                if event.source == "h" or event.source.startswith("agent"):
+                    if session_id := event.data.get("h_session_id"):
+                        step.h_session_id = session_id
+                    if event.message and event.type != "AgentRunStatusChangeEvent":
+                        step.data["last_action"] = event.message
+                    if run := self._runs.get((mission.id, StepKind(step_name))):
+                        self._set_agent_views(step, run)
+                        if observation := getattr(run, "browser_observation", None):
+                            step.data["browser_observation"] = observation
+                            self._capture_runs[(mission.id, StepKind(step_name))] = run
+                    if event.data.get("url"):
+                        step.data["current_url"] = event.data["url"]
         self._publish(mission, ("trace", event.model_dump(mode="json")))
 
     def _publish_state(self, mission: Mission) -> None:
@@ -572,8 +634,10 @@ class MissionService:
             except Exception as error:  # noqa: BLE001
                 step.status = StepStatus.failed
                 step.error = redact_secrets(str(error))
+                user_error = friendly_error(step.error)
+                step.data["error_user"] = user_error
                 code = "h_key_missing" if isinstance(self.agents, UnavailableBrowserAgents) else getattr(error, "code", "agent_error")
-                limitation = Limitation(code=code, message=step.error, step=kind.value)
+                limitation = Limitation(code=code, message=user_error, step=kind.value)
                 mission.limitations.append(limitation)
                 self._emit(mission, "error", limitation.model_dump(mode="json"))
                 self._record(
@@ -581,7 +645,7 @@ class MissionService:
                     TraceEvent(
                         source="app",
                         type="step_failed",
-                        message=f"{STEP_LABELS[kind]} : échec ({error})",
+                        message=f"{STEP_LABELS[kind]} : {user_error}",
                         data={"step": kind.value},
                     ),
                 )
@@ -590,6 +654,12 @@ class MissionService:
             finally:
                 self._runs.pop((mission.id, kind), None)
         step = mission.steps[kind] = self._merge_result(step, result)
+        if step.status is StepStatus.stopped_before_commitment:
+            step.data["headline"] = "Prêt : à finaliser vous-même sur le site officiel"
+        elif step.status is StepStatus.completed:
+            step.data["headline"] = "Terminé"
+        elif step.status is StepStatus.failed and step.error:
+            step.data.setdefault("error_user", friendly_error(step.error))
         self._refresh_journey(mission)
         self._record(
             mission,

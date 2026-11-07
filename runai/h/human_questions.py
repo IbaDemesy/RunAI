@@ -140,6 +140,7 @@ class HumanQuestionRegistry:
             id=question.question_id,
             kind=question.step,
             question=question.text,
+            display_text=question.display_text,
             options=question.choices,
             answer=question.answer
             if question.status == QuestionStatus.answered

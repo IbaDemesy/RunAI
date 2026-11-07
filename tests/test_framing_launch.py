@@ -123,6 +123,7 @@ def test_milan_train_with_njuko_automates_three_steps_without_v1_strings():
     plan = plan_launch(milan_train())
 
     assert plan.automated_steps() == list(StepKind)[1:]
+    assert plan.brief.budget_open is False
     assert (
         plan.steps[StepKind.registration].start_url
         == "https://in.njuko.com/fictive-milan"
@@ -138,6 +139,13 @@ def test_milan_train_with_njuko_automates_three_steps_without_v1_strings():
     assert "Turin → Milan" in transport and "trenitalia.com" in transport
     assert "2 octobre 2027" in transport and "jamais TAP" in transport
     assert "Paris" not in transport
+
+
+def test_confirmed_no_budget_is_preserved_as_open_budget():
+    plan = plan_launch(confirmed(summary={"budget_eur": None}))
+
+    assert plan.brief.budget_total_eur is None
+    assert plan.brief.budget_open is True
 
 
 def test_lisbon_klikego_link_is_manual_and_train_has_no_validated_vendor():

@@ -143,6 +143,7 @@ def _brief(session: FramingSession, race: Race) -> TripBrief:
         nights=summary.nights,
         origin=public_origin(summary.origin_public),
         budget_total_eur=summary.budget_eur,
+        budget_open=summary.budget_eur is None,
         transport_mode=normalize_transport_mode(summary.transport_mode)
         or summary.transport_mode,
         preferences=str(preferences) if preferences else None,

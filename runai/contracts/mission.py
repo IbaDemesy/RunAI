@@ -40,6 +40,7 @@ class HumanQuestion(BaseModel):
     revision: int
     reason: str | None = None
     text: str
+    display_text: str | None = None
     choices: list[str] = Field(default_factory=list)
     status: QuestionStatus = QuestionStatus.open
     answer: str | None = None
@@ -62,6 +63,7 @@ class HumanQuestion(BaseModel):
             session_id=session_id,
             revision=revision,
             text=question.question,
+            display_text=question.display_text,
             choices=question.options,
             status=QuestionStatus.answered if question.answer is not None else QuestionStatus.open,
             answer=question.answer,

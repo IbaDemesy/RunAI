@@ -102,6 +102,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             DataMode.demo if selected.simulated else DataMode.live,
             selected.search, selected.agents, selected.transcriber, provider_health(),
         )
+    if selected.phraser is None:
+        selected.phraser = framing_phraser(selected.providers)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -132,7 +134,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     app.state.service = selected
     engine = FramingEngine(
         search=candidate_search(selected.providers), mode=selected.providers.mode,
-        phraser=framing_phraser(selected.providers),
+        phraser=selected.phraser,
     )
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
