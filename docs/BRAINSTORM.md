@@ -82,6 +82,8 @@ Jurés : Mathieu Astruc, Axel Darmouni, Thibaut Le Boulaire, Maxime Langevin, Al
 
 Un seul outil qui accompagne le coureur de l'objectif jusqu'à la ligne d'arrivée : **réserver la course, le vol et l'hôtel, puis coacher l'entraînement**, avec un abonnement Stripe.
 
+Nouvelle piste pour dépasser l'effet « agrégateur » : [un assistant sportif qui coordonne calendrier, préparation et démarches](#piste-de-différenciation--lassistant-sportif-personnel). Elle reste à évaluer et ne remplace pas encore le périmètre de démo défini plus bas.
+
 ### Un rôle par partenaire
 
 - **Linkup, pour savoir** : trouver la course, les dates, le lieu du départ, les hôtels proches, les infos pratiques.
@@ -351,6 +353,63 @@ L'évaluation complète des recherches des 16 agents (on fait, en option, coupé
 - **Aucun projet ne porte sur la course à pied, l'inscription à une course ou le déplacement sportif.** La verticale reste libre.
 - La voix et la validation avant une action irréversible existent déjà (Life-Admin Operator). L'originalité doit venir d'ailleurs : **une seule intention qui déclenche plusieurs agents coordonnés** (course, hôtel, transport), le profil coureur (PPS, certificat, t-shirt) et la chaîne Linkup → H.
 - Le jury a déjà vu beaucoup d'agents « QA » et « rejouer une vidéo ». Mieux vaut éviter ces angles.
+
+### Piste de différenciation : l'assistant sportif personnel
+
+> Ajout au benchmark après discussion : piste de produit, pas fonctionnalité livrée ni décision de changer le MVP. Le benchmark H Showcase ci-dessus ne suffit pas à établir une nouveauté sur l'ensemble du marché.
+
+**Constat** : « dossard + hôtel + transport », même à la voix et avec plusieurs agents, peut ressembler à un agrégateur qui clique. Ajouter un générateur de plans ne suffit pas : les différentes dimensions doivent se coordonner autour du même objectif.
+
+**Vision** : un assistant complet pour le sport. **Périmètre proposé pour rester lisible** : la course à pied, un objectif principal, de la préparation jusqu'au jour J.
+
+> « Dis-moi ce que tu veux courir. On organise le chemin pour y arriver, autour de ta vie. »
+
+#### Comparaison des approches
+
+Comparaison de concepts, pas un relevé vérifié des fonctionnalités de concurrents. Un benchmark dédié des offres d'entraînement reste à faire avant de revendiquer une originalité de marché.
+
+| Approche | Ce que reçoit le coureur | Limite ou différenciation recherchée |
+| --- | --- | --- |
+| Agrégation et démarches | Des options de course, d'hôtel et de transport, puis des formulaires préparés | Gain administratif, mais peu de suivi dans le temps |
+| Génération d'un plan isolé | Un programme sur les semaines ou mois avant la course | Ne garantit pas la compatibilité avec l'agenda ni l'adaptation au réel |
+| Préparation compatible avec le calendrier | Des séances positionnées selon les disponibilités et les contraintes | Première piste à évaluer : une préparation réellement intégrable à la vie du coureur |
+| Assistant coordonné et adaptatif | Une préparation, des démarches et des ajustements liés au même objectif, avec arbitrages expliqués | Différenciation visée : maintenir la cohérence du parcours, plutôt que juxtaposer des services |
+
+#### Prendre en compte tout le calendrier
+
+- **Sportif** : date de l'objectif principal, autres courses, historique disponible et séances réalisées. Un plan complet couvre les semaines ou mois avant la course, pas seulement la semaine de l'inscription.
+- **Personnel** : travail, vacances, déplacements, créneaux récurrents et temps que l'utilisateur veut préserver. Accès explicite aux seules données nécessaires ; pas de modification d'événements personnels sans autorisation.
+- **Coordination** : le déplacement vers la course et la préparation ne doivent pas se contredire. Par exemple, ne pas placer une séance sur un créneau occupé par le trajet.
+
+Trois dimensions d'une même mission, et non trois produits indépendants : **s'entraîner**, **s'organiser**, **s'adapter**. L'écran principal envisagé montre la préparation et la prochaine étape utile, pas un catalogue de services.
+
+#### Les idées à évaluer
+
+1. **Planifier autour de la vraie vie** : partir de l'objectif, du niveau déclaré et des disponibilités, puis proposer une préparation dans l'agenda. Expliquer les conflits et demander un arbitrage si tout ne peut pas tenir.
+2. **Adapter selon le prévu et le réalisé** : tenir compte des séances effectuées, des empêchements et du ressenti déclaré. Proposer les changements avec un avant/après ; ne pas entasser automatiquement les séances ratées dans les jours suivants.
+3. **Rendre les arbitrages compréhensibles** : « Pourquoi cette séance ici ? », « Qu'est-ce qui change si je ne peux courir que deux fois cette semaine ? ». L'utilisateur valide les modifications avant leur application.
+4. **Articuler plusieurs courses sur une saison** : identifier un objectif prioritaire, des courses préparatoires et d'éventuelles incompatibilités. Vision ultérieure, pas une obligation pour la première démo centrée sur une seule course.
+
+#### Moment « waouh » proposé pour la démo
+
+1. Une course choisie, un niveau et un agenda de démonstration donnent une préparation sur plusieurs semaines.
+2. Une démarche liée à la course est préparée sur un vrai site autorisant l'automatisation, avec arrêt avant consentement sensible, paiement ou engagement.
+3. Le coureur dit : « Finalement, je suis en déplacement de mercredi à vendredi et je garde mon dimanche en famille. »
+4. RunAI montre les conflits, propose une adaptation et explique ce qui est déplacé, allégé ou laissé en attente d'arbitrage, en préservant la récupération.
+5. Le coureur valide la mise à jour de ses séances. Ses événements personnels restent inchangés.
+
+Le test de valeur est la **cohérence de l'ajustement**, pas le nombre de navigateurs ouverts. Ce scénario reste à implémenter et à valider : il ne prouve pas encore une capacité d'adaptation sportive fiable.
+
+#### Garde-fous et limites de périmètre
+
+- **Qualité sportive** : s'appuyer sur une base de plans et des règles de progression et de récupération validées avec une expertise sportive. Un LLM ne doit pas inventer librement les charges. Pas de diagnostic ni de prise en charge d'une blessure ; orienter vers un professionnel si nécessaire.
+- **Contrôle** : montrer les conséquences avant toute mise à jour ; aucun paiement, réservation finale ou engagement automatique. Les consentements restent humains.
+- **Computer use utile** : utiliser les API d'agenda lorsqu'elles existent. Réserver H aux démarches sans API adaptée sur des sites qui permettent l'automatisation, comme la préparation d'une inscription. Le rôle central de H dans cette nouvelle piste reste à démontrer pour le hackathon.
+- **Partenaires envisagés** : Gladia pour les contraintes et débriefs vocaux, Linkup pour les informations officielles des courses, H pour les démarches, Devin pour le développement et la vérification. Cela ne remplace pas la validation de la logique d'entraînement.
+- **Ne pas disperser le produit** : pas de nutrition, de diagnostic médical, de réseau social, de marketplace ou de coaching multisport dans ce cadrage initial. L'abonnement n'est pas nécessaire pour démontrer cette piste.
+- **Positionnement écarté** : « sauve mon week-end de course » est jugé trop spécifique comme promesse principale. Les pistes Crew et Race Control ne sont pas ajoutées au périmètre de cet assistant.
+
+**À décider avant de construire** : place de cette piste par rapport au parcours de démo existant, source des plans et règles sportives, intégration d'agenda et permissions minimales, et action H réellement utile dans le parcours. Aucune priorité P0/P1/P2 existante n'est modifiée par cet ajout.
 
 ## Valorisation des partenaires
 
