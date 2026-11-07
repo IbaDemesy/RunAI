@@ -1,6 +1,7 @@
 """Orchestration d'une mission : recherche, trois agents en parallèle, portail avant engagement."""
 
 import asyncio
+import contextlib
 import logging
 import os
 import re
@@ -105,7 +106,7 @@ class MissionService:
         *,
         profile: RunnerProfile | None = None,
         traces_dir: Path | None = None,
-        max_concurrency: int = 3,
+        max_concurrency: int | None = 3,
         simulated: bool = False,
         question_timeout_s: float | None = None,
     ):
@@ -128,7 +129,11 @@ class MissionService:
         ] = {}
         self._tasks: set[asyncio.Task[None]] = set()
         self._pending_questions: dict[str, asyncio.Future[str]] = {}
-        self._semaphore = asyncio.Semaphore(max_concurrency)
+        self._slots: contextlib.AbstractAsyncContextManager[Any] = (
+            asyncio.Semaphore(max_concurrency)
+            if max_concurrency is not None
+            else contextlib.nullcontext()
+        )
         self._loop: asyncio.AbstractEventLoop | None = None
 
     async def create(self, query: str) -> Mission:
@@ -437,7 +442,7 @@ class MissionService:
             event.data.setdefault("step", kind.value)
             self._record(mission, event)
 
-        async with self._semaphore:
+        async with self._slots:
             step.status = StepStatus.running
             self._record(
                 mission,

@@ -1,15 +1,18 @@
 """Backend FastAPI : API des missions, flux SSE et page web du portail."""
 
 import asyncio
+import contextlib
 import json
 import os
 from pathlib import Path
 
+import anyio
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from runai.app.auth import BasicAuthMiddleware
 from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
 from runai.app.mission import MissionError, MissionService
 from runai.app.tasks import STEP_LABELS
@@ -42,7 +45,8 @@ def build_demo_service(delay: float | None = None) -> MissionService:
         FakeBrowserAgents(delay=delay),
         FakeTranscriber(delay=delay / 3),
         traces_dir=settings.traces_dir,
-        max_concurrency=settings.h_max_concurrency,
+        # Agents simulés : aucun slot H à partager, les missions ne s'attendent pas.
+        max_concurrency=None,
         simulated=True,
     )
 
@@ -82,6 +86,8 @@ def build_service() -> MissionService:
 
 def create_app(service: MissionService | None = None) -> FastAPI:
     app = FastAPI(title="RunAI")
+    if credentials := os.getenv("RUNAI_BASIC_AUTH"):
+        app.add_middleware(BasicAuthMiddleware, credentials=credentials)
     app.state.service = service or build_service()
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -150,7 +156,10 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                     pending = asyncio.ensure_future(anext(messages))
             finally:
                 pending.cancel()
-                await messages.aclose()
+                with anyio.CancelScope(shield=True):
+                    with contextlib.suppress(asyncio.CancelledError, StopAsyncIteration):
+                        await pending
+                    await messages.aclose()
 
         return StreamingResponse(
             stream(),

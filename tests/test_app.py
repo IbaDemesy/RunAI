@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
 from runai.app.mission import Mission, MissionService, MissionStatus
-from runai.app.server import MAX_AUDIO_BYTES, create_app
+from runai.app.server import MAX_AUDIO_BYTES, build_demo_service, create_app
 from runai.app.tasks import (
     HUMAN_ACTIONS,
     build_task,
@@ -737,3 +737,44 @@ def test_api_transcribe_uses_voice_port(tmp_path):
         assert client.post("/api/transcribe", content=b"").status_code == 400
         oversized = b"0" * (MAX_AUDIO_BYTES + 1)
         assert client.post("/api/transcribe", content=oversized).status_code == 413
+
+
+@pytest.mark.anyio
+async def test_demo_missions_do_not_wait_for_each_other(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    service = build_demo_service(delay=0)
+    first = await service.create("Marathon de Milan")
+    second = await service.create("Marathon de Milan")
+
+    async def all_waiting(mission):
+        while not all(
+            step.status is StepStatus.waiting_for_user
+            for step in mission.steps.values()
+        ):
+            await asyncio.sleep(0.01)
+
+    await asyncio.wait_for(
+        asyncio.gather(all_waiting(first), all_waiting(second)), timeout=2
+    )
+    for mission in (first, second):
+        await answer_fake_questions(service, mission)
+        assert (await service.wait(mission.id)).status is MissionStatus.awaiting_human
+
+
+def test_basic_auth_protects_everything_but_health(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "equipe:secret")
+    with TestClient(create_app(make_service(tmp_path, delay=0))) as client:
+        assert client.get("/api/health").status_code == 200
+        denied = client.get("/")
+        assert denied.status_code == 401
+        assert denied.headers["www-authenticate"].startswith("Basic")
+        assert client.post("/api/missions", json={"query": "Milan"}).status_code == 401
+        assert client.get("/", auth=("equipe", "faux")).status_code == 401
+        assert client.get("/", auth=("equipe", "secret")).status_code == 200
+        assert client.get("/static/app.js", auth=("equipe", "secret")).status_code == 200
+
+
+def test_basic_auth_rejects_malformed_setting(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "sans-deux-points")
+    with pytest.raises(ValueError), TestClient(create_app(make_service(tmp_path))) as client:
+        client.get("/")

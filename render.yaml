@@ -1,0 +1,26 @@
+# Hébergement du POC sur Render (Blueprint). Voir README, section « Héberger le POC ».
+# Une seule instance : les missions vivent en mémoire du serveur.
+services:
+  - type: web
+    name: runai
+    runtime: python
+    plan: starter
+    numInstances: 1
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn runai.app.server:create_app --factory --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: RUNAI_BASIC_AUTH
+        sync: false
+      - key: HAI_API_KEY
+        sync: false
+      - key: LINKUP_API_KEY
+        sync: false
+      - key: GLADIA_API_KEY
+        sync: false
+      - key: RUNAI_H_MAX_STEPS
+        value: "40"
+      - key: RUNAI_H_MAX_TIME_S
+        value: "600"
