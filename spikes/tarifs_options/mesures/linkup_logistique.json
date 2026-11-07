@@ -1,0 +1,62 @@
+{
+ "royan_hotel": {
+  "q": "Prix d'une nuit à l'ibis ou ibis budget de Royan (Accor) pour 1 personne, samedi 22 mai 2027 ou un samedi de mai, en euros",
+  "answer": "Les tarifs pour le **samedi 22 mai 2027** ne sont pas indiqués dans les informations disponibles. Elles ne permettent donc pas d’estimer le prix pour cette date ni de confirmer un tarif pour un autre samedi de mai.\n\nÀ titre indicatif seulement, une source mentionne **63 € par nuit en moyenne cette semaine** au Grand Hôtel de Pontaillac à Royan, mais elle ne précise pas qu’il s’agit d’un hôtel ibis/ibis budget ni que ce tarif s’applique à une personne ou à mai 2027.",
+  "sources": [
+   "https://m.check-rates.com/ibis-hotels-4467_5208_5210-royan.html",
+   "https://ville-data.com/hotel-ibis-budget/Royan-17-17306",
+   "https://ville-data.com/hotel-ibis/Royan-17-17306",
+   "https://www.hotelscombined.fr/Hotel/ibis_budget_Roye.htm"
+  ]
+ },
+ "royan_train": {
+  "q": "Prix d'un billet de train TGV Paris Montparnasse - Royan (via Angoulême ou La Rochelle) aller simple seconde classe, en euros, prix typique",
+  "answer": "Comptez **environ 90 € l’aller en seconde classe** pour Paris-Montparnasse–Royan, à titre indicatif : une source donne un tarif moyen d’environ 92 €. En réservant à l’avance, des billets sont annoncés à partir d’environ **75 €**. Les tarifs varient selon la date, l’horaire et l’itinéraire (via Angoulême ou La Rochelle).",
+  "sources": [
+   "https://www.thetrainline.com/fr/horaires-train/royan-a-paris-montparnasse",
+   "https://www.thetrainline.com/fr/horaires-train/paris-montparnasse-a-royan",
+   "https://www.omio.co.uk/trains/paris/royan-x5dbm",
+   "https://fr.mytrainpal.com/billet-train/royan-paris-montparnasse"
+  ]
+ },
+ "hyeres_hotel": {
+  "q": "Prix d'une nuit à l'ibis Hyères ou ibis budget Hyères / Toulon (Accor) un samedi de mars, en euros",
+  "answer": "Pour un samedi de mars, les tarifs précis ne sont pas indiqués sans dates de séjour. À titre indicatif, les prix relevés sont :\n\n- **ibis budget Hyères Centre-Ville** : environ **53–60 €** la nuit (offres Momondo) ; d’autres annonces affichent un prix de départ de **51–61 €**.\n- **ibis Hyères Centre** : environ **83 € en moyenne en mars** selon KAYAK ; les offres relevées vont de **78 à 143 €**.\n- **ibis budget Toulon Centre** : environ **54–62 €** la nuit selon KAYAK et Momondo.\n\nLe tarif du samedi peut varier selon la date, la disponibilité et les conditions de réservation.",
+  "sources": [
+   "https://hotelcentre.fr/hotel/ibisbudgettoulon",
+   "https://fr-cotedazur.fr/hotel/ibisbudgettouloncentre",
+   "https://destinia.com/fr/hotels/europe/france/var/toulon/ibis-budget-toulon-centre/ho-602751",
+   "https://fr.tohotel.com/hotel/ibisbudgettouloncentre"
+  ]
+ },
+ "hyeres_train": {
+  "q": "Prix d'un billet TGV inOui Paris Gare de Lyon - Toulon ou Hyères aller simple seconde classe, prix typique en euros",
+  "answer": "Pour un **TGV INOUI en seconde classe, aller simple Paris-Gare-de-Lyon–Toulon**, prévoyez typiquement **autour de 100 €**. Le tarif peut être plus bas en réservant à l’avance (dès environ **76 €** dans les données fournies) et monter à **plus de 200 €** selon la date et le train.\n\nPour **Hyères**, les informations disponibles ne donnent pas de prix spécifique. Les tarifs dépendent de la date et des disponibilités ; vérifiez le trajet exact au moment de réserver.",
+  "sources": [
+   "https://www.thetrainline.com/fr/horaires-train/paris-gare-de-lyon-a-toulon",
+   "https://www.omio.fr/trains/paris/munich",
+   "https://www.omio.fr/trains/toulon/paris-ovoip",
+   "https://www.omio.fr/trains/paris/toulon-yidxx"
+  ]
+ },
+ "milan_hotel": {
+  "q": "Prix d'une nuit à l'ibis Milano Centro ou ibis Milano (Accor) un samedi d'avril, en euros",
+  "answer": "Les tarifs disponibles indiquent environ **94 € par nuit en moyenne** pour un hôtel ibis à Milan, mais ils ne précisent pas le prix d’un samedi d’avril. Pour l’ibis Milano Centro, les estimations générales varient fortement (d’environ **64 € à 191 €** selon les dates et la disponibilité). Il faut vérifier les dates exactes pour obtenir un tarif fiable.",
+  "sources": [
+   "https://www.momondo.fr/hotel/milan/Ibis-Milano-Centro.mhd138335.ksp",
+   "https://www.hotelscombined.fr/Place/Ibis_Hotels-Milan-Hotels.29.53596.hotel.ksp",
+   "https://destinia.com/fr/hotels/europe/italie/milan/milan/ibis-milano-centro/ho-42009",
+   "https://www.cityzeum.com/ibis-milano-centro"
+  ]
+ },
+ "milan_train": {
+  "q": "Prix d'un billet TGV ou Frecciarossa Paris - Milan aller simple, prix typique en euros, réservation à l'avance",
+  "answer": "Pour un aller simple Paris–Milan réservé à l’avance, comptez **environ 35 à 40 € au tarif d’appel** : les billets sont indiqués à partir de **39 € en TGV INOUI** et **35 € en Frecciarossa**. Ces prix bas sont soumis aux disponibilités.\n\nÀ titre indicatif, les tarifs moyens relevés pour Paris–Milan varient beaucoup selon la date : environ **75 € à J‑90**, **77 € à J‑30** et **111 € à J‑60**. Les réservations peuvent ouvrir jusqu’à **six mois à l’avance** selon l’opérateur ; réserver tôt peut aider à obtenir un meilleur prix.",
+  "sources": [
+   "https://kelbillet.com/train/trajet/paris-milan.html",
+   "https://kelbillet.com/train/trajet/milan-paris.html",
+   "https://www.voyagerentrain.fr/paris-milan/",
+   "https://www.thetrainline.com/fr/horaires-train/milan-a-paris"
+  ]
+ }
+}

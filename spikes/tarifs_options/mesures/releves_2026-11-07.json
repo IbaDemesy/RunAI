@@ -1,0 +1,714 @@
+{
+ "date": "2026-11-07",
+ "methode": "GET API front njuko / HTTP fiche épreuve Klikego, aucune session H, rien soumis",
+ "devis": [
+  {
+   "plateforme": "njuko",
+   "course": "Wizz Air Milano Marathon 2027",
+   "epreuve": "Athlètes étrangers résidant à l’étranger qui souhaitent participer en tant que coureurs non compétitifs",
+   "date_epreuve": "2027-04-04",
+   "url": "https://in.njuko.com/wizz-air-milano-marathon-20271776152378557",
+   "palier_actuel": {
+    "prix_eur": 114.0,
+    "date_fin": "2026-12-31",
+    "libelle": null
+   },
+   "paliers_suivants": [
+    {
+     "prix_eur": 124.0,
+     "date_fin": "2027-02-28",
+     "libelle": null
+    },
+    {
+     "prix_eur": 131.0,
+     "date_fin": "2027-04-03",
+     "libelle": null
+    }
+   ],
+   "frais_service_eur": null,
+   "frais_inclus_dans_prix": null,
+   "options": [
+    {
+     "nom": "Acceptation des conditions & assurance pour la participation au tourisme sportif",
+     "categorie": "assurance_annulation",
+     "prix_eur": 5.0,
+     "obligatoire": false,
+     "etape": "Participation requirements"
+    },
+    {
+     "nom": "Souhaitez-vous réserver vos places dès maintenant?",
+     "categorie": "autre",
+     "prix_eur": 40.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander votre gravure dès maintenant ?",
+     "categorie": "medaille",
+     "prix_eur": 10.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Choisissez un design unique pour votre dossard !",
+     "categorie": "merchandising",
+     "prix_eur": 5.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre t-shirt blanc ?",
+     "categorie": "t_shirt",
+     "prix_eur": 25.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre t-shirt bleau ?",
+     "categorie": "t_shirt",
+     "prix_eur": 25.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre sweat bleu ?",
+     "categorie": "merchandising",
+     "prix_eur": 45.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre veste coupe-vent ?",
+     "categorie": "merchandising",
+     "prix_eur": 45.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre t-shirt technique ?",
+     "categorie": "t_shirt",
+     "prix_eur": 30.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre casquette ?",
+     "categorie": "merchandising",
+     "prix_eur": 15.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant vos chaussettes ?",
+     "categorie": "merchandising",
+     "prix_eur": 15.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre tour de cou ?",
+     "categorie": "merchandising",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant vos manchettes ?",
+     "categorie": "merchandising",
+     "prix_eur": 15.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre sac à dos Roll-Top ?",
+     "categorie": "merchandising",
+     "prix_eur": 30.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre Milano Tote Bag ?",
+     "categorie": "merchandising",
+     "prix_eur": 15.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander la peluche Ambrogio dès maintenant ?",
+     "categorie": "merchandising",
+     "prix_eur": 22.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre Ambrogio Mascot Keychain ?",
+     "categorie": "autre",
+     "prix_eur": 6.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre porte-clés commémoratif Milano ?",
+     "categorie": "merchandising",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander vos magnets dès maintenant ?",
+     "categorie": "merchandising",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre Gourde en acier inoxydable ?",
+     "categorie": "merchandising",
+     "prix_eur": 17.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre gobelet réutilisable ?",
+     "categorie": "merchandising",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre mug ?",
+     "categorie": "merchandising",
+     "prix_eur": 10.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander dès maintenant votre tapis de souris ?",
+     "categorie": "merchandising",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous acheter l’assurance d’annulation de participation?",
+     "categorie": "assurance_annulation",
+     "prix_eur": 10.0,
+     "obligatoire": false,
+     "etape": "Services"
+    },
+    {
+     "nom": "Souhaitez-vous commander maintenant?",
+     "categorie": "autre",
+     "prix_eur": 190.0,
+     "obligatoire": false,
+     "etape": "Services"
+    }
+   ],
+   "total_minimal_eur": 114.0,
+   "complet": false,
+   "etape_arret": "page_course",
+   "raison_arret": "lecture API publique, aucun parcours d'inscription",
+   "rien_soumis": true,
+   "avertissements": [
+    "date de fin de palier masquée sur la page publique (visible seulement via l'API)",
+    "frais de service non trouvés dans le texte : à confirmer au panier"
+   ]
+  },
+  {
+   "plateforme": "njuko",
+   "course": "Semi Marathon de Hyères 2027",
+   "epreuve": "10 KM DE HYERES LES PALMIERS",
+   "date_epreuve": "2027-03-21",
+   "url": "https://in.njuko.com/semi-marathon-de-hyeres-2027",
+   "palier_actuel": {
+    "prix_eur": 22.0,
+    "date_fin": null,
+    "libelle": null
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": null,
+   "frais_inclus_dans_prix": null,
+   "options": [],
+   "total_minimal_eur": 22.0,
+   "complet": false,
+   "etape_arret": "page_course",
+   "raison_arret": "lecture API publique, aucun parcours d'inscription",
+   "rien_soumis": true,
+   "avertissements": [
+    "frais de service non trouvés dans le texte : à confirmer au panier"
+   ]
+  },
+  {
+   "plateforme": "njuko",
+   "course": "Semi Marathon de Hyères 2027",
+   "epreuve": "SEMI MARATHON DE HYERES",
+   "date_epreuve": "2027-03-21",
+   "url": "https://in.njuko.com/semi-marathon-de-hyeres-2027",
+   "palier_actuel": {
+    "prix_eur": 30.0,
+    "date_fin": null,
+    "libelle": null
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": null,
+   "frais_inclus_dans_prix": null,
+   "options": [],
+   "total_minimal_eur": 30.0,
+   "complet": true,
+   "etape_arret": "page_course",
+   "raison_arret": "lecture API publique, aucun parcours d'inscription",
+   "rien_soumis": true,
+   "avertissements": [
+    "frais de service non trouvés dans le texte : à confirmer au panier"
+   ]
+  },
+  {
+   "plateforme": "njuko",
+   "course": "Trail Urbain d'Orange 2027",
+   "epreuve": "8km- Trail de la Vierge",
+   "date_epreuve": "2027-02-07",
+   "url": "https://in.njuko.com/trail-urbain-dorange-20271791992029324",
+   "palier_actuel": {
+    "prix_eur": 11.0,
+    "date_fin": "2027-02-06",
+    "libelle": null
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": null,
+   "frais_inclus_dans_prix": null,
+   "options": [],
+   "total_minimal_eur": 11.0,
+   "complet": false,
+   "etape_arret": "page_course",
+   "raison_arret": "lecture API publique, aucun parcours d'inscription",
+   "rien_soumis": true,
+   "avertissements": [
+    "frais de service non trouvés dans le texte : à confirmer au panier"
+   ]
+  },
+  {
+   "plateforme": "njuko",
+   "course": "Trail Urbain d'Orange 2027",
+   "epreuve": "13km -  Trail d'Auguste",
+   "date_epreuve": "2027-02-07",
+   "url": "https://in.njuko.com/trail-urbain-dorange-20271791992029324",
+   "palier_actuel": {
+    "prix_eur": 17.0,
+    "date_fin": "2027-02-06",
+    "libelle": null
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": null,
+   "frais_inclus_dans_prix": null,
+   "options": [],
+   "total_minimal_eur": 17.0,
+   "complet": false,
+   "etape_arret": "page_course",
+   "raison_arret": "lecture API publique, aucun parcours d'inscription",
+   "rien_soumis": true,
+   "avertissements": [
+    "frais de service non trouvés dans le texte : à confirmer au panier"
+   ]
+  },
+  {
+   "plateforme": "njuko",
+   "course": "Trail Urbain d'Orange 2027",
+   "epreuve": "Marche (13km non chrono)",
+   "date_epreuve": "2027-02-07",
+   "url": "https://in.njuko.com/trail-urbain-dorange-20271791992029324",
+   "palier_actuel": {
+    "prix_eur": 12.0,
+    "date_fin": "2027-02-06",
+    "libelle": null
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": null,
+   "frais_inclus_dans_prix": null,
+   "options": [],
+   "total_minimal_eur": 12.0,
+   "complet": false,
+   "etape_arret": "page_course",
+   "raison_arret": "lecture API publique, aucun parcours d'inscription",
+   "rien_soumis": true,
+   "avertissements": [
+    "frais de service non trouvés dans le texte : à confirmer au panier"
+   ]
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Marathon Royan U Côte de Beauté",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 65.0,
+    "date_fin": null,
+    "libelle": "Droit d'inscription"
+   },
+   "paliers_suivants": [
+    {
+     "prix_eur": 70.0,
+     "date_fin": null,
+     "libelle": "Inscriptions dernière minute"
+    }
+   ],
+   "frais_service_eur": 3.0,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 68.0,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": [
+    "date de fin de palier non affichée sur la fiche"
+   ]
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Semi-Marathon Royan U Côte de Beauté",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 40.0,
+    "date_fin": null,
+    "libelle": "Droits d'inscription"
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 2.0,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 42.0,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "10km Royan U Côte de beauté",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 23.0,
+    "date_fin": null,
+    "libelle": "Droits d'inscription"
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 1.5,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 24.5,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Course Eveils 4 - 6 ans les Alouettes",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 6.0,
+    "date_fin": null,
+    "libelle": "Tarif Enfant "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 0.8,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 6.8,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Course Les Goélands 10 - 11 ans",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 6.0,
+    "date_fin": null,
+    "libelle": "Tarif Enfant "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 0.8,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 6.8,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Course Eveils 7 - 9 ans les Mouettes",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 6.0,
+    "date_fin": null,
+    "libelle": "Tarif Enfant "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 0.8,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 6.8,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Course Les Albatros 12 - 13 ans",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 7.0,
+    "date_fin": null,
+    "libelle": "Tarif Enfant chronométré "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 0.8,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 7.8,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "11ème Marathon Royan U Côte de Beauté 2027 - 17200 - Royan",
+   "epreuve": "Course Les Hérons 14 - 15 ans",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/11eme-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+   "palier_actuel": {
+    "prix_eur": 7.0,
+    "date_fin": null,
+    "libelle": "Tarif Enfant chronométré "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 0.8,
+   "frais_inclus_dans_prix": false,
+   "options": [
+    {
+     "nom": "ASSURANCE ANNULATION : 8€/personne Tout coureur peut souscrire à la garantie ann",
+     "categorie": "assurance_annulation",
+     "prix_eur": 8.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    },
+    {
+     "nom": "T-SHIRT DE L'EDITION Découvre notre T-shirt technique sublimé , conçu dans une m",
+     "categorie": "t_shirt",
+     "prix_eur": 12.0,
+     "obligatoire": false,
+     "etape": "formulaire (après création du compte)"
+    }
+   ],
+   "total_minimal_eur": 7.8,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "Marathon des Sables D'Olonne 2027 - 85100 - Les sables d olonne",
+   "epreuve": "Marathon des Sables d'Olonne",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/marathon-des-sables-dolonne-2027/running-course-a-pied/1780429129786-1",
+   "palier_actuel": {
+    "prix_eur": 90.0,
+    "date_fin": null,
+    "libelle": "Tarif Non-Licencié "
+   },
+   "paliers_suivants": [
+    {
+     "prix_eur": 85.0,
+     "date_fin": null,
+     "libelle": "Tarif FFA "
+    }
+   ],
+   "frais_service_eur": 2.5,
+   "frais_inclus_dans_prix": false,
+   "options": [],
+   "total_minimal_eur": 92.5,
+   "complet": true,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "Marathon des Sables D'Olonne 2027 - 85100 - Les sables d olonne",
+   "epreuve": "10km Priorité FFA",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/marathon-des-sables-dolonne-2027/running-course-a-pied/1780429129786-1",
+   "palier_actuel": {
+    "prix_eur": 18.0,
+    "date_fin": null,
+    "libelle": "Tarif - Priorité FFA "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 1.2,
+   "frais_inclus_dans_prix": false,
+   "options": [],
+   "total_minimal_eur": 19.2,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  },
+  {
+   "plateforme": "klikego",
+   "course": "Marathon des Sables D'Olonne 2027 - 85100 - Les sables d olonne",
+   "epreuve": "10km de la Chaume 25ème Édition",
+   "date_epreuve": null,
+   "url": "https://www.klikego.com/inscription/marathon-des-sables-dolonne-2027/running-course-a-pied/1780429129786-1",
+   "palier_actuel": {
+    "prix_eur": 27.0,
+    "date_fin": null,
+    "libelle": "Tarif Non-Licencié "
+   },
+   "paliers_suivants": [],
+   "frais_service_eur": 1.7,
+   "frais_inclus_dans_prix": false,
+   "options": [],
+   "total_minimal_eur": 28.7,
+   "complet": false,
+   "etape_arret": "fiche_epreuve",
+   "raison_arret": "lecture HTTP de la fiche épreuve ; l'étape suivante crée un compte Klikego",
+   "rien_soumis": true,
+   "avertissements": []
+  }
+ ]
+}

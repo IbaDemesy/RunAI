@@ -1,0 +1,248 @@
+{
+  "$defs": {
+    "OptionPayante": {
+      "properties": {
+        "nom": {
+          "description": "Libellé exact de l'option sur la page.",
+          "title": "Nom",
+          "type": "string"
+        },
+        "categorie": {
+          "enum": [
+            "t_shirt",
+            "repas",
+            "assurance_annulation",
+            "navette",
+            "photos",
+            "don",
+            "medaille",
+            "pass_participation",
+            "merchandising",
+            "autre"
+          ],
+          "title": "Categorie",
+          "type": "string"
+        },
+        "prix_eur": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Prix en euros, null si non affiché.",
+          "title": "Prix Eur"
+        },
+        "obligatoire": {
+          "description": "true seulement si la page impose l'option pour continuer.",
+          "title": "Obligatoire",
+          "type": "boolean"
+        },
+        "etape": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Étape du parcours où l'option apparaît.",
+          "title": "Etape"
+        }
+      },
+      "required": [
+        "nom",
+        "categorie",
+        "obligatoire"
+      ],
+      "title": "OptionPayante",
+      "type": "object"
+    },
+    "Palier": {
+      "properties": {
+        "prix_eur": {
+          "description": "Prix de l'inscription pour ce palier, en euros.",
+          "title": "Prix Eur",
+          "type": "number"
+        },
+        "date_fin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Date de fin du palier (AAAA-MM-JJ) si elle est affichée, sinon null. Ne jamais deviner.",
+          "title": "Date Fin"
+        },
+        "libelle": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Texte affiché, ex. 'Inscriptions dernière minute'.",
+          "title": "Libelle"
+        }
+      },
+      "required": [
+        "prix_eur"
+      ],
+      "title": "Palier",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "plateforme": {
+      "enum": [
+        "njuko",
+        "klikego",
+        "autre"
+      ],
+      "title": "Plateforme",
+      "type": "string"
+    },
+    "course": {
+      "title": "Course",
+      "type": "string"
+    },
+    "epreuve": {
+      "description": "Nom exact de l'épreuve (ex. '10 km', 'Marathon').",
+      "title": "Epreuve",
+      "type": "string"
+    },
+    "date_epreuve": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "AAAA-MM-JJ.",
+      "title": "Date Epreuve"
+    },
+    "url": {
+      "description": "URL de la dernière page lue.",
+      "title": "Url",
+      "type": "string"
+    },
+    "palier_actuel": {
+      "$ref": "#/$defs/Palier"
+    },
+    "paliers_suivants": {
+      "description": "Paliers futurs visibles, sinon [].",
+      "items": {
+        "$ref": "#/$defs/Palier"
+      },
+      "title": "Paliers Suivants",
+      "type": "array"
+    },
+    "frais_service_eur": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Frais de service/gestion Internet affichés, null si non affichés.",
+      "title": "Frais Service Eur"
+    },
+    "frais_inclus_dans_prix": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "true si la page dit que les frais sont compris dans le prix affiché.",
+      "title": "Frais Inclus Dans Prix"
+    },
+    "options": {
+      "items": {
+        "$ref": "#/$defs/OptionPayante"
+      },
+      "title": "Options",
+      "type": "array"
+    },
+    "total_minimal_eur": {
+      "description": "Prix du palier + frais (s'ils ne sont pas inclus) + options obligatoires uniquement.",
+      "title": "Total Minimal Eur",
+      "type": "number"
+    },
+    "complet": {
+      "default": false,
+      "description": "true si l'épreuve est affichée complète / liste d'attente.",
+      "title": "Complet",
+      "type": "boolean"
+    },
+    "etape_arret": {
+      "enum": [
+        "page_course",
+        "fiche_epreuve",
+        "choix_epreuve",
+        "identification_compte",
+        "formulaire_participant",
+        "cases_consentement",
+        "options",
+        "assurance",
+        "panier",
+        "choix_paiement",
+        "bloque"
+      ],
+      "title": "Etape Arret",
+      "type": "string"
+    },
+    "raison_arret": {
+      "description": "Pourquoi l'agent s'est arrêté (règle, compte exigé, case santé, paiement...).",
+      "title": "Raison Arret",
+      "type": "string"
+    },
+    "rien_soumis": {
+      "description": "true si aucun formulaire n'a été soumis et aucun compte créé.",
+      "title": "Rien Soumis",
+      "type": "boolean"
+    },
+    "avertissements": {
+      "description": "Incohérences ou doutes (prix différents, date de fin absente...).",
+      "items": {
+        "type": "string"
+      },
+      "title": "Avertissements",
+      "type": "array"
+    }
+  },
+  "required": [
+    "plateforme",
+    "course",
+    "epreuve",
+    "url",
+    "palier_actuel",
+    "total_minimal_eur",
+    "etape_arret",
+    "raison_arret",
+    "rien_soumis"
+  ],
+  "title": "Devis",
+  "type": "object"
+}
