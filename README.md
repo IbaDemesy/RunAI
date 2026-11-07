@@ -1,87 +1,33 @@
 # RunAI
 
-Projet du « Computer Use Agents Hackathon » (H Company × 42AI, 7–8 novembre 2026).
+**Say your race; RunAI prepares the registration, hotel and transport, stopping before payment.**
 
-**« Dis-moi ta course, je prépare tout le déplacement. »** Le coureur dit à voix haute la course qu'il veut faire. RunAI trouve la page officielle avec Linkup, puis des agents H préparent en parallèle l'inscription, l'hôtel et le transport sur les vrais sites, et s'arrêtent avant tout paiement ou engagement.
+Computer Use Agents Hackathon (H Company x 42AI), November 7-8, 2026.
 
-## Avancement
+## What it does
 
-- [Plan de développement multi-agents — équipes, lots et voyage complet](docs/PLAN_DEVELOPPEMENT.md)
-- [Frontend — direction visuelle, écrans et critères de finition](docs/FRONTEND.md)
-- [Notation du jury : ce qui est fait, ce qui manque](docs/NOTATION.md)
-- [Démo et livrables](docs/DEMO_ET_LIVRABLES.md)
-- [Recherches des agents : ce qu'on fait, en option, coupé](docs/RECHERCHES_AGENTS.md)
+Voice -> Holo framing -> Linkup official race sheet -> explicit confirmation ->
+three H `h/web-surfer-pro` agents in parallel -> **pre-payment halt**.
 
-## Règles du hackathon
+Describe your race and trip, correct missing details, choose a sourced race and
+confirm the summary before any agent starts. Follow registration, accommodation
+and transport in live browser views, then review the journey timeline and
+HTML/PDF/ICS exports. **RunAI never pays or makes a binding booking.**
 
-Le projet doit utiliser au moins **3 partenaires** parmi Devin, H Company, Gladia, Linkup et Stripe.
-RunAI en utilise **4** : Devin, H Company, Gladia et Linkup.
+## Partners and how each is showcased
 
-| Partenaire | Rôle | Utilisé ? | Documentation |
-| --- | --- | --- | --- |
-| Devin | Développement, exploration multi-agents, CI | Utilisé : PR, CI, workflow de 16 agents | [Devin docs](https://docs.devin.ai) |
-| H Company | Agents de navigation et d’automatisation | Câblé en V2 via lifecycle ; recette intégrée live restant à faire | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
-| Gladia | Transcription audio, sans TTS | Câblé au shell vocal ; smoke tests conditionnels | [Documentation](https://docs.gladia.io) |
-| Linkup | Recherche de candidats et fiche course sourcée | Câblé au cadrage V2 ; smoke tests conditionnels | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
-| Stripe | Paiements | Non prévu pour le moment | [Hackathon offer](https://stripe.com/startup-benefits/computer-use-agents-hackathon) |
-
-Les liens utiles, documents et crédits sont regroupés dans [Infos/README.md](Infos/README.md).
-
-## V2 : préparer une course
-
-Le parcours est **cadrage → confirmation explicite → agents → JourneyPlan → exports**.
-Décrivez la course et le déplacement, précisez les informations manquantes et choisissez
-un candidat sourcé. Vérifiez le résumé avant confirmation : aucun agent ne démarre avant.
-Seules les étapes couvertes sont lancées ; leurs résultats enrichissent le même séjour
-révisé pour la carte, la timeline accessible et les exports HTML/PDF/ICS.
-
-Choisissez explicitement `RUNAI_MODE` :
-
-| Mode | Comportement |
+| Partner | Showcase |
 | --- | --- |
-| `live` | Linkup, H et Gladia réels selon les clés/SDK disponibles. Un fournisseur sans clé produit un état indisponible et une erreur honnête, jamais un repli silencieux en démo. |
-| `demo` | Candidats de fixtures et agents/transcription simulés, étiquetés démo. Ville ou critères sans fixture : limitation explicite, aucun événement de remplacement inventé. |
-| `replay` | Offline `replay.v1` recording via `RUNAI_REPLAY_TRACE`, or the committed demo trace by default; all results are labeled replay. |
+| H Company | Three browser agents, the Holo4 framing model and live views of their work. |
+| Gladia | `solaria-1` live transcription with custom vocabulary and multilingual code-switching. No TTS. |
+| Linkup | Structured search produces a sourced official race sheet, not an invented event. |
+| Devin | Built the app and CI; a 16-agent night exploration loop informed the design. The [self-repair plan](docs/DEVIN.md) describes future trace-to-runbook fixes, not an already deployed repair service. |
 
-Variables de clés, **noms seulement** : `HAI_API_KEY`, puis `HAI_API_KEY_2`,
-`HAI_API_KEY_3`, etc. sans trou dans la numérotation ; `LINKUP_API_KEY` ;
-`GLADIA_API_KEY`. **Linkup ne lit que `LINKUP_API_KEY`**, pas ses variantes numérotées.
-Ne versionnez jamais les valeurs ni `.env`.
+[Partner resources](Infos/README.md) | [Demo and deliverables](docs/DEMO_ET_LIVRABLES.md) | [V2 technical details](docs/V2.md)
 
-Après l'installation ci-dessous, choisissez une commande depuis la racine :
+## Quickstart
 
-```bash
-RUNAI_MODE=demo .venv/bin/python -m runai.app
-# Ou, avec les fournisseurs configurés :
-RUNAI_MODE=live .venv/bin/python -m runai.app
-# Ou, avec votre trace existante :
-RUNAI_MODE=replay RUNAI_REPLAY_TRACE=/chemin/trace.json .venv/bin/python -m runai.app
-```
-
-Ouvrez `http://127.0.0.1:8000`. Hôte et port sont réglables avec `RUNAI_APP_HOST`
-et `RUNAI_APP_PORT`. [Commandes de test hors ligne](#tester) et [détails techniques V2](docs/V2.md).
-
-### Replay recordings
-`RUNAI_MODE=replay` defaults to `fixtures/replay/demo-marathon.replay.json`, also available in Render's repository checkout.
-Regenerate it offline with `python -m scripts.record_replay`; set `RUNAI_REPLAY_TRACE=/absolute/path/trace.json` to override it.
-For a LIVE recording, start `RUNAI_MODE=live .venv/bin/python -m runai.app`, confirm a framing, and answer its questions until terminal.
-Then run `curl --fail --user "$RUNAI_BASIC_AUTH" "http://127.0.0.1:8000/api/missions/$MISSION_ID/replay.json" --output live.replay.json` (set `MISSION_ID`; omit `--user` if authentication is disabled).
-Exports redact configured provider secrets and structured personal fields, emails and phone numbers; review free-text recordings before sharing.
-
-**Limites actuelles :** stockage mémoire des cadrages, missions, idempotence, événements
-SSE et révisions d'export ; automatisation limitée à **Njuko / Accor / Trenitalia**
-(train et couverture Italie pour ce dernier). Les autres plateformes/transports sont
-manuels, avec lien officiel lorsqu'il est connu ; Booking.com et TAP sont exclus de
-l'automatisation. L'extraction FR/EN est heuristique et partielle : corrigez les champs
-dans le cadrage. Le profil utilisé par défaut est fictif. Aucun paiement, réservation,
-compte, consentement, déclaration de santé ou soumission engageante n'est automatisé.
-Gladia sert à transcrire, **pas à faire de la synthèse vocale (TTS)**. Les données
-Journey non fournies de façon structurée restent inconnues ; les traces JSONL peuvent
-être écrites sur disque, mais ne constituent pas un stockage persistant des missions.
-
-## Installation
-
-Depuis la racine du dépôt, avec Python installé :
+From the repository root, with Python 3.11+ installed:
 
 ```bash
 python3 -m venv .venv
@@ -90,129 +36,160 @@ pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Renseignez les clés nécessaires dans `.env` : `HAI_API_KEY`, `GLADIA_API_KEY` et `LINKUP_API_KEY`.
-Ne publiez jamais ce fichier ni vos clés.
+For live mode, configure these variable names in your local `.env`:
+`HAI_API_KEY`, `GLADIA_API_KEY`, `LINKUP_API_KEY`.
+Optional extra H accounts use `HAI_API_KEY_2`, `HAI_API_KEY_3`, etc., with no
+numbering gaps. Linkup reads only `LINKUP_API_KEY`, not numbered variants.
+Never commit credentials or `.env`. Optional settings are documented in
+[.env.example](.env.example).
 
-### Installation des agents H
+## Run it
 
-Dans un environnement virtuel Python activé :
+Choose a mode explicitly, from the repository root:
 
 ```bash
-pip install -r requirements.txt
-holo login
-holo mcp install vscode
+RUNAI_MODE=live .venv/bin/python -m runai.app
+RUNAI_MODE=demo .venv/bin/python -m runai.app
+RUNAI_MODE=replay .venv/bin/python -m runai.app
 ```
 
-`holo login` ouvre une connexion navigateur ou permet de se connecter avec une clé API H. La commande MCP ajoute Holo aux serveurs MCP de l'utilisateur dans VS Code ; après avoir créé l'environnement virtuel du dépôt, relancez-la si nécessaire pour pointer vers son exécutable `holo`.
+Open `http://127.0.0.1:8000`; `RUNAI_APP_HOST` and `RUNAI_APP_PORT` override
+the local bind address.
 
-### Installation de Gladia
+| Mode | Behavior |
+| --- | --- |
+| `live` | Real Linkup, H and Gladia calls. Missing keys produce explicit unavailable errors, never a silent demo fallback. |
+| `demo` | Clearly labeled fixture candidates and simulated agents/transcription. Unsupported criteria produce a limitation, not a substitute invented race. |
+| `replay` | **Fallback demo:** the default recorded trace runs without keys or extra environment variables and makes no provider calls. Results are labeled replay, not live. |
 
-1. Créez un compte et une clé API sur [app.gladia.io](https://app.gladia.io/apikeys).
-2. Sur la [page de facturation](https://app.gladia.io/billing), apply the hackathon promo code (kept privately by the team) to get the 1,000 hackathon credits.
-3. Renseignez `GLADIA_API_KEY` dans `.env`.
-
-Le SDK Python `gladiaio-sdk` est installé via `requirements.txt` et lit automatiquement `GLADIA_API_KEY`.
-
-Optionnel, pour donner à un agent de code (Claude Code, Cursor, Codex) le contexte Gladia :
+To select a specific `replay.v1` trace instead of the default:
 
 ```bash
-npx skills add gladiaio/skills
+RUNAI_MODE=replay RUNAI_REPLAY_TRACE=<path> .venv/bin/python -m runai.app
 ```
 
-Pour le serveur MCP Gladia, configurez `GLADIA_API_KEY` dans son environnement,
-sans consigner sa valeur dans un fichier versionné.
+The default trace is `fixtures/replay/demo-marathon.replay.json`, also available in
+Render's repository checkout; regenerate it offline with `python -m scripts.record_replay`.
+For a live recording, start `RUNAI_MODE=live .venv/bin/python -m runai.app`, confirm a
+framing and answer its questions until the mission is terminal, then run
+`curl --fail --user "$RUNAI_BASIC_AUTH" "http://127.0.0.1:8000/api/missions/$MISSION_ID/replay.json" --output live.replay.json`
+(set `MISSION_ID`; omit `--user` if authentication is disabled). Exports redact
+configured provider secrets and structured personal fields, emails and phone numbers;
+review free-text recordings before sharing.
 
-## Tester
-
-Depuis la racine du dépôt, avec l’environnement virtuel activé et une clé H valide dans `.env` :
+[render.yaml](render.yaml) defines the Render web service, its health check at
+`/api/health`, and this production entrypoint:
 
 ```bash
-python scripts/test_h.py
+uvicorn runai.app.server:create_app --factory --host 0.0.0.0 --port $PORT
 ```
 
-Ce test appelle réellement l’API H, nécessite une connexion réseau et peut consommer des crédits.
-Il demande à l’agent de trouver l’article principal de Hacker News, puis affiche son statut et sa réponse.
+Keep a single instance: missions and authentication failure counters live in
+process memory and reset on restart. `/api/health` is the only public route when
+authentication is enabled; static assets, `/demo/live`, event streams and
+screenshots require credentials. Set `RUNAI_BASIC_AUTH=user:password` in Render's
+secret environment settings; for separate credentials use a comma-separated list
+such as `user:password,user2:password2` (commas cannot be part of a password).
+After five failed authentication attempts within 60 seconds, that client IP is
+blocked with HTTP 429 and a `Retry-After` header until the window expires. The
+first `X-Forwarded-For` hop identifies clients behind Render's TLS proxy; use this
+deployment only behind a trusted proxy that supplies that header.
 
-Pour Gladia, avec une clé valide dans `.env` :
+Security headers apply to authenticated and rejected responses alike, and API
+responses use `Cache-Control: no-store`. Content Security Policy defaults to
+`Content-Security-Policy-Report-Only` (`RUNAI_CSP_ENFORCE=0`); set
+`RUNAI_CSP_ENFORCE=1` to send an enforcing `Content-Security-Policy` instead.
+
+## How to test it live
+
+**Deployment: `RENDER_URL` (to be filled in by DevOps).**
+
+The operator configures `RUNAI_BASIC_AUTH` as a username/password pair; obtain
+access privately, never in this repository. With `RUNAI_PUBLIC=1`, live startup
+refuses to run without basic auth, protecting provider credits.
+
+1. Open `RENDER_URL`, sign in if prompted, and allow microphone access. Describe
+   a supported race and trip by voice (or type it).
+2. Check the sourced race sheet and framing fields, correct missing information,
+   then explicitly confirm. Watch the three covered agent tasks and live views.
+3. Review each result and the journey recap. The halt leaves the payment or
+   binding confirmation step untouched and reports the prepared state for human
+   review. No charge, final booking, account creation or binding submission is made.
+
+If provider access fails during judging, use a `RUNAI_MODE=replay` deployment or the
+local replay command above, and present it explicitly as a replay.
+
+## Tests
+
+Offline checks from the repository root (Node 24 must be on pytest's PATH):
 
 ```bash
-python scripts/test_gladia.py                 # fichier audio d’exemple de Gladia
-python scripts/test_gladia.py mon_audio.mp3   # fichier local ou URL
-```
-
-Ce test appelle réellement l’API Gladia et consomme des crédits. Il transcrit l’audio, puis affiche le statut et la transcription.
-
-Pour Linkup, avec une clé valide dans `.env` :
-
-```bash
-python scripts/test_linkup.py
-```
-
-Ce test lance une vraie recherche et affiche le nombre de résultats et la première URL.
-
-Tests hors ligne (sans clé), avec les dépendances installées dans `.venv` :
-
-```bash
-source ~/.nvm/nvm.sh  # sur la VM : Node 24 doit aussi être dans le PATH de pytest
+source ~/.nvm/nvm.sh
 .venv/bin/ruff check .
 .venv/bin/pytest -q
 node --test web/flyover/tests/*.test.js tests/contracts/*.test.js runai/app/static/tests/*.test.js web/voice/tests/*.test.js
 for script in runai/app/static/*.js web/flyover/*.js web/voice/voice-input.js; do node --check "$script" || break; done
 ```
 
-Les tests UX rejouent les patches D1 sur le commit `97265c6` ; un clone de test doit
-contenir cet historique. Le job CI utilise un checkout complet et installe Node 24
-avant pytest et les suites JavaScript.
+UX tests replay patches against commit `97265c6`; the clone must include that
+history. CI uses a full checkout and installs Node 24.
 
-## CI/CD
+Optional live smoke tests require the corresponding keys, network access and
+provider credits (the H test can take about three minutes):
 
-Le workflow `ci.yml` s’exécute sur chaque pull request et sur les pushs vers `main` : il vérifie le style avec Ruff et lance les tests hors ligne avec `pytest`.
-
-Le workflow `smoke.yml` lance les tests réels Linkup et Gladia lors d’un push vers `main` qui modifie `scripts/`, `requirements.txt` ou `smoke.yml`, pour ne pas consommer de crédits sur les PR de documentation. On peut aussi le lancer à la main (**Actions → Smoke → Run workflow**). Chaque test est ignoré avec une notice si son secret n’est pas configuré. Le test H est manuel : dans **Actions → Smoke → Run workflow**, activez `run_h=true`. Il prend environ 3 minutes et consomme des crédits ; le forfait H Free autorise 3 sessions concurrentes.
-
-Secrets de dépôt requis : `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY`.
-
-Les workflows installent les dépendances avec `uv` ; en local, utilisez `uv venv && uv pip install -r requirements.txt -r requirements-dev.txt`.
-
-## Hosting on Render
-
-Deploy the repository with the `render.yaml` Blueprint. Keep a single instance:
-missions and authentication failure counters live in process memory and reset on
-restart. `/api/health` is the only public route when authentication is enabled;
-static assets, `/demo/live`, event streams and screenshots require credentials.
-
-Set `RUNAI_BASIC_AUTH=user:password` in Render's secret environment settings.
-For separate credentials, use a comma-separated list such as
-`user:password,user2:password2` (commas cannot be part of a password).
-After five failed authentication attempts within 60 seconds, that client IP is
-blocked with HTTP 429 and a `Retry-After` header until the window expires.
-The first `X-Forwarded-For` hop identifies clients behind Render's TLS proxy;
-use this deployment only behind a trusted proxy that supplies that header.
-
-Security headers apply to authenticated and rejected responses alike, and API
-responses use `Cache-Control: no-store`. Content Security Policy defaults to
-`Content-Security-Policy-Report-Only` (`RUNAI_CSP_ENFORCE=0`) so violations can
-be reviewed in the browser console without blocking resources. Set
-`RUNAI_CSP_ENFORCE=1` to send enforcing `Content-Security-Policy` instead.
-
-## Structure du repo
-
-```text
-RunAI/
-├── .github/workflows/  # CI (ci.yml) et smoke tests (smoke.yml)
-├── Infos/              # Public partner documentation links
-├── docs/               # Notation, démo, recherches, notes partenaires
-├── scripts/
-│   ├── test_gladia.py  # Test de l’API Gladia
-│   ├── test_h.py       # Test de l’API H
-│   └── test_linkup.py  # Test de l’API Linkup
-├── tests/              # Tests hors ligne (imports, .env.example, clés committées)
-├── .env.example        # Variables d’environnement à renseigner
-├── .gitignore
-├── README.md
-└── requirements.txt    # Dépendances Python, SDK Gladia et interface de commande Holo
+```bash
+python scripts/test_h.py
+python scripts/test_gladia.py
+python scripts/test_gladia.py mon_audio.mp3
+python scripts/test_linkup.py
 ```
 
-## Équipe
+CI runs Ruff and offline pytest on pull requests and pushes to main. The smoke
+workflow runs selected real-provider checks separately to avoid spending credits
+on documentation PRs.
 
-À compléter : membres, rôles et coordonnées utiles.
+## Architecture
+
+| Directory | Responsibility |
+| --- | --- |
+| `runai/app/` | Web server, auth, provider modes, missions and browser UI. |
+| `runai/framing/` | Holo-assisted intent framing, clarification and launch confirmation. |
+| `runai/h/` | H browser-agent lifecycle, events and human questions. |
+| `runai/search/` | Linkup race discovery, structured sheets and source checks. |
+| `runai/voice/` | Gladia audio transcription, vocabulary and voice commands. |
+| `runai/journey/` | Shared journey planning from task results. |
+| `runai/planning/` | Evidence handling and recap adaptation. |
+| `runai/quote/` | Registration quote extraction and verification. |
+| `runai/logistics/` | Eligibility, durations, timeline rules and calendar data. |
+| `runai/recap/` | Journey recap rendering and HTML/PDF/ICS exports. |
+| `runai/coach/` | Runner-level assessment and training recommendations. |
+| `runai/contracts/` | Shared typed framing, mission and journey contracts. |
+| `web/` | Flyover and voice frontend modules and tests. |
+| `tests/` | Offline Python, contract and regression tests. |
+| `scripts/` | Partner API smoke tests. |
+| `docs/` | Design, integration notes, demo and pitch guides. |
+
+Shared configuration, models, safety checks and redaction live directly in
+`runai/`.
+
+## Limits
+
+Framing, missions, idempotency, SSE events and export revisions are stored in
+memory. Automation is limited to **Njuko / Accor / Trenitalia** (rail and Italian
+coverage for the latter). Other platforms and transport are manual, with an
+official link when known; Booking.com and TAP are excluded from automation.
+French/English extraction is heuristic and partial: correct fields in framing.
+The default profile is fictional. No payment, booking, account, consent, health
+declaration or binding submission is automated. Gladia transcribes speech;
+**there is no text-to-speech (TTS)**. Journey data not supplied structurally
+remains unknown. JSONL traces may be written to disk, but are not persistent
+mission storage.
+
+## Team
+
+Computer Use Agents Hackathon, November 7-8, 2026.
+
+| Name | Role | GitHub |
+| --- | --- | --- |
+| To fill in | To fill in | To fill in |
+| To fill in | To fill in | To fill in |
