@@ -145,7 +145,7 @@ class HoloPhraser:
                 )
                 response.raise_for_status()
                 data = response.json()
-                usage = data.get("usage")
+                usage = data.get("usage") if isinstance(data, dict) else None
                 if isinstance(usage, dict):
                     call.meta.update({key: value for key, value in usage.items()
                                       if key in {"prompt_tokens", "completion_tokens"}})
