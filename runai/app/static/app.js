@@ -64,6 +64,7 @@
   }
   function announce(text) { feedback.textContent = text; }
   function mode(value) {
+    document.getElementById("mode").className = "badge" + (value === "live" ? " real" : "");
     document.getElementById("mode").textContent = ({ live: "Réel · live", demo: "Démonstration · demo", replay: "Relecture · replay" })[value] || "Mode non vérifié";
   }
   function key(id, revision) { return core.idempotencyKey(storage, id, revision, () => crypto.randomUUID()); }
@@ -170,9 +171,20 @@
     const submit = button("Envoyer", () => {}, true); submit.type = "submit"; submit.className += " send";
     submit.setAttribute("aria-label", "Envoyer · " + title);
     node.append(fieldLabel, submit);
-    node.onsubmit = (event) => { event.preventDefault(); if (!busy && input.value.trim()) onSubmit(input.value.trim()); };
+    node.onsubmit = (event) => {
+      event.preventDefault();
+      if (busy || !input.value.trim()) return;
+      node.className += " sending"; showPending(input.value.trim()); onSubmit(input.value.trim());
+    };
     parent.append(node);
     return node;
+  }
+  function showPending(text) {
+    const thread = screen.querySelector(".thread");
+    if (!thread) { screen.className += " sending"; return; }
+    thread.append(el("li", text, "me pending"));
+    const typing = el("p", null, "typing"); typing.setAttribute("aria-label", "RunAI réfléchit");
+    typing.append(el("span"), el("span"), el("span")); aiMessage(thread).append(typing);
   }
   function startFraming(text) {
     return mutate(async () => { framing = await api.request("/api/framings", { text, channel: "text" }); drafts.clear(); });
@@ -182,7 +194,7 @@
     screen.append(el("h1", "Où voulez-vous courir ?"), el("p", "Dites-moi votre prochain objectif. Je trouve la course, le dossard, l’hôtel et le trajet, et je m’arrête avant de payer.", "hero-sub"));
     chatField(screen, "Votre objectif de course", "Un marathon au printemps, une ville, une envie…", startFraming, "start");
     const ideas = el("div", null, "ideas");
-    for (const idea of IDEAS) ideas.append(button(idea, () => startFraming(idea)));
+    for (const idea of IDEAS) ideas.append(button(idea, () => { showPending(idea); startFraming(idea); }));
     screen.append(ideas);
   }
   const voice = window.RunAIVoiceInput?.createVoiceInput({
