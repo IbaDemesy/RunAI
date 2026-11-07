@@ -3,11 +3,11 @@ import re
 from runai.models import StopPoint
 
 STOP_INSTRUCTIONS = """\
-Règles de sécurité absolues :
-- N'effectue aucun paiement, aucune réservation et aucune soumission définitive.
-- Ne crée aucun compte et ne saisis aucun mot de passe.
-- Ne coche aucune case de consentement, de règlement ou de déclaration de santé.
-- Arrête-toi dès que l'étape suivante demanderait l'une de ces actions, et décris précisément l'écran atteint.
+Absolute safety rules:
+- Do not make any payment, booking or final submission.
+- Do not create any account or enter any password.
+- Do not check any consent, rules acceptance or health declaration boxes.
+- Stop as soon as the next step would require any of these actions, and describe the screen reached precisely.
 """
 
 _PATTERNS: dict[StopPoint, re.Pattern[str]] = {
@@ -51,7 +51,7 @@ _NEGATION = re.compile(
 
 
 def detect_stop_point(text: str, *, ignore_negated: bool = False) -> StopPoint | None:
-    """`ignore_negated` sert seulement à classer un compte rendu d'agent ; les gardes restent strictes."""
+    """`ignore_negated` only classifies agent reports; guards remain strict."""
     for stop_point, pattern in _PATTERNS.items():
         for match in pattern.finditer(text):
             if not ignore_negated or not _NEGATION.search(

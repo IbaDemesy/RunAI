@@ -78,7 +78,7 @@ def test_yes_never_authorizes_commitment(text):
     open_question(registry, text)
     result = registry.answer("q1", "m1", answer())
     assert result.status == QuestionStatus.refused
-    assert "Aucune autorisation" in result.reason
+    assert "No automation authorized" in result.reason
     assert registry.to_agent_question("q1").answer is None
     with pytest.raises(HumanQuestionError):
         asyncio.run(registry.wait_answer("q1", 1))
@@ -87,7 +87,7 @@ def test_yes_never_authorizes_commitment(text):
 def test_expired_cancelled_and_wait():
     registry = HumanQuestionRegistry()
     open_question(registry, expires_at=utcnow() - timedelta(seconds=1))
-    with pytest.raises(HumanQuestionError, match="expirée"):
+    with pytest.raises(HumanQuestionError, match="expired"):
         registry.answer("q1", "m1", answer())
     registry = HumanQuestionRegistry()
     open_question(registry)
@@ -104,7 +104,7 @@ def test_expired_cancelled_and_wait():
         assert await task == "oui"
         other = HumanQuestionRegistry()
         open_question(other)
-        with pytest.raises(HumanQuestionError, match="expirée"):
+        with pytest.raises(HumanQuestionError, match="expired"):
             await other.wait_answer("q1", 0.001)
         assert other.get("q1").status == QuestionStatus.expired
 
