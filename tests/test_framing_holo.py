@@ -136,7 +136,7 @@ class TwoCandidates:
     async def find_candidates(self, slots):
         from runai.app.candidates import FixtureCandidateSearch
         from runai.app.fakes import DEMO_RACES
-        return (await FixtureCandidateSearch(DEMO_RACES, DataMode.demo).find_candidates(slots))[:2]
+        return (await FixtureCandidateSearch(list(DEMO_RACES.values()), DataMode.demo).find_candidates(slots))[:2]
 
 
 @pytest.mark.anyio
