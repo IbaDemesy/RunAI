@@ -60,6 +60,7 @@ class AgentQuestion(BaseModel):
     id: str
     kind: StepKind
     question: str
+    display_text: str | None = None
     options: list[str] = Field(default_factory=list)
     answer: str | None = None
     asked_at: datetime = Field(default_factory=utcnow)

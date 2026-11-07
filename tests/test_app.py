@@ -4,6 +4,7 @@ import threading
 import time
 from datetime import date
 from types import SimpleNamespace
+from typing import ClassVar
 
 import pytest
 from fastapi.testclient import TestClient
@@ -24,7 +25,12 @@ from runai.app.tasks import (
     extract_budget_per_night,
 )
 from runai.contracts.common import DataMode
-from runai.contracts.framing import FramingConfirm, FramingCreate, FramingReply
+from runai.contracts.framing import (
+    FramingConfirm,
+    FramingCreate,
+    FramingReply,
+    FramingTurn,
+)
 from runai.contracts.mission import HumanAnswer
 from runai.framing.engine import FramingEngine
 from runai.framing.launch import LaunchPlan, StepPlan
@@ -97,6 +103,106 @@ def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, mon
     assert state.payload["steps"][0]["agent_view_url"] == step["agent_view_url"]
     assert state.payload["steps"][0]["data"]["browser_observation"] == step["data"]["browser_observation"]
     assert "FAKE-H-PROGRESS-SENTINEL" not in state.to_sse()
+
+
+def test_observation_trace_stores_a_friendly_headline_and_keeps_raw_action(tmp_path):
+    service = make_service(tmp_path)
+    mission = Mission(
+        id="observation-headline",
+        query="course",
+        status=MissionStatus.running,
+        race=DEMO_RACES["milan"],
+        plan=unit_plan(),
+        steps={kind: StepResult(kind=kind, status=StepStatus.running) for kind in AGENT_KINDS},
+    )
+    service.missions[mission.id] = mission
+    service._writers[mission.id] = TraceWriter(mission.id, traces_dir=tmp_path)
+    service._record(
+        mission,
+        TraceEvent(
+            source="h",
+            type="AgentEvent.observation_event",
+            message="Title — https://www.example.com/",
+            data={
+                "step": "registration",
+                "event": {
+                    "type": "AgentEvent",
+                    "data": {
+                        "kind": "observation_event",
+                        "metadata": {
+                            "title": "Title",
+                            "url": "https://www.example.com/",
+                        },
+                    },
+                },
+            },
+        ),
+    )
+
+    step = mission.steps[StepKind.registration]
+    assert step.data["headline"] == "Sur example.com · Title"
+    assert step.data["last_action"] == "Title — https://www.example.com/"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("raises", [False, True])
+async def test_agent_question_uses_framing_phraser_with_known_context(tmp_path, raises):
+    class RecordingPhraser:
+        calls: ClassVar[list] = []
+
+        async def phrase(self, turns, question, known):
+            self.calls.append((list(turns), question, dict(known)))
+            if raises:
+                raise RuntimeError("phrasing unavailable")
+            return "Phrase naturelle"
+
+    phraser = RecordingPhraser()
+    service = make_service(tmp_path)
+    service.phraser = phraser
+    turns = [FramingTurn(role="user", text="Je prépare Milan", revision=1)]
+    mission = Mission(
+        id="phrased-question",
+        query="course",
+        status=MissionStatus.running,
+        race=DEMO_RACES["milan"],
+        plan=unit_plan(budget_total_eur=500, budget_per_night_eur=250),
+        framing_turns=turns,
+        steps={kind: StepResult(kind=kind, status=StepStatus.running) for kind in AGENT_KINDS},
+    )
+    service.missions[mission.id] = mission
+    service._writers[mission.id] = TraceWriter(mission.id, traces_dir=tmp_path)
+    asking = asyncio.create_task(
+        service.ask(mission.id, StepKind.registration, "Quel sas ?", ["Découverte", "Performance"])
+    )
+    while not mission.questions:
+        await asyncio.sleep(0)
+    question = mission.questions[0]
+    wrapped = service.questions.get(question.id)
+
+    assert question.question == "Quel sas ?"
+    assert question.display_text == ("Quel sas ?" if raises else "Phrase naturelle")
+    assert wrapped.text == "Quel sas ?"
+    assert wrapped.display_text == question.display_text
+    assert phraser.calls == [(turns, "Quel sas ?", {
+        "course": "Wizz Air Milano Marathon 2027",
+        "dates": "2027-04-11 ; 2027-04-03 → 2027-04-05",
+        "départ": "Paris",
+        "budget": "500 € au total, 250 € par nuit",
+        "transport": "train",
+    })]
+    service.answer_question(
+        mission.id,
+        question.id,
+        HumanAnswer(answer="Découverte", revision=mission.plan.revision, idempotency_key="test-answer"),
+    )
+    await asking
+
+
+def test_create_app_reuses_the_same_framing_phraser(tmp_path):
+    service = make_service(tmp_path)
+    app = create_app(service)
+
+    assert service.phraser is app.state.framing.phraser
 
 
 @pytest.mark.parametrize("outcome", ["normal", "missing", "failure", "badpng", "oversized", "cross_session"])
@@ -260,7 +366,21 @@ def test_build_task_is_guarded_and_uses_fake_profile():
     assert "camille.test@example.com" in registration
     assert "Wizz Air Milano Marathon 2027" in registration
     assert "en invité" in registration
-    assert "Runcard" in registration and "ECG d'effort" in registration
+    assert "Runcard" not in registration and "ECG d'effort" not in registration
+    assert "Avant de poursuivre, demande exactement avec ask_user" not in registration
+    assert (
+        "Ne pose aucune question de santé : le certificat médical ou le PPS "
+        "sera fourni par l'utilisateur lui-même."
+    ) in registration
+    assert (
+        "Ne redemande jamais une information déjà donnée ci-dessus "
+        "(dates, budget, ville de départ, distance, mode de transport)."
+    ) in registration
+    assert (
+        "Utilise ask_user uniquement pour un choix qui dépend du site "
+        "(sas, taille de t-shirt, hôtel parmi plusieurs offres, horaire, tarif) ; "
+        "pose au plus 2 questions."
+    ) in registration
     assert "Klikego" in registration
     assert "ask_user" in registration
     assert "3 avril 2027" in accommodation and "5 avril 2027" in accommodation
@@ -280,6 +400,22 @@ def test_build_task_is_guarded_and_uses_fake_profile():
         brief=task_brief(budget_per_night_eur=150),
     )
     assert "150 € par nuit" in budget_task and "300 € maximum" in budget_task
+    assert (
+        "Pas de plafond de budget : propose les meilleures options qualité-prix "
+        "et donne leur prix."
+    ) in build_task(
+        StepKind.accommodation,
+        race,
+        RunnerProfile(),
+        brief=task_brief(budget_open=True),
+    )
+    assert "Budget max par nuit ?" in accommodation
+    assert "Budget max par nuit ?" not in build_task(
+        StepKind.accommodation,
+        race,
+        RunnerProfile(),
+        brief=task_brief(budget_open=True),
+    )
     assert extract_budget_per_night("150 €") == 150
     assert extract_budget_per_night("Budget max 1 200,50 euros par nuit") == 1200.5
     with pytest.raises(ValueError):
@@ -638,12 +774,47 @@ async def test_summary_mentioning_payment_is_treated_as_stop(tmp_path):
     assert registration.status is StepStatus.stopped_before_commitment
     assert registration.stop_point is StopPoint.payment
     assert str(registration.live_view_url) == "https://live.example.org/registration"
+    assert registration.data["headline"] == "Prêt : à finaliser vous-même sur le site officiel"
     assert mission.steps[StepKind.accommodation].status is StepStatus.failed
     assert mission.steps[StepKind.accommodation].error == "H indisponible"
+    assert mission.steps[StepKind.transport].data["headline"] == "Terminé"
     assert mission.steps[StepKind.transport].status is StepStatus.completed
     assert mission.status is MissionStatus.awaiting_human
 
 
+@pytest.mark.anyio
+async def test_step_failure_keeps_raw_error_and_publishes_friendly_copy(tmp_path):
+    raw_error = "Traceback (most recent call last):\nAPI returned 403 Forbidden"
+    agents = ScriptedAgents(
+        {
+            StepKind.registration: StepResult(
+                kind=StepKind.registration,
+                status=StepStatus.completed,
+                summary="Inscription vérifiée",
+            ),
+            StepKind.accommodation: RuntimeError(raw_error),
+            StepKind.transport: StepResult(
+                kind=StepKind.transport,
+                status=StepStatus.completed,
+                summary="Horaires relevés",
+            ),
+        }
+    )
+    service = make_service(tmp_path, agents=agents)
+    mission = await service.wait((await create_confirmed(service, "Milan")).id)
+    step = mission.steps[StepKind.accommodation]
+    user_error = "Le service d'agents est indisponible pour le moment."
+
+    assert step.error == raw_error
+    assert step.data["error_user"] == user_error
+    assert step.data["headline"] == user_error
+    limitation = next(item for item in mission.limitations if item.step == "accommodation")
+    assert limitation.message == user_error
+    failure = next(
+        event for event in mission.events
+        if event.type == "step_failed" and event.data.get("step") == "accommodation"
+    )
+    assert failure.message == f"Hébergement : {user_error}"
 @pytest.mark.anyio
 async def test_partial_failure_without_stop_fails_mission(tmp_path):
     agents = ScriptedAgents(
