@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RunAI — Survol 3D du parcours</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+      integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="map" aria-label="Carte 3D du parcours"></div>
+
+    <aside id="panel">
+      <h1>Survol du parcours</h1>
+      <p id="track-name">Chargement…</p>
+      <p id="disclaimer" hidden>Parcours d'exemple, pas un tracé officiel de course.</p>
+      <dl id="stats">
+        <dt>Distance</dt><dd id="stat-distance">–</dd>
+        <dt>D+ / D−</dt><dd id="stat-climb">–</dd>
+        <dt>Altitude</dt><dd id="stat-ele">–</dd>
+        <dt>Source alt.</dt><dd id="stat-source">–</dd>
+      </dl>
+      <div class="controls">
+        <button id="play" type="button" disabled>▶ Lecture</button>
+        <button id="restart" type="button" disabled>⟲ Départ</button>
+        <button id="overview" type="button" disabled>Vue d'ensemble</button>
+      </div>
+      <label>Durée du survol
+        <select id="duration">
+          <option value="30">30 s</option>
+          <option value="60" selected>1 min</option>
+          <option value="120">2 min</option>
+          <option value="240">4 min</option>
+        </select>
+      </label>
+      <label>Fond de carte
+        <select id="basemap">
+          <option value="osm" selected>Plan OpenStreetMap</option>
+          <option value="satellite">Satellite Sentinel-2 (2020)</option>
+        </select>
+      </label>
+      <label><span>Relief ×<span id="exaggeration-value">1.5</span></span>
+        <input id="exaggeration" type="range" min="1" max="3" step="0.1" value="1.5" />
+      </label>
+      <label class="file">Ouvrir un GPX ou KML…
+        <input id="file" type="file" accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml" />
+      </label>
+      <p class="hint">Glisser-déposer un fichier marche aussi. Espace : lecture/pause, ← → : ±500 m.</p>
+      <p id="status" role="status"></p>
+    </aside>
+
+    <section id="profile-panel" aria-label="Profil d'altitude">
+      <div id="readout">km 0,00</div>
+      <canvas id="profile"></canvas>
+    </section>
+
+    <script
+      src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"
+      integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"
+      crossorigin="anonymous"
+    ></script>
+    <script src="route.js"></script>
+    <script src="flyover.js"></script>
+  </body>
+</html>
