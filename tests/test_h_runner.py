@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from hai_agents.errors import TooManyRequestsError
+from hai_agents.tools import tool
 
 from runai.h import (
     HAccount,
@@ -83,7 +84,9 @@ class FakeSessions:
         return SimpleNamespace(status=status, outcome=None, error=None, steps=2)
 
     async def get_session(self, session_id):
-        return SimpleNamespace(latest_answer=None, agent_view_url=VIEW)
+        return SimpleNamespace(
+            id=session_id, latest_answer=None, agent_view_url=VIEW
+        )
 
     async def pause_session(self, session_id):
         self.calls.append(("pause", session_id))
@@ -132,6 +135,70 @@ def test_run_guards_task_and_returns_step_result(tmp_path):
     assert len(seen) == 4
 
 
+def test_guard_task_does_not_duplicate_safety_instructions():
+    guarded = guard_task("Lis le titre")
+    assert guard_task(guarded) == guarded
+
+
+def test_h_run_dispatches_async_ask_user_tool_without_blocking(tmp_path):
+    class ToolSessionHandle:
+        def __init__(self, sessions, session_id, tools):
+            self.sessions = sessions
+            self.id = session_id
+            self.tools = tools
+
+        async def stream(self, **kwargs):
+            result = await self.tools[0].fn(
+                question="Quel temps visez-vous ?",
+                options=["moins de 3h30", "3h30–4h"],
+            )
+            self.sessions.tool_results.append(result)
+            self.sessions.served[self.id] = True
+            yield {
+                "type": "AgentEvent",
+                "data": {
+                    "kind": "answer_event",
+                    "answer": f"Le sas choisi par l'utilisateur est {result}.",
+                    "outcome": "success",
+                },
+            }
+
+    class ToolClient:
+        def __init__(self):
+            self.sessions = FakeSessions()
+            self.sessions.tool_results = []
+
+        async def start_session(self, *, tools, **params):
+            session = await self.sessions.create_session(**params)
+            return ToolSessionHandle(self.sessions, session.id, tools)
+
+    questions = []
+
+    async def ask_user(question: str, options: list[str]) -> str:
+        questions.append((question, options))
+        return "moins de 3h30"
+
+    @tool(name="ask_user")
+    async def ask_user_tool(question: str, options: list[str]) -> str:
+        """Request missing details from the runner before continuing."""
+        return await ask_user(question, options)
+
+    client = ToolClient()
+    runner = HRunner(client, traces_dir=tmp_path, quota_poll_s=0)
+    result = asyncio.run(
+        runner.run(
+            StepKind.registration,
+            "Prépare l'inscription",
+            tools=[ask_user_tool],
+        )
+    )
+    assert questions == [
+        ("Quel temps visez-vous ?", ["moins de 3h30", "3h30–4h"])
+    ]
+    assert client.sessions.tool_results == ["moins de 3h30"]
+    assert "moins de 3h30" in result.summary
+
+
 def test_every_event_is_traced_without_screenshots(tmp_path):
     runner = make_runner(tmp_path, FakeSessions())
     asyncio.run(runner.run(StepKind.search, "Lis le titre", mission_id="m1"))
@@ -153,6 +220,16 @@ def test_answer_reaching_payment_is_stop_point(tmp_path):
     result = asyncio.run(runner.run(StepKind.registration, "Prépare l'inscription"))
     assert result.status is StepStatus.stopped_before_commitment
     assert result.stop_point is StopPoint.payment
+
+
+def test_reported_captcha_block_is_a_failed_step():
+    result = build_step_result(
+        StepKind.registration,
+        "completed",
+        answer="BLOCAGE CAPTCHA/ANTI-BOT : accès bloqué.",
+    )
+    assert result.status is StepStatus.failed
+    assert "captcha" in result.error.lower()
 
 
 def test_failed_session(tmp_path):

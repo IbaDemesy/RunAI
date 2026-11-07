@@ -37,7 +37,10 @@ _PATTERNS: dict[StopPoint, re.Pattern[str]] = {
 
 
 def guard_task(task: str) -> str:
-    return f"{task.strip()}\n\n{STOP_INSTRUCTIONS}"
+    task = task.strip()
+    if task.endswith(STOP_INSTRUCTIONS.strip()):
+        return f"{task}\n"
+    return f"{task}\n\n{STOP_INSTRUCTIONS}"
 
 
 def detect_stop_point(text: str) -> StopPoint | None:

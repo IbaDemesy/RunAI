@@ -1,15 +1,21 @@
 import asyncio
 import json
 import threading
+import time
 
 import pytest
 from fastapi.testclient import TestClient
 
 from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
-from runai.app.mission import MissionService, MissionStatus
+from runai.app.mission import Mission, MissionService, MissionStatus
 from runai.app.server import MAX_AUDIO_BYTES, create_app
-from runai.app.tasks import HUMAN_ACTIONS, build_task
+from runai.app.tasks import (
+    HUMAN_ACTIONS,
+    build_task,
+    extract_budget_per_night,
+)
 from runai.models import (
+    AgentQuestion,
     Race,
     RunnerProfile,
     StepKind,
@@ -39,6 +45,18 @@ def make_service(tmp_path, agents=None, search=None, delay=0.0):
     )
 
 
+async def answer_fake_questions(service, mission):
+    while len(mission.questions) < 4 or any(
+        question.answer is None for question in mission.questions
+    ):
+        for question in mission.questions:
+            if question.answer is None:
+                service.answer_question(
+                    mission.id, question.id, question.options[0]
+                )
+        await asyncio.sleep(0)
+
+
 class ScriptedRun:
     def __init__(self, kind, result=None, error=None):
         self.session_id = f"scripted-{kind.value}"
@@ -66,7 +84,7 @@ class ScriptedAgents:
     def __init__(self, results):
         self.results = results
 
-    async def start(self, kind, task, race, profile, on_event):
+    async def start(self, kind, task, race, profile, on_event, ask_user, mission_id=None):
         outcome = self.results[kind]
         if isinstance(outcome, Exception):
             return ScriptedRun(kind, error=outcome)
@@ -78,10 +96,69 @@ def test_build_task_is_guarded_and_uses_fake_profile():
     for kind in AGENT_KINDS:
         task = build_task(kind, race, RunnerProfile())
         assert task.endswith(STOP_INSTRUCTIONS)
-        assert "camille.test@example.com" in task
-    assert "Booking.com" in build_task(StepKind.accommodation, race, RunnerProfile())
+        assert "ask_user" in task
+        assert "au plus 2 questions" in task
+        assert "BLOCAGE CAPTCHA/ANTI-BOT" in task
+    registration = build_task(StepKind.registration, race, RunnerProfile())
+    accommodation = build_task(StepKind.accommodation, race, RunnerProfile())
+    transport = build_task(StepKind.transport, race, RunnerProfile())
+    assert "camille.test@example.com" in registration
+    assert "Wizz Air Milano Marathon 2027" in registration
+    assert "en invité" in registration
+    assert "Runcard" in registration and "ECG d'effort" in registration
+    assert "Klikego" in registration
+    assert "ask_user" in registration
+    assert "3 avril 2027" in accommodation and "5 avril 2027" in accommodation
+    assert "all.accor.com" in accommodation
+    assert "PRIX_TOTAL_2_NUITS" in accommodation
+    assert all(
+        site in accommodation
+        for site in ("Booking.com", "Expedia", "Hotels.com", "Airbnb")
+    )
+    assert "Corso Sempione" in accommodation and "Via Moncucco 35" in accommodation
+    assert "trenitalia.com" in transport and "Paris" in transport
+    assert "jamais TAP" in transport
+    budget_task = build_task(
+        StepKind.accommodation,
+        race,
+        RunnerProfile(),
+        query="Marathon de Milan, budget hôtel max 150 € par nuit",
+    )
+    assert "150 € par nuit" in budget_task and "300 € maximum" in budget_task
+    assert extract_budget_per_night("150 €") == 150
+    assert extract_budget_per_night("Budget max 1 200,50 euros par nuit") == 1200.5
     with pytest.raises(ValueError):
         build_task(StepKind.search, race, RunnerProfile())
+
+
+def test_hotel_budget_overrun_is_marked_failed():
+    mission = Mission(
+        id="budget-test",
+        query="Marathon de Milan",
+        steps={kind: StepResult(kind=kind) for kind in AGENT_KINDS},
+        questions=[
+            AgentQuestion(
+                id="budget",
+                kind=StepKind.accommodation,
+                question="Budget max par nuit ?",
+                options=["100 €", "150 €", "200 €"],
+                answer="150 €",
+            )
+        ],
+    )
+    result = StepResult(
+        kind=StepKind.accommodation,
+        status=StepStatus.stopped_before_commitment,
+        summary="Sofitel disponible.",
+        price_eur=660.70,
+    )
+
+    filtered = MissionService._validate_hotel_budget(mission, result)
+
+    assert filtered.status is StepStatus.failed
+    assert filtered.data["budget_max_total_eur"] == 300
+    assert filtered.data["over_budget"] is True
+    assert "HORS BUDGET" in filtered.summary
 
 
 def test_every_stop_point_has_a_human_action():
@@ -93,6 +170,7 @@ async def test_full_fake_mission_stops_before_commitment(tmp_path):
     agents = FakeBrowserAgents(delay=0)
     service = make_service(tmp_path, agents=agents)
     mission = await service.create("Marathon de Milan, je pars de Paris")
+    await answer_fake_questions(service, mission)
     mission = await service.wait(mission.id)
 
     assert mission.status is MissionStatus.awaiting_human
@@ -105,8 +183,25 @@ async def test_full_fake_mission_stops_before_commitment(tmp_path):
         assert step["status"] == "stopped_before_commitment"
         assert step["stop_point"] in {"consent", "payment"}
         assert step["human_action"]
+        assert "Réponses utilisateur :" in step["summary"]
         assert step["data"]["live_view_path"].startswith("/demo/live?session=")
     assert all(run.task.endswith(STOP_INSTRUCTIONS) for run in agents.runs)
+    registration_step = next(
+        step
+        for step in snapshot["steps"]
+        if step["kind"] == StepKind.registration.value
+    )
+    assert "Oui, j'ai les deux" in registration_step["summary"]
+    registration_questions = [
+        question
+        for question in mission.questions
+        if question.kind is StepKind.registration
+    ]
+    assert registration_questions[0].question == (
+        "Avez-vous une Runcard ou un certificat médical de compétition (ECG d'effort) ?"
+    )
+    assert registration_questions[0].options == ["Oui, j'ai les deux", "Pas encore"]
+    assert len(registration_questions) == 2
     trace = TraceWriter(mission.id, traces_dir=tmp_path).read()
     assert trace[0].type == "mission_created"
     assert trace[-1].type == "mission_done"
@@ -124,6 +219,7 @@ async def test_pause_resume_and_message(tmp_path):
     agents = FakeBrowserAgents(delay=0.02)
     service = make_service(tmp_path, agents=agents)
     mission = await service.create("Milan")
+    await answer_fake_questions(service, mission)
     while mission.steps[StepKind.registration].status is not StepStatus.running:
         await asyncio.sleep(0.005)
     while service.get(mission.id).steps[StepKind.registration].h_session_id is None:
@@ -159,6 +255,163 @@ async def test_pause_resume_and_message(tmp_path):
         "resume",
         "message",
         "message_ack",
+    }
+
+
+@pytest.mark.anyio
+async def test_agent_question_waits_for_answer_and_resumes(tmp_path):
+    agents = FakeBrowserAgents(delay=0)
+    service = make_service(tmp_path, agents=agents)
+    mission = await service.create("Marathon de Milan")
+
+    while not mission.questions:
+        await asyncio.sleep(0)
+    question = mission.questions[0]
+    step = mission.steps[question.kind]
+    assert step.status is StepStatus.waiting_for_user
+    assert question.answer is None
+    assert question.kind.value in {
+        item["kind"]
+        for item in mission.snapshot()["steps"]
+        if item["status"] == StepStatus.waiting_for_user.value
+    }
+
+    answer = question.options[0]
+    service.answer_question(mission.id, question.id, answer)
+    await answer_fake_questions(service, mission)
+    mission = await service.wait(mission.id)
+
+    result = mission.steps[question.kind]
+    assert result.status is StepStatus.stopped_before_commitment
+    assert answer in result.summary
+    assert question.answered_at is not None
+    assert {event.type for event in mission.events} >= {"question", "answer"}
+    trace = TraceWriter(mission.id, traces_dir=tmp_path).read()
+    assert any(event.type == "question" for event in trace)
+    assert any(event.type == "answer" for event in trace)
+
+
+@pytest.mark.anyio
+async def test_question_sse_event_and_timeout_answer(tmp_path):
+    service = make_service(tmp_path, agents=FakeBrowserAgents(delay=0), delay=0)
+    service.question_timeout_s = 0.01
+    mission = await service.create("Marathon de Milan")
+    events = service.subscribe(mission.id)
+    await anext(events)
+    names = []
+    while "question" not in names or "answer" not in names:
+        name, _ = await asyncio.wait_for(anext(events), timeout=1)
+        names.append(name)
+    mission = await service.wait(mission.id)
+    assert "question" in names
+    assert "answer" in names
+    assert all(question.answer is not None for question in mission.questions)
+    assert all(
+        "arrête-toi ici et résume" in question.answer
+        for question in mission.questions
+    )
+    await events.aclose()
+
+
+def test_question_answer_endpoint_validation_and_history(tmp_path):
+    service = make_service(tmp_path, delay=0)
+    service.question_timeout_s = 60
+    with TestClient(create_app(service)) as client:
+        _assert_question_answer_endpoint(client)
+
+
+def _assert_question_answer_endpoint(client):
+    created = client.post(
+        "/api/missions", json={"query": "Marathon de Milan, départ de Paris"}
+    )
+    assert created.status_code == 201
+    mission_id = created.json()["id"]
+    assert (
+        client.post(
+            f"/api/missions/{mission_id}/questions/not-a-question/answer",
+            json={"answer": "150 €"},
+        ).status_code
+        == 404
+    )
+    assert (
+        client.post(
+            "/api/missions/unknown/questions/q1/answer",
+            json={"answer": "150 €"},
+        ).status_code
+        == 404
+    )
+
+    question = None
+    for _ in range(100):
+        snapshot = client.get(f"/api/missions/{mission_id}").json()
+        question = next(
+            (item for item in snapshot["questions"] if item["answer"] is None),
+            None,
+        )
+        if question:
+            break
+        time.sleep(0.01)
+    assert question is not None
+    assert (
+        client.post(
+            f"/api/missions/{mission_id}/questions/{question['id']}/answer",
+            json={"answer": "x" * 501},
+        ).status_code
+        == 422
+    )
+    assert (
+        client.post(
+            f"/api/missions/{mission_id}/questions/{question['id']}/answer",
+            json={"answer": " "},
+        ).status_code
+        == 422
+    )
+
+    answered = client.post(
+        f"/api/missions/{mission_id}/questions/{question['id']}/answer",
+        json={"answer": "150 €"},
+    )
+    assert answered.status_code == 200
+    saved_question = next(
+        item
+        for item in answered.json()["questions"]
+        if item["id"] == question["id"]
+    )
+    assert saved_question["answer"] == "150 €"
+    assert saved_question["answered_at"] is not None
+    assert (
+        client.post(
+            f"/api/missions/{mission_id}/questions/{question['id']}/answer",
+            json={"answer": "200 €"},
+        ).status_code
+        == 409
+    )
+    for _ in range(1000):
+        snapshot = client.get(f"/api/missions/{mission_id}").json()
+        if len(snapshot["questions"]) == 4:
+            break
+        time.sleep(0.01)
+    assert len(snapshot["questions"]) == 4
+    for pending in snapshot["questions"]:
+        if pending["answer"] is None:
+            assert (
+                client.post(
+                    f"/api/missions/{mission_id}/questions/{pending['id']}/answer",
+                    json={"answer": pending["options"][0]},
+                ).status_code
+                == 200
+            )
+    for _ in range(1000):
+        final_snapshot = client.get(f"/api/missions/{mission_id}").json()
+        if final_snapshot["status"] in {
+            MissionStatus.awaiting_human.value,
+            MissionStatus.failed.value,
+        }:
+            break
+        time.sleep(0.01)
+    assert final_snapshot["status"] in {
+        MissionStatus.awaiting_human.value,
+        MissionStatus.failed.value,
     }
 
 
@@ -223,6 +476,7 @@ async def test_trace_write_failure_does_not_strand_mission(tmp_path, monkeypatch
         raise OSError("disque plein")
 
     monkeypatch.setattr(TraceWriter, "write", broken_write)
+    await answer_fake_questions(service, mission)
     mission = await service.wait(mission.id)
     assert mission.status is MissionStatus.awaiting_human
 
@@ -242,7 +496,9 @@ async def test_failed_search_fails_mission(tmp_path):
 @pytest.mark.anyio
 async def test_events_from_another_thread_are_recorded(tmp_path):
     class ThreadedAgents(FakeBrowserAgents):
-        async def start(self, kind, task, race, profile, on_event):
+        async def start(
+            self, kind, task, race, profile, on_event, ask_user, mission_id=None
+        ):
             thread = threading.Thread(
                 target=on_event,
                 args=(
@@ -255,10 +511,14 @@ async def test_events_from_another_thread_are_recorded(tmp_path):
             )
             thread.start()
             thread.join()
-            return await super().start(kind, task, race, profile, on_event)
+            return await super().start(
+                kind, task, race, profile, on_event, ask_user, mission_id
+            )
 
     service = make_service(tmp_path, agents=ThreadedAgents(delay=0))
-    mission = await service.wait((await service.create("Milan")).id)
+    mission = await service.create("Milan")
+    await answer_fake_questions(service, mission)
+    mission = await service.wait(mission.id)
     assert sum(event.message == "depuis un thread" for event in mission.events) == 3
 
 
@@ -266,7 +526,9 @@ async def test_events_from_another_thread_are_recorded(tmp_path):
 async def test_subscribe_receives_final_state(tmp_path):
     service = make_service(tmp_path, agents=FakeBrowserAgents(delay=0.01))
     mission = await service.create("Milan")
+    answers = asyncio.create_task(answer_fake_questions(service, mission))
     messages = [message async for message in service.subscribe(mission.id)]
+    await answers
     assert messages[0][0] == "snapshot"
     assert messages[-1][0] == "mission"
     assert messages[-1][1]["status"] == "awaiting_human"
@@ -283,19 +545,49 @@ def read_sse(response):
     return events
 
 
+def answer_questions_from_thread(service, mission):
+    handled = set()
+    loop = service._loop
+    while not mission.is_terminal:
+        for question in mission.questions:
+            if question.answer is None and question.id not in handled:
+                loop.call_soon_threadsafe(
+                    service.answer_question,
+                    mission.id,
+                    question.id,
+                    question.options[0],
+                )
+                handled.add(question.id)
+        time.sleep(0.01)
+
+
 def test_api_runs_a_demo_mission_with_sse(tmp_path):
-    app = create_app(make_service(tmp_path, delay=0.01))
+    service = make_service(tmp_path, delay=0.01)
+    app = create_app(service)
     with TestClient(app) as client:
         assert "RunAI" in client.get("/").text
-        assert client.get("/api/health").json() == {"ok": True, "simulated": True}
+        assert client.get("/api/health").json() == {
+            "ok": True,
+            "mode": "demo",
+            "simulated": True,
+        }
 
         created = client.post("/api/missions", json={"query": "Marathon de Milan"})
         assert created.status_code == 201
         mission_id = created.json()["id"]
+        mission = service.get(mission_id)
+        answers = threading.Thread(
+            target=answer_questions_from_thread,
+            args=(service, mission),
+            daemon=True,
+        )
+        answers.start()
 
         with client.stream("GET", f"/api/missions/{mission_id}/events") as response:
             assert response.headers["content-type"].startswith("text/event-stream")
             events = read_sse(response)
+        answers.join(timeout=2)
+        assert not answers.is_alive()
         names = [name for name, _ in events]
         assert names[0] == "snapshot"
         assert "trace" in names

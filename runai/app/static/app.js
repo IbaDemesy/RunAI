@@ -2,6 +2,7 @@ const STATUS_LABELS = {
   pending: "En attente",
   running: "En cours",
   paused: "En pause",
+  waiting_for_user: "En attente de votre réponse",
   stopped_before_commitment: "Arrêté avant engagement",
   completed: "Terminé",
   failed: "Échec",
@@ -92,6 +93,54 @@ function stepCard(step) {
   return card;
 }
 
+function renderQuestions(step, questions) {
+  const container = $(".questions", document.getElementById(`step-${step.kind}`));
+  const answers = new Map(
+    [...container.querySelectorAll(".answer-form")].map((form) => [
+      form.dataset.questionId,
+      $("input", form).value,
+    ]),
+  );
+  container.replaceChildren();
+  const items = questions.filter((question) => question.kind === step.kind);
+  container.classList.toggle("hidden", items.length === 0);
+  for (const question of items) {
+    const item = element("section", null, question.answer ? "question-history" : "agent-question");
+    item.append(element("p", question.question, "question-text"));
+    if (question.answer) {
+      item.append(element("p", `Réponse : ${question.answer}`, "question-answer"));
+      container.append(item);
+      continue;
+    }
+    const options = element("div", null, "question-options");
+    for (const option of question.options || []) {
+      const button = element("button", option, "secondary");
+      button.type = "button";
+      button.addEventListener("click", () => submitAnswer(question.id, option, item));
+      options.append(button);
+    }
+    item.append(options);
+    const form = element("form", null, "row answer-form");
+    form.dataset.questionId = question.id;
+    const input = element("input");
+    input.name = "answer";
+    input.value = answers.get(question.id) || "";
+    input.maxLength = 500;
+    input.placeholder = "Votre réponse";
+    input.autocomplete = "off";
+    const send = element("button", "Envoyer");
+    send.type = "submit";
+    form.append(input, send);
+    const feedback = element("p", null, "question-feedback muted");
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitAnswer(question.id, input.value.trim(), item);
+    });
+    item.append(form, feedback);
+    container.append(item);
+  }
+}
+
 function renderStep(step) {
   const card = stepCard(step);
   card.dataset.status = step.status;
@@ -111,6 +160,7 @@ function renderStep(step) {
   }
   const summary = [step.summary, step.error && `Erreur : ${step.error}`].filter(Boolean).join(" ");
   $(".summary", card).textContent = summary;
+  renderQuestions(step, mission.questions || []);
   const started = Boolean(step.h_session_id);
   const active = started && (step.status === "running" || step.status === "paused");
   $(".pause", card).disabled = !started || step.status !== "running";
@@ -143,7 +193,7 @@ function renderPortal(steps) {
     container.append(item);
   }
   const total = stopped.reduce((sum, step) => sum + (step.price_eur || 0), 0);
-  const waiting = steps.filter((step) => ["pending", "running", "paused"].includes(step.status)).length;
+  const waiting = steps.filter((step) => ["pending", "running", "paused", "waiting_for_user"].includes(step.status)).length;
   $("#portal-total").textContent =
     `Total estimé à payer vous-même : ${total.toFixed(2)} €` + (waiting ? ` · ${waiting} agent(s) encore en cours` : "");
 }
@@ -183,6 +233,9 @@ function listen(id) {
     if (TERMINAL.has(data.status)) source.close();
   });
   source.addEventListener("trace", (event) => appendEvent(JSON.parse(event.data)));
+  source.addEventListener("question", () => {
+    if (mission) api(`/api/missions/${mission.id}`).then((data) => render(data));
+  });
   source.addEventListener("end", () => source.close());
 }
 
@@ -212,19 +265,18 @@ $("#mission-form").addEventListener("submit", async (event) => {
 });
 
 let recorder = null;
-async function transcribe(blob, note) {
-  $("#mic-status").textContent = "Transcription…";
-  const response = await fetch("/api/transcribe", {
+async function transcribe(blob, input, feedback, note) {
+  feedback.textContent = "Transcription…";
+  const data = await api("/api/transcribe", {
     method: "POST",
     headers: { "Content-Type": blob.type || "application/octet-stream" },
     body: blob,
   });
-  const data = await response.json();
-  $("#query").value = data.text;
-  $("#mic-status").textContent = note || "Transcription reçue : vérifiez puis cliquez sur « Préparer ».";
+  input.value = data.text;
+  feedback.textContent = note || "Transcription reçue.";
 }
 
-$("#mic").addEventListener("click", async () => {
+async function captureToInput(input, button, feedback) {
   if (recorder && recorder.state === "recording") {
     recorder.stop();
     return;
@@ -233,28 +285,62 @@ $("#mic").addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const chunks = [];
     recorder = new MediaRecorder(stream);
+    recorder.target = input;
+    recorder.button = button;
     recorder.ondataavailable = (event) => chunks.push(event.data);
     recorder.onstop = () => {
+      const stoppedRecorder = recorder;
+      stoppedRecorder.transcribing = true;
       stream.getTracks().forEach((track) => track.stop());
-      $("#mic").textContent = "Dire la course";
-      transcribe(new Blob(chunks, { type: recorder.mimeType }));
+      button.textContent = button.id === "mic" ? "Dire la course" : "Micro";
+      transcribe(new Blob(chunks, { type: recorder.mimeType }), input, feedback)
+        .catch((error) => (feedback.textContent = `Transcription impossible : ${error.message}`))
+        .finally(() => {
+          if (recorder === stoppedRecorder) recorder = null;
+        });
     };
     recorder.start();
-    $("#mic").textContent = "Arrêter";
-    $("#mic-status").textContent = "Enregistrement… cliquez sur « Arrêter » quand vous avez fini.";
+    button.textContent = "Arrêter";
+    feedback.textContent = "Enregistrement… cliquez sur « Arrêter » quand vous avez fini.";
   } catch (error) {
     if (!simulated) {
-      $("#mic-status").textContent = `Micro indisponible : ${error.message}`;
+      feedback.textContent = `Micro indisponible : ${error.message}`;
       return;
     }
-    transcribe(new Blob(["demo"], { type: "text/plain" }), "Micro indisponible : transcription simulée.");
+    transcribe(
+      new Blob(["demo"], { type: "text/plain" }),
+      input,
+      feedback,
+      "Micro indisponible : transcription simulée.",
+    ).catch((transcribeError) => (feedback.textContent = `Transcription impossible : ${transcribeError.message}`));
   }
-});
+}
+
+async function submitAnswer(questionId, answer, item) {
+  const feedback = $(".question-feedback", item);
+  if (!answer) {
+    if (feedback) feedback.textContent = "Saisissez ou choisissez une réponse.";
+    return;
+  }
+  try {
+    const data = await api(
+      `/api/missions/${mission.id}/questions/${questionId}/answer`,
+      { method: "POST", body: JSON.stringify({ answer }) },
+    );
+    render(data);
+  } catch (error) {
+    if (feedback) feedback.textContent = error.message;
+  }
+}
+
+$("#mic").addEventListener("click", () => captureToInput($("#query"), $("#mic"), $("#mic-status")));
 
 (async () => {
   const health = await api("/api/health");
   simulated = health.simulated;
-  $("#mode").classList.toggle("hidden", !simulated);
+  $("#mode").textContent = simulated ? "Mode démo : agents simulés" : "Mode réel";
+  $("#mode").classList.toggle("real", !simulated);
+  $("#mode").classList.remove("hidden");
   const existing = new URLSearchParams(location.search).get("mission");
   if (existing) {
     try {

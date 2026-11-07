@@ -14,6 +14,7 @@ from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
 from runai.app.mission import MissionError, MissionService
 from runai.app.tasks import STEP_LABELS
 from runai.config import get_settings
+from runai.h.runner import api_keys_from_env
 from runai.models import StepKind
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -29,6 +30,10 @@ class MessageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=500)
 
 
+class AnswerRequest(BaseModel):
+    answer: str = Field(min_length=1, max_length=500)
+
+
 def build_demo_service(delay: float | None = None) -> MissionService:
     delay = float(os.getenv("RUNAI_DEMO_DELAY", "1.5")) if delay is None else delay
     settings = get_settings()
@@ -42,9 +47,36 @@ def build_demo_service(delay: float | None = None) -> MissionService:
     )
 
 
+def build_service() -> MissionService:
+    settings = get_settings()
+    if (
+        os.getenv("RUNAI_DEMO") == "1"
+        or not api_keys_from_env()
+        or not settings.linkup_api_key
+    ):
+        return build_demo_service()
+
+    from runai.app.real import RealBrowserAgents, RealRaceSearch, RealTranscriber
+
+    delay = float(os.getenv("RUNAI_DEMO_DELAY", "1.5"))
+    transcriber = (
+        RealTranscriber()
+        if settings.gladia_api_key
+        else FakeTranscriber(delay=delay / 3)
+    )
+    return MissionService(
+        RealRaceSearch(),
+        RealBrowserAgents(traces_dir=settings.traces_dir),
+        transcriber,
+        traces_dir=settings.traces_dir,
+        max_concurrency=settings.h_max_concurrency,
+        simulated=False,
+    )
+
+
 def create_app(service: MissionService | None = None) -> FastAPI:
     app = FastAPI(title="RunAI")
-    app.state.service = service or build_demo_service()
+    app.state.service = service or build_service()
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     def get_service() -> MissionService:
@@ -65,7 +97,12 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> dict:
-        return {"ok": True, "simulated": get_service().simulated}
+        selected = get_service()
+        return {
+            "ok": True,
+            "mode": "demo" if selected.simulated else "real",
+            "simulated": selected.simulated,
+        }
 
     @app.post("/api/missions", status_code=201)
     async def create_mission(body: MissionRequest) -> dict:
@@ -153,6 +190,18 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     ) -> dict:
         try:
             await get_service().send_message(mission_id, kind, body.text)
+            return get_service().get(mission_id).snapshot()
+        except MissionError as error:
+            raise handle(error) from None
+
+    @app.post("/api/missions/{mission_id}/questions/{question_id}/answer")
+    async def answer_question(
+        mission_id: str, question_id: str, body: AnswerRequest
+    ) -> dict:
+        if not body.answer.strip():
+            raise HTTPException(status_code=422, detail="La réponse ne peut pas être vide")
+        try:
+            get_service().answer_question(mission_id, question_id, body.answer)
             return get_service().get(mission_id).snapshot()
         except MissionError as error:
             raise handle(error) from None

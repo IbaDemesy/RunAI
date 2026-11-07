@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -12,8 +13,14 @@ from typing import Any
 from pydantic import BaseModel, Field, HttpUrl
 
 from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
-from runai.app.tasks import STEP_LABELS, build_task, human_action
+from runai.app.tasks import (
+    STEP_LABELS,
+    build_task,
+    extract_budget_per_night,
+    human_action,
+)
 from runai.models import (
+    AgentQuestion,
     Race,
     RunnerProfile,
     StepKind,
@@ -44,6 +51,7 @@ TERMINAL_STATUSES = {
     MissionStatus.completed,
     MissionStatus.failed,
 }
+QUESTION_TIMEOUT_ANSWER = "Pas de réponse de l'utilisateur : arrête-toi ici et résume."
 
 
 class Mission(BaseModel):
@@ -53,6 +61,7 @@ class Mission(BaseModel):
     created_at: datetime = Field(default_factory=utcnow)
     race: Race | None = None
     steps: dict[StepKind, StepResult]
+    questions: list[AgentQuestion] = Field(default_factory=list)
     events: list[TraceEvent] = Field(default_factory=list)
     error: str | None = None
 
@@ -94,6 +103,7 @@ class MissionService:
         traces_dir: Path | None = None,
         max_concurrency: int = 3,
         simulated: bool = False,
+        question_timeout_s: float | None = None,
     ):
         self.search = search
         self.agents = agents
@@ -101,6 +111,11 @@ class MissionService:
         self.profile = profile or RunnerProfile()
         self.traces_dir = traces_dir
         self.simulated = simulated
+        self.question_timeout_s = (
+            float(os.getenv("RUNAI_QUESTION_TIMEOUT_S", "600"))
+            if question_timeout_s is None
+            else question_timeout_s
+        )
         self.missions: dict[str, Mission] = {}
         self._runs: dict[tuple[str, StepKind], AgentRun] = {}
         self._writers: dict[str, TraceWriter] = {}
@@ -108,6 +123,7 @@ class MissionService:
             str, set[asyncio.Queue[tuple[str, dict[str, Any]]]]
         ] = {}
         self._tasks: set[asyncio.Task[None]] = set()
+        self._pending_questions: dict[str, asyncio.Future[str]] = {}
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._loop: asyncio.AbstractEventLoop | None = None
 
@@ -146,6 +162,102 @@ class MissionService:
 
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         return await self.transcriber.transcribe(audio, content_type)
+
+    async def ask(
+        self, mission_id: str, kind: StepKind, question: str, options: list[str]
+    ) -> str:
+        mission = self.get(mission_id)
+        duplicate = next(
+            (
+                item
+                for item in reversed(mission.questions)
+                if item.kind is kind
+                and item.question == question
+                and item.options == options
+            ),
+            None,
+        )
+        if duplicate is not None:
+            if duplicate.answer is not None:
+                return duplicate.answer
+            future = self._pending_questions.get(duplicate.id)
+            if future is not None:
+                return await future
+        if sum(item.kind is kind for item in mission.questions) >= 2:
+            return "Tu as déjà posé deux questions. Utilise les informations disponibles et arrête-toi avant tout engagement."
+        step = mission.steps[kind]
+        question_model = AgentQuestion(
+            id=uuid.uuid4().hex,
+            kind=kind,
+            question=question,
+            options=options,
+        )
+        future = asyncio.get_running_loop().create_future()
+        self._pending_questions[question_model.id] = future
+        mission.questions.append(question_model)
+        step.status = StepStatus.waiting_for_user
+        self._record(
+            mission,
+            TraceEvent(
+                source=f"agent:{kind.value}",
+                type="question",
+                message=question,
+                data={
+                    "step": kind.value,
+                    "question_id": question_model.id,
+                    "options": options,
+                },
+            ),
+        )
+        self._publish(mission, ("question", question_model.model_dump(mode="json")))
+        timed_out = False
+        try:
+            try:
+                answer = await asyncio.wait_for(
+                    future, timeout=self.question_timeout_s
+                )
+            except TimeoutError:
+                timed_out = True
+                answer = QUESTION_TIMEOUT_ANSWER
+            question_model.answer = answer
+            question_model.answered_at = question_model.answered_at or utcnow()
+            step.status = StepStatus.running
+            self._record(
+                mission,
+                TraceEvent(
+                    source="system" if timed_out else "human",
+                    type="answer",
+                    message=f"{STEP_LABELS[kind]} : « {answer} »",
+                    data={
+                        "step": kind.value,
+                        "question_id": question_model.id,
+                        "answer": answer,
+                    },
+                ),
+            )
+            self._publish(
+                mission, ("answer", question_model.model_dump(mode="json"))
+            )
+            return answer
+        finally:
+            self._pending_questions.pop(question_model.id, None)
+
+    def answer_question(
+        self, mission_id: str, question_id: str, answer: str
+    ) -> AgentQuestion:
+        mission = self.get(mission_id)
+        question = next(
+            (item for item in mission.questions if item.id == question_id), None
+        )
+        if question is None:
+            raise MissionError(f"Question inconnue : {question_id}")
+        future = self._pending_questions.get(question_id)
+        if question.answer is not None or future is None or future.done():
+            raise MissionError(f"Question déjà répondue : {question_id}")
+        question.answer = answer.strip()
+        question.answered_at = utcnow()
+        future.set_result(question.answer)
+        return question
 
     async def pause(self, mission_id: str, kind: StepKind) -> None:
         mission, step, run = self._active(mission_id, kind)
@@ -333,15 +445,28 @@ class MissionService:
                 ),
             )
             try:
-                task = build_task(kind, mission.race, self.profile)
+                task = build_task(
+                    kind, mission.race, self.profile, query=mission.query
+                )
+
+                async def ask_user(question: str, options: list[str]) -> str:
+                    return await self.ask(mission.id, kind, question, options)
+
                 run = await self.agents.start(
-                    kind, task, mission.race, self.profile, on_event
+                    kind,
+                    task,
+                    mission.race,
+                    self.profile,
+                    on_event,
+                    ask_user=ask_user,
+                    mission_id=mission.id,
                 )
                 self._runs[(mission.id, kind)] = run
                 step.h_session_id = run.session_id
                 self._set_live_view(step, run.live_view_url)
                 self._publish_state(mission)
                 result = await run.wait()
+                result = self._validate_hotel_budget(mission, result)
             except Exception as error:  # noqa: BLE001
                 step.status = StepStatus.failed
                 step.error = str(error)
@@ -367,6 +492,53 @@ class MissionService:
                 data={"step": kind.value, "status": step.status.value},
             ),
         )
+
+    @staticmethod
+    def _validate_hotel_budget(mission: Mission, result: StepResult) -> StepResult:
+        if result.kind is not StepKind.accommodation or result.status is StepStatus.failed:
+            return result
+
+        budget = next(
+            (
+                parsed
+                for question in reversed(mission.questions)
+                if question.kind is StepKind.accommodation
+                and question.answer
+                and (parsed := extract_budget_per_night(question.answer)) is not None
+            ),
+            None,
+        )
+        if budget is None:
+            budget = extract_budget_per_night(mission.query, require_context=True)
+        if result.price_eur is None and budget is None:
+            return result
+        if budget is None:
+            result.status = StepStatus.failed
+            result.error = "Le budget hôtel maximal par nuit n'a pas été fourni."
+            result.summary = f"BUDGET MANQUANT — {result.summary or ''}".strip()
+            return result
+        if result.price_eur is None:
+            result.status = StepStatus.failed
+            result.error = "Le prix total de l'hôtel n'a pas pu être vérifié."
+            result.summary = f"PRIX INCONNU — {result.summary or ''}".strip()
+            return result
+
+        total_limit = budget * 2
+        result.data.update(
+            {
+                "budget_max_per_night_eur": budget,
+                "budget_max_total_eur": total_limit,
+                "over_budget": result.price_eur > total_limit,
+            }
+        )
+        if result.price_eur > total_limit:
+            result.status = StepStatus.failed
+            result.error = (
+                f"HORS BUDGET : {result.price_eur:.2f} € dépasse "
+                f"{total_limit:.2f} € ({budget:g} €/nuit × 2 nuits)."
+            )
+            result.summary = f"{result.error} {result.summary or ''}".strip()
+        return result
 
     @staticmethod
     def _set_live_view(step: StepResult, url: str | None) -> None:

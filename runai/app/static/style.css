@@ -24,6 +24,7 @@ code { font-size: 0.9em; }
 .top h1 { color: var(--accent); font-size: 1.8rem; }
 .tagline { margin: 4px 0 0; color: var(--muted); }
 .badge { background: #fff4e6; color: var(--warn); border: 1px solid #ffd8a8; border-radius: 999px; padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }
+.badge.real { background: #ebfbee; color: var(--ok); border-color: #b2f2bb; }
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 .row { display: flex; gap: 8px; align-items: center; }
 input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; min-width: 0; }
@@ -51,6 +52,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .status { font-size: 0.8rem; padding: 3px 10px; border-radius: 999px; background: #f1f3f5; color: var(--muted); }
 .status-running { background: #fff4e6; color: var(--accent); }
 .status-paused { background: #fff9db; color: var(--warn); }
+.status-waiting_for_user { background: #fff4e6; color: #9c36b5; }
 .status-stopped_before_commitment { background: #e7f5ff; color: var(--stop); }
 .status-completed { background: #ebfbee; color: var(--ok); }
 .status-failed { background: #fff5f5; color: var(--bad); }
@@ -60,6 +62,16 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .summary { font-weight: 500; }
 .message input { padding: 8px 10px; }
 .message button, .controls button { padding: 8px 12px; }
+.questions { display: grid; gap: 8px; }
+.agent-question, .question-history { border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
+.agent-question { border: 2px solid #9c36b5; background: #fff0f6; }
+.question-history { border: 1px solid var(--border); background: #f8f9fa; }
+.question-text { font-weight: 700; }
+.question-answer { margin: 0; color: var(--ok); font-size: 0.9rem; }
+.question-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.answer-form { flex-wrap: wrap; }
+.answer-form input { min-width: 160px; }
+.question-feedback { min-height: 1.1em; font-size: 0.85rem; }
 .portal { border: 2px solid var(--stop); }
 .portal-item { border-top: 1px solid var(--border); padding: 12px 0; display: grid; gap: 4px; }
 .portal-item p { margin: 0; }

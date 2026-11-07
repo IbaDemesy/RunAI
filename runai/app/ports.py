@@ -4,12 +4,13 @@ Les vraies implémentations (`runai/h/`, `runai/voice/`, `runai/search/`) n'ont 
 ces Protocols pour être branchées dans `MissionService` à la place des fakes.
 """
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Protocol
 
 from runai.models import Race, RunnerProfile, StepKind, StepResult, TraceEvent
 
 EventSink = Callable[[TraceEvent], None]
+AskUser = Callable[[str, list[str]], Awaitable[str]]
 
 
 class RaceSearch(Protocol):
@@ -45,6 +46,8 @@ class BrowserAgents(Protocol):
         race: Race,
         profile: RunnerProfile,
         on_event: EventSink,
+        ask_user: AskUser,
+        mission_id: str | None = None,
     ) -> AgentRun: ...
 
 
