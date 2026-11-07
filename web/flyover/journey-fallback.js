@@ -393,6 +393,7 @@
 
     function onError(event) {
       const detail = event.detail || {};
+      if (detail.fatal === false) return;
       if (plan && detail.planRevision != null && detail.planRevision !== plan.revision) return;
       pause();
       root.hidden = false;

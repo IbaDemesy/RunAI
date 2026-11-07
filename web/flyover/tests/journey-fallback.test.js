@@ -209,6 +209,24 @@ test("tile/WebGL error reveals fallback and pauses; stale revision errors do not
   assert.match(root.textContent, /Lille/);
 });
 
+test("nonfatal journey errors neither reveal fallback nor pause playback", () => {
+  const { container, view, timers, DetailEvent } = setup({ hiddenUntilError: true });
+  view.setPlan(load());
+  view.play();
+  const root = container.children[0];
+  const pending = [...timers.keys()];
+  container.dispatchEvent(new DetailEvent(J.MAP_EVENTS.error, {
+    detail: { planRevision: 1, fatal: false, error: { code: "chapter_unavailable" } },
+  }));
+  assert.equal(root.hidden, true);
+  assert.deepEqual([...timers.keys()], pending);
+  assert.doesNotMatch(root.textContent, /Carte indisponible/);
+  container.dispatchEvent(new DetailEvent(J.MAP_EVENTS.error, { detail: { error: "tiles" } }));
+  assert.equal(root.hidden, false);
+  assert.equal(timers.size, 0);
+  assert.match(root.textContent, /Carte indisponible/);
+});
+
 test("sources and attributions stay visible and untrusted labels/URLs cannot inject markup or scripts", () => {
   const { container, view } = setup({ attributions: [{ label: "© Test cartographe", url: "https://example.org/credits" }] });
   const plan = load();

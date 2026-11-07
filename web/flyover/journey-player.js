@@ -9,9 +9,15 @@
   "use strict";
 
   const SOURCES = { stops: "runai-journey-stops", segments: "runai-journey-segments" };
+  const MODE_COLOR = ["match", ["get", "mode"],
+    "walk", "#16a34a", "local", "#f97316", "train", "#7c3aed", "flight", "#2563eb", "race", "#dc2626", "#64748b"];
   const LAYERS = [
     { id: "runai-journey-segments-line", source: SOURCES.segments, type: "line",
-      paint: { "line-width": 3, "line-color": "#2563eb" } },
+      filter: ["==", ["get", "geometry_status"], "verified"],
+      paint: { "line-width": 3, "line-color": MODE_COLOR } },
+    { id: "runai-journey-segments-dashed", source: SOURCES.segments, type: "line",
+      filter: ["all", ["!=", ["get", "geometry_status"], "verified"], ["!=", ["get", "geometry_status"], "unavailable"]],
+      paint: { "line-width": 3, "line-color": MODE_COLOR, "line-dasharray": [2, 2] } },
     { id: "runai-journey-stops-circle", source: SOURCES.stops, type: "circle",
       paint: { "circle-radius": 6, "circle-color": "#f97316", "circle-stroke-color": "#fff", "circle-stroke-width": 2 } },
   ];
@@ -45,7 +51,7 @@
     }
 
     function fail(code, message, extra) {
-      emit(contract.MAP_EVENTS.error, Object.assign({ error: { code, message } }, extra));
+      emit(contract.MAP_EVENTS.error, Object.assign({ error: { code, message }, fatal: code === "invalid_plan" }, extra));
       return false;
     }
 

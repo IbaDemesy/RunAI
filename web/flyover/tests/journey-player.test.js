@@ -82,12 +82,41 @@ test("setPlan renders sources once, fits the global view and emits ready with re
   assert.equal(of(events, C.MAP_EVENTS.ready)[1].planRevision, 2);
 });
 
+test("segment layers distinguish modes and geometry certainty and are removed on destroy", () => {
+  const { view, map } = setup();
+  view.setPlan(load("train"));
+  const lines = P.LAYERS.filter((layer) => layer.type === "line");
+  assert.equal(lines.length, 2);
+  const [solid, dashed] = lines;
+  assert.deepEqual(solid.filter, ["==", ["get", "geometry_status"], "verified"]);
+  assert.deepEqual(dashed.filter, ["all", ["!=", ["get", "geometry_status"], "verified"], ["!=", ["get", "geometry_status"], "unavailable"]]);
+  assert.equal(solid.paint["line-dasharray"], undefined);
+  assert.deepEqual(dashed.paint["line-dasharray"], [2, 2]);
+  for (const layer of lines) {
+    assert.equal(layer.source, P.SOURCES.segments);
+    const expression = layer.paint["line-color"];
+    assert.deepEqual(expression.slice(0, 2), ["match", ["get", "mode"]]);
+    assert.deepEqual(expression.slice(2, -1).filter((_, i) => i % 2 === 0).sort(), [...C.SEGMENT_MODES].sort());
+    assert.equal(new Set(expression.slice(2, -1).filter((_, i) => i % 2 === 1)).size, C.SEGMENT_MODES.length);
+  }
+  view.setPlan(load("flight"));
+  assert.deepEqual([...map.layers], P.LAYERS.map((layer) => layer.id));
+  assert.equal(map.calls.filter((call) => call[0] === "addLayer").length, P.LAYERS.length);
+  assert.deepEqual(map.sources.get(P.SOURCES.segments).data.features.map((feature) => feature.properties.mode),
+    load("flight").segments.filter((segment) => segment.geometry_status !== "unavailable").map((segment) => segment.mode));
+  view.destroy();
+  assert.deepEqual(map.calls.filter((call) => call[0] === "removeLayer").map((call) => call[1]), P.LAYERS.map((layer) => layer.id));
+  assert.equal(map.layers.size, 0);
+  assert.equal(map.sources.size, 0);
+});
+
 test("invalid plan emits error and keeps the previous plan", () => {
   const { view, events } = setup();
   view.setPlan(load("train"));
   assert.equal(view.setPlan({ schema_version: "nope" }), false);
   const [error] = of(events, C.MAP_EVENTS.error);
   assert.equal(error.error.code, "invalid_plan");
+  assert.equal(error.fatal, true);
   assert.ok(error.errors.length > 0);
   assert.equal(view.state.planRevision, 1);
 });
@@ -117,6 +146,7 @@ test("unavailable chapter emits explicit unavailable + error events and never mo
     assert.equal(last.chapterId, chapter.id);
     assert.equal(last.state, "unavailable");
     assert.equal(of(events, C.MAP_EVENTS.error).at(-1).chapterId, chapter.id);
+    assert.equal(of(events, C.MAP_EVENTS.error).at(-1).fatal, false);
   }
 });
 
@@ -129,6 +159,8 @@ test("play tours every chapter in order then ends; unavailable chapters are repo
   assert.deepEqual(of(events, C.MAP_EVENTS.chapter).map((d) => d.chapterId), plan.chapters.map((c) => c.id));
   assert.deepEqual(of(events, C.MAP_EVENTS.playback).map((d) => d.state), ["playing", "ended"]);
   assert.equal(view.state.playback, "ended");
+  assert.ok(of(events, C.MAP_EVENTS.error).length > 0);
+  assert.ok(of(events, C.MAP_EVENTS.error).every((detail) => detail.fatal === false));
 });
 
 test("pause stops camera only: no fetch, no agent call, pending tour cancelled, resume from paused chapter", () => {
@@ -191,6 +223,7 @@ test("seekKm delegates to RunAIFlyover when race geometry exists and a track is 
   assert.equal(of(events, C.MAP_EVENTS.chapter).at(-1).chapterId, "race");
   assert.equal(view.seekKm(-1), false);
   assert.equal(of(events, C.MAP_EVENTS.error).at(-1).error.code, "invalid_km");
+  assert.equal(of(events, C.MAP_EVENTS.error).at(-1).fatal, false);
 });
 
 test("seekKm refuses unavailable race geometry or missing track with an explicit error", () => {
