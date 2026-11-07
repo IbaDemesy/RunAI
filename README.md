@@ -11,7 +11,7 @@ Le trio prévu est **Devin + H Company + Gladia** ; Linkup pourra être ajouté 
 | --- | --- | --- | --- |
 | Devin | Assistance au développement | Prévu | [Guide du hackathon](Infos/devin_hackathon_guide.pdf) |
 | H Company | Agents de navigation et d’automatisation | Script de test présent ; intégration prévue | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
-| Gladia | Transcription audio et traitement de la parole | Prévu | [Documentation](https://docs.gladia.io) |
+| Gladia | Transcription audio et traitement de la parole | SDK installé, script de test présent ; intégration prévue | [Documentation](https://docs.gladia.io) |
 | Linkup | Recherche web pour les agents | Optionnel, quatrième partenaire possible | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction) |
 | Stripe | Paiements | Non prévu pour le moment | [Ressource du hackathon](Infos/stripe_credits.pdf) |
 
@@ -43,6 +43,21 @@ holo mcp install vscode
 
 `holo login` ouvre une connexion navigateur ou permet de se connecter avec une clé API H. La commande MCP ajoute Holo aux serveurs MCP de l'utilisateur dans VS Code ; après avoir créé l'environnement virtuel du dépôt, relancez-la si nécessaire pour pointer vers son exécutable `holo`.
 
+### Installation de Gladia
+
+1. Créez un compte et une clé API sur [app.gladia.io](https://app.gladia.io/apikeys).
+2. Sur la [page de facturation](https://app.gladia.io/billing), appliquez le code promo indiqué dans [le PDF des crédits](Infos/gladia_hackathon_credits.pdf) pour obtenir les 1 000 crédits du hackathon.
+3. Renseignez `GLADIA_API_KEY` dans `.env`.
+
+Le SDK Python `gladiaio-sdk` est installé via `requirements.txt` et lit automatiquement `GLADIA_API_KEY`.
+
+Optionnel, pour donner à un agent de code (Claude Code, Cursor, Codex) le contexte Gladia :
+
+```bash
+npx skills add gladiaio/skills
+claude mcp add gladia --env GLADIA_API_KEY=... -- npx -y @gladiaio/mcp
+```
+
 ## Tester
 
 Depuis la racine du dépôt, avec l’environnement virtuel activé et une clé H valide dans `.env` :
@@ -54,17 +69,27 @@ python scripts/test_h.py
 Ce test appelle réellement l’API H, nécessite une connexion réseau et peut consommer des crédits.
 Il demande à l’agent de trouver l’article principal de Hacker News, puis affiche son statut et sa réponse.
 
+Pour Gladia, avec une clé valide dans `.env` :
+
+```bash
+python scripts/test_gladia.py                 # fichier audio d’exemple de Gladia
+python scripts/test_gladia.py mon_audio.mp3   # fichier local ou URL
+```
+
+Ce test appelle réellement l’API Gladia et consomme des crédits. Il transcrit l’audio, puis affiche le statut et la transcription.
+
 ## Structure du repo
 
 ```text
 RunAI/
 ├── Infos/              # Guides partenaires et récapitulatif des crédits
 ├── scripts/
+│   ├── test_gladia.py  # Test de l’API Gladia
 │   └── test_h.py       # Test de l’API H
 ├── .env.example        # Variables d’environnement à renseigner
 ├── .gitignore
 ├── README.md
-└── requirements.txt    # Dépendances Python et interface de commande Holo
+└── requirements.txt    # Dépendances Python, SDK Gladia et interface de commande Holo
 ```
 
 ## Équipe
