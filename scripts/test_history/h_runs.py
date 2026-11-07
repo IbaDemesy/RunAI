@@ -60,6 +60,7 @@ def extract_runs(traces: Path) -> list[dict[str, Any]]:
         sessions: dict[str, dict] = {}
         dates: dict[str, list[datetime]] = defaultdict(list)
         latest_step: dict[str, str] = {}
+        replays: dict[str, str] = {}
         with path.open(encoding="utf-8", errors="replace") as handle:
             for line in handle:
                 try:
@@ -89,6 +90,11 @@ def extract_runs(traces: Path) -> list[dict[str, Any]]:
                 at = _date(event.get("at"))
                 if at:
                     dates[session].append(at)
+                original = _text(details.get("replay_of"))
+                if original and original != session:
+                    replays[original] = session
+                if data.get("mode") == "replay":
+                    record["mode"] = "replay"
                 metrics = _dict(raw.get("metrics"))
                 for source in (raw, metrics, data, details, result):
                     for key in ("status", "outcome", "stop_point", "error_code"):
@@ -112,6 +118,16 @@ def extract_runs(traces: Path) -> list[dict[str, Any]]:
                     h_status = details.get("h_status") or data.get("h_status")
                     if h_status in ("timed_out", "interrupted"):
                         record["error_code"] = h_status
+        # Replayed events keep the original H session id; fold them into the replay run.
+        for original, replay in replays.items():
+            if original in sessions and replay in sessions:
+                old = sessions.pop(original)
+                new = sessions[replay]
+                for key, value in old.items():
+                    if new.get(key) in (None, "unknown"):
+                        new[key] = value
+                new["session_id"] = replay
+                dates[replay] += dates.pop(original, [])
         for session, record in sessions.items():
             if timestamps := dates[session]:
                 record["duration_s"] = (max(timestamps) - min(timestamps)).total_seconds()

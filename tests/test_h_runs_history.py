@@ -99,3 +99,25 @@ def test_cli_rejects_missing_directory(tmp_path, monkeypatch, capsys):
     with pytest.raises(SystemExit, match="2"):
         main()
     assert "existing directory" in capsys.readouterr().err
+
+
+def test_replay_events_fold_into_replay_session(tmp_path):
+    lines = [
+        {"at": "2026-11-07T02:00:00Z", "type": "agent_event",
+         "data": {"h_session_id": "s-orig", "step": "registration", "mode": "replay",
+                  "url": "https://in.njuko.com/race"}},
+        {"at": "2026-11-07T02:00:12Z", "type": "step_done",
+         "data": {"step": "registration", "result": {
+             "kind": "registration", "status": "stopped_before_commitment",
+             "h_session_id": "s-replay",
+             "data": {"replay_of": "s-orig", "steps": 9, "provenance": {"mode": "replay"}}}}},
+    ]
+    (tmp_path / "m.jsonl").write_text("\n".join(json.dumps(x) for x in lines))
+    runs = extract_runs(tmp_path)
+    assert len(runs) == 1
+    run = runs[0]
+    assert run["session_id"] == "s-replay"
+    assert run["mode"] == "replay"
+    assert run["platform"] == "in.njuko.com"
+    assert run["steps"] == 9
+    assert run["duration_s"] == 12
