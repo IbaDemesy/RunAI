@@ -121,6 +121,8 @@ Hors périmètre, ou mention « vision » dans le pitch : coach d'entraînement,
 
 Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents construits sur l'API H Agents. On y trouve des démos officielles de H et les projets du hackathon de San Francisco.
 
+Le tri de ce qu'on peut reprendre, par priorité, est dans [FEATURES_A_REPRENDRE.md](FEATURES_A_REPRENDRE.md).
+
 ### Les plus proches de notre idée
 
 | Projet | Ce qu'il fait | Recoupement avec RunAI |
