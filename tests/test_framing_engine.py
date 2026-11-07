@@ -164,6 +164,14 @@ def test_month_without_year_uses_next_occurrence(text, expected):
     assert extract_slots(text, today=date(2026, 11, 7))[SlotName.date_window] == expected
 
 
+def test_month_window_uses_explicit_edition_year():
+    values = extract_slots(
+        "course à Tokyo en mars édition 2030", today=date(2026, 11, 7)
+    )
+    assert values[SlotName.date_window] == "mars 2030"
+    assert values[SlotName.edition] == "2030"
+
+
 def test_candidates_selection_and_channel_parity():
     async def run():
         states = []

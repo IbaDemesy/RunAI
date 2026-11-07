@@ -70,6 +70,9 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
     french = re.search(
         r"\b(\d{1,2})\s+(" + "|".join(MONTHS) + r")\s+(\d{4})\b", text, re.IGNORECASE
     )
+    edition = re.search(r"\b(?:édition|edition)\s+(\d{4})\b", text, re.IGNORECASE)
+    if not edition:
+        edition = re.search(r"\b(?:en|in)\s+(\d{4})\b", text, re.IGNORECASE)
     try:
         if iso:
             result[SlotName.race_date] = date.fromisoformat(iso[0]).isoformat()
@@ -94,13 +97,14 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
                 if month_only:
                     current = today or date.today()
                     month = MONTHS.index(month_only[1].lower()) + 1
-                    year = current.year + (month < current.month)
+                    year = (
+                        int(edition[1])
+                        if edition
+                        else current.year + (month < current.month)
+                    )
                     result[SlotName.date_window] = f"{month_only[1].lower()} {year}"
     except ValueError:
         pass
-    edition = re.search(r"\b(?:édition|edition)\s+(\d{4})\b", text, re.IGNORECASE)
-    if not edition:
-        edition = re.search(r"\b(?:en|in)\s+(\d{4})\b", text, re.IGNORECASE)
     if edition:
         result[SlotName.edition] = edition[1]
     budget = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(?:€|euros?\b)", text, re.IGNORECASE)
