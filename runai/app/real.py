@@ -77,7 +77,11 @@ class RealAgentRun:
 
     @property
     def live_view_url(self) -> str | None:
-        return self.run.live_view_url or self.run.agent_view_url
+        return self.run.live_view_url
+
+    @property
+    def agent_view_url(self) -> str | None:
+        return getattr(self.run, "agent_view_url", None)
 
     async def pause(self) -> None:
         await self.run.pause()
@@ -136,7 +140,11 @@ class LifecycleAgentRun:
     @property
     def live_view_url(self):
         run = self.job.run
-        return (run.live_view_url or run.agent_view_url) if run else None
+        return run.live_view_url if run else None
+
+    @property
+    def agent_view_url(self):
+        return getattr(self.job.run, "agent_view_url", None)
 
     async def pause(self):
         await self.lifecycle.pause(self.job.job_id)
@@ -213,7 +221,7 @@ class RealTranscriber:
         pcm, sample_rate = await asyncio.to_thread(load_pcm, audio)
 
         async def chunks():
-            async for chunk in pcm_chunks(pcm, sample_rate, realtime=False):
+            async for chunk in pcm_chunks(pcm, sample_rate, realtime=True):
                 yield chunk
 
         transcripts = []

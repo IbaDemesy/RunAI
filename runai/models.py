@@ -92,6 +92,7 @@ class StepResult(BaseModel):
     url: HttpUrl | None = None
     price_eur: float | None = None
     live_view_url: HttpUrl | None = None
+    agent_view_url: HttpUrl | None = None
     h_session_id: str | None = None
     data: dict[str, Any] = Field(default_factory=dict)
     error: str | None = None

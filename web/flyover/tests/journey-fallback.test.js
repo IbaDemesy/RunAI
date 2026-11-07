@@ -305,3 +305,14 @@ test("the map failure explanation survives chapter navigation", () => {
   view.showChapter("race");
   assert.match(container.textContent, /Carte indisponible/);
 });
+
+test("a map error before setPlan does not leave an unavailable-journey warning after a valid plan loads", () => {
+  const { container, view, DetailEvent } = setup();
+  container.dispatchEvent(new DetailEvent(J.MAP_EVENTS.error, { detail: { error: "webgl" } }));
+  assert.match(container.textContent, /Séjour indisponible/);
+  view.setPlan(load("incomplete"));
+  view.showChapter("race");
+  assert.doesNotMatch(container.textContent, /Séjour indisponible/);
+  assert.match(container.textContent, /Carte indisponible/);
+  assert.match(container.textContent, /Mon séjour, étape par étape/);
+});

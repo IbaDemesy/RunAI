@@ -3,6 +3,7 @@ import json
 import threading
 import time
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -41,6 +42,43 @@ from runai.safety import STOP_INSTRUCTIONS
 from runai.tracing import TraceWriter
 
 AGENT_KINDS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
+
+
+def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, monkeypatch):
+    monkeypatch.setenv("HAI_API_KEY_2", "FAKE-H-PROGRESS-SENTINEL")
+    service = make_service(tmp_path)
+    mission = Mission(id="live-progress", query="course", status=MissionStatus.running,
+                      race=DEMO_RACES["milan"], plan=unit_plan(),
+                      steps={kind: StepResult(kind=kind, status=StepStatus.running) for kind in AGENT_KINDS})
+    service.missions[mission.id] = mission
+    service._writers[mission.id] = TraceWriter(mission.id, traces_dir=tmp_path)
+    service._runs[(mission.id, StepKind.registration)] = SimpleNamespace(
+        session_id="h-session", live_view_url="https://live.example.org/browser",
+        agent_view_url="https://platform.hcompany.ai/agent-view/test",
+    )
+    event = TraceEvent(source="h", type="action", message="Lecture FAKE-H-PROGRESS-SENTINEL",
+                       data={"step": "registration", "h_session_id": "h-session"})
+    service._record(mission, event)
+    metrics = TraceEvent(source="h", type="MetricsUpdateEvent", data={"step": "registration"})
+    service._record(mission, metrics)
+    mission.steps[StepKind.registration].data["events"] = 2
+    service._record(mission, TraceEvent(source="human", type="answer", message="Réponse privée",
+                                       data={"step": "registration"}))
+    snapshot = service.snapshot(mission.id).model_dump(mode="json")
+    step = snapshot["steps"][0]
+    assert step["live_view_url"] == "https://live.example.org/browser"
+    assert step["agent_view_url"] == "https://platform.hcompany.ai/agent-view/test"
+    assert step["data"]["last_action"] == "Lecture [REDACTED]"
+    assert step["data"]["history"] == [
+        {"at": event.at.isoformat(), "message": "Lecture [REDACTED]", "type": "action"},
+        {"at": metrics.at.isoformat(), "message": None, "type": "MetricsUpdateEvent"},
+    ]
+    assert step["data"]["events"] == 2
+    assert snapshot["steps"][1]["data"]["history"] == []
+    state = next(envelope for envelope in reversed(mission.envelopes) if envelope.type == "step")
+    assert state.payload["steps"][0]["live_view_url"] == step["live_view_url"]
+    assert state.payload["steps"][0]["agent_view_url"] == step["agent_view_url"]
+    assert "FAKE-H-PROGRESS-SENTINEL" not in state.to_sse()
 
 
 @pytest.fixture

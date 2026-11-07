@@ -190,13 +190,22 @@ class MissionService:
             mission_id=mission.id, framing_id=plan.framing_id,
             framing_revision=plan.revision, mode=plan.mode,
             status=mission.status.value, sequence=len(mission.envelopes),
-            race=mission.race, steps=list(mission.steps.values()),
+            race=mission.race, steps=self._snapshot_steps(mission),
             questions=[q for q in self.questions.questions.values() if q.mission_id == mission.id],
             limitations=mission.limitations, error=mission.error,
             journey_revision=mission.journey.revision if mission.journey else None,
             budget=mission.journey.budget if mission.journey else None,
         )
         return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
+
+    @staticmethod
+    def _snapshot_steps(mission: Mission) -> list[StepResult]:
+        return [step.model_copy(update={"data": {**step.data, "history": [
+            {"at": event.at.isoformat(), "message": event.message, "type": event.type}
+            for event in mission.events
+            if event.data.get("step") == step.kind.value
+            and (event.source == "h" or event.source.startswith("agent"))
+        ]}}) for step in mission.steps.values()]
 
     def _refresh_journey(self, mission: Mission) -> None:
         if mission.framing_summary is None:
@@ -319,7 +328,7 @@ class MissionService:
         run = self._runs.get((mission_id, kind))
         if run:
             step.h_session_id = run.session_id
-            self._set_live_view(step, run.live_view_url)
+            self._set_agent_views(step, run)
         wrapped = self.questions.open(question_model, mission_id, mission.plan.revision,
                                       step.h_session_id, ttl=self.question_timeout_s)
         step.status = StepStatus.waiting_for_user
@@ -462,21 +471,22 @@ class MissionService:
         except OSError:
             logger.exception("Trace non écrite pour la mission %s", mission.id)
         step_name = event.data.get("step")
-        if step_name in StepKind._value2member_map_ and event.source.startswith(
-            "agent"
-        ):
+        if step_name in StepKind._value2member_map_ and (event.source == "h" or event.source.startswith("agent")):
             step = mission.steps.get(StepKind(step_name))
             if step is not None:
                 if session_id := event.data.get("h_session_id"):
                     step.h_session_id = session_id
-                step.data["last_action"] = event.message
+                if event.message:
+                    step.data["last_action"] = event.message
+                if run := self._runs.get((mission.id, StepKind(step_name))):
+                    self._set_agent_views(step, run)
                 if event.data.get("url"):
                     step.data["current_url"] = event.data["url"]
         self._publish(mission, ("trace", event.model_dump(mode="json")))
 
     def _publish_state(self, mission: Mission) -> None:
         self._publish(mission, ("mission", mission.snapshot()))
-        self._emit(mission, "step", {"steps": [step.model_dump(mode="json") for step in mission.steps.values()]})
+        self._emit(mission, "step", {"steps": [step.model_dump(mode="json") for step in self._snapshot_steps(mission)]})
 
     def _publish(self, mission: Mission, message: tuple[str, dict[str, Any]]) -> None:
         for queue in self._subscribers.get(mission.id, ()):
@@ -546,11 +556,11 @@ class MissionService:
                 )
                 self._runs[(mission.id, kind)] = run
                 step.h_session_id = run.session_id
-                self._set_live_view(step, run.live_view_url)
+                self._set_agent_views(step, run)
                 self._publish_state(mission)
                 result = await run.wait()
                 step.h_session_id = run.session_id
-                self._set_live_view(step, run.live_view_url)
+                self._set_agent_views(step, run)
                 result = self._validate_hotel_budget(mission, result)
             except Exception as error:  # noqa: BLE001
                 step.status = StepStatus.failed
@@ -620,6 +630,13 @@ class MissionService:
         return result
 
     @staticmethod
+    def _set_agent_views(step: StepResult, run: AgentRun) -> None:
+        MissionService._set_live_view(step, run.live_view_url)
+        url = getattr(run, "agent_view_url", None)
+        if url and url.startswith(("http://", "https://")):
+            step.agent_view_url = HttpUrl(url)
+
+    @staticmethod
     def _set_live_view(step: StepResult, url: str | None) -> None:
         if not url:
             return
@@ -635,6 +652,7 @@ class MissionService:
                 "kind": step.kind,
                 "data": {**step.data, **result.data},
                 "live_view_url": result.live_view_url or step.live_view_url,
+                "agent_view_url": result.agent_view_url or step.agent_view_url,
                 "h_session_id": result.h_session_id or step.h_session_id,
             }
         )

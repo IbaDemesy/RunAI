@@ -323,6 +323,7 @@
         throw new TypeError(`JourneyPlan invalide : ${errors.join(", ")}`);
       }
       plan = next;
+      if (!recovery.hidden) recovery.textContent = "Carte indisponible : le séjour reste lisible sans carte. Utilisez les chapitres et les liens manuels.";
       selected = next.chapters.some((c) => c.id === selected) ? selected : (next.chapters[0] || {}).id || null;
       render();
       if (focusChapter && buttons.has(focusChapter)) buttons.get(focusChapter).focus();

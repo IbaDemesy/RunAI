@@ -205,6 +205,40 @@ def test_real_transcriber_decodes_uploaded_wav_and_uses_voice_stream():
     assert call == {"sample_rate": 16000, "audio": b"\0\0" * 400}
 
 
+@pytest.mark.parametrize("frames", [0, 400, 4800])
+def test_real_transcriber_paces_uploaded_audio_at_recording_rate(monkeypatch, frames):
+    audio = io.BytesIO()
+    with wave.open(audio, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(16000)
+        wav.writeframes(b"\0\0" * frames)
+    elapsed = 0
+    sent_at = []
+    received = []
+
+    async def sleep(delay):
+        nonlocal elapsed
+        elapsed += delay
+
+    async def streamer(chunks, *, sample_rate):
+        assert sample_rate == 16000
+        async for chunk in chunks:
+            sent_at.append(elapsed)
+            received.append(chunk)
+        yield SimpleNamespace(is_final=True, text="Une course" if received else "")
+
+    monkeypatch.setattr("runai.voice.audio.asyncio.sleep", sleep)
+    transcriber = RealTranscriber(streamer=streamer)
+    if frames:
+        assert asyncio.run(transcriber.transcribe(audio.getvalue(), "audio/wav")) == "Une course"
+    else:
+        with pytest.raises(RuntimeError, match="aucune transcription finale"):
+            asyncio.run(transcriber.transcribe(audio.getvalue(), "audio/wav"))
+    assert b"".join(received) == b"\0\0" * frames
+    assert sent_at == pytest.approx([0, .1, .2] if frames == 4800 else [0] if frames else [])
+
+
 def test_service_selects_fakes_or_real_adapters_from_environment(monkeypatch):
     monkeypatch.delenv("RUNAI_MODE", raising=False)
     monkeypatch.setenv("RUNAI_DEMO", "1")

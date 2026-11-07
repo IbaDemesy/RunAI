@@ -101,6 +101,7 @@ def build_step_result(
     error: str | None = None,
     session_id: str | None = None,
     live_view_url: str | None = None,
+    agent_view_url: str | None = None,
     last_url: str | None = None,
     data: dict[str, Any] | None = None,
 ) -> StepResult:
@@ -132,6 +133,7 @@ def build_step_result(
         stop_point=stop_point,
         url=_http_url(last_url),
         live_view_url=_http_url(live_view_url),
+        agent_view_url=_http_url(agent_view_url),
         h_session_id=session_id,
         data={"h_status": h_status, "answer": answer, "outcome": outcome, **(data or {})},
         error=error,
@@ -329,7 +331,8 @@ class HRun:
             outcome=self.outcome,
             error=error or self.error,
             session_id=self.id,
-            live_view_url=self.live_view_url or self.agent_view_url,
+            live_view_url=self.live_view_url,
+            agent_view_url=self.agent_view_url,
             last_url=self.last_url,
             data={
                 "agent_view_url": self.agent_view_url,

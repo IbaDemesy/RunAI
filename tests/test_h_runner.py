@@ -330,6 +330,15 @@ def test_build_step_result_mapping():
     assert build_step_result(StepKind.search, "completed", last_url="not a url").url is None
 
 
+@pytest.mark.parametrize("live", [None, LIVE])
+def test_live_browser_url_and_durable_agent_view_remain_separate(tmp_path, live):
+    sessions = FakeSessions(events=[] if live is None else [{"type": "LiveViewUrlEvent", "data": {"live_view_url": live}}])
+    runner = make_runner(tmp_path, sessions)
+    result = asyncio.run(runner.run(StepKind.search, "Lis le titre"))
+    assert (str(result.live_view_url) if result.live_view_url else None) == live
+    assert str(result.agent_view_url) == VIEW
+
+
 def test_event_helpers():
     assert event_label({"type": "AgentEvent", "data": {"kind": "policy_event"}}) == "AgentEvent.policy_event"
     assert event_summary({"type": "AgentRunStatusChangeEvent", "data": {"status": "paused"}}) == "paused"

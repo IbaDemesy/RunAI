@@ -211,6 +211,13 @@ button.primary { background: var(--button-bg); color: var(--button-text); }
 textarea { min-height: 110px; resize: vertical; }
 .ask { align-items: end; flex-wrap: wrap; }
 .steps { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.agent-content, .agent-live { display: grid; gap: var(--space-3); }
+.agent-live:not([open]) { display: block; }
+.agent-live iframe { width: 100%; height: 320px; border: 1px solid var(--line); border-radius: var(--radius-small); }
+.step[data-expanded="true"] { grid-column: 1 / -1; }
+.step[data-expanded="true"] .agent-live iframe { height: 65vh; }
+.agent-history ol { display: grid; gap: var(--space-3); padding-left: var(--space-6); max-height: 320px; overflow: auto; }
+.agent-history time { display: block; color: var(--ink-3); font-size: var(--type-small); }
 .bib.shell-stack { grid-template-columns: minmax(0, 1fr); }
 .journey-map { height: clamp(240px, 45vh, 480px); background: var(--paper-2); border-radius: var(--radius-card); }
 .journey-map[hidden] { display: none; }
