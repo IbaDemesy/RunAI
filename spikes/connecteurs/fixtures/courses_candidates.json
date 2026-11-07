@@ -1,0 +1,8 @@
+[
+  {"nom": "Wizz Air Milano Marathon", "date": "2027-04-04", "distance_km": 42.195, "d_plus_m": 50, "ville": "Milan", "url": "https://in.njuko.com/wizz-air-milano-marathon-20271776152378557", "source": "page Njuko lue le 2026-11-07 (114 €)"},
+  {"nom": "Vodafone 10K (Lisbonne)", "date": "2027-03-07", "distance_km": 10, "d_plus_m": 40, "ville": "Lisbonne", "url": "https://meia-maratona.inscricoes.maratonaportugal.com/", "source": "formulaire lu le 2026-11-07 (37 €), statut ouvert non confirmé"},
+  {"nom": "Hyundai 7k (Lisbonne)", "date": "2027-03-06", "distance_km": 7, "d_plus_m": 30, "ville": "Lisbonne", "url": "https://meia-maratona.inscricoes.maratonaportugal.com/", "source": "formulaire lu le 2026-11-07 (15 €), statut ouvert non confirmé"},
+  {"nom": "10 km fictif de Noël", "date": "2026-12-20", "distance_km": 10, "d_plus_m": 20, "ville": "Paris", "url": "", "source": "FICTIF (test du conflit vacances)"},
+  {"nom": "Trail fictif des Crêtes", "date": "2027-03-21", "distance_km": 25, "d_plus_m": 1200, "ville": "Annecy", "url": "", "source": "FICTIF (test événement transparent)"},
+  {"nom": "Semi fictif d'hiver", "date": "2027-01-31", "distance_km": 21.1, "d_plus_m": 80, "ville": "Nantes", "url": "", "source": "FICTIF (test préparation trop courte pour débutant)"}
+]

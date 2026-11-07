@@ -1,0 +1,14 @@
+{
+  "coureur": {"nom": "Camille Martin", "email": "camille.martin@example.com"},
+  "nom_course": "Wizz Air Milano Marathon",
+  "aller": {"debut": "2027-04-02T18:30:00", "fin": "2027-04-02T20:10:00", "lieu": "Paris CDG -> Milan Linate", "description": "Vol à réserver par le coureur (non payé par RunAI).", "rappel_min": 180},
+  "retrait_dossard": {"debut": "2027-04-03T10:00:00", "fin": "2027-04-03T11:00:00", "lieu": "Village marathon (lieu à confirmer sur le règlement)", "rappel_min": 60},
+  "course": {"debut": "2027-04-04T08:30:00", "fin": "2027-04-04T13:00:00", "lieu": "Milan", "description": "Heure de départ à confirmer sur le règlement.", "rappel_min": 120},
+  "retour": {"debut": "2027-04-04T18:00:00", "fin": "2027-04-04T19:40:00", "lieu": "Milan Linate -> Paris CDG"},
+  "hotel": {"nom": "Hôtel Accor (exemple)", "arrivee": "2027-04-02T21:00:00", "depart": "2027-04-04T11:00:00", "adresse": "Milan"},
+  "couts": [
+    {"poste": "Inscription (palier lu sur Njuko le 2026-11-07)", "montant_eur": 114.0, "mesure": true},
+    {"poste": "Hôtel 2 nuits", "montant_eur": null, "mesure": false},
+    {"poste": "Vol A/R", "montant_eur": null, "mesure": false}
+  ]
+}
