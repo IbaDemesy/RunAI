@@ -64,7 +64,13 @@ def test_confirmed_journey_revisions_and_shared_exports(tmp_path, monkeypatch, n
 
     monkeypatch.setattr(recap_adapter, "render_pdf", pdf)
     with TestClient(app) as client:
-        session = client.post("/api/framings", json={"text": f"une course à {race.city}"}).json()
+        session = client.post("/api/framings", json={
+            "text": (
+                f"une course à {race.city}, {race.distance_km} km "
+                f"{race.race_date.isoformat()} depuis Paris, "
+                "2000 euros, 2 nuits, train"
+            )
+        }).json()
         assert not service.missions
         assert client.get(f"/api/missions/{session['id']}/journey").status_code == 404
         session = client.post(f"/api/framings/{session['id']}/replies", json={

@@ -69,7 +69,10 @@ def mission(session):
 async def ready(engine):
     session = await engine.create(
         FramingCreate(
-            text="Une course à Tokyo depuis Lyon, 800 euros, 2 nuits, en avion"
+            text=(
+                "Une course à Tokyo, 10 km, en juin 2028, depuis Lyon, "
+                "800 euros, 2 nuits, en avion"
+            )
         )
     )
     return await engine.reply(
@@ -135,9 +138,52 @@ def test_named_race_capture_and_numeric_location_boundary():
 
     origin = extract_slots("course à Tokyo depuis 20 km de Lyon")
     assert SlotName.origin not in origin
+    named_marathon = extract_slots(
+        "Marathon de Paris depuis Lyon en train, 2 nuits, 300 euros"
+    )
+    assert named_marathon[SlotName.race] == "Marathon de Paris"
 
 
-def test_country_request_searches_before_asking_for_city_but_month_does_not():
+def test_candidate_search_waits_for_date_and_logistics_answers():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(
+            FramingCreate(text="Un semi marathon à Pékin")
+        )
+        assert search.calls == []
+        assert [q.slots for q in session.open_questions] == [
+            [SlotName.date_window],
+            [SlotName.origin],
+            [SlotName.budget],
+            [SlotName.nights],
+            [SlotName.transport_mode],
+        ]
+        assert session.open_questions[0].text == (
+            "Quelle période (mois ou saison) ? Répondez « peu importe » si vous êtes flexible."
+        )
+
+        answers = ("en avril", "depuis Paris", "300 euros", "2 nuits", "train")
+        for index, answer in enumerate(answers):
+            question = session.open_questions[0]
+            session = await engine.reply(
+                session.id,
+                FramingReply(
+                    revision=session.revision,
+                    question_id=question.id,
+                    text=answer,
+                ),
+            )
+            assert len(search.calls) == (1 if index == len(answers) - 1 else 0)
+
+        assert session.status == FramingStatus.choosing_candidate
+        assert len(search.calls) == 1
+        assert session.slots[SlotName.date_window].value.startswith("avril ")
+
+    asyncio.run(run())
+
+
+def test_country_hint_satisfies_location_question_but_month_does_not():
     class CountrySearch:
         def __init__(self):
             self.calls = []
@@ -164,9 +210,24 @@ def test_country_request_searches_before_asking_for_city_but_month_does_not():
         session = await FramingEngine(finder, DataMode.demo).create(
             FramingCreate(text="Un semi marathon en Chine")
         )
-        assert finder.calls == ["Un semi marathon en Chine"]
-        assert session.open_questions[0].slots == [SlotName.race]
-        assert session.open_questions[0].choices[0].candidate_id == "china-half"
+        assert finder.calls == []
+        assert session.open_questions[0].slots == [SlotName.date_window]
+        assert SlotName.city not in {
+            slot for question in session.open_questions for slot in question.slots
+        }
+
+        full_text = (
+            "Un semi marathon en Chine en octobre 2027 depuis Paris, "
+            "500 euros, 2 nuits, train"
+        )
+        complete = await FramingEngine(finder, DataMode.demo).create(
+            FramingCreate(text=full_text)
+        )
+        assert finder.calls == [full_text]
+        assert complete.open_questions[0].choices[0].candidate_id == "china-half"
+        assert SlotName.city not in {
+            slot for question in complete.open_questions for slot in question.slots
+        }
 
         month_finder = Search()
         month = await FramingEngine(month_finder, DataMode.demo).create(
@@ -174,6 +235,186 @@ def test_country_request_searches_before_asking_for_city_but_month_does_not():
         )
         assert month_finder.calls == []
         assert month.open_questions[0].slots == [SlotName.city]
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    "answer", ["PEU IMPORTE", "n'importe", "FLEXIBLE", "pas de préférence"]
+)
+def test_flexible_date_window_is_marked_not_needed_and_flow_continues(answer):
+    async def run():
+        engine = FramingEngine(Search(1), DataMode.demo)
+        session = await engine.create(
+            FramingCreate(text="Un semi marathon à Pékin")
+        )
+        question = session.open_questions[0]
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                question_id=question.id,
+                text=answer,
+            ),
+        )
+        assert session.slots[SlotName.date_window].value is None
+        assert session.slots[SlotName.date_window].status.value == "not_needed"
+        assert session.open_questions[0].slots == [SlotName.origin]
+
+    asyncio.run(run())
+
+
+def test_unrecognized_date_window_answer_is_kept_as_free_text():
+    async def run():
+        engine = FramingEngine(Search(), DataMode.demo)
+        session = await engine.create(
+            FramingCreate(text="Un semi marathon à Pékin")
+        )
+        question = session.open_questions[0]
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                question_id=question.id,
+                text="au printemps",
+            ),
+        )
+        assert session.slots[SlotName.date_window].value == "au printemps"
+
+    asyncio.run(run())
+
+
+def test_candidate_search_reuses_candidates_when_search_key_is_unchanged():
+    async def run():
+        search = Search(2)
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, avion"
+                )
+            )
+        )
+        original_ids = [candidate.id for candidate in session.candidates]
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                question_id=session.open_questions[0].id,
+                corrections={SlotName.budget: 500},
+            ),
+        )
+        assert len(search.calls) == 1
+        assert [candidate.id for candidate in session.candidates] == original_ids
+        assert session.status == FramingStatus.choosing_candidate
+
+    asyncio.run(run())
+
+
+def test_changing_date_window_while_candidates_are_shown_searches_again():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, avion"
+                )
+            )
+        )
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                question_id=session.open_questions[0].id,
+                corrections={SlotName.date_window: "juillet 2028"},
+            ),
+        )
+        assert len(search.calls) == 2
+        assert session.status == FramingStatus.choosing_candidate
+
+    asyncio.run(run())
+
+
+def test_selection_survives_filling_a_previously_unknown_date_window():
+    class DateWindowFiller:
+        async def extract(self, text, known):
+            return {"date_window": "avril 2028"} if text == "ma période" else {}
+
+        async def phrase(self, turns, question, known):
+            return question
+
+    async def run():
+        engine = FramingEngine(
+            Search(1, distances=(42.195,)),
+            DataMode.demo,
+            phraser=DateWindowFiller(),
+        )
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    "Marathon de Paris depuis Lyon en train, 2 nuits, 300 euros"
+                )
+            )
+        )
+        assert not session.slots[SlotName.date_window].is_known
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, choice_id="c0")
+        )
+        assert session.status == FramingStatus.ready_to_confirm
+        selected_id = session.selected_candidate_id
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, text="ma période")
+        )
+        assert session.slots[SlotName.date_window].value == "avril 2028"
+        assert session.selected_candidate_id == selected_id == "c0"
+        assert session.status == FramingStatus.ready_to_confirm
+
+    asyncio.run(run())
+
+
+def test_changing_a_known_distance_invalidates_the_selected_candidate():
+    async def run():
+        search = Search(1, distances=(10,))
+        engine = FramingEngine(search, DataMode.demo)
+        session = await ready(engine)
+        assert session.selected_candidate_id == "c0"
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                corrections={SlotName.distance_km: 21.0975},
+            ),
+        )
+        assert session.selected_candidate_id is None
+        assert len(search.calls) == 2
+        assert session.status == FramingStatus.choosing_candidate
+
+    asyncio.run(run())
+
+
+def test_named_race_request_skips_location_distance_and_period_questions():
+    async def run():
+        search = Search(1, distances=(42.195,))
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    "Marathon de Paris depuis Lyon en train, "
+                    "2 nuits, 300 euros"
+                )
+            )
+        )
+        assert session.slots[SlotName.race].value == "Marathon de Paris"
+        assert len(search.calls) == 1
+        assert session.open_questions[0].choices[0].candidate_id == "c0"
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, choice_id="c0")
+        )
+        assert session.status == FramingStatus.ready_to_confirm
+        assert session.summary is not None
 
     asyncio.run(run())
 
@@ -219,7 +460,13 @@ def test_candidates_selection_and_channel_parity():
         for channel in ("text", "voice"):
             engine = FramingEngine(Search(2), DataMode.demo)
             session = await engine.create(
-                FramingCreate(text="une course à Chicago", channel=channel)
+                FramingCreate(
+                    text=(
+                        "une course à Chicago, 10 km en juin 2028, depuis Lyon, "
+                        "800 euros, 2 nuits, avion"
+                    ),
+                    channel=channel,
+                )
             )
             assert session.status == FramingStatus.choosing_candidate
             assert session.slots[SlotName.race].value is None
@@ -231,6 +478,8 @@ def test_candidates_selection_and_channel_parity():
                 session.id, FramingReply(revision=1, choice_id="c1", channel=channel)
             )
             assert session.selected_candidate_id == "c1"
+            assert session.status == FramingStatus.ready_to_confirm
+            assert session.summary is not None
             assert session.slots[SlotName.distance_km].value == 10
             assert session.turns[-1].channel == channel
             states.append({k: s.value for k, s in session.slots.items()})
@@ -243,7 +492,14 @@ def test_close_candidates_use_close_match_choice_copy():
     async def run():
         session = await FramingEngine(
             Search(2, close_match=True), DataMode.demo
-        ).create(FramingCreate(text="course à Tokyo"))
+        ).create(
+            FramingCreate(
+                text=(
+                    "course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, avion"
+                )
+            )
+        )
         question = session.open_questions[0]
         assert question.text == (
             "Je n'ai pas trouvé exactement votre course. Voici les plus proches — "
@@ -260,7 +516,10 @@ def test_close_candidates_use_close_match_choice_copy():
 
 def test_close_match_distance_selection_uses_only_available_distance_or_asks():
     async def run():
-        requested = "une course à Tokyo, 21.1 km"
+        requested = (
+            "une course à Tokyo, 21.1 km en juin 2028, depuis Lyon, "
+            "800 euros, 2 nuits, en avion"
+        )
         engine = FramingEngine(
             Search(1, close_match=True, distances=[10]), DataMode.demo
         )
@@ -269,16 +528,26 @@ def test_close_match_distance_selection_uses_only_available_distance_or_asks():
             single.id, FramingReply(revision=single.revision, choice_id="c0")
         )
         assert single.slots[SlotName.distance_km].value == 10
+        assert single.status == FramingStatus.ready_to_confirm
 
         multiple_engine = FramingEngine(
             Search(1, close_match=True, distances=[10, 21]), DataMode.demo
         )
         multiple = await multiple_engine.create(
-            FramingCreate(text="une course à Tokyo, 42.195 km")
+            FramingCreate(
+                text=(
+                    "une course à Tokyo, 42.195 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, en avion"
+                )
+            )
         )
         multiple = await multiple_engine.reply(
             multiple.id,
-            FramingReply(revision=multiple.revision, choice_id="c0"),
+            FramingReply(
+                revision=multiple.revision,
+                question_id=multiple.open_questions[0].id,
+                choice_id="c0",
+            ),
         )
         assert not multiple.slots[SlotName.distance_km].is_known
         assert any(
@@ -292,7 +561,12 @@ def test_close_match_distance_selection_uses_only_available_distance_or_asks():
 def test_no_candidates_message_explains_that_search_was_expanded():
     async def run():
         session = await FramingEngine(Search(), DataMode.demo).create(
-            FramingCreate(text="course à Tokyo")
+            FramingCreate(
+                text=(
+                    "course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, train"
+                )
+            )
         )
         limitation = next(
             limitation
@@ -366,6 +640,7 @@ def test_manual_answers_stale_empty_and_errors():
         city_question = next(
             q for q in session.open_questions if q.slots == [SlotName.city]
         )
+        assert city_question.text == "Dans quelle ville ou quel pays ?"
         session = await engine.reply(
             session.id,
             FramingReply(revision=1, question_id=city_question.id, text="Nairobi"),
@@ -406,7 +681,12 @@ def test_manual_answers_stale_empty_and_errors():
         assert engine.get(session.id).status == FramingStatus.ready_to_confirm
         with pytest.raises(RuntimeError, match="Service indisponible"):
             await FramingEngine(Search(fail=True)).create(
-                FramingCreate(text="course à Tokyo")
+                FramingCreate(
+                    text=(
+                        "course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                        "800 euros, 2 nuits, train"
+                    )
+                )
             )
 
     asyncio.run(run())
@@ -417,7 +697,12 @@ def test_candidate_rejection_and_correction_preserve_known_answers():
         search = Search(2)
         engine = FramingEngine(search, DataMode.demo)
         session = await engine.create(
-            FramingCreate(text="course à Nairobi depuis Mombasa")
+            FramingCreate(
+                text=(
+                    "course à Nairobi, 10 km en juin 2028, depuis Mombasa, "
+                    "900 euros, 2 nuits, bus"
+                )
+            )
         )
         session = await engine.reply(
             session.id, FramingReply(revision=1, choice_id="none")

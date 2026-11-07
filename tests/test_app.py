@@ -278,7 +278,14 @@ def unit_plan(**updates):
 
 async def create_confirmed(service, query):
     engine = FramingEngine(FixtureCandidateSearch([DEMO_RACES["milan"]], DataMode.demo), DataMode.demo)
-    session = await engine.create(FramingCreate(text="une course à Milan"))
+    session = await engine.create(
+        FramingCreate(
+            text=(
+                "une course à Milan, 42.195 km en avril 2027, depuis Paris, "
+                "500 euros, 2 nuits, train"
+            )
+        )
+    )
     session = await engine.reply(session.id, FramingReply(revision=session.revision, choice_id=session.candidates[0].id))
     budget = extract_budget_per_night(query, require_context=True)
     session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={
@@ -290,7 +297,14 @@ async def create_confirmed(service, query):
 
 
 def api_confirm(client, city="Milan"):
-    session = client.post("/api/framings", json={"text": f"une course à {city}"}).json()
+    distance = "42.195 km" if city == "Milan" else "10 km"
+    period = "avril 2027" if city == "Milan" else "juin 2028"
+    session = client.post("/api/framings", json={
+        "text": (
+            f"une course à {city}, {distance} en {period}, depuis Paris, "
+            "500 euros, 2 nuits, train"
+        )
+    }).json()
     session = client.post(f"/api/framings/{session['id']}/replies", json={
         "revision": session["revision"], "choice_id": session["candidates"][0]["id"],
     }).json()

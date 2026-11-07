@@ -41,6 +41,8 @@ def candidate(city, country, day, url, km=42.195):
 
 
 ANSWERS = {
+    "distance_km": "42.195 km",
+    "date_window": "mai 2027",
     "origin": "Dakar",
     "budget": "900",
     "nights": "2",
@@ -80,6 +82,18 @@ def test_framing_to_launch_plan_any_city(text, cand, country):
     async def scenario():
         engine = FramingEngine(OneCandidate(cand))
         s = await engine.create(FramingCreate(text=text))
+        asked = []
+        while s.status is not FramingStatus.choosing_candidate:
+            question = s.open_questions[0]
+            asked.append(question.slots[0].value)
+            s = await engine.reply(
+                s.id,
+                FramingReply(
+                    revision=s.revision,
+                    question_id=question.id,
+                    text=ANSWERS[question.slots[0].value],
+                ),
+            )
         assert s.status is FramingStatus.choosing_candidate
         s = await engine.reply(
             s.id,
@@ -89,7 +103,6 @@ def test_framing_to_launch_plan_any_city(text, cand, country):
                 choice_id=cand.id,
             ),
         )
-        asked = []
         while s.open_questions:
             question = s.open_questions[0]
             asked.append(question.slots[0].value)

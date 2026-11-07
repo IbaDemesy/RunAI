@@ -24,7 +24,10 @@ def test_routes_revision_and_launch_gate():
         response = client.post(
             "/api/framings",
             json={
-                "text": "course à Tokyo depuis Lyon, 800 euros, 2 nuits, train",
+                "text": (
+                    "course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, train"
+                ),
                 "channel": "voice",
             },
         )

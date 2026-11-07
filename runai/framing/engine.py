@@ -36,9 +36,10 @@ from runai.search.candidates import CandidateSearchError, location_hint
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
 
 LABELS = {
-    SlotName.city: "Dans quelle ville ?",
+    SlotName.city: "Dans quelle ville ou quel pays ?",
     SlotName.race: "Quel événement officiel (nom ou URL) souhaitez-vous ?",
     SlotName.race_date: "À quelle date se déroule la course ?",
+    SlotName.date_window: "Quelle période (mois ou saison) ? Répondez « peu importe » si vous êtes flexible.",
     SlotName.distance_km: "Quelle distance en km ?",
     SlotName.origin: "De quelle ville partez-vous ?",
     SlotName.budget: "Quel budget total en euros (ou sans plafond) ?",
@@ -61,6 +62,7 @@ class FramingEngine:
         self._locks: dict[str, asyncio.Lock] = {}
         self._missions: dict[str, MissionSnapshot] = {}
         self._manual: set[str] = set()
+        self._search_keys: dict[str, tuple] = {}
 
     def get(self, framing_id: str) -> FramingSession:
         return self.sessions[framing_id].model_copy(deep=True)
@@ -128,17 +130,31 @@ class FramingEngine:
                 if choice is None:
                     raise FramingError("Choix inconnu")
             values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
-            if (
-                question
-                and len(question.slots) == 1
-                and reply.text
-                and not values
-                and not question.choices
-            ):
+            if question and len(question.slots) == 1 and reply.text and not question.choices:
                 slot = question.slots[0]
-                if slot in (SlotName.city, SlotName.origin, SlotName.race):
+                if slot == SlotName.date_window and slot not in values:
+                    answer = reply.text.strip()
+                    normalized = answer.casefold()
+                    flexible = (
+                        "peu importe",
+                        "n'importe",
+                        "n’importe",
+                        "flexible",
+                        "pas de préférence",
+                    )
+                    if any(phrase in normalized for phrase in flexible):
+                        values[slot] = None
+                    else:
+                        values[slot] = (
+                            extract_slots(reply.text).get(slot) or answer
+                        )
+                elif not values and slot in (SlotName.city, SlotName.origin, SlotName.race):
                     values[slot] = reply.text.strip()
-                elif slot in (SlotName.distance_km, SlotName.budget, SlotName.nights):
+                elif not values and slot in (
+                    SlotName.distance_km,
+                    SlotName.budget,
+                    SlotName.nights,
+                ):
                     try:
                         values[slot] = float(reply.text.replace(",", "."))
                     except ValueError as exc:
@@ -161,10 +177,13 @@ class FramingEngine:
             session.confirm_key = session.confirmed_revision = None
             session.status = FramingStatus.collecting
             discovery_changed = any(
-                name in values and values[name] != session.slots[name].value
+                name in values
+                and session.slots[name].is_known
+                and values[name] != session.slots[name].value
                 for name in (
                     SlotName.city,
                     SlotName.race,
+                    SlotName.distance_km,
                     SlotName.date_window,
                     SlotName.race_date,
                     SlotName.edition,
@@ -193,7 +212,7 @@ class FramingEngine:
                     else Provenance(kind="human"),
                     revision=session.revision,
                 )
-                if name == SlotName.budget and value is None:
+                if name in (SlotName.budget, SlotName.date_window) and value is None:
                     session.slots[name].status = SlotStatus.not_needed
             if choice and choice.candidate_id:
                 candidate = next(
@@ -311,55 +330,111 @@ class FramingEngine:
             turn.text for turn in session.turns if turn.role == "user" and turn.text
         )
         place = location_hint(request_text)
-        if (
-            search
-            and not session.selected_candidate_id
-            and session.id not in self._manual
-            and (
-                session.slots[SlotName.city].is_known
-                or session.slots[SlotName.race].is_known
-                or place
-            )
-        ):
-            session.limitations = [l for l in session.limitations if l.code not in {
-                "no_candidates", "candidate_provider_error", "fixture_missing"
-            }]
-            try:
-                if hasattr(self.search, "search"):
-                    if place:
-                        result = await self.search.search(
-                            session.slots, request_text=request_text
-                        )
-                    else:
-                        result = await self.search.search(session.slots)
-                    session.candidates = result.candidates
-                    session.limitations.extend(result.limitations)
-                else:
-                    if place:
-                        session.candidates = await self.search.find_candidates(
-                            session.slots, request_text=request_text
-                        )
-                    else:
-                        session.candidates = await self.search.find_candidates(
-                            session.slots
-                        )
-            except CandidateSearchError as exc:
-                session.candidates = []
-                session.limitations.append(Limitation(
-                    code="candidate_provider_error", message=redact_secrets(str(exc))
-                ))
-            if not session.candidates and not any(
-                l.code == "no_candidates" for l in session.limitations
+        if not session.selected_candidate_id and session.id not in self._manual:
+            prerequisites = []
+            if (
+                not session.slots[SlotName.city].is_known
+                and not session.slots[SlotName.race].is_known
+                and not place
             ):
-                session.limitations.append(
-                    Limitation(
-                        code="no_candidates",
-                        message=(
-                            "Je n'ai trouvé aucune course correspondante, même en élargissant. "
-                            "Donnez le nom officiel de la course ou le lien de son site."
-                        ),
-                    )
+                prerequisites.append(SlotName.city)
+            if (
+                not session.slots[SlotName.distance_km].is_known
+                and not session.slots[SlotName.race].is_known
+            ):
+                prerequisites.append(SlotName.distance_km)
+            if (
+                not session.slots[SlotName.date_window].is_known
+                and not session.slots[SlotName.race_date].is_known
+                and not session.slots[SlotName.race].is_known
+            ):
+                prerequisites.append(SlotName.date_window)
+            prerequisites.extend(
+                name
+                for name in missing_slots(session)
+                if name
+                in (
+                    SlotName.origin,
+                    SlotName.budget,
+                    SlotName.nights,
+                    SlotName.transport_mode,
                 )
+            )
+            if prerequisites:
+                session.status = FramingStatus.collecting
+                for name in prerequisites:
+                    session.open_questions.append(
+                        FramingQuestion(
+                            id=uuid4().hex,
+                            slots=[name],
+                            text=LABELS[name],
+                            revision=session.revision,
+                        )
+                    )
+                return
+            if search:
+                date_window = session.slots[SlotName.date_window]
+                search_key = (
+                    session.slots[SlotName.city].value,
+                    session.slots[SlotName.race].value,
+                    session.slots[SlotName.distance_km].value,
+                    date_window.value,
+                    date_window.status,
+                    session.slots[SlotName.race_date].value,
+                    place,
+                )
+                if self._search_keys.get(session.id) != search_key:
+                    self._search_keys[session.id] = search_key
+                    session.limitations = [
+                        limitation
+                        for limitation in session.limitations
+                        if limitation.code
+                        not in {
+                            "no_candidates",
+                            "candidate_provider_error",
+                            "fixture_missing",
+                        }
+                    ]
+                    try:
+                        if hasattr(self.search, "search"):
+                            if place:
+                                result = await self.search.search(
+                                    session.slots, request_text=request_text
+                                )
+                            else:
+                                result = await self.search.search(session.slots)
+                            session.candidates = result.candidates
+                            session.limitations.extend(result.limitations)
+                        elif place:
+                            session.candidates = await self.search.find_candidates(
+                                session.slots, request_text=request_text
+                            )
+                        else:
+                            session.candidates = await self.search.find_candidates(
+                                session.slots
+                            )
+                    except CandidateSearchError as exc:
+                        session.candidates = []
+                        session.limitations.append(
+                            Limitation(
+                                code="candidate_provider_error",
+                                message=redact_secrets(str(exc)),
+                            )
+                        )
+                    if not session.candidates and not any(
+                        limitation.code == "no_candidates"
+                        for limitation in session.limitations
+                    ):
+                        session.limitations.append(
+                            Limitation(
+                                code="no_candidates",
+                                message=(
+                                    "Je n'ai trouvé aucune course correspondante, "
+                                    "même en élargissant. Donnez le nom officiel "
+                                    "de la course ou le lien de son site."
+                                ),
+                            )
+                        )
         if session.candidates and not session.selected_candidate_id:
             session.status = FramingStatus.choosing_candidate
             close_matches_only = all(
@@ -400,13 +475,16 @@ class FramingEngine:
                 )
             )
             return
-        missing = missing_slots(session)
-        if not session.slots[SlotName.city].is_known:
-            missing.insert(0, SlotName.city)
         candidate = next(
             (c for c in session.candidates if c.id == session.selected_candidate_id),
             None,
         )
+        if candidate and not session.slots[SlotName.race_date].is_known:
+            missing = [SlotName.race_date]
+        else:
+            missing = missing_slots(session)
+            if not session.slots[SlotName.city].is_known:
+                missing.insert(0, SlotName.city)
         distance = session.slots[SlotName.distance_km]
         race_km = float(distance.value) if distance.is_known else None
         if candidate and candidate.distances_km and race_km is not None:
