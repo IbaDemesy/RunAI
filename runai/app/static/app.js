@@ -17,6 +17,7 @@
   };
   let framing, mission, events, view, plan, busy = false, page = "progress";
   const drafts = new Map();
+  const seenQuestions = new Set();
   let journeyScripts, pendingFocus, voiceFraming, voiceMission, voiceAborted = false, voiceState = "idle";
   function loadJourneyScripts() {
     if (!journeyScripts) journeyScripts = (window.RUNAI_JOURNEY_SCRIPTS || []).reduce((previous, src) => previous.then(() => new Promise((resolve) => {
@@ -105,6 +106,8 @@
       return;
     }
     const active = document.activeElement;
+    const newQuestion = !screen.querySelector("input:focus, textarea:focus") && mission?.questions?.find(q => q.status === "open" && !seenQuestions.has(q.question_id));
+    mission?.questions?.filter(q => q.status === "open").forEach(q => seenQuestions.add(q.question_id));
     const focusKey = pendingFocus || active?.dataset.focusKey;
     const hadFocus = pendingFocus != null || screen.contains(active);
     pendingFocus = null;
@@ -118,7 +121,10 @@
     screen.querySelectorAll("input, textarea, button").forEach((node, index) => {
       node.dataset.focusKey = node.tagName === "BUTTON" ? "button:" + node.textContent : "field:" + index;
     });
-    if (hadFocus) {
+    if (newQuestion) {
+      const heading = Array.from(screen.querySelectorAll(".agent-question")).find(node => node.dataset.questionId === newQuestion.question_id)?.querySelector("h2");
+      if (heading) { heading.tabIndex = -1; heading.focus?.(); }
+    } else if (hadFocus) {
       const replacement = Array.from(screen.querySelectorAll("[data-focus-key]")).find((node) => node.dataset.focusKey === focusKey && !node.disabled);
       if (replacement) {
         replacement.focus();
@@ -181,6 +187,7 @@
     return node;
   }
   function showPending() {
+    announce("RunAI cherche pour vous…", true);
     screen.className += " thinking";
     const runner = el("div", null, "runner");
     runner.setAttribute("role", "img"); runner.setAttribute("aria-label", "RunAI réfléchit");
@@ -260,15 +267,17 @@
     if (list.children.length) parent.append(list);
   }
   function typewrite(node, text) {
-    node.textContent = text;
+    const live = el("span", null, "sr-only"); live.setAttribute?.("aria-live", "polite");
+    const visible = el("span", text); visible.setAttribute?.("aria-hidden", "true");
+    node.append(live, visible); live.textContent = text;
     const motion = typeof matchMedia === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!motion || typeof setTimeout !== "function" || typewrite.done === text) return;
     typewrite.done = text;
-    node.setAttribute("aria-label", text); node.textContent = "";
+    visible.textContent = "";
     let index = 0;
     const step = () => {
       if (!node.isConnected) return;
-      index += 1; node.textContent = text.slice(0, index);
+      index += 1; visible.textContent = text.slice(0, index);
       if (index < text.length) setTimeout(step, 22);
     };
     step();
@@ -289,7 +298,7 @@
     const phrased = last?.role === "assistant" && last.revision === framing.revision ? last.text : null;
     const sayText = phrased || question?.text || pick?.text
       || (state === "ready_to_confirm" ? "Tout est prêt. Vérifiez le récapitulatif avant de lancer la recherche." : "Dites-m’en un peu plus sur votre projet.");
-    const say = el("p", null, "say"); say.setAttribute("aria-live", "polite"); screen.append(say); typewrite(say, sayText);
+    const say = el("p", null, "say"); screen.append(say); typewrite(say, sayText);
     if (question) {
       const choices = el("div", null, "replies");
       for (const choice of question.choices) choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
@@ -363,12 +372,14 @@
     const refresh = async () => {
       try {
         const previousStatus = mission.status;
+        const previousSteps = mission.steps;
         mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id));
         if (terminal()) {
           source.onerror = null; source.close();
           if (events === source) events = null;
         }
         if (previousStatus !== mission.status || terminal()) announce("Statut de la mission : " + label(mission.status));
+        announceStepChanges(previousSteps, mission.steps);
         if (!busy && !screen.querySelector("input:focus, textarea:focus")) render();
       }
       catch (_) { announce("Suivi interrompu. La reconnexion ne relance pas les agents."); }
@@ -378,6 +389,7 @@
   }
   function questionBlock(question) {
     const block = el("article", null, "agent-question");
+    block.dataset.questionId = question.question_id;
     block.append(el("h2", question.text), el("p", label(question.step) + " · " + label(question.status)));
     if (question.reason) block.append(el("p", question.reason));
     if (question.status !== "open") { if (question.answer) block.append(el("p", question.answer)); return block; }
@@ -394,6 +406,10 @@
   function agentContext() {
     return JSON.stringify([mission.mission_id, mission.status, mission.questions, mission.limitations, mission.error]);
   }
+  function announceStepChanges(previousSteps = [], steps = []) {
+    const changed = steps.filter(step => previousSteps.some(previous => previous.kind === step.kind && previous.status !== step.status));
+    if (changed.length) announce(changed.map(step => label(step.kind) + " : " + label(step.status)).join(" · "), true);
+  }
   function renderAgentSteps(steps) {
     steps.dataset.context = agentContext();
     for (const step of mission.steps) {
@@ -403,6 +419,7 @@
         block.append(el("div", null, "agent-content")); steps.append(block);
       }
       const content = block.querySelector(".agent-content");
+      block.setAttribute?.("aria-busy", String(["running", "searching"].includes(step.status)));
       const active = ["running", "paused", "waiting_for_user"].includes(step.status);
       content.replaceChildren(el("h3", label(step.kind)), el("p", label(step.status), "status"), el("p", step.summary || "En attente"));
       content.append(el("p", step.data?.last_action || "Aucune action H reçue pour cette étape.", "last-action"));
@@ -481,6 +498,8 @@
     const questions = mission.questions || [];
     if (questions.some((q) => q.status === "open")) {
       const priority = el("section", null, "questions"); priority.append(el("h2", "À vous de répondre"));
+      priority.querySelector("h2").id = "questions-heading";
+      priority.setAttribute?.("aria-labelledby", "questions-heading");
       questions.filter((q) => q.status === "open").forEach((q) => priority.append(questionBlock(q))); screen.append(priority);
     }
     const nav = el("nav", null, "question-options"); nav.setAttribute("aria-label", "Écrans du séjour");

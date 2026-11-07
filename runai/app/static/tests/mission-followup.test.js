@@ -7,7 +7,7 @@ const core = require("../shell-core.js");
 
 class Node {
   constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.dataset = {}; this.attributes = {}; this._text = ""; }
-  set textContent(text) { this._text = text; this.children = []; }
+  set textContent(text) { (this.writes ||= []).push(text); this._text = text; this.children = []; }
   get textContent() { return this._text + this.children.map(child => child.textContent).join(""); }
   append(...nodes) { for (const node of nodes) { node.remove(); node.parentNode = this; this.children.push(node); } }
   replaceChildren(...nodes) { for (const node of this.children) node.parentNode = null; this.children = []; this.append(...nodes); }
@@ -24,12 +24,18 @@ class Node {
   }
   querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
   contains() { return false; }
-  focus() {}
+  focus() { this.focused = true; }
+  get isConnected() { return true; }
 }
 
-async function setup(status = "running", questions = [], step = {}) {
+async function setup(status = "running", questions = [], step = {}, options = {}) {
   const screen = new Node("section"), feedback = new Node("p"), mode = new Node("span");
   const values = new Map([["runai:mission", "mission-test"]]), sources = [], requests = [];
+  const timers = [];
+  if (options.framing) { values.delete("runai:mission"); values.set("runai:framing", "framing-test"); }
+  const document = { activeElement: null, createElement: tag => new Node(tag), getElementById: id => ({ screen, feedback, mode }[id]) };
+  const querySelector = screen.querySelector.bind(screen);
+  screen.querySelector = selector => selector === "input:focus, textarea:focus" ? options.typing && document.activeElement : querySelector(selector);
   let mission = { mission_id: "mission-test", mode: "live", status, questions, limitations: [],
     steps: [{ kind: "accommodation", status: "stopped_before_commitment", stop_point: "payment",
       summary: "Arrêt avant paiement", url: "https://all.accor.com/", data: {}, ...step }] };
@@ -44,16 +50,70 @@ async function setup(status = "running", questions = [], step = {}) {
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../app.js"), "utf8"), {
     window, EventSource: Source, location: { search: "", href: "http://runai.test/" }, URLSearchParams, URL,
     sessionStorage: { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) },
-    document: { activeElement: null, createElement: tag => new Node(tag), getElementById: id => ({ screen, feedback, mode }[id]) },
-    async fetch(url, options) {
-      requests.push({ url, options });
-      const body = url === "/api/health" ? { mode: "live" } : structuredClone(mission);
+    document, matchMedia: () => ({ matches: !!options.reduced }), setTimeout: callback => timers.push(callback),
+    async fetch(url, requestOptions) {
+      requests.push({ url, options: requestOptions });
+      const body = url === "/api/health" ? { mode: "live" } : structuredClone(options.framing || mission);
       return { ok: true, json: async () => body };
     },
   });
   await new Promise(resolve => setImmediate(resolve));
-  return { screen, feedback, sources, requests, voiceOptions, update: changes => { mission = { ...mission, ...changes }; } };
+  return { screen, feedback, sources, requests, voiceOptions, timers, document, update: changes => { mission = { ...mission, ...changes }; } };
 }
+
+for (const reduced of [false, true]) {
+  test(`phrase accessible complète une seule fois, mouvement réduit ${reduced}`, async () => {
+    const text = "Précisez votre projet.";
+    const framing = { id: "framing-test", revision: 1, status: "collecting", mode: "demo", slots: {}, limitations: [], candidates: [], open_questions: [], turns: [{ role: "assistant", revision: 1, text }] };
+    const { screen, timers } = await setup("running", [], {}, { framing, reduced });
+    const say = screen.querySelector(".say"); assert.ok(say, screen.textContent);
+    const [live, visible] = say.children;
+    assert.equal(live.className, "sr-only");
+    assert.equal(live.attributes["aria-live"], "polite");
+    assert.deepEqual(live.writes, [text]);
+    assert.equal(visible.attributes["aria-hidden"], "true");
+    assert.equal(visible.textContent, reduced ? text : text.slice(0, 1));
+    if (!reduced) { timers.shift()(); assert.equal(visible.textContent, text.slice(0, 2)); }
+    while (timers.length) timers.shift()();
+    assert.equal(visible.textContent, text);
+    assert.deepEqual(live.writes, [text]);
+    assert.equal(say.attributes["aria-live"], undefined);
+    assert.equal(say.attributes["aria-label"], undefined);
+  });
+}
+
+test("changements groupés annoncés une fois, aria-busy suit le statut et aucun doublon", async () => {
+  const { screen, feedback, sources, update } = await setup("running", [], { status: "searching" });
+  assert.equal(screen.querySelector(".step").attributes["aria-busy"], "true");
+  const before = feedback.writes?.length || 0;
+  update({ steps: [{ kind: "accommodation", status: "failed", error: "Indisponible" }] });
+  await sources[0].handlers.get("step")();
+  assert.deepEqual(feedback.writes.slice(before), ["Hôtel : Échec"]);
+  assert.equal(screen.querySelector(".step").attributes["aria-busy"], "false");
+  await sources[0].handlers.get("step")();
+  update({ steps: [] }); await sources[0].handlers.get("step")();
+  assert.equal(feedback.writes.length, before + 1);
+});
+
+test("nouvelle question : focus sur son titre, sans répétition", async () => {
+  const { screen, sources, update } = await setup();
+  update({ questions: [{ question_id: "new", status: "open", step: "accommodation", text: "Quelle chambre ?", choices: [] }] });
+  await sources[0].handlers.get("question_opened")();
+  const heading = screen.querySelector(".agent-question").querySelector("h2");
+  assert.equal(heading.focused, true); assert.equal(heading.tabIndex, -1);
+  assert.equal(screen.querySelector(".questions").attributes["aria-labelledby"], "questions-heading");
+  await sources[0].handlers.get("trace")();
+  assert.equal(screen.querySelector(".agent-question").querySelector("h2").focused, undefined);
+});
+
+test("question reçue pendant la saisie : aucun déplacement de focus", async () => {
+  const { screen, sources, update, document } = await setup("running", [], {}, { typing: true });
+  document.activeElement = new Node("input");
+  update({ questions: [{ question_id: "new", status: "open", text: "Choix ?", choices: [] }] });
+  await sources[0].handlers.get("question_opened")();
+  assert.equal(screen.querySelector(".agent-question"), null);
+  assert.equal(document.activeElement.focused, undefined);
+});
 
 test("arrêt hôtel avant paiement sans question : action manuelle et lien officiel, aucun suivi terminal rouvert", async () => {
   const { screen, sources } = await setup("awaiting_human");
