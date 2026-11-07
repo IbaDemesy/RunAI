@@ -1,0 +1,368 @@
+import asyncio
+import math
+from collections.abc import Awaitable, Callable
+from datetime import date, timedelta
+from uuid import uuid4
+
+from runai.contracts.common import DataMode, Limitation, Provenance
+from runai.contracts.framing import (
+    CandidateSearch,
+    FramingChoice,
+    FramingConfirm,
+    FramingCreate,
+    FramingError,
+    FramingQuestion,
+    FramingReply,
+    FramingSession,
+    FramingStatus,
+    FramingSummary,
+    FramingTurn,
+    Slot,
+    SlotName,
+    SlotStatus,
+    assert_launchable,
+    check_reply_revision,
+    missing_slots,
+)
+from runai.contracts.mission import MissionSnapshot
+from runai.framing.interpret import extract_slots
+from runai.models import Race
+
+OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
+
+LABELS = {
+    SlotName.city: "Dans quelle ville ?",
+    SlotName.race: "Quel événement officiel (nom ou URL) souhaitez-vous ?",
+    SlotName.race_date: "À quelle date se déroule la course ?",
+    SlotName.distance_km: "Quelle distance en km ?",
+    SlotName.origin: "De quelle ville partez-vous ?",
+    SlotName.budget: "Quel budget total en euros (ou sans plafond) ?",
+    SlotName.nights: "Combien de nuits ?",
+    SlotName.transport_mode: "Quel transport : train, avion, voiture ou bus ?",
+}
+
+
+class FramingEngine:
+    def __init__(self, search: CandidateSearch, mode: DataMode = DataMode.live):
+        self.search = search
+        self.mode = mode
+        self.sessions: dict[str, FramingSession] = {}
+        self._locks: dict[str, asyncio.Lock] = {}
+        self._missions: dict[str, MissionSnapshot] = {}
+        self._manual: set[str] = set()
+
+    def get(self, framing_id: str) -> FramingSession:
+        return self.sessions[framing_id].model_copy(deep=True)
+
+    async def create(self, request: FramingCreate) -> FramingSession:
+        session = FramingSession(id=uuid4().hex, mode=self.mode)
+        self.sessions[session.id] = session
+        self._locks[session.id] = asyncio.Lock()
+        return await self.reply(
+            session.id,
+            FramingReply(revision=0, text=request.text, channel=request.channel),
+        )
+
+    @staticmethod
+    def _validate(values: dict[SlotName, object]) -> None:
+        for name, value in values.items():
+            try:
+                if name == SlotName.race_date and value is not None:
+                    date.fromisoformat(str(value))
+                elif (
+                    name in (SlotName.distance_km, SlotName.budget, SlotName.nights)
+                    and value is not None
+                ):
+                    number = float(value)
+                    if (
+                        not math.isfinite(number)
+                        or number < 0
+                        or (name == SlotName.distance_km and number == 0)
+                    ):
+                        raise ValueError()
+                    if name == SlotName.nights and not number.is_integer():
+                        raise ValueError()
+                elif value is None and name != SlotName.budget:
+                    continue
+                elif name not in (
+                    SlotName.budget,
+                    SlotName.nights,
+                    SlotName.distance_km,
+                ) and (not isinstance(value, str) or not value.strip()):
+                    raise ValueError()
+            except (ValueError, TypeError, OverflowError) as exc:
+                raise FramingError(f"Valeur invalide : {name.value}") from exc
+
+    async def reply(self, framing_id: str, reply: FramingReply) -> FramingSession:
+        async with self._locks[framing_id]:
+            session = self.get(framing_id)
+            check_reply_revision(session, reply)
+            question = next(
+                (q for q in session.open_questions if q.id == reply.question_id), None
+            )
+            if reply.question_id and question is None:
+                raise FramingError("Question périmée ou inconnue")
+            choice = None
+            if reply.choice_id:
+                choice = next(
+                    (
+                        c
+                        for q in session.open_questions
+                        for c in q.choices
+                        if c.id == reply.choice_id
+                        and (question is None or q.id == question.id)
+                    ),
+                    None,
+                )
+                if choice is None:
+                    raise FramingError("Choix inconnu")
+            values = extract_slots(reply.text or "") | reply.corrections
+            if (
+                question
+                and len(question.slots) == 1
+                and reply.text
+                and not values
+                and not question.choices
+            ):
+                slot = question.slots[0]
+                if slot in (SlotName.city, SlotName.origin, SlotName.race):
+                    values[slot] = reply.text.strip()
+                elif slot in (SlotName.distance_km, SlotName.budget, SlotName.nights):
+                    try:
+                        values[slot] = float(reply.text.replace(",", "."))
+                    except ValueError as exc:
+                        raise FramingError(
+                            "Une valeur numérique est nécessaire"
+                        ) from exc
+            if not values and choice is None and session.turns:
+                raise FramingError("Précisez une réponse ou une correction explicite")
+            self._validate(values)
+            session.revision += 1
+            session.summary = None
+            session.confirm_key = session.confirmed_revision = None
+            session.status = FramingStatus.collecting
+            discovery_changed = any(
+                name in values and values[name] != session.slots[name].value
+                for name in (
+                    SlotName.city,
+                    SlotName.race,
+                    SlotName.date_window,
+                    SlotName.race_date,
+                    SlotName.edition,
+                )
+            )
+            if discovery_changed:
+                self._manual.discard(framing_id)
+                session.selected_candidate_id = None
+                session.candidates = []
+                for name, old in list(session.slots.items()):
+                    if old.status == SlotStatus.sourced and name != SlotName.city:
+                        session.slots[name] = Slot(name=name)
+            for name, value in values.items():
+                session.slots[name] = Slot(
+                    name=name,
+                    status=SlotStatus.answered
+                    if value is not None
+                    else SlotStatus.unknown,
+                    value=value,
+                    provenance=Provenance(
+                        kind="derived", label="Distance du terme humain marathon/semi"
+                    )
+                    if name == SlotName.distance_km
+                    and name not in reply.corrections
+                    and "km" not in (reply.text or "").lower()
+                    else Provenance(kind="human"),
+                    revision=session.revision,
+                )
+                if name == SlotName.budget and value is None:
+                    session.slots[name].status = SlotStatus.not_needed
+            if choice and choice.candidate_id:
+                candidate = next(
+                    c for c in session.candidates if c.id == choice.candidate_id
+                )
+                session.selected_candidate_id = candidate.id
+                sourced = {
+                    SlotName.race: candidate.name,
+                    SlotName.city: candidate.city,
+                    SlotName.race_date: candidate.race_date,
+                }
+                if candidate.race_date:
+                    sourced[SlotName.edition] = str(candidate.race_date.year)
+                if (
+                    len(candidate.distances_km) == 1
+                    and not session.slots[SlotName.distance_km].is_known
+                ):
+                    sourced[SlotName.distance_km] = candidate.distances_km[0]
+                for name, value in sourced.items():
+                    if value is not None:
+                        session.slots[name] = Slot(
+                            name=name,
+                            value=value,
+                            status=SlotStatus.sourced,
+                            provenance=candidate.provenance,
+                            revision=session.revision,
+                        )
+                session.limitations.extend(candidate.limitations)
+            elif choice:
+                session.candidates = []
+                self._manual.add(framing_id)
+            session.turns.append(
+                FramingTurn(
+                    role="user",
+                    text=reply.text or reply.choice_id or str(reply.corrections),
+                    channel=reply.channel,
+                    revision=session.revision,
+                )
+            )
+            await self._advance(session, search=choice is None)
+            self.sessions[framing_id] = session
+            return self.get(framing_id)
+
+    async def _advance(self, session: FramingSession, *, search: bool) -> None:
+        session.open_questions = []
+        if (
+            search
+            and not session.selected_candidate_id
+            and session.id not in self._manual
+            and not session.slots[SlotName.race].is_known
+            and (
+                session.slots[SlotName.city].is_known
+                or session.slots[SlotName.race].is_known
+            )
+        ):
+            session.candidates = await self.search.find_candidates(session.slots)
+            if not session.candidates and not any(
+                l.code == "no_candidates" for l in session.limitations
+            ):
+                session.limitations.append(
+                    Limitation(
+                        code="no_candidates",
+                        message="Aucun événement sourcé trouvé ; précisez le nom officiel ou son URL pour une préparation manuelle.",
+                    )
+                )
+        if session.candidates and not session.selected_candidate_id:
+            session.status = FramingStatus.choosing_candidate
+            session.open_questions.append(
+                FramingQuestion(
+                    id=uuid4().hex,
+                    slots=[SlotName.race],
+                    text="Quel événement souhaitez-vous ? Vérifiez les sources et l'édition.",
+                    revision=session.revision,
+                    choices=[
+                        FramingChoice(
+                            id=c.id,
+                            candidate_id=c.id,
+                            label=f"{c.name} — {c.race_date or 'date inconnue'}",
+                            value=c.model_dump(mode="json"),
+                        )
+                        for c in session.candidates
+                    ]
+                    + [FramingChoice(id="none", label="Aucun de ceux-ci")],
+                )
+            )
+            return
+        missing = missing_slots(session)
+        if not session.slots[SlotName.city].is_known:
+            missing.insert(0, SlotName.city)
+        candidate = next(
+            (c for c in session.candidates if c.id == session.selected_candidate_id),
+            None,
+        )
+        distance = session.slots[SlotName.distance_km]
+        if (
+            candidate
+            and candidate.distances_km
+            and distance.is_known
+            and float(distance.value) not in candidate.distances_km
+        ):
+            raise FramingError("Distance non proposée par cet événement")
+        for name in missing:
+            session.open_questions.append(
+                FramingQuestion(
+                    id=uuid4().hex,
+                    slots=[name],
+                    text=LABELS[name],
+                    revision=session.revision,
+                )
+            )
+        if missing:
+            return
+        value = lambda name: session.slots[name].value
+        race = (
+            candidate.to_race(float(value(SlotName.distance_km)))
+            if candidate
+            else Race(
+                name=value(SlotName.race),
+                city=value(SlotName.city),
+                country="",
+                distance_km=float(value(SlotName.distance_km)),
+            )
+        )
+        race.race_date = date.fromisoformat(str(value(SlotName.race_date)))
+        if not candidate and not any(
+            l.code == "manual_event" for l in session.limitations
+        ):
+            session.limitations.append(
+                Limitation(
+                    code="manual_event",
+                    message="Événement renseigné par l'utilisateur, non vérifié : vérifier manuellement le site officiel et le pays avant toute automatisation.",
+                )
+            )
+        nights = int(value(SlotName.nights))
+        dates = (
+            (
+                race.race_date - timedelta(days=nights - 1),
+                race.race_date + timedelta(days=1),
+            )
+            if nights
+            else (race.race_date, race.race_date)
+        )
+        session.summary = FramingSummary(
+            revision=session.revision,
+            race=race,
+            candidate_id=session.selected_candidate_id,
+            origin_public=value(SlotName.origin),
+            date_range=dates,
+            nights=nights,
+            budget_eur=value(SlotName.budget),
+            transport_mode=value(SlotName.transport_mode),
+            lines=[
+                f"{race.name}, {race.city}, {race.race_date}, {race.distance_km} km",
+                f"Départ : {value(SlotName.origin)} ; {nights} nuits ; {value(SlotName.transport_mode)}",
+                f"Budget : {value(SlotName.budget) if value(SlotName.budget) is not None else 'sans plafond'}",
+            ],
+            limitations=session.limitations,
+        )
+        session.status = FramingStatus.ready_to_confirm
+
+    async def confirm(
+        self, framing_id: str, request: FramingConfirm, on_confirm: OnConfirm
+    ) -> MissionSnapshot:
+        async with self._locks[framing_id]:
+            session = self.sessions[framing_id]
+            mission_id = assert_launchable(session, request)
+            if mission_id:
+                return self._missions[mission_id].model_copy(deep=True)
+            session.status = FramingStatus.confirmed
+            session.confirmed_revision = session.revision
+            session.confirm_key = request.idempotency_key
+            try:
+                mission = await on_confirm(session.model_copy(deep=True))
+            except BaseException:
+                session.status = FramingStatus.ready_to_confirm
+                session.confirm_key = session.confirmed_revision = None
+                raise
+            session.status = FramingStatus.launched
+            session.mission_id = mission.mission_id
+            self._missions[mission.mission_id] = mission.model_copy(deep=True)
+            return mission
+
+    async def cancel(self, framing_id: str) -> FramingSession:
+        async with self._locks[framing_id]:
+            session = self.sessions[framing_id]
+            if session.status == FramingStatus.launched:
+                raise FramingError("Mission lancée : utilisez l'annulation de mission")
+            session.status = FramingStatus.cancelled
+            session.summary = None
+            session.open_questions = []
+            return self.get(framing_id)
