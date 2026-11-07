@@ -23,7 +23,7 @@ jobs:
           N: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          files=$(gh api "repos/$REPO/pulls/$N/files" --paginate --jq '.[].filename')
+          files=$(gh api "repos/$REPO/pulls/$N/files" --paginate --jq '.[] | .filename, (.previous_filename // empty)')
           has_static=false
           outside=()
           while IFS= read -r file; do
