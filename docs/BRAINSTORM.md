@@ -158,6 +158,14 @@ Bonnes idées à reprendre : lire le plan à voix haute avant d'agir, et prépar
 
 *À reprendre pour RunAI* : c'est presque notre architecture (plusieurs sessions H en parallèle, vue live, une réponse consolidée). Le code est sous licence MIT, donc on peut s'en inspirer directement. À retenir surtout : valider côté serveur ce que l'agent renvoie (bonne course, bonne distance, prix, arrêt avant le paiement) au lieu de se fier uniquement au prompt.
 
+**Zoom sur [Hiking Routes in Google Maps](https://github.com/Exynos-8890/0711hack)** (Hackathon SF), **le seul projet lié au sport** : les randonnées urbaines ne rentrent pas dans les itinéraires classiques de Google Maps. NVIDIA NemoClaw conçoit l'itinéraire et le vérifie. Un agent navigateur H le trace dans Google Maps, puis renvoie des captures et un lien de partage. Si un point de passage est faux, il est corrigé sur place, sans tout recommencer.
+*À reprendre pour RunAI* :
+- Séparer le « cerveau » qui planifie (chez nous, Linkup et le LLM) de l'agent H qui exécute.
+- Rendre au coureur des preuves directement utilisables : captures du formulaire rempli, lien vers la page de paiement.
+- Corriger une erreur sur place (« prends plutôt le 21 km ») au lieu de relancer tout le parcours.
+
+Le sport reste donc quasiment libre dans le showcase : ce projet fait de la planification d'itinéraire, pas de l'inscription ni de la logistique de course.
+
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
