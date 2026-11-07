@@ -17,6 +17,7 @@ from runai.search.checks import (
     registration_url_issue,
 )
 from runai.search.models import Issue, IssueLevel, RaceSheet
+from runai.telemetry import timed
 from runai.tracing import TraceWriter
 
 Depth = Literal["standard", "deep"]
@@ -261,14 +262,17 @@ def complete_missing(
         return sheet
     keys = list(dict.fromkeys(key for field in missing for key in _FOLLOW_UP_KEYS[field]))
     schema = {"type": "object", "properties": {key: FIELD_SCHEMAS[key] for key in keys}}
-    response = client.search(
-        query=build_follow_up_prompt(sheet, missing),
-        depth=depth,
-        output_type="structured",
-        structured_output_schema=json.dumps(schema),
-        include_sources=True,
-        include_domains=domains,
-    )
+    with timed("linkup", "search.structured", depth=depth, output_type="structured",
+               domains=domains) as call:
+        response = client.search(
+            query=build_follow_up_prompt(sheet, missing),
+            depth=depth,
+            output_type="structured",
+            structured_output_schema=json.dumps(schema),
+            include_sources=True,
+            include_domains=domains,
+        )
+        call.meta["n_sources"] = len(_sources(response))
     data = {key: value for key, value in _data(response).items() if key in keys}
     _apply(sheet, data, sheet._notes, only_missing=True)
     _add_sources(sheet, _sources(response))
@@ -276,7 +280,8 @@ def complete_missing(
 
 
 def links_on_page(client: SearchClient, url: str) -> list[str]:
-    response = client.fetch(url=url, render_js=True)
+    with timed("linkup", "fetch", domains=[host_of(url)]):
+        response = client.fetch(url=url, render_js=True)
     markdown = getattr(response, "markdown", "") or ""
     return list(dict.fromkeys(link.rstrip(".,;") for link in _LINK.findall(markdown)))
 
@@ -326,13 +331,16 @@ def search_race(
 ) -> RaceSheet:
     """Cherche la course décrite en langage libre et renvoie une fiche sourcée et vérifiée."""
     client = client or default_client()
-    response = client.search(
-        query=build_prompt(request),
-        depth=depth,
-        output_type="structured",
-        structured_output_schema=json.dumps(RACE_SCHEMA),
-        include_sources=True,
-    )
+    with timed("linkup", "search.structured", depth=depth, output_type="structured",
+               domains=[]) as call:
+        response = client.search(
+            query=build_prompt(request),
+            depth=depth,
+            output_type="structured",
+            structured_output_schema=json.dumps(RACE_SCHEMA),
+            include_sources=True,
+        )
+        call.meta["n_sources"] = len(_sources(response))
     sheet = parse_response(request, response, today=today)
     if follow_up:
         sheet = complete_missing(sheet, client, depth=depth, today=today)

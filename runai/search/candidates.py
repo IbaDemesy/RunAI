@@ -15,6 +15,7 @@ from runai.contracts.framing import RaceCandidate, Slot, SlotName, matching_dist
 from runai.models import Source
 from runai.search.checks import host_of, is_aggregator, on_domain
 from runai.search.linkup_search import SearchClient, default_client
+from runai.telemetry import timed
 
 
 class CandidateSearchError(RuntimeError):
@@ -411,14 +412,18 @@ class LinkupCandidateSearch:
         try:
             if self._client is None:
                 self._client = default_client()
-            response = self._client.search(
-                query=query,
-                depth="standard",
-                output_type="structured",
-                structured_output_schema=_NextEdition,
-                include_sources=True,
-                exclude_domains=EXCLUDED_DOMAINS,
-            )
+            with timed("linkup", "search.next_edition", depth="standard",
+                       output_type="structured", domains=EXCLUDED_DOMAINS) as call:
+                response = self._client.search(
+                    query=query,
+                    depth="standard",
+                    output_type="structured",
+                    structured_output_schema=_NextEdition,
+                    include_sources=True,
+                    exclude_domains=EXCLUDED_DOMAINS,
+                )
+                sources = response.get("sources", []) if isinstance(response, dict) else getattr(response, "sources", [])
+                call.meta["n_sources"] = len(sources or [])
             data = getattr(response, "data", response)
             if isinstance(data, BaseModel):
                 data = data.model_dump(mode="json")
@@ -449,9 +454,14 @@ class LinkupCandidateSearch:
     def _search(self, prompt: str) -> Any:
         if self._client is None:
             self._client = default_client()
-        return self._client.search(query=prompt, depth="standard", output_type="structured",
-                                   structured_output_schema=_Candidates, include_sources=True,
-                                   exclude_domains=EXCLUDED_DOMAINS)
+        with timed("linkup", "search.structured", depth="standard",
+                   output_type="structured", domains=EXCLUDED_DOMAINS) as call:
+            response = self._client.search(query=prompt, depth="standard", output_type="structured",
+                                       structured_output_schema=_Candidates, include_sources=True,
+                                       exclude_domains=EXCLUDED_DOMAINS)
+            sources = response.get("sources", []) if isinstance(response, dict) else getattr(response, "sources", [])
+            call.meta["n_sources"] = len(sources or [])
+        return response
 
     @staticmethod
     def _result(candidates: list[RaceCandidate]) -> CandidateSearchResult:

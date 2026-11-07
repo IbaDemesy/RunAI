@@ -2,9 +2,11 @@
 
 import asyncio
 from collections.abc import AsyncIterable, AsyncIterator, Iterable
+from time import perf_counter
 from typing import Any
 
 import runai.config  # noqa: F401  (charge le .env avant le SDK Gladia, qui lit la clé à l'import)
+from runai.telemetry import timed
 from runai.voice.audio import AudioStream
 from runai.voice.commands import CommandDetector
 from runai.voice.models import TranscriptEvent, VoiceEvent
@@ -87,38 +89,45 @@ async def stream_transcripts(
     options: dict[str, Any] | None = None,
 ) -> AsyncIterator[TranscriptEvent]:
     """Envoie l'audio à Gladia au fil de l'eau et produit les transcriptions partielles et finales."""
-    client = client or default_client()
-    queue: asyncio.Queue[Any] = asyncio.Queue()
-    errors: list[Exception] = []
-    session = client.start_session(options or build_live_options(sample_rate))
-    session.on("message", queue.put_nowait)
-    session.on("error", errors.append)
-    session.on("ended", lambda ended: queue.put_nowait((_ENDED, ended)))
+    async with timed("gladia", "live.transcribe", audio_s=0, n_final_utterances=0) as call:
+        client = client or default_client()
+        queue: asyncio.Queue[Any] = asyncio.Queue()
+        errors: list[Exception] = []
+        session = client.start_session(options or build_live_options(sample_rate))
+        session.on("message", queue.put_nowait)
+        session.on("error", errors.append)
+        session.on("ended", lambda ended: queue.put_nowait((_ENDED, ended)))
 
-    async def feed() -> None:
+        async def feed() -> None:
+            try:
+                async for chunk in chunks:
+                    session.send_audio(chunk)
+                    call.meta["audio_s"] += len(chunk) / (sample_rate * 2)
+            finally:
+                session.stop_recording()
+
+        feeder = asyncio.create_task(feed())
         try:
-            async for chunk in chunks:
-                session.send_audio(chunk)
+            while True:
+                item = await queue.get()
+                if isinstance(item, tuple) and item and item[0] is _ENDED:
+                    code = getattr(item[1], "code", 1000)
+                    if code != 1000:
+                        raise VoiceError(f"Session Gladia terminée (code {code})") from (errors[-1] if errors else None)
+                    break
+                if getattr(item, "type", None) == "transcript":
+                    event = to_transcript_event(item)
+                    if event.is_final:
+                        call.meta["n_final_utterances"] += 1
+                    elif "time_to_first_partial_ms" not in call.meta:
+                        call.meta["time_to_first_partial_ms"] = (perf_counter() - call.start) * 1000
+                    yield event
+            if feeder.done() and not feeder.cancelled() and feeder.exception():
+                raise VoiceError("Lecture audio interrompue") from feeder.exception()
         finally:
-            session.stop_recording()
-
-    feeder = asyncio.create_task(feed())
-    try:
-        while True:
-            item = await queue.get()
-            if isinstance(item, tuple) and item and item[0] is _ENDED:
-                code = getattr(item[1], "code", 1000)
-                if code != 1000:
-                    raise VoiceError(f"Session Gladia terminée (code {code})") from (errors[-1] if errors else None)
-                break
-            if getattr(item, "type", None) == "transcript":
-                yield to_transcript_event(item)
-        if feeder.done() and not feeder.cancelled() and feeder.exception():
-            raise VoiceError("Lecture audio interrompue") from feeder.exception()
-    finally:
-        if not feeder.done():
-            feeder.cancel()
-        session.end_session()
+            if not feeder.done():
+                feeder.cancel()
+            session.end_session()
 
 
 async def stream_events(

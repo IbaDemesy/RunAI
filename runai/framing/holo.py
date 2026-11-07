@@ -16,6 +16,7 @@ import httpx
 
 from runai.contracts.framing import FramingTurn
 from runai.redaction import redact_secrets
+from runai.telemetry import timed
 
 H_MODELS_URL = "https://api.hcompany.ai/v1/chat/completions"
 MAX_REPLY_CHARS = 420
@@ -125,9 +126,12 @@ class HoloPhraser:
         self._fallback = fallback or TemplatePhraser()
         self._transport = transport
 
-    async def _complete(self, messages: list[dict[str, str]], max_tokens: int) -> str:
+    async def _complete(self, messages: list[dict[str, str]], max_tokens: int, operation: str = "chat.phrase") -> str:
         try:
-            async with httpx.AsyncClient(timeout=self._timeout_s, transport=self._transport) as client:
+            async with (
+                timed("holo", operation, model=self.model, max_tokens=max_tokens) as call,
+                httpx.AsyncClient(timeout=self._timeout_s, transport=self._transport) as client,
+            ):
                 response = await client.post(
                     H_MODELS_URL,
                     headers={"Authorization": f"Bearer {self._api_key}"},
@@ -140,7 +144,12 @@ class HoloPhraser:
                     },
                 )
                 response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
+                data = response.json()
+                usage = data.get("usage")
+                if isinstance(usage, dict):
+                    call.meta.update({key: value for key, value in usage.items()
+                                      if key in {"prompt_tokens", "completion_tokens"}})
+                content = data["choices"][0]["message"]["content"]
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
             return ""
         return content if isinstance(content, str) else ""
@@ -156,7 +165,7 @@ class HoloPhraser:
                 f"Conversation récente :\n{_history(turns)}\n\nDéjà compris :\n{context}\n\n"
                 f"Nouveau message à analyser : {text}"
             )},
-        ], 200)
+        ], 200, operation="chat.extract")
         match = re.search(r"\{.*\}", content, re.DOTALL)
         try:
             return clean_extraction(json.loads(match[0])) if match else {}
@@ -179,7 +188,7 @@ class HoloPhraser:
     async def phrase(
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> str:
-        content = await self._complete(self._messages(turns, question, known), 200)
+        content = await self._complete(self._messages(turns, question, known), 200, operation="chat.phrase")
         content = redact_secrets(content.strip().strip('"«» ').strip())
         if not content or len(content) > MAX_REPLY_CHARS or "?" not in content:
             return await self._fallback.phrase(turns, question, known)
