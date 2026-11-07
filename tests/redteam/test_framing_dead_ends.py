@@ -28,6 +28,7 @@ def engine():
 
 
 @pytest.mark.parametrize("answer", [
+    "Marathon 2026 de Lisboa",
     "Lisboa 2026 Night Run",
     "https://example.org/races/" + "lisboa-" * 12 + "2026",
 ])

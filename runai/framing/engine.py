@@ -177,7 +177,11 @@ class FramingEngine:
                         values[slot] = (
                             extract_slots(reply.text).get(slot) or answer
                         )
-                elif not values and slot in (SlotName.city, SlotName.origin, SlotName.race):
+                elif (
+                    slot in (SlotName.city, SlotName.origin, SlotName.race)
+                    and slot not in values
+                    and (reply.question_id or not values)
+                ):
                     if reply.question_id or (
                         len(answer) <= 60 and not any(c.isdigit() for c in answer)
                     ):
