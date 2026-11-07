@@ -22,6 +22,9 @@ from runai.contracts.framing import (
     SlotStatus,
     assert_launchable,
     check_reply_revision,
+    format_date,
+    format_distance,
+    format_money,
     matching_distance,
     missing_slots,
 )
@@ -220,6 +223,7 @@ class FramingEngine:
             discovery_changed = any(
                 name in values
                 and session.slots[name].is_known
+                and session.slots[name].value is not None
                 and values[name] != session.slots[name].value
                 for name in (
                     SlotName.city,
@@ -236,7 +240,10 @@ class FramingEngine:
                 session.selected_candidate_id = None
                 session.candidates = []
                 for name, old in list(session.slots.items()):
-                    if old.status == SlotStatus.sourced and name != SlotName.city:
+                    if old.status == SlotStatus.sourced and name in (
+                        SlotName.race, SlotName.race_date, SlotName.distance_km,
+                        SlotName.edition, SlotName.date_window,
+                    ):
                         session.slots[name] = Slot(name=name)
             for name, value in values.items():
                 session.slots[name] = Slot(
@@ -304,6 +311,9 @@ class FramingEngine:
             elif choice:
                 session.candidates = []
                 self._manual.add(framing_id)
+            if session.slots[SlotName.race_date].is_known:
+                for name in (SlotName.date_window, SlotName.edition):
+                    session.slots[name].status = SlotStatus.not_needed
             session.turns.append(
                 FramingTurn(
                     role="user",
@@ -313,6 +323,10 @@ class FramingEngine:
                 )
             )
             await self._advance(session, search=choice is None)
+            for limitations in [session.limitations] + [c.limitations for c in session.candidates]:
+                for limitation in limitations:
+                    if limitation.code == "close_match":
+                        limitation.message = "Close to your request, but not an exact match."
             await self._phrase_next_question(session)
             self.sessions[framing_id] = session
             return self.get(framing_id)
@@ -530,7 +544,7 @@ class FramingEngine:
                             id=c.id,
                             candidate_id=c.id,
                             label=(
-                                f"{c.name} — {c.race_date or 'date to be confirmed'}"
+                                f"{c.name} — {format_date(c.race_date) if c.race_date else 'date to be confirmed'}"
                                 + (
                                     " · close to your request"
                                     if any(
@@ -621,9 +635,9 @@ class FramingEngine:
             budget_eur=value(SlotName.budget),
             transport_mode=value(SlotName.transport_mode),
             lines=[
-                f"{race.name}, {race.city}, {race.race_date}, {race.distance_km:.1f} km",
-                f"Departure: {value(SlotName.origin)}; {nights} {'night' if nights == 1 else 'nights'}; {value(SlotName.transport_mode)}",
-                f"Budget: {budget_label}",
+                f"{race.name}, {race.city}, {format_date(race.race_date)}, {format_distance(race.distance_km)}",
+                f"From {value(SlotName.origin)} · {nights} {'night' if nights == 1 else 'nights'} · {value(SlotName.transport_mode)}",
+                f"Budget: {format_money(value(SlotName.budget))}",
             ],
             limitations=session.limitations,
         )

@@ -621,7 +621,7 @@ def test_close_candidates_use_close_match_choice_copy():
             "which one interests you?"
         )
         assert question.choices[0].label == (
-            "Course 0 — 2028-06-12 · close to your request"
+            "Course 0 — Monday 12 June 2028 · close to your request"
         )
         assert question.choices[-1].id == "none"
         assert question.choices[-1].label == "None of these, let me clarify"
@@ -849,6 +849,7 @@ def test_french_conjunction_car_is_not_a_transport_mode():
         "je viens car je veux courir à Tokyo"
     )
     assert extract_slots("j'y vais en voiture")[SlotName.transport_mode] == "car"
+<<<<<<< HEAD
 
 
 @pytest.mark.parametrize(
@@ -946,3 +947,54 @@ def test_clearing_race_date_clears_derived_period():
         assert any(q.slots == [SlotName.date_window] for q in session.open_questions)
 
     asyncio.run(run())
+||||||| parent of 2aa15ef (Polish English framing summaries and preserve discovery answers)
+=======
+
+
+@pytest.mark.parametrize("city", ["Lyon", "Berlin"])
+def test_bare_city_answer_preserves_chip_origin(city):
+    async def run():
+        engine = FramingEngine(Search())
+        session = await engine.create(
+            FramingCreate(text="Un marathon au printemps, depuis Lyon")
+        )
+        assert session.slots[SlotName.origin].value == "Lyon"
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, text=city)
+        )
+        assert session.slots[SlotName.city].value == city
+        session = await engine.reply(
+            session.id,
+            FramingReply(revision=session.revision, corrections={SlotName.city: "Milan", SlotName.race: "Milano Marathon"}),
+        )
+        assert session.slots[SlotName.origin].value == "Lyon"
+        assert session.slots[SlotName.origin].provenance.kind == "human"
+        assert not any(SlotName.origin in q.slots for q in session.open_questions)
+
+    asyncio.run(run())
+
+
+def test_known_race_date_retires_discovery_slots_and_formats_summary():
+    async def run():
+        engine = FramingEngine(Search())
+        session = await engine.create(FramingCreate(text="Un marathon au printemps, depuis Lyon"))
+        session = await engine.reply(
+            session.id,
+            FramingReply(revision=session.revision, corrections={
+                SlotName.city: "Milan", SlotName.race: "Milano Marathon",
+                SlotName.race_date: "2027-04-11", SlotName.budget: 800,
+                SlotName.nights: 2, SlotName.transport_mode: "train",
+            }),
+        )
+        assert all(session.slots[name].status.value == "not_needed" for name in (SlotName.date_window, SlotName.edition))
+        assert session.summary.lines == [
+            "Milano Marathon, Milan, Sunday 11 April 2027, 42.2 km",
+            "From Lyon · 2 nights · train", "Budget: €800",
+        ]
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={SlotName.budget: None}))
+        assert session.summary.lines[-1] == "Budget: no cap"
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={SlotName.budget: 129.5}))
+        assert session.summary.lines[-1] == "Budget: €129.50"
+
+    asyncio.run(run())
+>>>>>>> 2aa15ef (Polish English framing summaries and preserve discovery answers)
