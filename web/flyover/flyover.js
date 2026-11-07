@@ -402,7 +402,8 @@
     state.lastFrame = null;
     ui.play.textContent = "❚❚ Pause";
     const here = R.pointAt(state.track, state.distance);
-    state.bearing = R.lookAheadBearing(state.track, state.distance, 250) || map.getBearing();
+    const heading = R.lookAheadBearing(state.track, state.distance, 250);
+    state.bearing = heading === null ? map.getBearing() : heading;
     map.easeTo({ center: [here.lon, here.lat], zoom: FOLLOW_ZOOM, pitch: FOLLOW_PITCH, bearing: state.bearing, duration: 1500 });
     map.once("moveend", () => requestAnimationFrame(frame));
   }
