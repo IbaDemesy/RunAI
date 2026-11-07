@@ -422,6 +422,31 @@ def test_credit_exhaustion(accounts):
     asyncio.run(scenario())
 
 
+def test_credit_retry_waits_for_busy_healthy_account():
+    async def scenario():
+        runner = RetryRunner(["insufficient_credit", None], accounts=2)
+        healthy = runner.accounts[1]
+        healthy.active = healthy.max_concurrency
+        original_start = runner.start
+        waiting = asyncio.Event()
+
+        async def start(*args, **kwargs):
+            if runner.calls:
+                waiting.set()
+                while not healthy.has_local_slot:
+                    await asyncio.sleep(0.001)
+            return await original_start(*args, **kwargs)
+
+        runner.start = start
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race")
+        await asyncio.wait_for(waiting.wait(), 1)
+        assert not job.done
+        healthy.active = 0
+        assert (await asyncio.wait_for(job.wait(), 1)).status is StepStatus.completed
+        assert [call[2] for call in runner.calls] == ["K0", "K1"]
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize("outcome", ["infeasible", "blocked"])
 def test_non_retryable_outcomes(outcome):
     async def scenario():

@@ -257,7 +257,7 @@ class HLifecycle:
                     if account is not None:
                         account.max_concurrency = 0
                         logger.warning("H credits exhausted for account %s", account.name)
-                    if outcome != "infeasible" and not any(a.has_local_slot for a in self.runner.accounts):
+                    if outcome != "infeasible" and not any(a.max_concurrency > 0 for a in self.runner.accounts):
                         raise HCreditsExhausted("No H account with credits has an available slot.")
                 if (outcome == "infeasible" or attempt + 1 >= self.retry_policy.max_attempts
                         or code not in {"environment_error", "internal", "no_answer", "answer_validation",
