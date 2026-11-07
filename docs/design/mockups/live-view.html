@@ -61,8 +61,8 @@ main { max-width: 1200px; margin: 0 auto; padding: var(--space-6); display: grid
 .choices button.primary { background: var(--sun); color: var(--night); border-color: var(--sun); font-weight: 600; }
 
 .lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
-.lane { padding: var(--space-4); display: grid; gap: 6px; align-content: start; cursor: pointer; }
-.lane[aria-selected="true"] { border-color: var(--haze); box-shadow: 0 0 0 1px var(--haze) inset; }
+.lane { padding: var(--space-4); display: grid; gap: 6px; align-content: start; }
+.lane[aria-current="true"] { border-color: var(--haze); box-shadow: 0 0 0 1px var(--haze) inset; }
 .lane-head { display: flex; align-items: center; gap: var(--space-2); justify-content: space-between; }
 .lane-head h3 { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--mist); }
 .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 9px; font-size: .76rem; font-weight: 600; }
@@ -147,9 +147,10 @@ details.history time { font-family: var(--mono); font-size: .75rem; color: var(-
   <h2 class="muted" style="font-size:.85rem;letter-spacing:.08em;text-transform:uppercase">Preparations in progress</h2>
 
   <!-- C · lanes -->
-  <section class="lanes" role="tablist" aria-label="Agents">
+  <section class="lanes" aria-label="Agents">
+    <!-- Static mockup: the pane below shows the selected lane (Registration). In the app, click/Enter on a lane re-points the pane. -->
     <!-- running -->
-    <article class="panel lane" role="tab" tabindex="0" aria-selected="true" data-kind="registration">
+    <article class="panel lane" aria-current="true" data-kind="registration">
       <div class="lane-head">
         <h3 data-field="step.kind">Registration</h3>
         <span class="chip running" data-field="step.status">Running</span>
@@ -174,7 +175,7 @@ details.history time { font-family: var(--mono); font-size: .75rem; color: var(-
     </article>
 
     <!-- waiting_for_user -->
-    <article class="panel lane" role="tab" tabindex="0" aria-selected="false" data-kind="accommodation">
+    <article class="panel lane" data-kind="accommodation">
       <div class="lane-head">
         <h3 data-field="step.kind">Stay</h3>
         <span class="chip waiting" data-field="step.status">Needs you</span>
@@ -199,7 +200,7 @@ details.history time { font-family: var(--mono); font-size: .75rem; color: var(-
     </article>
 
     <!-- stopped_before_commitment -->
-    <article class="panel lane" role="tab" tabindex="0" aria-selected="false" data-kind="transport">
+    <article class="panel lane" data-kind="transport">
       <div class="lane-head">
         <h3 data-field="step.kind">Transport</h3>
         <span class="chip stopped" data-field="step.status">Prepared — not booked</span>
@@ -272,13 +273,5 @@ details.history time { font-family: var(--mono); font-size: .75rem; color: var(-
 
   <p class="never-pays">RunAI prepares everything and stops before any payment. You confirm on the official sites.</p>
 </main>
-<script>
-  // Mockup only: lane selection (keyboard + click) to show which lane drives the screenshot pane.
-  document.querySelectorAll(".lane").forEach((lane) => {
-    const select = () => document.querySelectorAll(".lane").forEach((other) => other.setAttribute("aria-selected", String(other === lane)));
-    lane.addEventListener("click", select);
-    lane.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
-  });
-</script>
 </body>
 </html>
