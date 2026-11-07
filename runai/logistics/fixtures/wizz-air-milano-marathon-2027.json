@@ -1,0 +1,137 @@
+{
+  "aliases": ["milano marathon", "milan marathon", "marathon de milan", "maratona di milano"],
+  "year": 2027,
+  "exclude_words": ["relay", "staffetta", "half", "mezza", "semi", "10k", "family", "kids", "junior"],
+  "rules": {
+    "race_name": "Wizz Air Milano Marathon 2027",
+    "race_date": "2027-04-04",
+    "distance_km": 42.195,
+    "country_code": "IT",
+    "timezone": "Europe/Rome",
+    "official_url": "https://www.milanomarathon.it/",
+    "regulation_url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba",
+    "start_time": "08:15:00",
+    "start_location": null,
+    "start_waves": "Ondes et sas attribués selon le « tempo di accredito » déclaré (temps net depuis le 1er janvier 2025 sur marathon ou semi homologués FIDAL / World Athletics), couleur sur le dossard ; détail des vagues à venir.",
+    "corrals_open": "07:00:00",
+    "corrals_close_before_wave": "PT20M",
+    "bag_drop": "Consigne : Piazza Castello, uniquement le sac fourni avec le dossard.",
+    "bib_pickup_location": "Milano Running Festival (lieu 2027 à communiquer par l'organisateur)",
+    "bib_pickup_windows": [
+      {"day": "2027-04-01", "opens": "16:00:00", "closes": "20:00:00"},
+      {"day": "2027-04-02", "opens": "10:00:00", "closes": "20:00:00"},
+      {"day": "2027-04-03", "opens": "09:00:00", "closes": "19:00:00"}
+    ],
+    "bib_pickup_race_day": false,
+    "bib_pickup_proxy_allowed": true,
+    "time_limit": "PT6H30M",
+    "time_gates": [
+      {"km": 21.1, "max_elapsed": "PT3H15M", "clock_time": "12:05:00"},
+      {"km": 27.8, "max_elapsed": "PT4H20M", "clock_time": "13:10:00"}
+    ],
+    "aid_stations": "Ravitaillement à l'arrivée et tous les 5 km (8 réglementaires) + 2 supplémentaires : eau, boisson énergétique, fruits et biscuits dès le km 20 ; points d'épongement.",
+    "min_age": 20,
+    "registration_deadline": "2027-03-31T23:59:00",
+    "entry_paths": [
+      {
+        "id": "fidal_license",
+        "label": "Licencié FIDAL",
+        "licenses": ["host_federation"],
+        "requirements": [
+          {"kind": "license", "label": "Licence FIDAL valide le 4 avril 2027", "detail": "Téléverser la carte FIDAL, code et nom du club."}
+        ],
+        "source": {"url": "https://www.milanomarathon.it/wp-content/uploads/2026/07/entry_flowchart_MM27_ENG_V02.pdf", "page": 2, "excerpt": "To participate it is only necessary for your FIDAL license to be valid on the date of the race."}
+      },
+      {
+        "id": "foreign_federation_license",
+        "label": "Licencié d'une fédération étrangère affiliée à World Athletics (ex. FFA)",
+        "licenses": ["foreign_federation"],
+        "requirements": [
+          {"kind": "license", "label": "Licence d'athlétisme valide le 4 avril 2027", "detail": "Nom de la fédération, numéro de licence, nom du club ; formulaire d'autodéclaration de licence si l'inscription n'est pas faite par la fédération ou le club. Hors UE : titre de séjour ou visa."}
+        ],
+        "limitations": ["Type de licence FFA accepté (compétition, running…) non précisé : à confirmer auprès de info@milanomarathon.it."],
+        "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 1, "excerpt": "Atlete/i tesserate/i per Federazioni straniere affiliate a World Athletics presentando, nel caso non vengano iscritti dalla propria Federazione o Club o Assistente, apposito modulo di autodichiarazione del tesseramento."}
+      },
+      {
+        "id": "runcard_italian_citizen",
+        "label": "Runcard, citoyen italien",
+        "host_citizen": true,
+        "licenses": ["none"],
+        "requirements": [
+          {"kind": "runcard", "label": "Runcard FIDAL valide le 4 avril 2027", "detail": "Achat sur www.runcard.com (site en italien) : 30 € résident en Italie, 15 € résident à l'étranger."},
+          {"kind": "medical_certificate", "label": "Certificat d'aptitude à la compétition en athlétisme délivré en Italie", "detail": "Mention « idoneità sportiva agonistica alla pratica dell'ATLETICA LEGGERA (D.M. 18/02/1982) » ; les mentions « corsa », « podismo », « maratona » ne sont pas valables."}
+        ],
+        "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 4, "excerpt": "I cittadini italiani (pur non essendo residenti in Italia), sono tenuti a fornire un certificato medico rilasciato in Italia."}
+      },
+      {
+        "id": "runcard_foreign_resident_italy",
+        "label": "Runcard, étranger résidant en Italie",
+        "host_citizen": false,
+        "resident_in_host_country": true,
+        "licenses": ["none"],
+        "requirements": [
+          {"kind": "runcard", "label": "Runcard FIDAL valide le 4 avril 2027", "cost_eur": 30, "detail": "Achat sur www.runcard.com (site en italien)."},
+          {"kind": "medical_certificate", "label": "Certificat d'aptitude à la compétition en athlétisme délivré en Italie"}
+        ],
+        "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 2, "excerpt": "Possessori di RUNCARD italiani (residenti e non residenti in Italia) e stranieri residenti in Italia. [...] La loro partecipazione è comunque subordinata al possesso di un certificato medico di idoneità agonistica specifica per l'Atletica Leggera."}
+      },
+      {
+        "id": "runcard_foreign_resident_abroad",
+        "label": "Runcard, étranger résidant à l'étranger (compétition)",
+        "host_citizen": false,
+        "resident_in_host_country": false,
+        "licenses": ["none"],
+        "requirements": [
+          {"kind": "runcard", "label": "Runcard FIDAL valide le 4 avril 2027", "cost_eur": 15, "detail": "Achetable avec l'inscription ou sur www.runcard.com (site en italien).", "deadline": "Numéro à saisir avant le retrait du dossard (1-3 avril 2027)"},
+          {"kind": "medical_certificate", "label": "Certificat médical d'aptitude à la compétition en athlétisme, aux normes italiennes", "detail": "Délivré dans votre pays mais avec les examens de la loi italienne (D.M. 18/02/1982) : visite médicale, analyse d'urine complète, électrocardiogramme au repos ET après effort, spirographie. Ou le « health form » de l'organisateur. Valide le 4 avril 2027, original présenté à l'organisateur.", "deadline": "À téléverser avant le retrait du dossard (1-3 avril 2027)", "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 3, "excerpt": "Questi atleti possono presentare un certificato medico emesso nel proprio paese, ma conforme agli esami diagnostici [...] Visita Medica; Esame completo delle urine; Elettrocardiogramma a riposo e dopo sforzo; Spirografia."}}
+        ],
+        "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 2, "excerpt": "Possessori di RUNCARD stranieri residenti all'estero. Possono partecipare cittadini stranieri residenti all'estero [...] in possesso di RUNCARD in corso di validità."}
+      },
+      {
+        "id": "sport_tourism",
+        "label": "Participation « tourisme sportif » (non compétitive), étranger résidant à l'étranger",
+        "competitive": false,
+        "host_citizen": false,
+        "resident_in_host_country": false,
+        "licenses": ["none"],
+        "requirements": [
+          {"kind": "waiver", "label": "Lire et accepter la décharge de responsabilité et le formulaire d'information santé", "detail": "Dans le formulaire d'inscription : case à cocher par vous, jamais par l'agent."},
+          {"kind": "insurance_fee", "label": "Assurance obligatoire", "cost_eur": 5}
+        ],
+        "limitations": [
+          "Dossard différent, classement séparé par ordre alphabétique",
+          "Ni prix, ni primes, ni remboursements de frais"
+        ],
+        "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 3, "excerpt": "Partecipazione con finalità turistico-sportive per stranieri residenti all'estero. [...] dovranno leggere attentamente e accettare il modulo di esonero di responsabilità e informazione sulla salute."}
+      }
+    ],
+    "field_sources": {
+      "race_date": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 1, "excerpt": "La gara si disputerà domenica 4 aprile 2027 a Milano."},
+      "distance_km": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 1, "excerpt": "corsa su strada di livello internazionale top di km 42,195"},
+      "start_time": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 8, "excerpt": "La partenza della Wizz Air Milano Marathon 2027 è prevista dalle ore 08:15."},
+      "start_waves": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 7, "excerpt": "Il settore di partenza sarà determinato sulla base del «tempo di accredito» dichiarato dagli iscritti."},
+      "corrals_open": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 8, "excerpt": "l'accesso alle griglie di partenza dalle 7:00 in poi"},
+      "corrals_close_before_wave": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 8, "excerpt": "con possibilità di accedere alle griglie fino a 20 minuti dalla partenza della propria ondata"},
+      "bag_drop": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 8, "excerpt": "nell'apposita area predisposta in Piazza Castello"},
+      "bib_pickup_location": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 7, "excerpt": "potranno essere ritirati presso il Milano Running Festival [...] Verranno fornite indicazioni precise in merito al luogo e agli orari per il ritiro."},
+      "bib_pickup_windows": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 7, "excerpt": "giovedì 1° aprile (dalle 16 alle 20), venerdì 2 aprile (dalle 10 alle 20) e sabato 3 aprile (dalle 9 alle 19)"},
+      "bib_pickup_race_day": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 7, "excerpt": "Non è prevista la spedizione anticipata del pettorale né la consegna pettorali e pacchi gara la mattina del 4 aprile 2027."},
+      "bib_pickup_proxy_allowed": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 7, "excerpt": "potranno essere ritirati anche da terze persone, presentando apposito modulo di delega firmato del delegante e un proprio documento di riconoscimento"},
+      "time_limit": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 9, "excerpt": "Il tempo limite per concludere la maratona è di 6h30'."},
+      "time_gates": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 9, "excerpt": "al km 21,1 dopo 3h15' di gara (ore 12:05 circa); al km 27,8 dopo 4h20' di gara (ore 13:10 circa)"},
+      "aid_stations": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 9, "excerpt": "punti di ristoro all'arrivo ed ogni 5 chilometri lungo il percorso [...] Oltre agli 8 ristori previsti da regolamento, saranno presenti 2 ristori aggiuntivi."},
+      "min_age": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 2, "excerpt": "limitatamente alle persone di età da 20 anni (millesimo di età: 2007) in poi"},
+      "registration_deadline": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 6, "excerpt": "Le iscrizioni saranno chiuse alle 23:59 del 31 marzo 2027."},
+      "entry_paths": {"url": "https://www.milanomarathon.it/wp-content/uploads/2026/07/entry_flowchart_MM27_ENG_V02.pdf", "page": 1, "excerpt": "Find out what documents you need to participate in the Wizz Air Milano Marathon 2027."}
+    },
+    "missing_fields": ["start_location"],
+    "notes": [
+      "Règlement officiel 2027 (Regolamento_MM27_it, lien depuis https://www.milanomarathon.it/wizz-air-milano-marathon/regolamento/) publié en images Adobe InDesign : lu par OCR puis relu à l'œil le 7 nov. 2026 ; Linkup /fetch renvoie une erreur sur indd.adobe.com.",
+      "Lieu exact du départ 2027 absent du règlement (2026 : Corso Sempione) : à confirmer.",
+      "Barrières : l'heure publiée (≈ 12:05 au km 21,1) vaut 8:15 + 3h50, pas 8:15 + 3h15 : elle vise sans doute la dernière vague. RunAI raisonne en temps de course depuis le départ de la vague.",
+      "Documents à téléverser au plus tard avant le retrait du dossard (FAQ https://www.milanomarathon.it/fr/informations-pratiques/)."
+    ],
+    "origin": "fixture",
+    "verified_on": "2026-11-07"
+  }
+}
