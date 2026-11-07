@@ -48,9 +48,10 @@ async def main() -> None:
     args = parser.parse_args()
 
     async with HRunner(max_concurrency=1, quota_timeout_s=0) as runner:
-        quota = await runner.quota()
-        print(f"Quota H : {quota.active}/{quota.limit} actifs, {quota.available} libres ({quota.scope})")
-        if quota.available < 1:
+        quotas = await runner.quotas()
+        for name, quota in quotas.items():
+            print(f"Quota H {name} : {quota.active}/{quota.limit} actifs, {quota.available} libres ({quota.scope})")
+        if not any(quota.available > 0 for quota in quotas.values()):
             raise SystemExit("Aucun slot H libre : démo annulée.")
 
         mission_id = f"h-demo-{uuid.uuid4().hex[:8]}"
@@ -60,7 +61,7 @@ async def main() -> None:
             max_steps=args.max_steps,
             start_url=args.url if args.start_url else None,
         )
-        print(f"Session : {run.id}\nAgent View : {run.agent_view_url}")
+        print(f"Session : {run.id} (clé {run.account.name})\nAgent View : {run.agent_view_url}")
 
         def on_event(event: dict) -> None:
             if event.get("type") == "LiveViewUrlEvent":

@@ -1,13 +1,21 @@
 import asyncio
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from hai_agents.errors import TooManyRequestsError
 
-from runai.h import HQuotaTimeout, HRunner, HStep, build_step_result
+from runai.h import (
+    HAccount,
+    HQuotaTimeout,
+    HRunner,
+    HStep,
+    api_keys_from_env,
+    build_step_result,
+)
 from runai.h.events import compact, event_label, event_summary
 from runai.models import StepKind, StepStatus, StopPoint
-from runai.safety import STOP_INSTRUCTIONS
+from runai.safety import STOP_INSTRUCTIONS, guard_task
 from runai.tracing import TraceWriter
 
 LIVE = "https://live.hcompany.ai/view/abc"
@@ -171,7 +179,7 @@ def test_controls_are_forwarded_and_traced(tmp_path):
     assert sessions.calls == [
         ("pause", "s1"),
         ("resume", "s1"),
-        ("message", "s1", "Plutôt près du départ"),
+        ("message", "s1", guard_task("Plutôt près du départ")),
         ("force_answer", "s1"),
         ("cancel", "s1"),
     ]
@@ -193,7 +201,7 @@ def test_quota_timeout(tmp_path):
     with pytest.raises(HQuotaTimeout):
         asyncio.run(runner.run(StepKind.search, "x"))
     assert sessions.created == []
-    assert runner._semaphore._value == runner.max_concurrency
+    assert runner.accounts[0].active == 0
 
 
 def test_retries_when_create_hits_429(tmp_path):
@@ -233,7 +241,7 @@ def test_timeout_cancels_session(tmp_path):
     assert result.status is StepStatus.failed
     assert "timeout" in result.error
     assert ("cancel", "s1") in sessions.calls
-    assert runner._semaphore._value == runner.max_concurrency
+    assert runner.accounts[0].active == 0
 
 
 def test_build_step_result_mapping():
@@ -266,3 +274,136 @@ def test_interactive_session_settles_on_idle(tmp_path):
     assert sessions.created[0]["idle_timeout_s"] == 60
     assert result.data["h_status"] == "idle"
     assert result.status is StepStatus.completed
+
+
+def make_accounts(tmp_path, *sessions, cap=3, **kwargs):
+    kwargs.setdefault("quota_poll_s", 0)
+    accounts = [
+        HAccount(f"k{i}", client=SimpleNamespace(sessions=s), max_concurrency=cap) for i, s in enumerate(sessions, 1)
+    ]
+    return HRunner(accounts=accounts, traces_dir=tmp_path, **kwargs)
+
+
+def test_api_keys_from_env(monkeypatch):
+    monkeypatch.setenv("HAI_API_KEY", "a")
+    monkeypatch.setenv("HAI_API_KEY_2", "b")
+    monkeypatch.delenv("HAI_API_KEY_3", raising=False)
+    assert api_keys_from_env() == [("HAI_API_KEY", "a"), ("HAI_API_KEY_2", "b")]
+    monkeypatch.delenv("HAI_API_KEY")
+    assert api_keys_from_env() == [("HAI_API_KEY_2", "b")]
+    runner = HRunner(traces_dir=Path("."))
+    assert [a.name for a in runner.accounts] == ["HAI_API_KEY_2"]
+
+
+def test_pool_picks_key_with_most_free_slots(tmp_path):
+    first, second = FakeSessions(quotas=[1]), FakeSessions(quotas=[3])
+    runner = make_accounts(tmp_path, first, second)
+    result = asyncio.run(runner.run(StepKind.search, "x", mission_id="pool"))
+    assert result.status is StepStatus.completed
+    assert (len(first.created), len(second.created)) == (0, 1)
+    created = TraceWriter("pool", traces_dir=tmp_path).read()[0]
+    assert created.data["h_key"] == "k2"
+
+
+def test_pool_spreads_run_many_under_per_key_cap(tmp_path):
+    first, second = FakeSessions(), FakeSessions()
+    runner = make_accounts(tmp_path, first, second, cap=1)
+    steps = [HStep(StepKind.registration, "a"), HStep(StepKind.accommodation, "b"), HStep(StepKind.transport, "c")]
+    results = asyncio.run(runner.run_many(steps))
+    assert all(r.status is StepStatus.completed for r in results)
+    assert first.max_active == second.max_active == 1
+    assert len(first.created) + len(second.created) == 3
+    assert [a.active for a in runner.accounts] == [0, 0]
+
+
+def test_pool_skips_full_key(tmp_path):
+    full, free = FakeSessions(quotas=[0] * 10), FakeSessions(quotas=[0, 2])
+    result = asyncio.run(make_accounts(tmp_path, full, free).run(StepKind.search, "x"))
+    assert result.status is StepStatus.completed
+    assert full.created == [] and len(free.created) == 1
+
+
+def test_reserved_create_params_cannot_bypass_guard(tmp_path):
+    sessions = FakeSessions()
+    runner = make_runner(tmp_path, sessions)
+    for key in ("messages", "agent", "queue"):
+        with pytest.raises(ValueError):
+            asyncio.run(runner.start(StepKind.search, "x", **{key: "y"}))
+    assert sessions.created == []
+
+
+def test_run_many_shared_options(tmp_path):
+    sessions = FakeSessions()
+    runner = make_runner(tmp_path, sessions)
+    steps = [HStep(StepKind.search, "a"), HStep(StepKind.search, "b", max_steps=3)]
+    results = asyncio.run(runner.run_many(steps, max_steps=10, start_url="https://example.com"))
+    assert all(r.status is StepStatus.completed for r in results)
+    assert sorted(p["max_steps"] for p in sessions.created) == [3, 10]
+    assert all("overrides" in p for p in sessions.created)
+
+
+def test_interactive_idle_keeps_slot_until_close(tmp_path):
+    sessions = FakeSessions()
+    sessions.idle_polls = {"s1": 5}
+    runner = make_runner(tmp_path, sessions)
+
+    async def scenario():
+        run = await runner.start(StepKind.search, "x", idle_timeout_s=60)
+        result = await run.wait()
+        assert runner.accounts[0].active == 1
+        await run.close()
+        return result
+
+    assert asyncio.run(scenario()).data["h_status"] == "idle"
+    assert ("cancel", "s1") in sessions.calls
+    assert runner.accounts[0].active == 0
+
+
+def test_trace_failure_cancels_created_session(tmp_path):
+    class BrokenTrace:
+        def write(self, event):
+            raise OSError("disk full")
+
+    sessions = FakeSessions()
+    runner = make_runner(tmp_path, sessions)
+    with pytest.raises(OSError):
+        asyncio.run(runner.start(StepKind.search, "x", trace=BrokenTrace()))
+    assert ("cancel", "s1") in sessions.calls
+    assert runner.accounts[0].active == 0
+
+
+def test_cancelled_wait_cancels_session(tmp_path):
+    class Stuck(FakeSessions):
+        async def get_session_changes(self, *args, **kwargs):
+            await asyncio.sleep(10)
+
+    sessions = Stuck()
+    runner = make_runner(tmp_path, sessions)
+
+    async def scenario():
+        task = asyncio.create_task(runner.run(StepKind.search, "x"))
+        await asyncio.sleep(0.05)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(scenario())
+    assert ("cancel", "s1") in sessions.calls
+    assert runner.accounts[0].active == 0
+
+
+def test_step_count_follows_status(tmp_path):
+    class Final(FakeSessions):
+        async def get_session_status(self, session_id):
+            status = await super().get_session_status(session_id)
+            status.steps = 7
+            return status
+
+    result = asyncio.run(make_runner(tmp_path, Final()).run(StepKind.search, "x"))
+    assert result.data["steps"] == 7
+
+
+def test_pool_tie_prefers_least_loaded_org(tmp_path):
+    first, second = FakeSessions(quotas=[2]), FakeSessions(quotas=[3])
+    asyncio.run(make_accounts(tmp_path, first, second, cap=1).run(StepKind.search, "x"))
+    assert (len(first.created), len(second.created)) == (0, 1)

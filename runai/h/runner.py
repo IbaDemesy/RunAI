@@ -1,5 +1,7 @@
 import asyncio
+import contextlib
 import inspect
+import os
 import time
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
@@ -24,8 +26,58 @@ EventCallback = Callable[[dict[str, Any]], Awaitable[None] | None]
 _HTTP_URL = TypeAdapter(HttpUrl)
 
 
+RESERVED_CREATE_PARAMS = frozenset({"agent", "messages", "queue"})
+
+
 class HQuotaTimeout(TimeoutError):
     """Aucun slot H libre dans le délai imparti."""
+
+
+def api_keys_from_env() -> list[tuple[str, str]]:
+    """Clés H disponibles : `HAI_API_KEY` puis `HAI_API_KEY_2`, `HAI_API_KEY_3`… (noms renvoyés, jamais les valeurs loguées)."""
+    names = ["HAI_API_KEY"]
+    index = 2
+    while os.getenv(f"HAI_API_KEY_{index}"):
+        names.append(f"HAI_API_KEY_{index}")
+        index += 1
+    return [(name, os.environ[name]) for name in names if os.getenv(name)]
+
+
+class HAccount:
+    """Une clé H (une organisation H) : son client, son plafond local et ses sessions en cours."""
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        client: Any | None = None,
+        api_key: str | None = None,
+        max_concurrency: int = 3,
+    ):
+        self.name = name
+        self._client = client
+        self._owns_client = client is None
+        self._api_key = api_key
+        self.max_concurrency = max_concurrency
+        self.active = 0
+
+    @property
+    def client(self) -> Any:
+        if self._client is None:
+            self._client = AsyncClient(api_key=self._api_key) if self._api_key else AsyncClient()
+        return self._client
+
+    @property
+    def has_local_slot(self) -> bool:
+        return self.active < self.max_concurrency
+
+    async def quota(self) -> Any:
+        return await self.client.sessions.get_session_quota()
+
+    async def aclose(self) -> None:
+        if self._owns_client and self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
 
 def _http_url(value: Any) -> HttpUrl | None:
@@ -93,12 +145,19 @@ class HRun:
     """Session H en cours : suivi des événements, contrôles et résultat final."""
 
     def __init__(
-        self, runner: "HRunner", session: Any, kind: StepKind, trace: TraceWriter, interactive: bool = False
+        self,
+        runner: "HRunner",
+        account: HAccount,
+        session: Any,
+        kind: StepKind,
+        trace: TraceWriter,
+        interactive: bool = False,
     ):
         self._runner = runner
+        self.account = account
         # Une session one-shot passe brièvement par `idle` avant `completed` : on attend l'état terminal.
         self._settled = SETTLED_STATUSES if interactive else TERMINAL_STATUSES
-        self._sessions = runner.client.sessions
+        self._sessions = account.client.sessions
         self.id: str = session.id
         self.kind = kind
         self.trace = trace
@@ -162,7 +221,7 @@ class HRun:
         self.outcome = getattr(status, "outcome", None) or self.outcome
         self.error = getattr(status, "error", None) or self.error
         if getattr(status, "steps", None) is not None:
-            self.metrics.setdefault("steps", status.steps)
+            self.metrics["steps"] = status.steps
         return self.status
 
     async def wait_for_status(self, statuses: Iterable[str], timeout_s: float = 60.0, poll_s: float = 1.0) -> float:
@@ -184,8 +243,9 @@ class HRun:
         self._log("control", "resume")
 
     async def send_message(self, message: str) -> None:
+        """Message de pilotage, toujours accompagné des règles d'arrêt (`guard_task`)."""
         await self._sessions.send_session_messages(
-            self.id, request=SendSessionMessagesRequestBody_UserMessage(message=message)
+            self.id, request=SendSessionMessagesRequestBody_UserMessage(message=guard_task(message))
         )
         self._log("control", "message", text=message)
 
@@ -259,23 +319,33 @@ class HRun:
         timeout_s: float | None = None,
         wait_for_seconds: int = 20,
     ) -> StepResult:
-        """Suit la session jusqu'à son terme ; au-delà de `timeout_s`, l'annule pour libérer le slot."""
+        """Suit la session jusqu'à son terme ; au-delà de `timeout_s`, l'annule pour libérer le slot.
+
+        Une session interactive arrêtée sur `idle` garde son slot : `close()` (ou `async with run:`) l'annule.
+        """
         try:
             await asyncio.wait_for(self._follow(on_event, wait_for_seconds), timeout_s)
             result = await self._finalize()
         except TimeoutError:
-            await self._safe_cancel()
+            await self._abandon()
             self.status = "timed_out"
             result = self._result(error=f"timeout RunAI après {timeout_s}s")
+        except asyncio.CancelledError:
+            await asyncio.shield(self._abandon())
+            raise
         except Exception as exc:  # noqa: BLE001 - toute erreur de suivi devient un échec tracé
-            await self._safe_cancel()
+            await self._abandon()
             result = self._result(error=f"{type(exc).__name__}: {exc}")
             result.status = StepStatus.failed
-        finally:
+        if self.status in TERMINAL_STATUSES:
             self._release()
         self.result = result
         self._log("result", result.status.value, result=result.model_dump(mode="json"))
         return result
+
+    async def _abandon(self) -> None:
+        await self._safe_cancel()
+        self._release()
 
     async def _safe_cancel(self) -> None:
         if self.status in TERMINAL_STATUSES:
@@ -286,24 +356,29 @@ class HRun:
             self._log("warning", f"annulation impossible : {exc}")
 
     async def close(self) -> None:
-        """Annule la session si elle tourne encore et libère le slot local."""
-        if self.result is None:
+        """Annule la session si elle tourne encore (y compris `idle`) et libère le slot local."""
+        if not self._released and self.status not in TERMINAL_STATUSES:
             await self._safe_cancel()
         self._release()
 
     def _release(self) -> None:
         if not self._released:
             self._released = True
-            self._runner._semaphore.release()
+            self._runner._release(self.account)
 
 
 class HRunner:
-    """Lance des étapes H gardées, sous une limite de sessions simultanées alignée sur le quota réel."""
+    """Lance des étapes H gardées sur une ou plusieurs clés H, selon le quota réel de chacune et un plafond par clé.
+
+    Sans `client` ni `accounts`, les clés viennent de l'environnement (`HAI_API_KEY`, `HAI_API_KEY_2`…).
+    `max_concurrency` (défaut `RUNAI_H_MAX_CONCURRENCY`) est le plafond local **par clé**.
+    """
 
     def __init__(
         self,
         client: Any | None = None,
         *,
+        accounts: Iterable[HAccount] | None = None,
         agent: str | None = None,
         max_concurrency: int | None = None,
         quota_poll_s: float = 5.0,
@@ -311,21 +386,25 @@ class HRunner:
         traces_dir=None,
     ):
         settings = get_settings()
-        self._client = client
-        self._owns_client = client is None
-        self._api_key = settings.hai_api_key
         self.agent = agent or settings.h_agent
         self.max_concurrency = max_concurrency or settings.h_max_concurrency
         self.quota_poll_s = quota_poll_s
         self.quota_timeout_s = quota_timeout_s
         self.traces_dir = traces_dir
-        self._semaphore = asyncio.Semaphore(self.max_concurrency)
+        if accounts is not None:
+            self.accounts = list(accounts)
+        elif client is not None:
+            self.accounts = [HAccount("default", client=client, max_concurrency=self.max_concurrency)]
+        else:
+            keys = api_keys_from_env() or [("HAI_API_KEY", None)]
+            self.accounts = [HAccount(name, api_key=key, max_concurrency=self.max_concurrency) for name, key in keys]
+        if not self.accounts:
+            raise ValueError("Au moins une clé H est nécessaire")
+        self._slot_freed = asyncio.Event()
 
     @property
     def client(self) -> Any:
-        if self._client is None:
-            self._client = AsyncClient(api_key=self._api_key) if self._api_key else AsyncClient()
-        return self._client
+        return self.accounts[0].client
 
     async def __aenter__(self) -> Self:
         return self
@@ -334,24 +413,68 @@ class HRunner:
         await self.aclose()
 
     async def aclose(self) -> None:
-        if self._owns_client and self._client is not None:
-            await self._client.aclose()
-            self._client = None
+        for account in self.accounts:
+            await account.aclose()
 
-    async def quota(self) -> Any:
-        return await self.client.sessions.get_session_quota()
+    async def quotas(self) -> dict[str, Any]:
+        """Quota réel de chaque clé, par nom de clé."""
+        values = await asyncio.gather(*(account.quota() for account in self.accounts))
+        return {account.name: quota for account, quota in zip(self.accounts, values, strict=True)}
 
-    async def wait_for_slot(self, timeout_s: float | None = None) -> Any:
-        """Attend qu'un slot H soit libre pour toute l'organisation (`available > 0`)."""
-        timeout_s = self.quota_timeout_s if timeout_s is None else timeout_s
-        deadline = time.monotonic() + timeout_s
+    async def _pick(self, accounts: list[HAccount]) -> tuple[HAccount | None, dict[str, Any]]:
+        """Choisit la clé qui a le plus de slots libres (quota réel borné par le plafond local)."""
+        values = await asyncio.gather(*(account.quota() for account in accounts), return_exceptions=True)
+        errors = [value for value in values if isinstance(value, BaseException)]
+        if len(errors) == len(values):
+            raise errors[0]
+        best, best_score, seen = None, (0, 0), {}
+        for account, quota in zip(accounts, values, strict=True):
+            if isinstance(quota, BaseException):
+                seen[account.name] = f"erreur {type(quota).__name__}"
+                continue
+            seen[account.name] = f"{quota.active}/{quota.limit}"
+            # À égalité de slots utilisables, on préfère l'organisation la moins chargée.
+            score = (min(quota.available, account.max_concurrency - account.active), quota.available)
+            if score[0] > 0 and score > best_score:
+                best, best_score = account, score
+        return best, seen
+
+    async def _wait_freed(self, timeout_s: float | None) -> None:
+        self._slot_freed.clear()
+        try:
+            await asyncio.wait_for(self._slot_freed.wait(), timeout_s)
+        except TimeoutError:
+            pass
+
+    def _release(self, account: HAccount) -> None:
+        account.active -= 1
+        self._slot_freed.set()
+
+    async def _create(self, params: dict[str, Any]) -> tuple[HAccount, Any]:
+        """Réserve un slot local sur la clé la plus libre puis crée la session ; réessaie après un `429`."""
+        deadline = None
         while True:
-            quota = await self.quota()
-            if quota.available > 0:
-                return quota
+            local = [account for account in self.accounts if account.has_local_slot]
+            if not local:
+                await self._wait_freed(None)
+                continue
+            if deadline is None:
+                deadline = time.monotonic() + self.quota_timeout_s
+            account, seen = await self._pick(local)
+            if account is not None and account.has_local_slot:
+                account.active += 1
+                try:
+                    return account, await account.client.sessions.create_session(**params)
+                except TooManyRequestsError:
+                    self._release(account)
+                    seen[account.name] = "429"
+                except BaseException:
+                    self._release(account)
+                    raise
             if time.monotonic() >= deadline:
-                raise HQuotaTimeout(f"Aucun slot H libre ({quota.active}/{quota.limit}) après {timeout_s}s")
-            await asyncio.sleep(self.quota_poll_s)
+                detail = ", ".join(f"{name} {state}" for name, state in seen.items())
+                raise HQuotaTimeout(f"Aucun slot H libre après {self.quota_timeout_s}s ({detail})")
+            await self._wait_freed(self.quota_poll_s)
 
     async def start(
         self,
@@ -366,44 +489,38 @@ class HRunner:
         **create_params: Any,
     ) -> HRun:
         """Crée la session sans file d'attente H (`queue=False`) : un slot local et un slot réel sont garantis."""
-        params: dict[str, Any] = {"agent": self.agent, "messages": guard_task(task), "queue": False, **create_params}
+        reserved = RESERVED_CREATE_PARAMS & create_params.keys()
+        if reserved:
+            raise ValueError(f"Paramètres gérés par HRunner, non surchargeables : {sorted(reserved)}")
+        params: dict[str, Any] = {**create_params, "agent": self.agent, "messages": guard_task(task), "queue": False}
         if max_steps is not None:
             params["max_steps"] = max_steps
         if max_time_s is not None:
             params["max_time_s"] = max_time_s
         if start_url:
-            params.setdefault("overrides", {})["agent.environments[kind=web].start_url"] = start_url
+            params["overrides"] = {**params.get("overrides", {}), "agent.environments[kind=web].start_url": start_url}
 
-        await self._semaphore.acquire()
+        account, session = await self._create(params)
         try:
-            session = await self._create(params)
+            writer = trace or TraceWriter(mission_id or f"h-{session.id}", traces_dir=self.traces_dir)
+            run = HRun(self, account, session, kind, writer, interactive=bool(params.get("idle_timeout_s")))
+            run._log(
+                "session_created",
+                kind.value,
+                agent=self.agent,
+                h_key=account.name,
+                task=task,
+                agent_view_url=run.agent_view_url,
+                max_steps=max_steps,
+                max_time_s=max_time_s,
+                start_url=start_url,
+            )
         except BaseException:
-            self._semaphore.release()
+            with contextlib.suppress(Exception):
+                await account.client.sessions.cancel_session(session.id)
+            self._release(account)
             raise
-        writer = trace or TraceWriter(mission_id or f"h-{session.id}", traces_dir=self.traces_dir)
-        run = HRun(self, session, kind, writer, interactive=bool(params.get("idle_timeout_s")))
-        run._log(
-            "session_created",
-            kind.value,
-            agent=self.agent,
-            task=task,
-            agent_view_url=run.agent_view_url,
-            max_steps=max_steps,
-            max_time_s=max_time_s,
-            start_url=start_url,
-        )
         return run
-
-    async def _create(self, params: dict[str, Any]) -> Any:
-        deadline = time.monotonic() + self.quota_timeout_s
-        while True:
-            await self.wait_for_slot(max(0.0, deadline - time.monotonic()))
-            try:
-                return await self.client.sessions.create_session(**params)
-            except TooManyRequestsError:
-                if time.monotonic() >= deadline:
-                    raise HQuotaTimeout(f"Quota H toujours plein après {self.quota_timeout_s}s") from None
-                await asyncio.sleep(self.quota_poll_s)
 
     async def run(
         self,
@@ -415,25 +532,23 @@ class HRunner:
         **start_params: Any,
     ) -> StepResult:
         run = await self.start(kind, task, **start_params)
-        return await run.wait(on_event=on_event, timeout_s=timeout_s)
+        async with run:
+            return await run.wait(on_event=on_event, timeout_s=timeout_s)
 
     async def run_many(self, steps: Iterable[HStep], *, mission_id: str | None = None, **run_params: Any) -> list[StepResult]:
-        """Lance plusieurs étapes en parallèle ; une erreur de lancement devient un `StepResult` en échec."""
+        """Lance plusieurs étapes en parallèle ; une erreur de lancement devient un `StepResult` en échec.
+
+        `run_params` s'applique à toutes les étapes ; les champs d'une `HStep` (et ses `options`) priment.
+        """
         steps = list(steps)
         trace = TraceWriter(mission_id, traces_dir=self.traces_dir) if mission_id else None
 
         async def one(step: HStep) -> StepResult:
+            own = {"start_url": step.start_url, "max_steps": step.max_steps, "max_time_s": step.max_time_s}
+            params = {**run_params, **step.options, **{k: v for k, v in own.items() if v is not None}}
+            params.setdefault("trace", trace)
             try:
-                return await self.run(
-                    step.kind,
-                    step.task,
-                    trace=trace,
-                    start_url=step.start_url,
-                    max_steps=step.max_steps,
-                    max_time_s=step.max_time_s,
-                    **step.options,
-                    **run_params,
-                )
+                return await self.run(step.kind, step.task, **params)
             except Exception as exc:  # noqa: BLE001 - une étape en échec ne bloque pas les autres
                 return StepResult(kind=step.kind, status=StepStatus.failed, error=f"{type(exc).__name__}: {exc}")
 
