@@ -1,0 +1,185 @@
+{
+  "profile": {
+    "id": "p1_debutant_10k_paris",
+    "label": "Debutant, 1er 10 km autour de Paris, mars-avril 2027",
+    "distance_km": 10.0,
+    "distance_tolerance_km": null,
+    "distance_label": "10 km",
+    "date_from": "2027-03-01",
+    "date_to": "2027-04-30",
+    "origin_city": "Paris",
+    "max_travel_h": 1.5,
+    "travel_mode": "ground",
+    "terrain": "plat",
+    "race_size": "indifferent",
+    "level": "debutant",
+    "zone_hint": "en Ile-de-France (Paris et alentours)",
+    "foreign": false
+  },
+  "recommended_open": [
+    {
+      "name": "Trail 10 km",
+      "date": "2027-03-21",
+      "city": "Paris",
+      "country": "France",
+      "distance_km": 10.0,
+      "elevation_gain_m": null,
+      "platform": "Njuko",
+      "registration_url": "https://www.ecotrailparis.com",
+      "status_verified": "open",
+      "status_evidence": "Inscriptions ouvertes",
+      "status_from_search": "Inscriptions ouvertes",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.0,
+      "score": 6.0,
+      "reason": "10 km pour un objectif de 10 km; le 2027-03-21, soit 19 semaines de preparation; ~0.0 h de trajet estimees depuis Paris",
+      "sources": [
+        "https://www.ecotrailparis.com",
+        "https://sasdepart.fr/ecotrail-paris-2027-les-inscriptions-sont-deja-ouvertes-et-le-80-km-se-remplit/"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    }
+  ],
+  "to_check_with_H": [],
+  "not_open": [
+    {
+      "name": "La Grande Course RATP du Grand Paris",
+      "date": "2027-03-14",
+      "city": "Saint-Denis",
+      "country": "France",
+      "distance_km": 10.0,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://lagrandecourse.fr/",
+      "status_verified": "not_yet_open",
+      "status_evidence": "Inscrivez-vous à la newsletter pour être informés de l'ouverture des inscriptions 2027",
+      "status_from_search": "inconnu",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.13,
+      "score": 5.83,
+      "reason": "10 km pour un objectif de 10 km; le 2027-03-14, soit 18 semaines de preparation; ~0.1 h de trajet estimees depuis Paris",
+      "sources": [
+        "https://lagrandecourse.fr/",
+        "https://www.sortiraparis.com/id/hobi/olahraga-dan-kesejahteraan/articles/135931-lomba-besar-grand-paris-2027-semi-maraton-10-km-dan-5-km-pada-14-maret"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    }
+  ],
+  "unverified_candidates": [],
+  "rejected": [],
+  "n_candidates": 2,
+  "metrics": {
+    "search_calls": 3,
+    "enrich_calls": 1,
+    "calendar_fetch_calls": 1,
+    "fetch_calls": 2,
+    "fetch_errors": 0,
+    "search_s": [
+      3.21,
+      3.96,
+      2.51
+    ],
+    "enrich_s": [
+      2.76
+    ],
+    "calendar_fetch_s": [
+      1.98
+    ],
+    "phases_s": {
+      "decouverte": 5.94,
+      "filtre_geo": 1.61,
+      "url_inscription": 2.76,
+      "verification": 10.03
+    },
+    "fetch_s": [
+      3.82,
+      7.51
+    ],
+    "total_s": 20.35,
+    "cost_usd_computed": 0.056,
+    "second_round": true
+  },
+  "linkup_log": [
+    {
+      "query": "Calendrier 2027 : courses de 10 km en Ile-de-France (Paris et alentours) entre le 2027-03-01 et le 2027-04-30, parcours plat et roulant. Liste 10 courses. Pour chaque course donne : nom, date exacte (YYYY-MM-DD), ville et pays du depart, distance de l'epreuve, D+ si indique, URL de la page d'inscription, plateforme d'inscription, statut des inscriptions tel qu'ecrit (ouvertes, complet, pas encore ouvertes), nombre de participants, URL source. Liste toutes les courses trouvees, meme si le statut est inconnu.",
+      "kw": {},
+      "n_races": 1,
+      "sources": [
+        "https://courseproche.fr/evenement/10-km-des-champs-elysees",
+        "https://www.runtrail.run/event/21347-10km-des-champs-elysees",
+        "https://7running.coach/blog/10-km-de-paris-2027/",
+        "https://fr.milesrepublic.com/semi-marathon/ile-de-france",
+        "https://werun.world/course/foulees-dile-de-france-france-des-iles/",
+        "https://running.life/calendrier-10-km/france/ile-de-france",
+        "https://www.ahotu.com/fr/calendrier/course/10-km/france/ile-de-france/paris",
+        "https://www.sortiraparis.com/id/hobi/olahraga-dan-kesejahteraan/articles/135931-lomba-besar-grand-paris-2027-semi-maraton-10-km-dan-5-km-pada-14-maret",
+        "https://www.sortiraparis.com/sk/zaluby/sport-a-blaho/articles/135931-velky-beh-grand-paris-2027-polmaraton-10-km-a-5-km-14-marca",
+        "https://www.sortiraparis.com/pl/zainteresowania/sport-i-dobre-samopoczucie/articles/339090-foulees-de-vincennes-2027-biegi-na-5-i-10-km-wracaja-31-stycznia"
+      ]
+    },
+    {
+      "query": "Inscriptions ouvertes 10 km 2027 en Ile-de-France (Paris et alentours) entre le 2027-03-01 et le 2027-04-30. Pour chaque course donne : nom, date exacte (YYYY-MM-DD), ville et pays du depart, distance de l'epreuve, D+ si indique, URL de la page d'inscription, plateforme d'inscription, statut des inscriptions tel qu'ecrit (ouvertes, complet, pas encore ouvertes), nombre de participants, URL source. Liste toutes les courses trouvees, meme si le statut est inconnu.",
+      "kw": {
+        "include_domains": [
+          "klikego.com",
+          "protiming.fr",
+          "njuko.net",
+          "in.njuko.com",
+          "chronostart.com",
+          "sportinnovation.fr",
+          "sporkrono.fr",
+          "ipitos.com",
+          "espace-competition.com",
+          "yaka-inscription.com",
+          "onsinscrit.com",
+          "adeorun.com",
+          "wedosport.net",
+          "timepulse.fr",
+          "endu.net",
+          "racemap.com",
+          "sasdepart.fr",
+          "athle.fr"
+        ]
+      },
+      "n_races": 1,
+      "sources": [
+        "https://sasdepart.fr/courses-pres-de/melun/",
+        "https://sasdepart.fr/calendrier/paris-75/",
+        "https://sasdepart.fr/courses-pres-de/paris/",
+        "https://sasdepart.fr/route/10-km-des-champs-elysees/",
+        "https://sasdepart.fr/ecotrail-paris-2027-les-inscriptions-sont-deja-ouvertes-et-le-80-km-se-remplit/",
+        "https://www.klikego.com/inscription/10km-des-champs-elysees-fulfil-2027/course-a-pied-running/1665608501151-7",
+        "https://protiming.fr/events/8519-10km-paris-15",
+        "https://sasdepart.fr/calendrier-route/fevrier-2027/",
+        "https://sasdepart.fr/calendrier-route/janvier-2027/",
+        "https://protiming.fr/events/8369"
+      ]
+    },
+    {
+      "calendar_url": "https://running.life/calendrier-10-km/france/ile-de-france",
+      "n_races": 0
+    },
+    {
+      "query": "10 km en Ile-de-France (Paris et alentours) entre le 2027-03-01 et le 2027-04-30 : courses dont les inscriptions 2027 sont deja ouvertes (bouton S'inscrire actif). Pour chaque course : nom, date YYYY-MM-DD, ville, pays, distance, D+, URL d'inscription, plateforme, statut, URL source.",
+      "kw": {},
+      "n_races": 0,
+      "sources": [
+        "https://sasdepart.fr/route/10-km-des-champs-elysees/",
+        "https://pacecraft.fr/courses-ile-de-france",
+        "https://sasdepart.fr/calendrier/paris-75/",
+        "https://oleno.fr/courses/10km-du-trocadero",
+        "https://protiming.fr/events/8155-les-foulees-d-ile-de-france-france-des-iles",
+        "https://actu.fr/ile-de-france/paris_75056/10k-paris-les-inscriptions-pour-la-course-en-plein-coeur-de-la-capitale-sont-ouvertes_63743867.html",
+        "https://sasdepart.fr/calendrier-route/calendrier-route-10km/",
+        "https://protiming.fr/Runnings/detail/8155-Les-Foulees-d-Ile-de-France-France-des-Iles",
+        "https://www.adidas10kparis.fr/en",
+        "https://sasdepart.fr/lavaredo-ultra-trail-2027-une-seule-fenetre-de-tirage-en-septembre-2026/"
+      ]
+    }
+  ],
+  "linkup_balance_delta_usd": 0.038
+}

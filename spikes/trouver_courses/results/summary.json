@@ -1,0 +1,250 @@
+[
+  {
+    "profile": "p1_debutant_10k_paris",
+    "wall_s": 20.35,
+    "n_candidates": 2,
+    "n_open": 1,
+    "n_to_check_H": 0,
+    "n_not_open": 1,
+    "metrics": {
+      "search_calls": 3,
+      "enrich_calls": 1,
+      "calendar_fetch_calls": 1,
+      "fetch_calls": 2,
+      "fetch_errors": 0,
+      "search_s": [
+        3.21,
+        3.96,
+        2.51
+      ],
+      "enrich_s": [
+        2.76
+      ],
+      "calendar_fetch_s": [
+        1.98
+      ],
+      "phases_s": {
+        "decouverte": 5.94,
+        "filtre_geo": 1.61,
+        "url_inscription": 2.76,
+        "verification": 10.03
+      },
+      "fetch_s": [
+        3.82,
+        7.51
+      ],
+      "total_s": 20.35,
+      "cost_usd_computed": 0.056,
+      "second_round": true
+    },
+    "linkup_balance_delta_usd": 0.038,
+    "open": [
+      [
+        "Trail 10 km",
+        "2027-03-21",
+        "https://www.ecotrailparis.com"
+      ]
+    ]
+  },
+  {
+    "profile": "p2_semi_rapide_france",
+    "wall_s": 26.45,
+    "n_candidates": 12,
+    "n_open": 4,
+    "n_to_check_H": 1,
+    "n_not_open": 3,
+    "metrics": {
+      "search_calls": 2,
+      "enrich_calls": 2,
+      "calendar_fetch_calls": 1,
+      "fetch_calls": 8,
+      "fetch_errors": 1,
+      "search_s": [
+        6.55,
+        9.25
+      ],
+      "enrich_s": [
+        3.11,
+        2.85
+      ],
+      "calendar_fetch_s": [
+        1.91
+      ],
+      "phases_s": {
+        "decouverte": 11.16,
+        "filtre_geo": 2.47,
+        "url_inscription": 3.11,
+        "verification": 9.72
+      },
+      "fetch_s": [
+        4.02,
+        6.41,
+        3.45,
+        5.62,
+        4.24,
+        5.76,
+        5.7,
+        0.8
+      ],
+      "total_s": 26.45,
+      "cost_usd_computed": 0.11599999999999998,
+      "second_round": false
+    },
+    "linkup_balance_delta_usd": 0.068,
+    "open": [
+      [
+        "Abalone Marathon de Nantes — Semi-marathon",
+        "2027-04-25",
+        "https://www.marathondenantes.com"
+      ],
+      [
+        "Semi Marathon Boucle de Seine",
+        "2027-03-21",
+        "https://www.klikego.com/inscription/semi-marathon-boucle-de-seine-2027/course-a-pied-running/1790283994662-1"
+      ],
+      [
+        "Semi-marathon de Crevin 7eme Edition 21.100 km",
+        "2027-04-03",
+        "https://www.klikego.com/inscription/100km-n07-marathon-semi-marathon-de-crevin-et-la-crevinoise-2027/running-course-a-pied/1516494105802-20"
+      ],
+      [
+        "SEMI-MARATHON ET LE DIX SYLVANAIS",
+        "2027-03-07",
+        "https://espace-competition.com/index.php?comp=3243&module=inscription"
+      ]
+    ]
+  },
+  {
+    "profile": "p3_trail_20_30_lyon",
+    "wall_s": 52.17,
+    "n_candidates": 19,
+    "n_open": 3,
+    "n_to_check_H": 3,
+    "n_not_open": 2,
+    "metrics": {
+      "search_calls": 2,
+      "enrich_calls": 0,
+      "calendar_fetch_calls": 1,
+      "fetch_calls": 8,
+      "fetch_errors": 1,
+      "search_s": [
+        2.4,
+        12.94
+      ],
+      "enrich_s": [],
+      "calendar_fetch_s": [
+        14.93
+      ],
+      "phases_s": {
+        "decouverte": 27.88,
+        "filtre_geo": 3.33,
+        "url_inscription": 0.0,
+        "verification": 20.97
+      },
+      "fetch_s": [
+        5.24,
+        20.97,
+        5.5,
+        7.52,
+        6.55,
+        4.02,
+        3.23,
+        4.13
+      ],
+      "total_s": 52.17,
+      "cost_usd_computed": 0.10399999999999998,
+      "second_round": false
+    },
+    "linkup_balance_delta_usd": 0.056,
+    "open": [
+      [
+        "Trail des Forts de Besançon — 22KM",
+        "2027-05-07",
+        "https://www.traildesforts.com/"
+      ],
+      [
+        "Trail Patrimoine Chemin des Batignolles",
+        "2027-05-08",
+        "https://www.volvic-vvx.com/"
+      ],
+      [
+        "La Transju'Trails",
+        "2027-06-05",
+        "https://www.latransju.com/evenements/la-transju-trail/"
+      ]
+    ]
+  },
+  {
+    "profile": "p4_semi_etranger_vol_2h",
+    "wall_s": 60.8,
+    "n_candidates": 78,
+    "n_open": 4,
+    "n_to_check_H": 2,
+    "n_not_open": 2,
+    "metrics": {
+      "search_calls": 2,
+      "enrich_calls": 8,
+      "calendar_fetch_calls": 1,
+      "fetch_calls": 8,
+      "fetch_errors": 1,
+      "search_s": [
+        2.27,
+        3.3
+      ],
+      "enrich_s": [
+        3.27,
+        3.43,
+        2.9,
+        3.65,
+        2.71,
+        3.14,
+        3.51,
+        2.93
+      ],
+      "calendar_fetch_s": [
+        32.84
+      ],
+      "phases_s": {
+        "decouverte": 36.15,
+        "filtre_geo": 7.98,
+        "url_inscription": 6.42,
+        "verification": 10.25
+      },
+      "fetch_s": [
+        8.07,
+        5.11,
+        7.44,
+        0.96,
+        5.87,
+        6.25,
+        2.64,
+        4.37
+      ],
+      "total_s": 60.8,
+      "cost_usd_computed": 0.152
+    },
+    "linkup_balance_delta_usd": 0.104,
+    "open": [
+      [
+        "Green Park Reading Half Marathon",
+        "2027-03-21",
+        "https://www.readinghalfmarathon.com/pages/step-one-choose-event"
+      ],
+      [
+        "Hastings Half Marathon",
+        "2027-03-21",
+        "https://www.nice-work.org.uk/e/hastings-half-marathon-13433"
+      ],
+      [
+        "Leuven Half Marathon",
+        "2027-04-11",
+        "https://leuvenmarathon.com/fr/inscriptions/"
+      ],
+      [
+        "HOKA Hackney Half",
+        "2027-05-16",
+        "https://runforcharity.com/charity-registration/arthritis-uk/hoka-hackney-half/register"
+      ]
+    ]
+  }
+]

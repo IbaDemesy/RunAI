@@ -1,0 +1,725 @@
+{
+  "profile": {
+    "id": "p4_semi_etranger_vol_2h",
+    "label": "Semi a l'etranger, moins de 2 h de vol de Paris, mars-mai 2027",
+    "distance_km": 21.1,
+    "distance_tolerance_km": null,
+    "distance_label": "semi-marathon",
+    "date_from": "2027-03-01",
+    "date_to": "2027-05-31",
+    "origin_city": "Paris",
+    "max_travel_h": 2.0,
+    "travel_mode": "flight",
+    "terrain": "plat",
+    "race_size": "grande",
+    "level": "intermediaire",
+    "zone_hint": "en Europe hors de France (Espagne, Portugal, Italie, Belgique, Pays-Bas, Allemagne, Royaume-Uni, Irlande, Danemark...)",
+    "foreign": true
+  },
+  "recommended_open": [
+    {
+      "name": "Green Park Reading Half Marathon",
+      "date": "2027-03-21",
+      "city": "Reading",
+      "country": "Royaume-Uni",
+      "distance_km": 21.0975,
+      "elevation_gain_m": 140.0,
+      "platform": "Site officiel Reading Half Marathon (plateforme non précisée)",
+      "registration_url": "https://www.readinghalfmarathon.com/pages/step-one-choose-event",
+      "status_verified": "open",
+      "status_evidence": "2027 ENTRIES OPEN NOW",
+      "status_from_search": "Inscriptions ouvertes",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 1.0,
+      "score": 6.99,
+      "reason": "21.0975 km pour un objectif de 21.1 km; le 2027-03-21, soit 19 semaines de preparation; D+ 140 m (plat); ~1.0 h de vol estimees depuis Paris",
+      "sources": [
+        "https://running.life/fr/evenement/reading-half-marathon",
+        "https://www.readinghalfmarathon.com/pages/step-one-choose-event"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    },
+    {
+      "name": "Hastings Half Marathon",
+      "date": "2027-03-21",
+      "city": "Hastings",
+      "country": "Royaume-Uni",
+      "distance_km": 21.08,
+      "elevation_gain_m": null,
+      "platform": "Nice Work Race Management",
+      "registration_url": "https://www.nice-work.org.uk/e/hastings-half-marathon-13433",
+      "status_verified": "open",
+      "status_evidence": "Enter Now",
+      "status_from_search": "Inscriptions ouvertes",
+      "current_price_eur": null,
+      "price_tier": "Standard Pricing",
+      "travel_h_est": 0.84,
+      "score": 5.11,
+      "reason": "21.08 km pour un objectif de 21.1 km; le 2027-03-21, soit 19 semaines de preparation; ~0.8 h de vol estimees depuis Paris",
+      "sources": [
+        "https://www.nice-work.org.uk/e/hastings-half-marathon-13433",
+        "https://running.life/fr/evenement/hastings-half-marathon/2027-03-21"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    },
+    {
+      "name": "Leuven Half Marathon",
+      "date": "2027-04-11",
+      "city": "Leuven",
+      "country": "Belgique",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": "Inscription en ligne sur le site officiel (plateforme tierce non précisée).",
+      "registration_url": "https://leuvenmarathon.com/fr/inscriptions/",
+      "status_verified": "open",
+      "status_evidence": "Les inscriptions sont ouvertes en ligne jusqu’au samedi 10.04.2027, dans la limite des places disponibles pour la distance que vous avez choisie.",
+      "status_from_search": "Ouvertes en ligne jusqu’au 10 avril 2027, dans la limite des places disponibles.",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.88,
+      "score": 5.11,
+      "reason": "21.0975 km pour un objectif de 21.1 km; le 2027-04-11, soit 22 semaines de preparation; ~0.9 h de vol estimees depuis Paris",
+      "sources": [
+        "https://running.life/fr/evenement/leuven-marathon",
+        "https://leuvenmarathon.com/fr/inscriptions/"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    },
+    {
+      "name": "HOKA Hackney Half",
+      "date": "2027-05-16",
+      "city": "London",
+      "country": "Royaume-Uni",
+      "distance_km": 21.1,
+      "elevation_gain_m": null,
+      "platform": "Run for Charity (lien de place caritative ; une inscription générale officielle n’est pas confirmée par les informations fournies)",
+      "registration_url": "https://runforcharity.com/charity-registration/arthritis-uk/hoka-hackney-half/register",
+      "status_verified": "open",
+      "status_evidence": "Good Availability",
+      "status_from_search": "Des places caritatives sont proposées via Run for Charity. L’ouverture ou la disponibilité des inscriptions générales n’est pas confirmée par les informations fournies ; le D+ n’est pas indiqué.",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.96,
+      "score": 5.04,
+      "reason": "21.1 km pour un objectif de 21.1 km; le 2027-05-16, soit 27 semaines de preparation; ~1.0 h de vol estimees depuis Paris",
+      "sources": [
+        "https://runforcharity.com/charity-registration/arthritis-uk/hoka-hackney-half/register",
+        "https://running.life/fr/evenement/wizz-air-hackney-half"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    }
+  ],
+  "to_check_with_H": [
+    {
+      "name": "Night Marathon Luxembourg",
+      "date": "2027-05-08",
+      "city": "Luxembourg",
+      "country": "Luxembourg",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": "Njuko",
+      "registration_url": "https://in.njuko.com/20-ing-night-marathon-luxembourg-2027?currentPage=select-competition",
+      "status_verified": "a_verifier_par_H",
+      "status_evidence": null,
+      "status_from_search": "Inscriptions ouvertes jusqu’au 24 mars 2027, sous réserve des places disponibles.",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.89,
+      "score": 5.1,
+      "reason": "21.0975 km pour un objectif de 21.1 km; le 2027-05-08, soit 26 semaines de preparation; ~0.9 h de vol estimees depuis Paris",
+      "sources": [
+        "https://in.njuko.com/20-ing-night-marathon-luxembourg-2027?currentPage=select-competition",
+        "https://running.life/fr/evenement/ing-night-marathon-luxembourg"
+      ],
+      "check_error": "The Linkup API returned a fetch error (400). The provided URL might not be found or can't be fetched.",
+      "status_source": "page_inscription_ou_officielle"
+    },
+    {
+      "name": "The London Landmarks Half Marathon",
+      "date": "2027-04-04",
+      "city": "London",
+      "country": "Royaume-Uni",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://llhm.co.uk/",
+      "status_verified": "unknown",
+      "status_evidence": null,
+      "status_from_search": "Inscriptions générales 2027 closes selon les informations disponibles ; des places caritatives peuvent encore être proposées par certains partenaires.",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.96,
+      "score": 5.03,
+      "reason": "21.0975 km pour un objectif de 21.1 km; le 2027-04-04, soit 21 semaines de preparation; ~1.0 h de vol estimees depuis Paris",
+      "sources": [
+        "https://running.life/fr/evenement/london-landmarks-half-marathon",
+        "https://llhm.co.uk/"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    }
+  ],
+  "not_open": [
+    {
+      "name": "Sofico Gent Half Marathon",
+      "date": "2027-03-21",
+      "city": "Gand",
+      "country": "Belgique",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://soficogentmarathon.com/fr/inscrire/",
+      "status_verified": "not_yet_open",
+      "status_evidence": "Les inscriptions pour l’édition anniversaire ouvrent le mardi 8 septembre 2026 à 11 h 00.",
+      "status_from_search": "Inscriptions ouvertes ; inscription en ligne possible jusqu’au 20 mars 2027 à 23 h 59, dans la limite des dossards disponibles. La plateforme d’inscription et le dénivelé ne sont pas précisés dans les informations fournies.",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.85,
+      "score": 5.14,
+      "reason": "21.0975 km pour un objectif de 21.1 km; le 2027-03-21, soit 19 semaines de preparation; ~0.8 h de vol estimees depuis Paris",
+      "sources": [
+        "https://soficogentmarathon.com/fr/inscrire/",
+        "https://running.life/fr/evenement/gent-marathon"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    },
+    {
+      "name": "Amgen Singelloop Breda",
+      "date": "2027-04-04",
+      "city": "Breda",
+      "country": "Pays-Bas",
+      "distance_km": 21.1,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://www.amgensingelloopbreda.nl/en/sign-up",
+      "status_verified": "full",
+      "status_evidence": "SOLD OUT",
+      "status_from_search": "Complet",
+      "current_price_eur": null,
+      "price_tier": null,
+      "travel_h_est": 0.97,
+      "score": 5.03,
+      "reason": "21.1 km pour un objectif de 21.1 km; le 2027-04-04, soit 21 semaines de preparation; ~1.0 h de vol estimees depuis Paris",
+      "sources": [
+        "https://running.life/fr/evenement/singelloop-breda",
+        "https://www.amgensingelloopbreda.nl/en/sign-up"
+      ],
+      "check_error": null,
+      "status_source": "page_inscription_ou_officielle"
+    }
+  ],
+  "unverified_candidates": [
+    {
+      "name": "Genève Marathon",
+      "date": "2027-05-08",
+      "city": "Genf",
+      "url": null
+    },
+    {
+      "name": "Venloop",
+      "date": "2027-03-21",
+      "city": "Venlo",
+      "url": null
+    },
+    {
+      "name": "Leiden Marathon",
+      "date": "2027-05-08",
+      "city": "Leiden",
+      "url": null
+    },
+    {
+      "name": "Cambridge Half Marathon",
+      "date": "2027-03-14",
+      "city": "Cambridge",
+      "url": null
+    },
+    {
+      "name": "Freiburg Marathon",
+      "date": "2027-04-04",
+      "city": "Freiburg im Breisgau",
+      "url": null
+    },
+    {
+      "name": "Düsseldorf Marathon",
+      "date": "2027-04-18",
+      "city": "Düsseldorf",
+      "url": null
+    },
+    {
+      "name": "Bath Half Marathon",
+      "date": "2027-03-14",
+      "city": "Bath",
+      "url": null
+    },
+    {
+      "name": "Halbmarathon Mainz",
+      "date": "2027-05-02",
+      "city": "Mainz",
+      "url": null
+    },
+    {
+      "name": "Great Bristol Run",
+      "date": "2027-05-09",
+      "city": "Bristol",
+      "url": null
+    },
+    {
+      "name": "Frankfurter Halbmarathon",
+      "date": "2027-03-21",
+      "city": "Frankfurt am Main",
+      "url": null
+    },
+    {
+      "name": "Coventry Half Marathon",
+      "date": "2027-04-11",
+      "city": "Coventry",
+      "url": null
+    },
+    {
+      "name": "Zürich Mara­thon",
+      "date": "2027-04-11",
+      "city": "Zürich",
+      "url": null
+    },
+    {
+      "name": "Enschede Marathon",
+      "date": "2027-04-11",
+      "city": "Enschede",
+      "url": null
+    },
+    {
+      "name": "Great Birmingham Run",
+      "date": "2027-05-02",
+      "city": "Birmingham",
+      "url": null
+    },
+    {
+      "name": "Swansea Half Marathon",
+      "date": "2027-03-21",
+      "city": "Swansea",
+      "url": null
+    },
+    {
+      "name": "Paderborner Osterlauf",
+      "date": "2027-03-27",
+      "city": "Paderborn",
+      "url": null
+    },
+    {
+      "name": "Marathon Würzburg",
+      "date": "2027-05-23",
+      "city": "Würzburg",
+      "url": null
+    },
+    {
+      "name": "Sheffield Half Marathon",
+      "date": "2027-04-04",
+      "city": "Sheffield",
+      "url": null
+    },
+    {
+      "name": "La Mezza di Torino",
+      "date": "2027-04-11",
+      "city": "Torino",
+      "url": null
+    },
+    {
+      "name": "Wilmslow Running Festival",
+      "date": "2027-03-21",
+      "city": "Wilmslow",
+      "url": null
+    },
+    {
+      "name": "Chester Half Marathon",
+      "date": "2027-05-16",
+      "city": "Chester",
+      "url": null
+    },
+    {
+      "name": "Leeds Half Marathon",
+      "date": "2027-05-09",
+      "city": "Leeds",
+      "url": null
+    },
+    {
+      "name": "Liverpool Half Marathon & 10 Miler",
+      "date": "2027-03-14",
+      "city": "Liverpool",
+      "url": null
+    },
+    {
+      "name": "Marathon Hannover",
+      "date": "2027-04-11",
+      "city": "Hannover",
+      "url": null
+    },
+    {
+      "name": "Halbmarathon München",
+      "date": "2027-04-18",
+      "city": "München",
+      "url": null
+    },
+    {
+      "name": "Fila Lake Garda 42",
+      "date": "2027-04-09",
+      "city": "Limone Sul Garda",
+      "url": null
+    },
+    {
+      "name": "Haspa Marathon Hamburg",
+      "date": "2027-04-25",
+      "city": "Hamburg",
+      "url": null
+    },
+    {
+      "name": "Leipzig Marathon",
+      "date": "2027-04-18",
+      "city": "Leipzig",
+      "url": null
+    },
+    {
+      "name": "Running Festival Karlovy Vary",
+      "date": "2027-05-15",
+      "city": "Karlovy Vary",
+      "url": null
+    },
+    {
+      "name": "Vitoria-Gasteiz Maratón Martín Fiz",
+      "date": "2027-05-16",
+      "city": "Vitoria-Gasteiz",
+      "url": null
+    },
+    {
+      "name": "Salzburg Marathon",
+      "date": "2027-05-16",
+      "city": "Salzburg",
+      "url": null
+    },
+    {
+      "name": "Padova Marathon",
+      "date": "2027-04-18",
+      "city": "Padova",
+      "url": null
+    },
+    {
+      "name": "Bologna Marathon",
+      "date": "2027-03-07",
+      "city": "Bologna",
+      "url": null
+    },
+    {
+      "name": "Media Maratón Zaragoza",
+      "date": "2027-03-14",
+      "city": "Zaragoza",
+      "url": null
+    },
+    {
+      "name": "Media Maratón San Sebastián",
+      "date": "2027-04-04",
+      "city": "San Sebastián",
+      "url": null
+    },
+    {
+      "name": "Edinburgh Marathon Festival",
+      "date": "2027-05-29",
+      "city": "Edinburgh",
+      "url": null
+    },
+    {
+      "name": "Generali Berliner Halbmarathon",
+      "date": "2027-04-04",
+      "city": "Berlin",
+      "url": null
+    },
+    {
+      "name": "Linz Donau Marathon",
+      "date": "2027-04-11",
+      "city": "Linz",
+      "url": null
+    },
+    {
+      "name": "Great Limerick Run",
+      "date": "2027-05-02",
+      "city": "Limerick",
+      "url": null
+    },
+    {
+      "name": "Prague Half Marathon",
+      "date": "2027-04-03",
+      "city": "Praha",
+      "url": null
+    },
+    {
+      "name": "Half Marathon Firenze",
+      "date": "2027-04-04",
+      "city": "Firenze",
+      "url": null
+    },
+    {
+      "name": "Vienna City Marathon",
+      "date": "2027-04-18",
+      "city": "Wien",
+      "url": null
+    },
+    {
+      "name": "Odense City Half",
+      "date": "2027-05-30",
+      "city": "Odense",
+      "url": null
+    },
+    {
+      "name": "Istrian Marathon",
+      "date": "2027-04-10",
+      "city": "Izola",
+      "url": null
+    },
+    {
+      "name": "Trieste Marathon",
+      "date": "2027-05-02",
+      "city": "Trieste",
+      "url": null
+    },
+    {
+      "name": "Stramilano",
+      "date": "2027-03-21",
+      "city": "Milano",
+      "url": null
+    },
+    {
+      "name": "Inverness Half Marathon",
+      "date": "2027-03-14",
+      "city": "Inverness",
+      "url": null
+    },
+    {
+      "name": "Madrid Medio Maratón",
+      "date": "2027-04-04",
+      "city": "Madrid",
+      "url": null
+    },
+    {
+      "name": "Bratislava Marathon",
+      "date": "2027-04-10",
+      "city": "Bratislava",
+      "url": null
+    },
+    {
+      "name": "Poznań Półmaraton",
+      "date": "2027-04-11",
+      "city": "Poznań",
+      "url": null
+    },
+    {
+      "name": "Aucune course confirmée répondant à tous les critères",
+      "date": null,
+      "city": null,
+      "url": null
+    }
+  ],
+  "rejected": [
+    {
+      "name": "Media Maratón ciudad de Málaga",
+      "date": "2027-03-07",
+      "city": "Málaga",
+      "why": "trajet estime 2.44 h > 2.0 h"
+    },
+    {
+      "name": "Meia Maratona de Lisboa",
+      "date": "2027-03-07",
+      "city": "Alfama",
+      "why": "trajet estime 2.44 h > 2.0 h"
+    },
+    {
+      "name": "Semi de Paris",
+      "date": "2027-03-07",
+      "city": "Paris",
+      "why": "en France alors que l'etranger est demande"
+    },
+    {
+      "name": "Athina Half Marathon",
+      "date": "2027-03-07",
+      "city": "Athens",
+      "why": "trajet estime 3.29 h > 2.0 h"
+    },
+    {
+      "name": "CPC Loop Den Haag",
+      "date": "2027-03-14",
+      "city": "Den Haag",
+      "why": "trajet estime 12.81 h > 2.0 h"
+    },
+    {
+      "name": "Mostar Half Marathon",
+      "date": "2027-03-20",
+      "city": "Mostar",
+      "why": "trajet estime 2.28 h > 2.0 h"
+    },
+    {
+      "name": "La Valette Marathon",
+      "date": "2027-03-21",
+      "city": "Msida",
+      "why": "trajet estime 2.34 h > 2.0 h"
+    },
+    {
+      "name": "Limassol Marathon",
+      "date": "2027-04-03",
+      "city": "Limassol",
+      "why": "trajet estime 4.45 h > 2.0 h"
+    },
+    {
+      "name": "Półmaraton Warszawski",
+      "date": "2027-04-04",
+      "city": "Warsaw",
+      "why": "trajet estime 2.32 h > 2.0 h"
+    },
+    {
+      "name": "Belgrade Marathon",
+      "date": "2027-04-17",
+      "city": "Belgrade",
+      "why": "trajet estime 2.43 h > 2.0 h"
+    },
+    {
+      "name": "Gdynia Półmaraton",
+      "date": "2027-04-24",
+      "city": "Gdynia",
+      "why": "trajet estime 2.2 h > 2.0 h"
+    },
+    {
+      "name": "Bergen City Marathon",
+      "date": "2027-04-24",
+      "city": "Bergen",
+      "why": "trajet estime 2.23 h > 2.0 h"
+    },
+    {
+      "name": "Maratona da Europa – Aveiro",
+      "date": "2027-04-24",
+      "city": "Aveiro",
+      "why": "trajet estime 2.18 h > 2.0 h"
+    },
+    {
+      "name": "Marathon International de Biarritz",
+      "date": "2027-04-24",
+      "city": "Biarritz",
+      "why": "en France alors que l'etranger est demande"
+    },
+    {
+      "name": "Bucharest Half Marathon",
+      "date": "2027-05-08",
+      "city": "Bucharest",
+      "why": "trajet estime 2.99 h > 2.0 h"
+    },
+    {
+      "name": "Białystok Półmaraton",
+      "date": "2027-05-08",
+      "city": "Białystok",
+      "why": "trajet estime 2.53 h > 2.0 h"
+    },
+    {
+      "name": "Rimi Riga Marathon",
+      "date": "2027-05-15",
+      "city": "Riga",
+      "why": "trajet estime 2.77 h > 2.0 h"
+    },
+    {
+      "name": "Göteborgsvarvet",
+      "date": "2027-05-22",
+      "city": "Göteborg",
+      "why": "trajet estime 2.06 h > 2.0 h"
+    },
+    {
+      "name": "Meia Maratona do Douro Vinhateiro",
+      "date": "2027-05-30",
+      "city": "Peso da Régua",
+      "why": "trajet estime 2.06 h > 2.0 h"
+    }
+  ],
+  "n_candidates": 78,
+  "metrics": {
+    "search_calls": 2,
+    "enrich_calls": 8,
+    "calendar_fetch_calls": 1,
+    "fetch_calls": 8,
+    "fetch_errors": 1,
+    "search_s": [
+      2.27,
+      3.3
+    ],
+    "enrich_s": [
+      3.27,
+      3.43,
+      2.9,
+      3.65,
+      2.71,
+      3.14,
+      3.51,
+      2.93
+    ],
+    "calendar_fetch_s": [
+      32.84
+    ],
+    "phases_s": {
+      "decouverte": 36.15,
+      "filtre_geo": 7.98,
+      "url_inscription": 6.42,
+      "verification": 10.25
+    },
+    "fetch_s": [
+      8.07,
+      5.11,
+      7.44,
+      0.96,
+      5.87,
+      6.25,
+      2.64,
+      4.37
+    ],
+    "total_s": 60.8,
+    "cost_usd_computed": 0.152
+  },
+  "linkup_log": [
+    {
+      "query": "Calendrier 2027 : courses de semi-marathon en Europe hors de France (Espagne, Portugal, Italie, Belgique, Pays-Bas, Allemagne, Royaume-Uni, Irlande, Danemark...) entre le 2027-03-01 et le 2027-05-31, parcours plat et roulant. Liste 10 courses. Pour chaque course donne : nom, date exacte (YYYY-MM-DD), ville et pays du depart, distance de l'epreuve, D+ si indique, URL de la page d'inscription, plateforme d'inscription, statut des inscriptions tel qu'ecrit (ouvertes, complet, pas encore ouvertes), nombre de participants, URL source. Liste toutes les courses trouvees, meme si le statut est inconnu.",
+      "kw": {},
+      "n_races": 0,
+      "sources": [
+        "https://running.life/calendrier-semi-marathons/europe",
+        "https://www.ahotu.com/fr/calendrier/course/semi-marathon/europe-de-l-ouest",
+        "https://planmapace.com/courses/semi-marathons",
+        "https://www.ahotu.com/fr/calendrier/course/semi-marathon/europe",
+        "https://liensutiles.org/pdmeu.htm",
+        "https://jogging-plus.com/calendrier/marathons/monde/",
+        "https://sportstoursinternational.fr/blog/les-meilleurs-semi-marathons-deurope/",
+        "https://www.ahotu.com/fr/calendrier/inscription/course/semi-marathon/europe",
+        "https://www.myraceland.com/fr/semi-marathon/europe-du-sud/",
+        "https://www.liensutiles.org/pdmeu.htm"
+      ]
+    },
+    {
+      "query": "Half marathon 2027 in Europe outside France entre le 2027-03-01 et le 2027-05-31 with registration open, flat and fast course, under 2 hours flight from Paris. For each race: name, exact date, city, country, distance, registration URL, registration platform, registration status, number of runners, source URL.",
+      "kw": {},
+      "n_races": 1,
+      "sources": [
+        "https://maratonaclubedeportugal.com/en/corrida-marco/edp-lisbon-half-marathon/",
+        "https://marathontours.com/en-us/events/paris-half-marathon/",
+        "https://13milers.com/eurohalfmarathons",
+        "https://www.travelmarathon.it/en/maratone/mezza-maratona-di-parigi/",
+        "https://www.timeoutdoors.com/events/half-marathons/europe",
+        "https://www.timeoutdoors.com/events/half-marathons/pb-potential/europe",
+        "https://runninglog.app/blog/the-10-best-half-marathons-in-the-world-dates-courses-how-to-enter/",
+        "https://en.run-motion.com/paris-half-marathon-2027-registration/",
+        "https://www.42cal.com/best/flat-marathons-in-europe",
+        "https://www.sortiraparis.com/en/news/in-paris/articles/351882-paris-marathon-2027-and-half-marathon-what-s-changing-for-the-next-edition"
+      ]
+    },
+    {
+      "calendar_url": "https://running.life/calendrier-semi-marathons/europe",
+      "n_races": 77
+    }
+  ],
+  "linkup_balance_delta_usd": 0.104
+}
