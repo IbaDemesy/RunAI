@@ -14,7 +14,7 @@ valeur libre ; les événements possibles viennent de recherches sourcées (`Rac
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -187,6 +187,12 @@ class FramingReply(BaseModel):
 class FramingConfirm(BaseModel):
     revision: int
     idempotency_key: str = Field(min_length=8, max_length=100)
+
+
+class CandidateSearch(Protocol):
+    """Recherche générique sourcée (B1) : aucun filtre par liste de villes ; [] si rien trouvé."""
+
+    async def find_candidates(self, slots: dict[SlotName, Slot]) -> list[RaceCandidate]: ...
 
 
 class FramingError(Exception):
