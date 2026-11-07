@@ -1,11 +1,11 @@
-"""Transcription en direct Gladia (solaria-1) et flux d'événements voix → commandes."""
+"""Live Gladia transcription (solaria-1) and voice-to-command event stream."""
 
 import asyncio
 from collections.abc import AsyncIterable, AsyncIterator, Iterable
 from time import perf_counter
 from typing import Any
 
-import runai.config  # noqa: F401  (charge le .env avant le SDK Gladia, qui lit la clé à l'import)
+import runai.config  # noqa: F401  (load .env before the Gladia SDK reads its key at import)
 from runai.telemetry import timed
 from runai.voice.audio import AudioStream
 from runai.voice.commands import CommandDetector
@@ -21,8 +21,8 @@ from runai.voice.models import (
 from runai.voice.vocabulary import gladia_vocabulary
 
 DEFAULT_LANGUAGES = ("fr", "en", "pt")
-# Les pauses partent sur les partiels : un endpointing un peu long ne retarde pas l'arrêt et
-# évite de couper « Non, attends… plutôt un hôtel près du départ » en deux énoncés.
+# Pause on partial transcripts so longer endpointing does not delay interruption
+# or split a correction into two utterances.
 DEFAULT_ENDPOINTING = 0.3
 _ENDED = object()
 
@@ -243,7 +243,7 @@ async def stream_events(
     client: Any = None,
     options: dict[str, Any] | None = None,
 ) -> AsyncIterator[VoiceEvent]:
-    """Flux consommable par l'app web : chaque transcription, suivie des commandes qu'elle déclenche."""
+    """Web app stream: each transcript followed by the commands it triggers."""
     detector = detector or CommandDetector()
     async for transcript in stream_transcripts(
         audio.chunks, sample_rate=audio.sample_rate, client=client, options=options

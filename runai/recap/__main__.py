@@ -1,4 +1,4 @@
-"""python -m runai.recap [dossier] : écrit le récap d'exemple (HTML, PDF, .ics) et affiche les temps."""
+"""python -m runai.recap [directory]: write the demo HTML, PDF and .ics recap and print timings."""
 
 import sys
 import time
@@ -17,7 +17,7 @@ def main() -> None:
         ms = (time.perf_counter() - t0) * 1000
         path = out / f"{recap.id}.{ext}"
         path.write_bytes(data)
-        print(f"{path}  {len(data) / 1024:.1f} Ko  {ms:.1f} ms")
+        print(f"{path}  {len(data) / 1024:.1f} KB  {ms:.1f} ms")
 
 
 if __name__ == "__main__":

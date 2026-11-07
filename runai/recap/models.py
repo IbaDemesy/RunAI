@@ -1,4 +1,4 @@
-"""Modèle du récap de week-end : une seule source pour le HTML, le PDF et le .ics."""
+"""Weekend recap model: one source for HTML, PDF and .ics."""
 
 from datetime import date, datetime
 from typing import Literal
@@ -11,14 +11,14 @@ TimelineTag = Literal["course", "a_payer", "info", "conseil"]
 
 
 def http_url_or_none(value: str | None) -> str | None:
-    """Refuse les schémas autres que http(s) (ex. `javascript:`) dans les liens du récap."""
+    """Reject URL schemes other than http(s) in recap links (e.g. `javascript:`)."""
     if value is not None and not value.lower().startswith(("http://", "https://")):
         raise ValueError(f"URL http(s) attendue : {value[:40]!r}")
     return value
 
 
 class TimelineItem(BaseModel):
-    """Étape du week-end. `start` doit porter un fuseau (heure locale du lieu)."""
+    """Weekend event. `start` must carry the destination's local timezone."""
 
     start: datetime
     end: datetime | None = None
@@ -26,16 +26,16 @@ class TimelineItem(BaseModel):
     detail: str | None = None
     location: str | None = None
     tag: TimelineTag = "info"
-    time_known: bool = Field(True, description="False : seule la date est connue (événement « journée » dans le .ics)")
+    time_known: bool = Field(True, description="False: only the date is known (all-day event in the .ics)")
     in_calendar: bool = True
-    alarm_minutes: int | None = Field(None, description="Rappel N minutes avant (VALARM)")
+    alarm_minutes: int | None = Field(None, description="Reminder N minutes before (VALARM)")
 
 
 class KeyFact(BaseModel):
     label: str
     value: str
     detail: str | None = None
-    source: int | None = Field(None, description="Numéro (1-based) dans Recap.sources")
+    source: int | None = Field(None, description="Index (1-based) in Recap.sources")
 
 
 class RecapSource(BaseModel):
@@ -56,7 +56,7 @@ class FieldRow(BaseModel):
 
 
 class RecapMission(BaseModel):
-    """Une mission d'agent H (inscription, hébergement, transport) telle qu'elle apparaît dans le récap."""
+    """An H agent mission (registration, accommodation, transport) as shown in the recap."""
 
     kind: StepKind
     title: str
@@ -70,7 +70,7 @@ class RecapMission(BaseModel):
     live_view_url: str | None = None
     h_session_id: str | None = None
     human_action: str
-    capture_data_uri: str | None = Field(None, description="Capture PNG en data: URI (dernière vue avant l'arrêt)")
+    capture_data_uri: str | None = Field(None, description="PNG capture as a data: URI (last view before stopping)")
     error: str | None = None
 
     @field_validator("finalize_url", "live_view_url")
@@ -95,18 +95,18 @@ class Recap(BaseModel):
     runner_fictive: bool = True
     goal: str | None = None
     voice_request: str | None = None
-    notice: str | None = Field(None, description="Bandeau en tête (ex. « données fictives »)")
+    notice: str | None = Field(None, description="Top banner (e.g. fictional data)")
     key_facts: list[KeyFact] = Field(default_factory=list)
     timeline: list[TimelineItem] = Field(default_factory=list)
     missions: list[RecapMission] = Field(default_factory=list)
-    checklist: list[str] = Field(default_factory=list, description="À faire par l'humain en plus des paiements")
+    checklist: list[str] = Field(default_factory=list, description="For you to do in addition to payments")
     sources: list[RecapSource] = Field(default_factory=list)
     calendar_timezone: str = "Europe/Paris"
 
     @computed_field
     @property
     def paid_by_runai_eur(self) -> float:
-        """Toujours 0 : RunAI s'arrête avant chaque paiement."""
+        """Always 0: RunAI stops before every payment."""
         return 0.0
 
     @computed_field

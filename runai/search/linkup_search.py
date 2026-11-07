@@ -120,7 +120,7 @@ def default_client() -> SearchClient:
 
     api_key = get_settings().linkup_api_key
     if not api_key:
-        raise RuntimeError("LINKUP_API_KEY manquante : renseignez-la dans .env")
+        raise RuntimeError("LINKUP_API_KEY missing: set it in .env")
     return LinkupClient(api_key=api_key)
 
 
@@ -140,7 +140,7 @@ def _parse_url(text: str | None, field: str, issues: list[Issue]) -> HttpUrl | N
     try:
         return _URL.validate_python(text)
     except ValidationError:
-        issues.append(Issue(field=field, level=IssueLevel.warning, message=f"URL invalide ignorée : {text!r}"))
+        issues.append(Issue(field=field, level=IssueLevel.warning, message=f"Invalid URL ignored: {text!r}"))
         return None
 
 
@@ -150,7 +150,7 @@ def _date(value: Any, field: str, issues: list[Issue]) -> date | None:
     try:
         return date.fromisoformat(str(value).strip()[:10])
     except ValueError:
-        issues.append(Issue(field=field, level=IssueLevel.warning, message=f"date non reconnue ignorée : {value!r}"))
+        issues.append(Issue(field=field, level=IssueLevel.warning, message=f"Unrecognized date ignored: {value!r}"))
         return None
 
 
@@ -160,7 +160,7 @@ def _float(value: Any, field: str, issues: list[Issue]) -> float | None:
     try:
         return float(str(value).lower().replace(",", ".").removesuffix("km").strip())
     except ValueError:
-        issues.append(Issue(field=field, level=IssueLevel.warning, message=f"distance non reconnue : {value!r}"))
+        issues.append(Issue(field=field, level=IssueLevel.warning, message=f"Unrecognized distance: {value!r}"))
         return None
 
 
@@ -185,7 +185,7 @@ def _data(response: Any) -> dict[str, Any]:
 
 
 def _apply(sheet: RaceSheet, data: dict[str, Any], issues: list[Issue], only_missing: bool) -> None:
-    """Recopie les champs renvoyés par Linkup ; avec `only_missing`, ne remplace jamais une valeur déjà trouvée."""
+    """Copy Linkup fields; `only_missing` never overwrites a previously found value."""
 
     def put(target: Any, attr: str, value: Any) -> None:
         if value in (None, "", []):
@@ -255,7 +255,7 @@ def _official_domains(sheet: RaceSheet) -> list[str]:
 def complete_missing(
     sheet: RaceSheet, client: SearchClient, depth: Depth = "deep", today: date | None = None
 ) -> RaceSheet:
-    """Seconde recherche limitée aux domaines officiels, pour les seuls champs manquants."""
+    """Follow-up search restricted to official domains, for missing fields only."""
     missing = [field for field in sheet.missing_fields if field in _FOLLOW_UP_KEYS]
     domains = _official_domains(sheet)
     if not missing or not domains:
@@ -296,7 +296,7 @@ def _is_registration_link(link: str) -> bool:
 
 
 def verify_registration_link(sheet: RaceSheet, client: SearchClient, today: date | None = None) -> RaceSheet:
-    """Lit la page officielle (Linkup /fetch) : le lien d'inscription doit y figurer, sinon on prend celui de la page."""
+    """Read the official page (Linkup /fetch); use its registration link if the current link is absent."""
     if sheet.official_url is None or registration_url_issue(sheet) is None:
         return sheet
     links = links_on_page(client, str(sheet.official_url))
@@ -309,8 +309,8 @@ def verify_registration_link(sheet: RaceSheet, client: SearchClient, today: date
             Issue(
                 field="registration_url",
                 level=IssueLevel.warning,
-                message=f"{sheet.registration_url} absent de la page officielle, "
-                "remplacé par le lien d'inscription qu'elle contient",
+                message=f"{sheet.registration_url} absent from the official page, "
+                "replaced with the registration link it contains",
             )
         )
         sheet.registration_url = _URL.validate_python(candidates[0])
@@ -329,7 +329,7 @@ def search_race(
     today: date | None = None,
     trace: TraceWriter | None = None,
 ) -> RaceSheet:
-    """Cherche la course décrite en langage libre et renvoie une fiche sourcée et vérifiée."""
+    """Search for the race described in free text and return sourced, verified details."""
     client = client or default_client()
     with timed("linkup", "search.structured", depth=depth, output_type="structured",
                domains=[]) as call:
@@ -359,8 +359,7 @@ def search_race(
 
 
 def search_race_tool(request: str) -> str:
-    """Cherche une course à pied (date, heure, distance, inscription officielle, retrait du dossard, départ).
+    """Search for a running race (date, time, distance, official registration, bib pick-up, start).
 
-    Renvoie la fiche en JSON ; `missing_fields` et `issues` signalent ce qui n'a pas été trouvé ou vérifié.
-    """
+    Return JSON details; `missing_fields` and `issues` flag unfound or unverified information."""
     return search_race(request).model_dump_json(indent=2)

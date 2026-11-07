@@ -151,7 +151,7 @@ def test_incomplete_structure_unknown_stays_none():
     assert plan.budget.known_total == 250 and plan.budget.over_cap is None
     assert {"c-hotel", "c-transport"} <= set(plan.budget.missing_line_ids)
     assert "transport_not_covered" in {lim.code for lim in plan.limitations}
-    assert "Retrait des dossards inconnu." in plan.warnings
+    assert "Bib pick-up unknown." in plan.warnings
 
 
 def test_iana_timezones_on_stops():
@@ -283,13 +283,13 @@ def test_live_plan_rejects_fixture_data_and_keeps_sources():
         build_journey_plan(s, train_inputs(), mission_id="m", mode=DataMode.live)
     live = build_journey_plan(s, train_inputs(prov=LINKUP), mission_id="m", mode=DataMode.live)
     assert live.sources == [LINKUP]
-    assert not any("démonstration" in w for w in live.warnings)
+    assert not any("Demo data" in w for w in live.warnings)
 
 
 @pytest.mark.parametrize("raw", ["12 rue de la Roquette", "12 rue de la Roquette 75011 Paris",
                                 "Rue de la Roquette", "東京都新宿区西新宿2-8-1"])
 def test_unseparated_private_address_is_not_public(raw):
-    assert public_origin(raw) == "Origine non précisée"
+    assert public_origin(raw) == "Origin not specified"
 
 
 def test_return_is_door_to_door_with_its_own_stops_and_times():
@@ -376,7 +376,7 @@ def test_unknown_start_does_not_invent_a_blocking_nine_oclock_departure():
     plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
     assert next(stop for stop in plan.stops if stop.id == "start").local_time is None
     assert "arrival_after_start" not in {lim.code for lim in plan.limitations}
-    assert "Heure de départ à confirmer." in plan.warnings
+    assert "Start time to confirm." in plan.warnings
 
 
 def test_unsupported_outbound_cannot_claim_automation():

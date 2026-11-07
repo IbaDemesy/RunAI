@@ -1,4 +1,4 @@
-"""Recherche Linkup : fiche course sourcée, vérifiée en code, et coordonnées du départ et du retrait."""
+"""Linkup search: sourced race details, code verification, and start / bib pick-up coordinates."""
 
 from runai.search.checks import check_sheet
 from runai.search.geo import NominatimGeocoder, locate_race

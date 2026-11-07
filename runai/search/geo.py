@@ -19,7 +19,7 @@ class Geocoder(Protocol):
 
 
 class NominatimGeocoder:
-    """Géocodage OpenStreetMap : 1 requête par seconde au plus, User-Agent identifiant (politique Nominatim)."""
+    """OpenStreetMap geocoding: at most one request per second, identifying User-Agent (Nominatim policy)."""
 
     provider = "nominatim"
 
@@ -95,10 +95,9 @@ def _first_match(
 
 
 def locate_race(sheet: RaceSheet, geocoder: Geocoder | None = None) -> RaceLocations:
-    """Coordonnées du départ et du retrait du dossard.
+    """Start and bib pick-up coordinates.
 
-    `None` si le lieu est inconnu, introuvable ou à plus de 30 km de la ville : jamais de centre-ville par défaut.
-    """
+    None for unknown or unfound locations or those over 30 km from the city: no default city center."""
     geocoder = geocoder or NominatimGeocoder()
     country_code = sheet.country_code
     city_center = geocoder.geocode(sheet.city, country_code) if sheet.city else None

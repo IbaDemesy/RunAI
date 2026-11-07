@@ -103,7 +103,7 @@ def test_confirmed_journey_revisions_and_shared_exports(tmp_path, monkeypatch, n
         assert all(segment.automation.value != "automated" for segment in plan.segments if segment.mode.value == "flight")
         bib = next(stop for stop in plan.stops if stop.id == "bib")
         assert bib.local_time is None
-        assert any("pas un rendez-vous" in warning for warning in plan.warnings)
+        assert any("not an appointment" in warning for warning in plan.warnings)
         if name == "nairobi_incomplete":
             assert all(segment.geometry is None for segment in plan.segments if segment.mode.value == "local")
         revision = plan.revision

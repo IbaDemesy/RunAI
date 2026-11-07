@@ -1,4 +1,4 @@
-"""Adaptation des preuves de prix et des démarches humaines au séjour."""
+"""Adapt price evidence and human requirements to the trip."""
 
 from collections.abc import Iterable
 from datetime import datetime
@@ -45,10 +45,10 @@ def quote_cost_lines(devis: Devis, options_choisies: Iterable[str] = (), *,
         note=line.note or None,
     ) for i, line in enumerate(lines)]
     result.extend(CostLine(id=f"registration-unknown-{i}", category=CostCategory.registration,
-                           label="Prix à confirmer", note=alert) for i, alert in enumerate(alerts))
+                           label="Price to confirm", note=alert) for i, alert in enumerate(alerts))
     if devis.frais_service_eur is None and devis.frais_inclus_dans_prix is not True:
         result.append(CostLine(id="registration-fees-unknown", category=CostCategory.registration,
-                               label="Frais de service", note="Montant ou inclusion des frais non confirmé."))
+                               label="Service fees", note="Fee amount or inclusion not confirmed."))
     return result
 
 
@@ -64,7 +64,7 @@ def _requirements(rules: RaceRules, entry_path_id: str | None = None):
 def rules_cost_lines(rules: RaceRules, *, entry_path_id: str | None = None,
                      now: datetime | None = None) -> list[CostLine]:
     if entry_path_id is not None and not any(path.id == entry_path_id for path in rules.entry_paths):
-        raise ValueError(f"Voie d'inscription inconnue : {entry_path_id}")
+        raise ValueError(f"Unknown entry path: {entry_path_id}")
     at = now or utcnow()
     out = []
     unchosen = entry_path_id is None and len(rules.entry_paths) > 1
@@ -79,9 +79,9 @@ def rules_cost_lines(rules: RaceRules, *, entry_path_id: str | None = None,
             money=Money(amount=requirement.cost_eur, currency="EUR", collected_at=at,
                         provenance=provenance, confidence=Confidence.estimated)
             if requirement.cost_eur is not None and not unchosen else None,
-            note=(f"Voie à choisir par l'humain ; coût publié : {requirement.cost_eur} EUR."
-                  if unchosen and requirement.cost_eur is not None else "Voie à choisir par l'humain."
-                  if unchosen else requirement.detail if requirement.cost_eur is not None else "Coût non publié, à confirmer."),
+            note=(f"You must choose an entry path; published cost: {requirement.cost_eur} EUR."
+                  if unchosen and requirement.cost_eur is not None else "You must choose an entry path."
+                  if unchosen else requirement.detail if requirement.cost_eur is not None else "Cost not published, to confirm."),
         ))
     return out
 
@@ -96,7 +96,7 @@ def build_budget(lines: Iterable[CostLine] = (), *, cap: float | None = None,
                                    label=category.value, money=money))
         elif not any(line.category == category for line in result):
             result.append(CostLine(id=f"{category.value}-unknown", category=category,
-                                   label=category.value, note="Prix non renseigné."))
+                                   label=category.value, note="Price not provided."))
     return Budget(cap=cap, lines=result)
 
 
@@ -109,7 +109,7 @@ def eligibility_questions(rules: RaceRules) -> list[EligibilityQuestion]:
 
 
 def sheet_limitations(sheet: RaceSheet) -> list[Limitation]:
-    return [Limitation(code=f"missing_{field}", message=f"Information non trouvée : {field}",
+    return [Limitation(code=f"missing_{field}", message=f"Information not found: {field}",
                        manual_url=sheet.official_url) for field in sheet.missing_fields] + [
         Limitation(code=f"issue_{issue.field}", message=issue.message, manual_url=sheet.official_url)
         for issue in sheet.issues

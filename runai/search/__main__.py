@@ -5,10 +5,10 @@ from runai.search import locate_race, search_race
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Fiche course sourcée via Linkup (appel réel, ~0,055 $ en deep)")
-    parser.add_argument("request", help="Demande libre, ex. « semi de Lisbonne 2027 »")
+    parser = argparse.ArgumentParser(description="Sourced race details via Linkup (live call, ~$0.055 in deep mode)")
+    parser.add_argument("request", help="Free-text request, e.g. 'Lisbon half marathon 2027'")
     parser.add_argument("--depth", choices=["standard", "deep"], default="deep")
-    parser.add_argument("--no-geo", action="store_true", help="Ne pas géocoder le départ ni le retrait")
+    parser.add_argument("--no-geo", action="store_true", help="Do not geocode the start or bib pick-up")
     args = parser.parse_args()
 
     sheet = search_race(args.request, depth=args.depth)

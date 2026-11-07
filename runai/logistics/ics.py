@@ -1,4 +1,4 @@
-"""Export iCalendar (RFC 5545) d'une `Timeline`, heures en UTC pour éviter tout VTIMEZONE."""
+"""Export a `Timeline` to iCalendar (RFC 5545), using UTC to avoid VTIMEZONE."""
 
 import hashlib
 from datetime import UTC, datetime
@@ -9,12 +9,12 @@ _FORMAT = "%Y%m%dT%H%M%SZ"
 
 
 def to_ics(timeline: Timeline, *, now: datetime | None = None) -> str:
-    """Un VEVENT par événement ; « (estimé) » dans le titre quand l'horaire vient d'une hypothèse."""
+    """One VEVENT per event; append '(estimated)' when the time comes from an assumption."""
     stamp = (now or datetime.now(UTC)).astimezone(UTC).strftime(_FORMAT)
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//RunAI//logistics//FR",
+        "PRODID:-//RunAI//logistics//EN",
         "CALSCALE:GREGORIAN",
         f"X-WR-CALNAME:{_escape(timeline.race_name)}",
         f"X-WR-TIMEZONE:{timeline.timezone}",
@@ -22,7 +22,7 @@ def to_ics(timeline: Timeline, *, now: datetime | None = None) -> str:
     for event in timeline.events:
         start = event.start.astimezone(UTC)
         uid = hashlib.sha1(f"{event.title}|{start.isoformat()}".encode()).hexdigest()[:16]
-        summary = event.title + (" (estimé)" if event.assumption else "")
+        summary = event.title + (" (estimated)" if event.assumption else "")
         description = "\n".join(part for part in (event.detail, f"Source : {event.source_url}" if event.source_url else None) if part)
         lines += [
             "BEGIN:VEVENT",

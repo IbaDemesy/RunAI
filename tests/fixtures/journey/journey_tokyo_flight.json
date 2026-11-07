@@ -25,7 +25,7 @@
       "provenance": {
         "kind": "fixture",
         "url": null,
-        "label": "Origine publique",
+        "label": "Public origin",
         "collected_at": "2028-01-01T00:00:00Z"
       },
       "confidence": "unknown"
@@ -203,7 +203,7 @@
       "provenance": null,
       "limitation": {
         "code": "transport_manual",
-        "message": "Vol non automatisé : vérifier et réserver soi-même via le lien officiel.",
+        "message": "Flight not automated: check and book yourself via the official link.",
         "step": "transport",
         "manual_url": null
       }
@@ -271,7 +271,7 @@
       "provenance": null,
       "limitation": {
         "code": "transport_manual",
-        "message": "Retour non automatisé : vérifier le lien officiel.",
+        "message": "Return not automated: check the official link.",
         "step": "transport",
         "manual_url": null
       }
@@ -358,7 +358,7 @@
   "chapters": [
     {
       "id": "home",
-      "label": "Chez moi",
+      "label": "Home",
       "stop_ids": [
         "home"
       ],
@@ -369,7 +369,7 @@
     },
     {
       "id": "departure_hub",
-      "label": "Aéroport",
+      "label": "Airport",
       "stop_ids": [
         "hub-out"
       ],
@@ -378,7 +378,7 @@
     },
     {
       "id": "main_transport",
-      "label": "Vol",
+      "label": "Flight",
       "stop_ids": [
         "hub-in"
       ],
@@ -389,7 +389,7 @@
     },
     {
       "id": "arrival_hotel",
-      "label": "Arrivée et hôtel",
+      "label": "Arrival and hotel",
       "stop_ids": [
         "hotel"
       ],
@@ -400,14 +400,14 @@
     },
     {
       "id": "bib_pickup",
-      "label": "Dossard",
+      "label": "Bib pick-up",
       "stop_ids": [],
       "segment_ids": [],
       "status": "unavailable"
     },
     {
       "id": "race",
-      "label": "Départ et course",
+      "label": "Start and race",
       "stop_ids": [
         "start"
       ],
@@ -418,7 +418,7 @@
     },
     {
       "id": "return_trip",
-      "label": "Retour",
+      "label": "Return",
       "stop_ids": [
         "hub-back-from",
         "hub-back-to",
@@ -439,7 +439,7 @@
       {
         "id": "c-reg",
         "category": "registration",
-        "label": "Inscription",
+        "label": "Registration",
         "money": {
           "amount": 50.0,
           "currency": "EUR",
@@ -457,7 +457,7 @@
       {
         "id": "c-hotel",
         "category": "accommodation",
-        "label": "Hôtel 2 nuits",
+        "label": "Hotel 2 nights",
         "money": {
           "amount": 200.0,
           "currency": "EUR",
@@ -475,7 +475,7 @@
       {
         "id": "c-transport",
         "category": "transport",
-        "label": "Transport aller-retour",
+        "label": "Transport",
         "money": {
           "amount": 210.0,
           "currency": "EUR",
@@ -484,7 +484,7 @@
           "provenance": {
             "kind": "derived",
             "url": null,
-            "label": "Somme des trajets",
+            "label": "Sum of legs",
             "collected_at": "2028-01-01T00:00:00Z"
           }
         },
@@ -493,9 +493,9 @@
       {
         "id": "c-local",
         "category": "local",
-        "label": "Transports locaux",
+        "label": "Local transport",
         "money": null,
-        "note": "Non estimé"
+        "note": "Not estimated"
       }
     ],
     "known_total": 460.0,
@@ -506,21 +506,21 @@
     "over_cap": null
   },
   "warnings": [
-    "Données de démonstration : course, hôtel et horaires fictifs.",
-    "Retrait des dossards inconnu.",
-    "Jours et horaires de retrait du dossard non trouvés : à confirmer.",
-    "Budget partiel : postes non chiffrés exclus du total."
+    "Demo data: fictional race, hotel and times.",
+    "Bib pick-up unknown.",
+    "Bib pick-up days and times not found: to confirm.",
+    "Partial budget: unpriced items excluded from the total."
   ],
   "limitations": [
     {
       "code": "transport_manual",
-      "message": "Vol non automatisé : vérifier et réserver soi-même via le lien officiel.",
+      "message": "Flight not automated: check and book yourself via the official link.",
       "step": "transport",
       "manual_url": null
     },
     {
       "code": "transport_manual",
-      "message": "Retour non automatisé : vérifier le lien officiel.",
+      "message": "Return not automated: check the official link.",
       "step": "transport",
       "manual_url": null
     }
@@ -529,7 +529,7 @@
     {
       "kind": "fixture",
       "url": null,
-      "label": "Origine publique",
+      "label": "Public origin",
       "collected_at": "2028-01-01T00:00:00Z"
     },
     {

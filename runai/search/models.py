@@ -36,7 +36,7 @@ class BibPickup(BaseModel):
 
 
 class RaceSheet(BaseModel):
-    """Fiche course sourcée : les champs introuvables restent vides et sont listés dans `missing_fields`."""
+    """Sourced race details: unfound fields stay empty and are listed in `missing_fields`."""
 
     query: str
     name: str | None = None

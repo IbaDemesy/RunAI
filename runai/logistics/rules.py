@@ -1,4 +1,4 @@
-"""Extraction du règlement d'une course (Linkup structuré), avec fixtures vérifiées et cache disque."""
+"""Extract race rules (structured Linkup), with verified fixtures and a disk cache."""
 
 import json
 import os
@@ -160,7 +160,7 @@ def default_client() -> SearchClient:
 
     api_key = get_settings().linkup_api_key
     if not api_key:
-        raise RuntimeError("LINKUP_API_KEY manquante : renseignez-la dans .env")
+        raise RuntimeError("LINKUP_API_KEY missing: set it in .env")
     return LinkupClient(api_key=api_key)
 
 
@@ -198,12 +198,11 @@ def extract_rules(
     refresh: bool = False,
     depth: Literal["standard", "deep"] = "standard",
 ) -> RaceRules:
-    """Règlement sourcé d'une course.
+    """Sourced race rules.
 
-    Ordre : fixture vérifiée à la main (ex. Milan 2027), puis cache disque, puis un appel Linkup `/search`
-    structuré (≈ 0,006 $ en `standard`). `refresh=True` ignore fixture et cache. `cache_dir=False` désactive
-    le cache (par défaut `RUNAI_LOGISTICS_CACHE` ou `traces/logistics-cache/`).
-    """
+    Order: manually checked fixture (e.g. Milan 2027), disk cache, then one structured
+    Linkup `/search` call (~$0.006 in `standard`). `refresh=True` skips fixture and cache.
+    `cache_dir=False` disables caching (default: `RUNAI_LOGISTICS_CACHE` or `traces/logistics-cache/`)."""
     name = race.name if isinstance(race, Race) else race
     year = race.race_date.year if isinstance(race, Race) and race.race_date else _year_in(name)
     if use_fixtures and not refresh and (fixture := find_fixture(name, year)):
@@ -231,7 +230,7 @@ def extract_rules(
 
 
 def find_fixture(name: str, year: int | None = None) -> RaceRules | None:
-    """Fixture vérifiée correspondant au nom (alias) et à l'année, s'il y en a une."""
+    """Verified fixture matching the name (alias) and year, if available."""
     normalized = f" {_normalize(name)} "
     year = year if year is not None else _year_in(name)
     for path in sorted(FIXTURES_DIR.glob("*.json")):
@@ -246,7 +245,7 @@ def find_fixture(name: str, year: int | None = None) -> RaceRules | None:
 
 
 def parse_rules_response(name: str, response: Any) -> RaceRules:
-    """Transforme la réponse structurée Linkup en `RaceRules` ; valeurs illisibles ignorées et notées."""
+    """Convert structured Linkup output to `RaceRules`; skip and flag unreadable values."""
     data = _data(response)
     notes: list[str] = []
     groups = {
@@ -283,10 +282,10 @@ def parse_rules_response(name: str, response: Any) -> RaceRules:
         if source:
             field_sources[field] = source
         else:
-            notes.append(f"{field} : Linkup n'a pas donné de source, à confirmer")
+            notes.append(f"{field}: Linkup provided no source, to confirm")
     timezone = COUNTRY_TIMEZONES.get(country or "", "Europe/Paris")
     if country and country not in COUNTRY_TIMEZONES:
-        notes.append(f"Fuseau inconnu pour {country} : Europe/Paris par défaut, à confirmer")
+        notes.append(f"Unknown timezone for {country}: Europe/Paris by default, to confirm")
     missing = [field for field in CRITICAL_FIELDS if values[field] in (None, [])]
     return RaceRules(
         race_name=_text(data.get("race_name")) or name,
@@ -308,13 +307,13 @@ def _entry_paths(data: dict[str, Any], source: FieldSource | None) -> list[Entry
         foreign = _bool(data.get("foreign_license_accepted"))
         license = Requirement(
             kind=RequirementKind.license,
-            label="Licence valide le jour de la course",
+            label="License valid on race day",
             detail=_text(data.get("license_details")),
         )
         paths.append(
             EntryPath(
                 id="license",
-                label="Avec licence d'athlétisme",
+                label="With an athletics license",
                 licenses=[LicenseKind.host_federation] + ([LicenseKind.foreign_federation] if foreign else []),
                 requirements=[license],
                 source=source,
@@ -324,16 +323,16 @@ def _entry_paths(data: dict[str, Any], source: FieldSource | None) -> list[Entry
             paths.append(
                 EntryPath(
                     id="foreign_license_unconfirmed",
-                    label="Avec licence d'une fédération étrangère",
+                    label="With a foreign federation license",
                     licenses=[LicenseKind.foreign_federation],
                     requirements=[
                         license,
                         Requirement(
                             kind=RequirementKind.other,
-                            label="Faire confirmer par l'organisateur que votre licence étrangère est acceptée",
+                            label="Ask the organizer to confirm that your foreign license is accepted",
                         ),
                     ],
-                    to_confirm="le règlement ne précise pas si les licences étrangères sont acceptées",
+                    to_confirm="the rules do not specify whether foreign licenses are accepted",
                     source=source,
                 )
             )
@@ -342,17 +341,17 @@ def _entry_paths(data: dict[str, Any], source: FieldSource | None) -> list[Entry
     details = _text(data.get("medical_certificate_details"))
     requirements: list[Requirement] = []
     if runcard:
-        requirements.append(Requirement(kind=RequirementKind.runcard, label="Runcard FIDAL valide le jour de la course"))
+        requirements.append(Requirement(kind=RequirementKind.runcard, label="FIDAL Runcard valid on race day"))
     if certificate:
-        label = "Certificat médical d'aptitude à la course en compétition"
+        label = "Medical certificate of fitness for competitive running"
         if details and _PPS.search(details):
-            label = "PPS (Pass Prévention Santé) ou certificat médical"
+            label = "PPS (health prevention pass) or medical certificate"
         requirements.append(Requirement(kind=RequirementKind.medical_certificate, label=label, detail=details))
     if requirements or certificate is False:
         paths.append(
             EntryPath(
                 id="no_license",
-                label="Sans licence",
+                label="Without a license",
                 licenses=[LicenseKind.none],
                 requirements=requirements,
                 source=source,
@@ -363,10 +362,10 @@ def _entry_paths(data: dict[str, Any], source: FieldSource | None) -> list[Entry
         paths.append(
             EntryPath(
                 id="non_competitive",
-                label="Participation non compétitive",
+                label="Non-competitive participation",
                 competitive=False,
                 licenses=[LicenseKind.none],
-                requirements=[Requirement(kind=RequirementKind.waiver, label="Décharge et déclaration santé à signer")],
+                requirements=[Requirement(kind=RequirementKind.waiver, label="Waiver and health declaration for you to sign")],
                 limitations=[limits] if limits else [],
                 source=source,
             )

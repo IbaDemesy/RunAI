@@ -93,7 +93,7 @@ def registration_url_issue(sheet: RaceSheet) -> Issue | None:
         return Issue(
             field="registration_url",
             level=IssueLevel.error,
-            message=f"{host} est un agrégateur, pas le site officiel ni une plateforme d'inscription",
+            message=f"{host} is an aggregator, not the official website or a registration platform",
         )
     if sheet.registration_verified or any(on_domain(host, domain) for domain in KNOWN_REGISTRATION_PLATFORMS):
         return None
@@ -102,7 +102,7 @@ def registration_url_issue(sheet: RaceSheet) -> Issue | None:
     return Issue(
         field="registration_url",
         level=IssueLevel.error,
-        message=f"{host} n'est ni le domaine officiel de la course ni une plateforme d'inscription connue",
+        message=f"{host} is neither the official race domain nor a known registration platform",
     )
 
 
@@ -127,7 +127,7 @@ def check_sheet(sheet: RaceSheet, today: date | None = None) -> list[Issue]:
                 Issue(
                     field="race_date",
                     level=IssueLevel.error,
-                    message=f"la date {sheet.race_date.isoformat()} n'est pas dans le futur",
+                    message=f"date {sheet.race_date.isoformat()} is not in the future",
                 )
             )
         years = {int(year) for year in _YEAR.findall(sheet.query)}
@@ -136,25 +136,25 @@ def check_sheet(sheet: RaceSheet, today: date | None = None) -> list[Issue]:
                 Issue(
                     field="race_date",
                     level=IssueLevel.error,
-                    message=f"édition {sheet.race_date.year} trouvée, {sorted(years)} demandée",
+                    message=f"edition {sheet.race_date.year} found, {sorted(years)} requested",
                 )
             )
 
     if sheet.start_time is not None and not _TIME.match(sheet.start_time):
         issues.append(
-            Issue(field="start_time", level=IssueLevel.warning, message=f"heure non reconnue : {sheet.start_time!r}")
+            Issue(field="start_time", level=IssueLevel.warning, message=f"Unrecognized time: {sheet.start_time!r}")
         )
 
     expected = expected_distance_km(sheet.query)
     if sheet.distance_km is not None:
         if sheet.distance_km <= 0:
-            issues.append(Issue(field="distance_km", level=IssueLevel.error, message="distance nulle ou négative"))
+            issues.append(Issue(field="distance_km", level=IssueLevel.error, message="zero or negative distance"))
         elif expected is not None and abs(sheet.distance_km - expected) > 0.5:
             issues.append(
                 Issue(
                     field="distance_km",
                     level=IssueLevel.error,
-                    message=f"{sheet.distance_km} km trouvés, environ {expected} km attendus pour la demande",
+                    message=f"{sheet.distance_km} km found, about {expected} km expected for the request",
                 )
             )
 
@@ -169,14 +169,14 @@ def check_sheet(sheet: RaceSheet, today: date | None = None) -> list[Issue]:
                     Issue(
                         field="bib_pickup.days",
                         level=IssueLevel.warning,
-                        message=f"retrait le {day.isoformat()}, incohérent avec une course le {sheet.race_date.isoformat()}",
+                        message=f"pick-up on {day.isoformat()}, inconsistent with a race on {sheet.race_date.isoformat()}",
                     )
                 )
 
     if not sheet.sources:
-        issues.append(Issue(field="sources", level=IssueLevel.error, message="aucune source renvoyée"))
+        issues.append(Issue(field="sources", level=IssueLevel.error, message="no source returned"))
 
     for field in missing_fields(sheet):
-        issues.append(Issue(field=field, level=IssueLevel.warning, message="information introuvable dans les sources"))
+        issues.append(Issue(field=field, level=IssueLevel.warning, message="information not found in the sources"))
 
     return issues

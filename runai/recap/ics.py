@@ -1,11 +1,12 @@
-"""Recap → .ics (RFC 5545), sans dépendance : CRLF, lignes pliées à 75 octets, TZID + VTIMEZONE."""
+"""Recap to .ics (RFC 5545), dependency-free: CRLF, 75-byte folding, TZID + VTIMEZONE."""
 
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from .models import Recap, TimelineItem
 
-PRODID = "-//RunAI//Recap week-end//FR"
+PRODID = "-//RunAI//Weekend recap//EN"
+CATEGORY_LABELS = {"course": "race", "a_payer": "to pay", "info": "info", "conseil": "tip"}
 DEFAULT_DURATION = timedelta(minutes=30)
 
 
@@ -15,7 +16,7 @@ def escape_text(value: str) -> str:
 
 
 def fold(line: str) -> str:
-    """Plie une ligne de contenu à 75 octets sans couper un caractère UTF-8 (RFC 5545 §3.1)."""
+    """Fold a content line at 75 bytes without splitting UTF-8 characters (RFC 5545 section 3.1)."""
     out, cur, size, limit = [], [], 0, 75
     for ch in line:
         n = len(ch.encode())
@@ -34,8 +35,9 @@ def _last_sunday(year: int, month: int) -> date:
 
 
 def eu_dst_offsets(tzname: str, year: int) -> tuple[timedelta, timedelta] | None:
-    """(décalage hiver, décalage été) si le fuseau suit la règle UE (changement à 01:00 UTC
-    les derniers dimanches de mars et d'octobre) pour `year`, sinon None."""
+    """(winter offset, summer offset) if the timezone follows EU DST rules in `year`, else None.
+
+    EU transitions occur at 01:00 UTC on the last Sundays of March and October."""
     tz = ZoneInfo(tzname)
     std = datetime(year, 1, 15, tzinfo=tz).utcoffset()
     dst = datetime(year, 7, 15, tzinfo=tz).utcoffset()
@@ -55,7 +57,7 @@ def _offset(td: timedelta) -> str:
 
 
 def vtimezone(tzname: str, std: timedelta, dst: timedelta) -> list[str]:
-    """VTIMEZONE compacte à règle UE (RRULE annuelle) plutôt qu'une liste de RDATE."""
+    """Compact EU-rule VTIMEZONE (annual RRULE) rather than a list of RDATEs."""
     tz = ZoneInfo(tzname)
     names = (datetime(2001, 1, 15, tzinfo=tz).tzname(), datetime(2001, 7, 15, tzinfo=tz).tzname())
     spring = (datetime(1996, 3, 31, 1) + std).strftime("%Y%m%dT%H%M%S")
@@ -73,18 +75,17 @@ def vtimezone(tzname: str, std: timedelta, dst: timedelta) -> list[str]:
 def _description(item: TimelineItem, local: datetime) -> str:
     parts = [item.detail or ""]
     if item.time_known and item.start.utcoffset() != local.utcoffset():
-        parts.append(f"Heure locale : {item.start:%H:%M} ({item.start.tzinfo}).")
+        parts.append(f"Local time: {item.start:%H:%M} ({item.start.tzinfo}).")
     if item.tag == "a_payer":
-        parts.append("Statut : prêt, à payer par toi (0 € payé par RunAI).")
-    parts.append("Préparé par RunAI.")
+        parts.append("Status: ready, for you to pay (0 € paid by RunAI).")
+    parts.append("Prepared by RunAI.")
     return "\n".join(p for p in parts if p)
 
 
 def render_ics(recap: Recap) -> bytes:
-    """Événements de la timeline marqués `in_calendar`, en heure de `recap.calendar_timezone`.
+    """Timeline events marked `in_calendar`, in `recap.calendar_timezone`.
 
-    Si ce fuseau ne suit pas la règle UE, les heures sont écrites en UTC (suffixe Z).
-    """
+    For timezones without EU DST rules, write times in UTC (Z suffix)."""
     items = [t for t in recap.timeline if t.in_calendar]
     tzname = recap.calendar_timezone
     tz = ZoneInfo(tzname)
@@ -113,7 +114,7 @@ def render_ics(recap: Recap) -> bytes:
         lines += [f"SUMMARY:{escape_text(item.title)}", f"DESCRIPTION:{escape_text(_description(item, local))}"]
         if item.location:
             lines.append(f"LOCATION:{escape_text(item.location)}")
-        lines += [f"CATEGORIES:RunAI,{item.tag}", "TRANSP:OPAQUE" if item.time_known else "TRANSP:TRANSPARENT"]
+        lines += [f"CATEGORIES:RunAI,{CATEGORY_LABELS[item.tag]}", "TRANSP:OPAQUE" if item.time_known else "TRANSP:TRANSPARENT"]
         if item.alarm_minutes:
             lines += ["BEGIN:VALARM", "ACTION:DISPLAY", f"DESCRIPTION:{escape_text(item.title)}",
                       f"TRIGGER:-PT{item.alarm_minutes}M", "END:VALARM"]

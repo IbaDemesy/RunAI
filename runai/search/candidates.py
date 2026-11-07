@@ -1,4 +1,4 @@
-"""Recherche générique de courses, sans valeurs de cadrage implicites."""
+"""Generic race search, without implicit framing values."""
 
 import asyncio
 import hashlib
@@ -19,7 +19,7 @@ from runai.telemetry import timed
 
 
 class CandidateSearchError(RuntimeError):
-    """Le fournisseur n'a pas pu effectuer la recherche."""
+    """The provider could not complete the search."""
 
 
 class CandidateSearchResult(BaseModel):
@@ -171,7 +171,7 @@ class LinkupCandidateSearch:
             )
             candidates = self._parse_candidates(response, slots, today=today)
         except Exception as exc:
-            raise CandidateSearchError("Recherche Linkup impossible") from exc
+            raise CandidateSearchError("Linkup search failed") from exc
         if candidates:
             candidates = await self._lookup_next_editions(
                 self._rank_candidates(candidates), today
@@ -195,7 +195,7 @@ class LinkupCandidateSearch:
                 response, fallback_slots, today=today, close_match=True
             )
         except Exception as exc:
-            raise CandidateSearchError("Recherche Linkup impossible") from exc
+            raise CandidateSearchError("Linkup search failed") from exc
         candidates = await self._lookup_next_editions(
             self._rank_candidates(candidates), today
         )
@@ -238,7 +238,7 @@ class LinkupCandidateSearch:
         if isinstance(data, str):
             data = json.loads(data)
         if not isinstance(data, dict) or not isinstance(data.get("candidates"), list):
-            raise TypeError("réponse candidats invalide")
+            raise TypeError("invalid candidate response")
         response_sources = _sources(
             (response.get("sources", []) if isinstance(response, dict) else getattr(response, "sources", [])) or []
         )
@@ -304,23 +304,23 @@ class LinkupCandidateSearch:
                 limits.append(Limitation(
                     code="next_edition_unconfirmed",
                     message=(
-                        f"Dernière édition connue le {past_date:%d/%m/%Y} ; "
-                        "date de la prochaine édition à confirmer."
+                        f"Latest known edition on {past_date:%d/%m/%Y}; "
+                        "next edition date to confirm."
                     ),
                 ))
             elif not when:
-                limits.append(Limitation(code="race_date_unknown", message="Date de course à confirmer."))
+                limits.append(Limitation(code="race_date_unknown", message="Race date to confirm."))
             if close_match:
                 limits.append(Limitation(
                     code="close_match",
-                    message="Proche de votre demande, pas exactement ce que vous avez demandé.",
+                    message="Close to your request, not an exact match.",
                 ))
             official = row.official_url if row.official_url and not _blocked(row.official_url) else None
             registration = row.registration_url
             if registration and _blocked(registration):
                 registration = None
                 limits.append(Limitation(code="registration_url_unverified", step="registration",
-                                         message="Lien d'inscription non officiel : vérification humaine requise.",
+                                         message="Unofficial registration link: human verification required.",
                                          manual_url=official))
             key = json.dumps([norm_name(row.name), norm_name(row.city), norm_name(row.country),
                               when.isoformat() if when else "unknown"])
@@ -472,5 +472,5 @@ class LinkupCandidateSearch:
     @staticmethod
     def _result(candidates: list[RaceCandidate]) -> CandidateSearchResult:
         return CandidateSearchResult(candidates=candidates, limitations=[] if candidates else [
-            Limitation(code="no_candidate_found", message="Aucune course candidate sourcée trouvée.")
+            Limitation(code="no_candidate_found", message="No sourced race candidate found.")
         ])

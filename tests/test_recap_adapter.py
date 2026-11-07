@@ -66,8 +66,8 @@ def test_plan_exports(factory):
     assert snapshot.mode == plan.mode.value
     assert f"revision {plan.revision}" in html
     assert f"X-RUNAI-REVISION:{plan.revision}" in ics
-    assert "Préparé ≠ réservé" in html and "Préparé ≠ réservé" in ics
-    assert "pas des données live" in html and "pas des données live" in ics
+    assert "Prepared ≠ booked" in html and "Prepared ≠ booked" in ics
+    assert "not live data" in html and "not live data" in ics
     expected = []
     stops = {s.id: s for s in plan.stops}
     times = [(s.local_time, s.timezone) for s in plan.stops]
@@ -84,21 +84,21 @@ def test_plan_exports(factory):
     assert calendar_starts(ics) == sorted(expected)
     assert "DTEND" not in ics
     for line in plan.budget.lines:
-        value = f"{line.money.amount} {line.money.currency}" if line.money else "non chiffré (not priced)"
+        value = f"{line.money.amount} {line.money.currency}" if line.money else "not priced"
         assert value in html and value in ics
     assert f"{plan.budget.known_total} {plan.budget.currency}" in html
     if not plan.budget.complete:
-        assert "Total connu partiel" in html and "Total connu partiel" in ics
+        assert "Known total (partial)" in html and "Known total (partial)" in ics
     if plan.budget.over_cap is None:
         assert "unknown" in html and "unknown" in ics
     for segment in plan.segments:
         if segment.automation.value in ("manual", "not_covered"):
-            assert "non automatisé" in html and "non automatisé" in ics
+            assert "not automated" in html and "not automated" in ics
             if segment.manual_url:
                 assert segment.manual_url in html and segment.manual_url in ics
     for limitation in plan.limitations:
         assert limitation.message in html and limitation.message in ics
-    assert "total estimé, à payer" not in html
+    assert "estimated total, for you to pay" not in html
     assert "18 rue privée" not in html + ics
 
 
@@ -126,7 +126,7 @@ def test_empty_unknown_and_replay():
     html, ics = render_html(snapshot), unfolded(snapshot)
     assert calendar_starts(ics) == []
     assert "REPLAY" in html and "REPLAY" in ics
-    assert "unknown" in html and "Total connu partiel" in html
+    assert "unknown" in html and "Known total (partial)" in html
     assert "DTSTART" not in ics
 
 
@@ -155,7 +155,7 @@ def test_unknown_timezone_is_not_invented():
     stop.local_time = datetime(2031, 4, 5, 8, 23)
     stop.timezone = None
     snapshot = recap_from_journey(plan)
-    assert "2031-04-05T08:23:00 (fuseau inconnu)" in render_html(snapshot)
+    assert "2031-04-05T08:23:00 (unknown timezone)" in render_html(snapshot)
     assert calendar_starts(unfolded(snapshot)) == []
 
 

@@ -1,8 +1,4 @@
-"""Itinéraire porte à porte : JourneyPlan v1 construit depuis le cadrage confirmé et les étapes.
-
-    plan = build_journey_plan(summary, JourneyInputs(home=Place(label="Lille", ...), outbound=..., hotel=...),
-                              mission_id="m-1", mode=DataMode.demo, previous=old_plan)
-"""
+"""Door-to-door itinerary: JourneyPlan v1 built from confirmed framing and step results."""
 
 from runai.journey.planner import (
     HotelChoice,

@@ -456,7 +456,7 @@ def test_relaxed_search_runs_once_without_strict_filters_and_marks_close_matches
         "close_match"
     ]
     assert result.candidates[0].limitations[0].message == (
-        "Proche de votre demande, pas exactement ce que vous avez demandé."
+        "Close to your request, not an exact match."
     )
 
 
@@ -531,7 +531,7 @@ def test_results_are_capped_at_five_with_exact_dated_candidates_first():
         "limitations": [
             Limitation(
                 code="close_match",
-                message="Proche de votre demande, pas exactement ce que vous avez demandé.",
+                message="Close to your request, not an exact match.",
             )
         ]
     })

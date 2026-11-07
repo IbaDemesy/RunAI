@@ -125,8 +125,8 @@ def test_mutually_exclusive_entry_paths_are_not_summed_without_human_choice():
     ])
     lines = rules_cost_lines(regulation, now=NOW)
     assert all(line.money is None for line in lines)
-    assert all("choisir" in line.note for line in lines)
+    assert all("choose" in line.note for line in lines)
     selected = rules_cost_lines(regulation, entry_path_id="visitor", now=NOW)
     assert len(selected) == 1 and selected[0].money.amount == 15
-    with pytest.raises(ValueError, match="inconnue"):
+    with pytest.raises(ValueError, match="Unknown entry path"):
         rules_cost_lines(regulation, entry_path_id="invented", now=NOW)
