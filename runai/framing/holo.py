@@ -101,8 +101,10 @@ class HoloPhraser:
                     },
                 )
                 response.raise_for_status()
-                content = (response.json()["choices"][0]["message"]["content"] or "").strip()
+                content = response.json()["choices"][0]["message"]["content"]
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+            content = ""
+        if not isinstance(content, str):
             content = ""
         content = redact_secrets(content.strip().strip('"«» ').strip())
         if not content or len(content) > MAX_REPLY_CHARS or "?" not in content:

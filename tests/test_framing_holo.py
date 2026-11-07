@@ -54,6 +54,8 @@ async def test_holo_phraser_calls_h_models_and_returns_reply():
     httpx.Response(500),
     httpx.Response(200, json={"choices": []}),
     httpx.Response(200, json={"choices": [{"message": {"content": "Sans question."}}]}),
+    httpx.Response(200, json={"choices": [{"message": {"content": {"text": "Où ?"}}}]}),
+    httpx.Response(200, json={"choices": [{"message": {"content": None}}]}),
     httpx.Response(200, json={"choices": [{"message": {"content": "x?" * 400}}]}),
 ])
 async def test_holo_phraser_falls_back_to_local_wording(response):
