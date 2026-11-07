@@ -283,3 +283,8 @@ def test_decimal_distance_keeps_integer_part():
 def test_negated_keyword_is_not_a_command(text):
     assert parse_command(text) is None
     assert CommandDetector().feed(_transcript(text, is_final=False)) == []
+
+
+def test_decimal_distance_correction_targets_race():
+    command = parse_command("Plutôt 21,1 km")
+    assert (command.kind, command.target) == (CommandKind.correction, CorrectionTarget.race)

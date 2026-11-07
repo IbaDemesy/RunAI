@@ -86,11 +86,11 @@ _TARGETS: tuple[tuple[CorrectionTarget, re.Pattern[str]], ...] = (
         rf"(?:\d{{1,2}}(?:er)? (?:de )?)?(?:{_MONTHS})",
     )),
     (CorrectionTarget.budget, _words(
-        "budget", "prix", "moins cher", "cheaper", "price", "preco", "barato", r"\d+ ?(?:€|euros?)",
+        "budget", "prix", "moins cher", "cheaper", "price", "preco", "barato", r"\d+(?:[.,]\d+)? ?(?:€|euros?)",
     )),
     (CorrectionTarget.race, _words(
         "course", "semi", "semi-marathon", "marathon", "distance", "race", "corrida",
-        "maratona", "meia", r"\d+ ?km",
+        "maratona", "meia", r"\d+(?:[.,]\d+)? ?km",
     )),
 )
 
