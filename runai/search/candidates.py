@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 import json
+import re
 from datetime import date
 from typing import Annotated, Any
 
@@ -41,22 +42,72 @@ class _Candidates(BaseModel):
     candidates: list[_Candidate]
 
 
+class _NextEdition(BaseModel):
+    race_date: str | None = None
+    source_url: HttpUrl | None = None
+
+
+_LOCATION_REQUEST = re.compile(
+    r"\b(?:en|au|aux|in)\s+"
+    r"([A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*"
+    r"(?:\s+[A-ZÀ-Ö][^\W\d_]*(?:[-’'][^\W\d_]+)*){0,2})"
+)
+_DATE_WORDS = frozenset(
+    [
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
+        "aout", "septembre", "octobre", "novembre", "décembre", "decembre",
+        "january", "february", "march", "april", "may", "june", "july", "august",
+        "september", "october", "november", "december", "lundi", "mardi",
+        "mercredi", "jeudi", "vendredi", "samedi", "dimanche", "monday",
+        "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    ]
+)
+
+
+def location_hint(text: str | None) -> str | None:
+    if not text:
+        return None
+    match = _LOCATION_REQUEST.search(text)
+    if not match:
+        return None
+    hint = match.group(1)
+    if any(word.casefold() in _DATE_WORDS for word in re.findall(r"[^\W\d_]+", hint)):
+        return None
+    return hint
+
+
 SEARCH_SLOTS = (
     SlotName.city, SlotName.race, SlotName.edition, SlotName.race_date,
     SlotName.date_window, SlotName.distance_km, SlotName.preferences,
 )
 
 
-def build_candidate_prompt(slots: dict[SlotName, Slot]) -> str:
+def build_candidate_prompt(
+    slots: dict[SlotName, Slot],
+    today: date | None = None,
+    *,
+    relaxed: bool = False,
+    location_constraint: str | None = None,
+) -> str:
     known = {name.value: slots[name].value for name in SEARCH_SLOTS
              if name in slots and slots[name].is_known and slots[name].value is not None}
-    return (
+    prompt = (
         "Find running race candidates matching only these known constraints: "
         + json.dumps(known, ensure_ascii=False, default=str)
         + ". Return distinct events with name, city, country, race_date (ISO if published), "
         "distances_km, official_url, registration_url, source_url and relevant sources. "
-        "Use sourced facts; leave unpublished details empty. Do not infer unspecified constraints."
+        "Use sourced facts; leave unpublished details empty. Do not infer unspecified constraints. "
+        f"Prefer the next edition on or after {(today or date.today()).isoformat()}; "
+        "if its date is not published yet, return the latest edition with its date."
     )
+    if relaxed:
+        prompt += (
+            " No exact match was found; also include races in nearby cities (about 50 km) "
+            "and other distances or dates."
+        )
+    if location_constraint is not None:
+        prompt += f' Location constraint (country or region): "{location_constraint}".'
+    return prompt
 
 
 def _blocked(url: HttpUrl) -> bool:
@@ -87,28 +138,100 @@ class LinkupCandidateSearch:
         self._client = client
         self.today = today
 
-    async def find_candidates(self, slots: dict[SlotName, Slot]) -> list[RaceCandidate]:
-        return (await self.search(slots)).candidates
+    async def find_candidates(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> list[RaceCandidate]:
+        return (await self.search(slots, request_text=request_text)).candidates
 
-    async def search(self, slots: dict[SlotName, Slot]) -> CandidateSearchResult:
+    async def search(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> CandidateSearchResult:
+        place = location_hint(request_text)
         if not any(name in slots and slots[name].is_known and slots[name].value
-                   for name in (SlotName.city, SlotName.race)):
+                   for name in (SlotName.city, SlotName.race)) and not place:
             return self._result([])
+        today = self.today or date.today()
         try:
-            response = await asyncio.to_thread(self._search, build_candidate_prompt(slots))
-            data = getattr(response, "data", response)
-            if isinstance(data, BaseModel):
-                data = data.model_dump(mode="json")
-            if isinstance(data, str):
-                data = json.loads(data)
-            if not isinstance(data, dict) or not isinstance(data.get("candidates"), list):
-                raise TypeError("réponse candidats invalide")
+            response = await asyncio.to_thread(
+                self._search,
+                build_candidate_prompt(
+                    slots, today=today, location_constraint=place
+                ),
+            )
+            candidates = self._parse_candidates(response, slots, today=today)
         except Exception as exc:
             raise CandidateSearchError("Recherche Linkup impossible") from exc
+        if candidates:
+            candidates = await self._lookup_next_editions(
+                self._rank_candidates(candidates), today
+            )
+            return self._result(self._rank_candidates(candidates))
+
+        fallback_slots = self._relaxed_slots(slots)
+        if fallback_slots is None:
+            return self._result([])
+        try:
+            response = await asyncio.to_thread(
+                self._search,
+                build_candidate_prompt(
+                    fallback_slots,
+                    today=today,
+                    relaxed=True,
+                    location_constraint=place,
+                ),
+            )
+            candidates = self._parse_candidates(
+                response, fallback_slots, today=today, close_match=True
+            )
+        except Exception as exc:
+            raise CandidateSearchError("Recherche Linkup impossible") from exc
+        candidates = await self._lookup_next_editions(
+            self._rank_candidates(candidates), today
+        )
+        return self._result(self._rank_candidates(candidates))
+
+    @staticmethod
+    def _relaxed_slots(
+        slots: dict[SlotName, Slot],
+    ) -> dict[SlotName, Slot] | None:
+        known_to_relax = (
+            SlotName.distance_km,
+            SlotName.race_date,
+            SlotName.date_window,
+            SlotName.edition,
+            SlotName.race,
+        )
+        if not any(
+            name in slots and slots[name].is_known for name in known_to_relax
+        ):
+            return None
+        relaxed = dict(slots)
+        for name in known_to_relax[:-1]:
+            relaxed.pop(name, None)
+        city = relaxed.get(SlotName.city)
+        if city and city.is_known and city.value:
+            relaxed.pop(SlotName.race, None)
+        return relaxed
+
+    def _parse_candidates(
+        self,
+        response: Any,
+        slots: dict[SlotName, Slot],
+        *,
+        today: date,
+        close_match: bool = False,
+    ) -> list[RaceCandidate]:
+        data = getattr(response, "data", response)
+        if isinstance(data, BaseModel):
+            data = data.model_dump(mode="json")
+        if isinstance(data, str):
+            data = json.loads(data)
+        if not isinstance(data, dict) or not isinstance(data.get("candidates"), list):
+            raise TypeError("réponse candidats invalide")
         response_sources = _sources(
             (response.get("sources", []) if isinstance(response, dict) else getattr(response, "sources", [])) or []
         )
-        merged: dict[str, RaceCandidate] = {}
+        rows: list[tuple[_Candidate, date | None]] = []
         for raw in data["candidates"]:
             if not isinstance(raw, dict):
                 continue
@@ -118,29 +241,69 @@ class LinkupCandidateSearch:
                 row = _Candidate.model_validate(raw)
             except ValidationError:
                 continue
-            when = parse_date(row.race_date)
-            if when and when < (self.today or date.today()):
+            rows.append((row, parse_date(row.race_date)))
+        accepted_rows: list[tuple[_Candidate, date | None, list[Source]]] = []
+        future_events = set()
+        target = slots.get(SlotName.distance_km)
+        for row, when in rows:
+            urls = {str(s.url) for s in row.sources}
+            urls.update(
+                str(u)
+                for u in (row.source_url, row.official_url, row.registration_url)
+                if u
+            )
+            sources = _sources(
+                [
+                    *([str(row.source_url)] if row.source_url else []),
+                    *row.sources,
+                    *(s for s in response_sources if str(s.url) in urls),
+                ]
+            )
+            if not sources:
                 continue
-            target = slots.get(SlotName.distance_km)
             if (
-                target
+                not close_match
+                and target
                 and target.is_known
                 and target.value is not None
                 and row.distances_km
                 and matching_distance(row.distances_km, float(target.value)) is None
             ):
+                if when and when >= today:
+                    future_events.add(
+                        (norm_name(row.name), norm_name(row.city), norm_name(row.country))
+                    )
                 continue
-            urls = {str(s.url) for s in row.sources}
-            urls.update(str(u) for u in (row.source_url, row.official_url, row.registration_url) if u)
-            sources = _sources([
-                *([str(row.source_url)] if row.source_url else []), *row.sources,
-                *(s for s in response_sources if str(s.url) in urls),
-            ])
-            if not sources:
-                continue
+            accepted_rows.append((row, when, sources))
+        future_events.update(
+            (norm_name(row.name), norm_name(row.city), norm_name(row.country))
+            for row, when, _ in accepted_rows
+            if when and when >= today
+        )
+        merged: dict[str, RaceCandidate] = {}
+        for row, when, sources in accepted_rows:
+            event = (norm_name(row.name), norm_name(row.city), norm_name(row.country))
+            past_date = when if when and when < today else None
+            if past_date:
+                if event in future_events:
+                    continue
+                when = None
             limits = []
-            if not when:
+            if past_date:
+                limits.append(Limitation(
+                    code="next_edition_unconfirmed",
+                    message=(
+                        f"Dernière édition connue le {past_date:%d/%m/%Y} ; "
+                        "date de la prochaine édition à confirmer."
+                    ),
+                ))
+            elif not when:
                 limits.append(Limitation(code="race_date_unknown", message="Date de course à confirmer."))
+            if close_match:
+                limits.append(Limitation(
+                    code="close_match",
+                    message="Proche de votre demande, pas exactement ce que vous avez demandé.",
+                ))
             official = row.official_url if row.official_url and not _blocked(row.official_url) else None
             registration = row.registration_url
             if registration and _blocked(registration):
@@ -163,8 +326,121 @@ class LinkupCandidateSearch:
                 candidate.official_url = old.official_url or candidate.official_url
                 candidate.registration_url = old.registration_url or candidate.registration_url
                 candidate.limitations = list({x.model_dump_json(): x for x in [*old.limitations, *limits]}.values())
+                if any(
+                    limitation.code == "next_edition_unconfirmed"
+                    for limitation in candidate.limitations
+                ):
+                    candidate.limitations = [
+                        limitation
+                        for limitation in candidate.limitations
+                        if limitation.code != "race_date_unknown"
+                    ]
             merged[key] = candidate
-        return self._result(list(merged.values()))
+        return list(merged.values())
+
+    @staticmethod
+    def _rank_candidates(candidates: list[RaceCandidate]) -> list[RaceCandidate]:
+        ranked = sorted(
+            candidates,
+            key=lambda candidate: (
+                any(limitation.code == "close_match" for limitation in candidate.limitations),
+                candidate.race_date is None,
+                candidate.race_date or date.max,
+            ),
+        )
+        return ranked[:5]
+
+    async def _lookup_next_editions(
+        self, candidates: list[RaceCandidate], today: date
+    ) -> list[RaceCandidate]:
+        past_only = [
+            candidate
+            for candidate in candidates
+            if any(
+                limitation.code == "next_edition_unconfirmed"
+                for limitation in candidate.limitations
+            )
+        ]
+        unknown_date = [
+            candidate
+            for candidate in candidates
+            if any(
+                limitation.code == "race_date_unknown"
+                for limitation in candidate.limitations
+            )
+        ]
+        pending = [*past_only, *unknown_date][:3]
+        results = await asyncio.gather(
+            *(
+                asyncio.to_thread(self._search_next_edition, candidate, today)
+                for candidate in pending
+            )
+        )
+        for candidate, result in zip(pending, results):
+            if result is None:
+                continue
+            race_date, sources = result
+            candidate.race_date = race_date
+            if candidate in past_only:
+                candidate.registration_url = None
+            candidate.sources = _sources([*candidate.sources, *sources])
+            candidate.limitations = [
+                limitation
+                for limitation in candidate.limitations
+                if limitation.code not in {"next_edition_unconfirmed", "race_date_unknown"}
+            ]
+        return candidates
+
+    def _search_next_edition(
+        self, candidate: RaceCandidate, today: date
+    ) -> tuple[date, list[Source]] | None:
+        query = (
+            f'Find the date of the next edition, on or after {today}, of the running race '
+            f'"{candidate.name}" in {candidate.city}, {candidate.country}.'
+        )
+        if candidate.official_url:
+            query += f" Check its official website {candidate.official_url} first."
+        query += (
+            " Return race_date as ISO only if it is officially published, with the source_url; "
+            "otherwise leave it empty."
+        )
+        try:
+            if self._client is None:
+                self._client = default_client()
+            response = self._client.search(
+                query=query,
+                depth="standard",
+                output_type="structured",
+                structured_output_schema=_NextEdition,
+                include_sources=True,
+                exclude_domains=EXCLUDED_DOMAINS,
+            )
+            data = getattr(response, "data", response)
+            if isinstance(data, BaseModel):
+                data = data.model_dump(mode="json")
+            if isinstance(data, str):
+                data = json.loads(data)
+            if not isinstance(data, dict):
+                return None
+            edition = _NextEdition.model_validate(data)
+            when = parse_date(edition.race_date)
+            if when is None or when < today:
+                return None
+            response_sources = (
+                response.get("sources", [])
+                if isinstance(response, dict)
+                else getattr(response, "sources", [])
+            ) or []
+            sources = _sources(
+                [
+                    *([str(edition.source_url)] if edition.source_url else []),
+                    *response_sources,
+                ]
+            )
+            sources = [source for source in sources if not _blocked(source.url)]
+            return (when, sources) if sources else None
+        except Exception:  # noqa: BLE001
+            return None
 
     def _search(self, prompt: str) -> Any:
         if self._client is None:

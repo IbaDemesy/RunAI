@@ -5,7 +5,11 @@ import unicodedata
 from runai.contracts.common import DataMode, Limitation, Provenance
 from runai.contracts.framing import RaceCandidate, Slot, SlotName
 from runai.models import Race
-from runai.search.candidates import CandidateSearchError, CandidateSearchResult
+from runai.search.candidates import (
+    CandidateSearchError,
+    CandidateSearchResult,
+    location_hint,
+)
 
 
 def normalized(value: object) -> str:
@@ -19,16 +23,27 @@ class FixtureCandidateSearch:
         self.races = races
         self.mode = mode
 
-    async def find_candidates(self, slots: dict[SlotName, Slot]) -> list[RaceCandidate]:
-        return (await self.search(slots)).candidates
+    async def find_candidates(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> list[RaceCandidate]:
+        return (await self.search(slots, request_text=request_text)).candidates
 
-    async def search(self, slots: dict[SlotName, Slot]) -> CandidateSearchResult:
+    async def search(
+        self, slots: dict[SlotName, Slot], request_text: str | None = None
+    ) -> CandidateSearchResult:
+        place = location_hint(request_text)
+        has_city_or_race = any(
+            name in slots and slots[name].is_known
+            for name in (SlotName.city, SlotName.race)
+        )
+        races = [] if place and not has_city_or_race else self.races
+
         def value(name):
             slot = slots.get(name)
             return slot.value if slot and slot.is_known else None
 
         matches = []
-        for index, race in enumerate(self.races):
+        for index, race in enumerate(races):
             city, name = value(SlotName.city), value(SlotName.race)
             if city and normalized(city) != normalized(race.city):
                 continue
@@ -61,5 +76,5 @@ class UnavailableCandidateSearch:
     def __init__(self, message: str):
         self.message = message
 
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         raise CandidateSearchError(self.message)

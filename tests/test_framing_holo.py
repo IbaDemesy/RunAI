@@ -12,7 +12,7 @@ TURNS = [FramingTurn(role="user", text="Un marathon au printemps", revision=1)]
 
 
 class NoCandidates:
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         return []
 
 
@@ -133,10 +133,27 @@ async def test_engine_fills_only_unknown_slots_from_holo():
 
 
 class TwoCandidates:
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         from runai.app.candidates import FixtureCandidateSearch
         from runai.app.fakes import DEMO_RACES
-        return (await FixtureCandidateSearch(list(DEMO_RACES.values()), DataMode.demo).find_candidates(slots))[:2]
+        return (
+            await FixtureCandidateSearch(list(DEMO_RACES.values()), DataMode.demo)
+            .find_candidates(slots, request_text=request_text)
+        )[:2]
+
+
+class LegacyCandidateSearch:
+    async def find_candidates(self, slots):
+        return []
+
+
+@pytest.mark.anyio
+async def test_engine_does_not_pass_request_text_to_legacy_finders():
+    engine = FramingEngine(LegacyCandidateSearch(), DataMode.demo)
+    session = await engine.create(
+        FramingCreate(text="une course à Milan", channel="text")
+    )
+    assert not session.candidates
 
 
 @pytest.mark.anyio

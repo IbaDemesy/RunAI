@@ -27,7 +27,7 @@ class Discovery:
         self.count = count
         self.cities = []
 
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         city = slots[SlotName.city].value
         self.cities.append(city)
         return [

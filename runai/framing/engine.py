@@ -31,7 +31,7 @@ from runai.framing.interpret import extract_slots
 from runai.journey import public_origin
 from runai.models import Race
 from runai.redaction import redact_secrets
-from runai.search.candidates import CandidateSearchError
+from runai.search.candidates import CandidateSearchError, location_hint
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
 
@@ -200,6 +200,24 @@ class FramingEngine:
                     c for c in session.candidates if c.id == choice.candidate_id
                 )
                 session.selected_candidate_id = candidate.id
+                distance = session.slots[SlotName.distance_km]
+                if (
+                    distance.is_known
+                    and distance.value is not None
+                    and candidate.distances_km
+                    and matching_distance(
+                        candidate.distances_km, float(distance.value)
+                    )
+                    is None
+                ):
+                    if len(candidate.distances_km) == 1:
+                        distance.value = candidate.distances_km[0]
+                        distance.status = SlotStatus.sourced
+                        distance.provenance = candidate.provenance
+                    else:
+                        session.slots[SlotName.distance_km] = Slot(
+                            name=SlotName.distance_km
+                        )
                 sourced = {
                     SlotName.race: candidate.name,
                     SlotName.city: candidate.city,
@@ -289,6 +307,10 @@ class FramingEngine:
 
     async def _advance(self, session: FramingSession, *, search: bool) -> None:
         session.open_questions = []
+        request_text = " / ".join(
+            turn.text for turn in session.turns if turn.role == "user" and turn.text
+        )
+        place = location_hint(request_text)
         if (
             search
             and not session.selected_candidate_id
@@ -296,6 +318,7 @@ class FramingEngine:
             and (
                 session.slots[SlotName.city].is_known
                 or session.slots[SlotName.race].is_known
+                or place
             )
         ):
             session.limitations = [l for l in session.limitations if l.code not in {
@@ -303,11 +326,23 @@ class FramingEngine:
             }]
             try:
                 if hasattr(self.search, "search"):
-                    result = await self.search.search(session.slots)
+                    if place:
+                        result = await self.search.search(
+                            session.slots, request_text=request_text
+                        )
+                    else:
+                        result = await self.search.search(session.slots)
                     session.candidates = result.candidates
                     session.limitations.extend(result.limitations)
                 else:
-                    session.candidates = await self.search.find_candidates(session.slots)
+                    if place:
+                        session.candidates = await self.search.find_candidates(
+                            session.slots, request_text=request_text
+                        )
+                    else:
+                        session.candidates = await self.search.find_candidates(
+                            session.slots
+                        )
             except CandidateSearchError as exc:
                 session.candidates = []
                 session.limitations.append(Limitation(
@@ -319,27 +354,49 @@ class FramingEngine:
                 session.limitations.append(
                     Limitation(
                         code="no_candidates",
-                        message="Aucun événement sourcé trouvé ; précisez le nom officiel ou son URL pour une préparation manuelle.",
+                        message=(
+                            "Je n'ai trouvé aucune course correspondante, même en élargissant. "
+                            "Donnez le nom officiel de la course ou le lien de son site."
+                        ),
                     )
                 )
         if session.candidates and not session.selected_candidate_id:
             session.status = FramingStatus.choosing_candidate
+            close_matches_only = all(
+                any(limitation.code == "close_match" for limitation in candidate.limitations)
+                for candidate in session.candidates
+            )
             session.open_questions.append(
                 FramingQuestion(
                     id=uuid4().hex,
                     slots=[SlotName.race],
-                    text="Quel événement souhaitez-vous ? Vérifiez les sources et l'édition.",
+                    text=(
+                        "Je n'ai pas trouvé exactement votre course. Voici les plus proches — "
+                        "laquelle vous intéresse ?"
+                        if close_matches_only
+                        else "Quel événement souhaitez-vous ? Vérifiez les sources et l'édition."
+                    ),
                     revision=session.revision,
                     choices=[
                         FramingChoice(
                             id=c.id,
                             candidate_id=c.id,
-                            label=f"{c.name} — {c.race_date or 'date inconnue'}",
+                            label=(
+                                f"{c.name} — {c.race_date or 'date à confirmer'}"
+                                + (
+                                    " · proche de votre demande"
+                                    if any(
+                                        limitation.code == "close_match"
+                                        for limitation in c.limitations
+                                    )
+                                    else ""
+                                )
+                            ),
                             value=c.model_dump(mode="json"),
                         )
                         for c in session.candidates
                     ]
-                    + [FramingChoice(id="none", label="Aucun de ceux-ci")],
+                    + [FramingChoice(id="none", label="Aucune, je précise")],
                 )
             )
             return

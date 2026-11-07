@@ -20,7 +20,7 @@ from runai.safety import detect_stop_point
 
 
 class Search:
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         return [
             RaceCandidate(
                 id="edp",

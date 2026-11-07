@@ -21,7 +21,7 @@ from runai.models import Source, StepKind, StepResult, StepStatus
 
 
 class Search:
-    async def find_candidates(self, slots):
+    async def find_candidates(self, slots, request_text: str | None = None):
         return [
             RaceCandidate(
                 id="c1",

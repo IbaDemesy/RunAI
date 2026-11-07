@@ -45,6 +45,17 @@ from runai.tracing import TraceWriter
 AGENT_KINDS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 
 
+@pytest.mark.anyio
+async def test_fixture_search_does_not_offer_races_for_country_only_request():
+    candidate_search = FixtureCandidateSearch(
+        [DEMO_RACES["milan"]], DataMode.demo
+    )
+    result = await candidate_search.search(
+        {}, request_text="Un semi marathon en Chine"
+    )
+    assert result.candidates == []
+
+
 def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, monkeypatch):
     monkeypatch.setenv("HAI_API_KEY_2", "FAKE-H-PROGRESS-SENTINEL")
     service = make_service(tmp_path)
