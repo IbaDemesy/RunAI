@@ -19,7 +19,10 @@ def utcnow() -> datetime:
 
 
 class RunnerProfile(BaseModel):
-    """Profil fictif par défaut : aucune donnée réelle ne part dans un navigateur cloud."""
+    """Runner data sent to H agents in tasks protected by guard_task.
+
+    Defaults are fictional; saving real data requires explicit user confirmation.
+    """
 
     first_name: str = "Camille"
     last_name: str = "Test"
@@ -29,6 +32,14 @@ class RunnerProfile(BaseModel):
     nationality: str = "FR"
     city: str = "Paris"
     club: str | None = None
+    phone: str | None = None
+    emergency_contact_name: str | None = None
+    emergency_contact_phone: str | None = None
+    license_number: str | None = None
+    pps_number: str | None = None
+    tshirt_size: str | None = None
+    estimated_finish_time: str | None = None
+    fictional: bool = True
 
 
 class Source(BaseModel):

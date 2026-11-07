@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import re
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
@@ -11,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -19,6 +20,7 @@ from runai.app.auth import BasicAuthMiddleware
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
 from runai.app.mission import MissionError, MissionService
+from runai.app.profile import ProfileStore
 from runai.app.providers import (
     ProviderSet,
     ProviderStatus,
@@ -34,7 +36,7 @@ from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
 from runai.framing.holo import HoloPhraser, Phraser, TemplatePhraser
 from runai.h.human_questions import HumanQuestionError
-from runai.models import StepKind
+from runai.models import RunnerProfile, StepKind
 from runai.planning import recap_adapter
 from runai.redaction import redact_secrets
 from runai.search.candidates import LinkupCandidateSearch
@@ -53,6 +55,27 @@ class MessageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=500)
 
 
+class ProfileRequest(RunnerProfile):
+    model_config = ConfigDict(extra="forbid", str_max_length=256)
+
+    confirm_real_data: StrictBool = False
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
+            raise ValueError("Invalid email address")
+        return value
+
+
+def profile_response(profile: RunnerProfile) -> dict:
+    data = profile.model_dump(mode="json")
+    for field in ("license_number", "pps_number"):
+        if data[field]:
+            data[field] = "[REDACTED]"
+    return redact_secrets(data)
+
+
 def build_demo_service(delay: float | None = None) -> MissionService:
     return build_service(mode=DataMode.demo, delay=delay)
 
@@ -67,6 +90,7 @@ def build_service(mode: DataMode | None = None, delay: float | None = None) -> M
     service = MissionService(
         providers.search, agents, providers.transcriber,
         traces_dir=settings.traces_dir,
+        profile=ProfileStore(settings.traces_dir / "profile.json").load(),
         # Agents simulés : aucun slot H à partager, les missions ne s'attendent pas.
         max_concurrency=None if providers.simulated else settings.h_max_concurrency,
         simulated=providers.simulated, question_timeout_s=timeout,
@@ -146,6 +170,34 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     def get_service() -> MissionService:
         return app.state.service
+
+    @app.get("/api/profile")
+    async def get_profile() -> dict:
+        return profile_response(get_service().profile)
+
+    @app.put("/api/profile")
+    async def put_profile(body: ProfileRequest) -> dict:
+        if body.email.rsplit("@", 1)[-1].lower() != "example.com" and not body.confirm_real_data:
+            raise HTTPException(422, "Confirm real data before sharing it with H agents")
+        profile = RunnerProfile.model_validate(body.model_dump(exclude={"confirm_real_data", "fictional"}))
+        profile.fictional = not body.confirm_real_data
+        service = get_service()
+        path = service.traces_dir if service.traces_dir is not None else get_settings().traces_dir
+        ProfileStore(path / "profile.json").save(profile)
+        service.profile = profile
+        return profile_response(profile)
+
+    @app.get("/api/prefill")
+    async def prefill(user_id: str | None = None) -> dict:
+        missions = [mission for mission in get_service().missions.values()
+                    if mission.plan is not None
+                    and (user_id is None or getattr(mission, "user_id", None) == user_id)]
+        if not missions:
+            raise HTTPException(404, "No confirmed brief found")
+        latest = max(missions, key=lambda mission: mission.created_at)
+        return redact_secrets(latest.plan.brief.model_dump(mode="json", include={
+            "origin", "transport_mode", "budget_total_eur", "nights", "preferences",
+        }))
 
     def handle(error: MissionError) -> HTTPException:
         return HTTPException(
