@@ -72,6 +72,7 @@ Un seul outil qui accompagne le coureur de l'objectif jusqu'à la ligne d'arriv�
 - **Gladia, pour parler** : toute l'interaction à la voix, y compris la correction d'un agent en cours de route. Plus le débrief vocal après une séance d'entraînement.
 - **Stripe, pour payer** : l'abonnement RunAI Premium (coach et réservations).
 - **Devin, pour construire** : le développement du projet.
+  Stratégie pour le prix « Best Use of Devin » : [DEVIN.md](DEVIN.md), avec Devin dans la boucle du produit.
 
 ### Scénario de démo (environ 3 min)
 
