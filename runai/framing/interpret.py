@@ -49,16 +49,17 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
         (SlotName.origin, r"(?:depuis|au départ de|départ de|leaving\s+from|departing(?:\s+from)?|from)"),
         (SlotName.city, r"(?:à|in|(?:marathon|semi|course|race) de)"),
     ):
-        match = re.search(
+        for match in re.finditer(
             r"\b" + prefix + r"\s+([^\W\d_][\wÀ-ž '\-]*?)" + boundary,
             text,
             re.IGNORECASE,
-        )
-        if (match and slot not in result
-                and not any(word.lower() in MONTH_NUMBERS or re.fullmatch(SEASONS, word.lower())
-                            for word in match[1].split())
-                and not re.search(r"\b(?:ou|or)\b", match[1], re.IGNORECASE)):
-            result[slot] = match[1].strip()
+        ):
+            if (slot not in result
+                    and not any(word.lower() in MONTH_NUMBERS or re.fullmatch(SEASONS, word.lower())
+                                for word in match[1].split())
+                    and not re.search(r"\b(?:ou|or)\b", match[1], re.IGNORECASE)):
+                result[slot] = match[1].strip()
+                break
     named_race = re.search(
         r"\b(?i:ultra-trail|trail|ultra|course|corrida|foulées|ekiden|raid)"
         r"\s+(?i:des|du|de la|de l['’]|d['’])\s*"

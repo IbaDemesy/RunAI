@@ -28,6 +28,7 @@ from runai.search.candidates import location_hint
         ("on 12 April 2027", {"race_date": "2027-04-12", "edition": "2027"}),
         ("April 12, 2027", {"race_date": "2027-04-12", "edition": "2027"}),
         ("in April", {"date_window": "april 2027"}),
+        ("race in April 2027 in London", {"city": "London", "date_window": "april 2027"}),
         ("in January 2027", {"date_window": "january 2027", "edition": "2027"}),
         ("spring 2027", {"date_window": "spring 2027", "edition": "2027"}),
         ("summer 2027", {"date_window": "summer 2027", "edition": "2027"}),
