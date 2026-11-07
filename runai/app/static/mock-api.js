@@ -6,7 +6,7 @@
   "use strict";
   function createAPI({ storage, loadFixture = async (name) => {
     const response = await fetch("/static/contract-fixtures/" + name + ".json");
-    if (!response.ok) throw new Error("Fixtures de démonstration indisponibles. Vérifiez leur montage.");
+    if (!response.ok) throw new Error("Demo fixtures unavailable. Check their mount.");
     return response.json();
   } }) {
     let state = JSON.parse(storage.getItem("runai:mock") || "null") || { framing: null, mission: null, stage: 0, launches: 0 };
@@ -18,34 +18,34 @@
       const parts = path.split("/").filter(Boolean).map(decodeURIComponent);
       if (path === "/api/health") return { mode: "demo" };
       if (path === "/api/framings" && body) {
-        if (state.framing) fail(409, "Une demande existe déjà.");
+        if (state.framing) fail(409, "A request already exists.");
         state.framing = await fixture("framing_vague");
         state.framing.turns[0].text = body.text;
         save(); return clone(state.framing);
       }
       if (parts[1] === "framings") {
         const framing = state.framing;
-        if (!framing || parts[2] !== framing.id) fail(404, "Demande introuvable.");
+        if (!framing || parts[2] !== framing.id) fail(404, "Request not found.");
         if (!body) return clone(framing);
         if (parts[3] === "cancel") {
-          if (framing.mission_id) fail(409, "Mission déjà lancée.");
+          if (framing.mission_id) fail(409, "Mission already started.");
           framing.status = "cancelled";
         } else if (parts[3] === "confirm") {
           if (framing.mission_id) {
-            if (body.idempotency_key !== framing.confirm_key) fail(409, "Mission déjà lancée.");
+            if (body.idempotency_key !== framing.confirm_key) fail(409, "Mission already started.");
             return clone(state.mission);
           }
-          if (framing.status !== "ready_to_confirm" || body.revision !== framing.revision || framing.summary.revision !== body.revision) fail(409, "Résumé obsolète.");
-          if (!body.idempotency_key || body.idempotency_key.length < 8) fail(422, "Clé de confirmation invalide.");
+          if (framing.status !== "ready_to_confirm" || body.revision !== framing.revision || framing.summary.revision !== body.revision) fail(409, "Summary outdated.");
+          if (!body.idempotency_key || body.idempotency_key.length < 8) fail(422, "Invalid confirmation key.");
           state.mission = await fixture("mission_snapshot");
           state.mission.framing_id = framing.id; state.mission.mode = "demo";
           framing.mission_id = state.mission.mission_id;
           framing.confirm_key = body.idempotency_key; framing.status = "launched";
           state.launches += 1; save(); return clone(state.mission);
         } else if (parts[3] === "replies") {
-          if (body.revision !== framing.revision || ["launched", "cancelled"].includes(framing.status)) fail(409, "Révision obsolète.");
-          if (body.question_id && !framing.open_questions.some((q) => q.id === body.question_id)) fail(409, "Question obsolète.");
-          if (body.choice_id && !framing.open_questions.some((q) => q.choices.some((c) => c.id === body.choice_id))) fail(409, "Choix inconnu.");
+          if (body.revision !== framing.revision || ["launched", "cancelled"].includes(framing.status)) fail(409, "Revision outdated.");
+          if (body.question_id && !framing.open_questions.some((q) => q.id === body.question_id)) fail(409, "Question outdated.");
+          if (body.choice_id && !framing.open_questions.some((q) => q.choices.some((c) => c.id === body.choice_id))) fail(409, "Unknown choice.");
           const turn = { role: "user", channel: body.channel, text: body.text || "Correction", revision: framing.revision + 1 };
           let next;
           if (state.stage === 0) {
@@ -53,7 +53,7 @@
           } else if (state.stage === 1) {
             const question = framing.open_questions.find((q) => q.id === body.question_id);
             const choice = question?.choices.find((c) => c.id === body.choice_id);
-            if (!choice?.candidate_id) fail(422, "Choisissez une course proposée.");
+            if (!choice?.candidate_id) fail(422, "Choose a suggested race.");
             next = clone(framing); next.selected_candidate_id = choice.candidate_id;
             next.status = "collecting"; next.open_questions = []; next.candidates = [];
             const candidate = framing.candidates.find((c) => c.id === choice.candidate_id);
@@ -62,12 +62,12 @@
           } else {
             next = await fixture("framing_ready"); state.stage = 3;
             for (const [name, value] of Object.entries(body.corrections || {})) {
-              if (!next.slots[name]) fail(422, "Information inconnue.");
+              if (!next.slots[name]) fail(422, "Unknown information.");
               next.slots[name].value = value; next.slots[name].status = "answered";
             }
             if (body.corrections && Object.keys(body.corrections).length) {
-              const names = { city: "Ville", race: "Course", edition: "Édition", race_date: "Date de course", date_window: "Période", distance_km: "Distance en km", origin: "Départ", budget: "Budget", nights: "Nuits", transport_mode: "Transport", preferences: "Préférences" };
-              next.summary.lines = Object.entries(next.slots).filter(([, slot]) => slot.value != null).map(([name, slot]) => names[name] + " : " + (name === "transport_mode" && slot.value === "flight" ? "Avion" : slot.value));
+              const names = { city: "City", race: "Race", edition: "Edition", race_date: "Race date", date_window: "Period", distance_km: "Distance (km)", origin: "Origin", budget: "Budget", nights: "Nights", transport_mode: "Transport", preferences: "Preferences" };
+              next.summary.lines = Object.entries(next.slots).filter(([, slot]) => slot.value != null).map(([name, slot]) => names[name] + " : " + (name === "transport_mode" && slot.value === "flight" ? "Flight" : slot.value));
               if (body.corrections.budget != null) next.summary.budget_eur = Number(body.corrections.budget);
             }
           }
@@ -75,12 +75,12 @@
           next.turns = [...framing.turns, turn]; next.mode = "demo";
           if (next.summary) next.summary.revision = next.revision;
           state.framing = next;
-        } else fail(404, "Action inconnue.");
+        } else fail(404, "Unknown action.");
         save(); return clone(state.framing);
       }
       if (parts[1] === "missions") {
         const mission = state.mission;
-        if (!mission || parts[2] !== mission.mission_id) fail(404, "Mission introuvable.");
+        if (!mission || parts[2] !== mission.mission_id) fail(404, "Mission not found.");
         if (parts[3] === "journey") {
           const journey = await fixture("journey_flight");
           journey.mission_id = mission.mission_id; journey.mode = "demo"; return journey;
@@ -89,15 +89,15 @@
         if (parts[3] === "cancel") { mission.status = "cancelled"; mission.questions.forEach((q) => { if (q.status === "open") q.status = "cancelled"; }); }
         else if (parts[3] === "questions" && parts[5] === "answer") {
           const question = mission.questions.find((q) => q.question_id === parts[4]);
-          if (!question || question.status !== "open" || body.revision !== question.revision || mission.status === "cancelled") fail(409, "Question expirée ou déjà traitée.");
-          if (!body.answer?.trim() || !body.idempotency_key) fail(422, "Réponse invalide.");
+          if (!question || question.status !== "open" || body.revision !== question.revision || mission.status === "cancelled") fail(409, "Question expired or already handled.");
+          if (!body.answer?.trim() || !body.idempotency_key) fail(422, "Invalid answer.");
           question.answer = body.answer; question.status = "answered";
           mission.status = "completed"; mission.steps[0].status = "stopped_before_commitment";
-          mission.steps[0].summary = "Préparé, à valider sur le site officiel.";
-        } else fail(404, "Action inconnue.");
+          mission.steps[0].summary = "Prepared, to be confirmed on the official site.";
+        } else fail(404, "Unknown action.");
         save(); return clone(mission);
       }
-      fail(404, "Route de démonstration inconnue.");
+      fail(404, "Unknown demo route.");
     }
     return { request, get launches() { return state.launches; } };
   }

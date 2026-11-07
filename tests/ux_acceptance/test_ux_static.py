@@ -1,4 +1,4 @@
-"""Revue statique uniquement : les motifs documentent le contrat du shell D1/C3."""
+"""Static review only: patterns document the D1/C3 shell contract."""
 
 import os
 import shutil
@@ -13,15 +13,15 @@ ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "runai/app/static"
 HERE = Path(__file__).parent
 DEFECTS = [
-    ("UX-01", "app.js", "focus équivalent ou h1 après rendu et mutation", "majeur"),
-    ("UX-02", "app.js", "aria-current=page sur navigation courante", "moyen"),
-    ("UX-03", "app.js", "noms contextualisés par candidat/question", "moyen"),
-    ("UX-04", "app.js", "annonce du changement de mission.status par SSE", "moyen"),
-    ("UX-05", "app.js", "rôle region sur journey-map", "mineur"),
-    ("UX-06", "app.js", "h1 unique et titres sans saut", "mineur"),
-    ("UX-07", "app.js", "nouvel onglet dans le nom accessible", "mineur"),
-    ("UX-08", "app.js", "Lecture absente en mouvement réduit", "mineur"),
-    ("UX-09", "live.html", "viewport et statut live annoncé", "mineur"),
+    ("UX-01", "app.js", "equivalent focus or h1 after render and mutation", "major"),
+    ("UX-02", "app.js", "aria-current=page on current navigation", "medium"),
+    ("UX-03", "app.js", "names contextualized by candidate/question", "medium"),
+    ("UX-04", "app.js", "announce mission.status changes via SSE", "medium"),
+    ("UX-05", "app.js", "region role on journey-map", "minor"),
+    ("UX-06", "app.js", "single h1 and no skipped heading levels", "minor"),
+    ("UX-07", "app.js", "new tab in the accessible name", "minor"),
+    ("UX-08", "app.js", "Play absent with reduced motion", "minor"),
+    ("UX-09", "live.html", "viewport and announced live status", "minor"),
 ]
 
 
@@ -63,20 +63,20 @@ def patched(tmp_path_factory):
     target = directory / "runai/app/static"
     target.mkdir(parents=True)
     for name in ("app.js", "live.html", "style.css"):
-        # Les patches restent rejouables sur la base D1 revue (97265c6).
+        # Patches remain replayable against the reviewed D1 base (97265c6).
         source = run("git", "show", f"97265c6:runai/app/static/{name}", cwd=ROOT)
         (target / name).write_text(source, encoding="utf-8")
     for patch in sorted((HERE / "fixes").glob("d1-*.patch")):
         run("git", "apply", "--check", str(patch), cwd=directory)
         run("git", "apply", str(patch), cwd=directory)
-    assert shutil.which("node"), "Charger Node : source ~/.nvm/nvm.sh"
+    assert shutil.which("node"), "Load Node: source ~/.nvm/nvm.sh"
     run("node", "--check", str(target / "app.js"), cwd=directory)
     return target
 
 
 @pytest.mark.parametrize("identifier,filename,expected,severity", DEFECTS, ids=[r[0] for r in DEFECTS])
 def test_corrective_patch(patched, identifier, filename, expected, severity):
-    assert checks.defect((patched / filename).read_text(), identifier) == []
+    assert checks.defect((patched / filename).read_text(), identifier, legacy=True) == []
 
 
 def test_corrected_palette(patched):
@@ -89,14 +89,14 @@ def test_patches_preserve_regressions(patched):
     assert checks.external_links(app) == []
     assert checks.reduced_motion_option(app) == []
     assert checks.css_accessibility((patched / "style.css").read_text()) == []
-    assert checks.html_basics((patched / "live.html").read_text(), feedback=False) == []
+    assert checks.html_basics((patched / "live.html").read_text(), feedback=False, lang="fr") == []
 
 
 def test_c3_contracts():
     configured = os.environ.get("RUNAI_UX_C3_DIR")
     directory = Path(configured) if configured else ROOT / "web/flyover"
     if not configured and not (directory / "journey-fallback.js").exists():
-        pytest.skip("C3 pas encore intégré : câblage E3 ; fournir RUNAI_UX_C3_DIR")
+        pytest.skip("C3 not integrated yet: E3 wiring; provide RUNAI_UX_C3_DIR")
     source = (directory / "journey-fallback.js").read_text()
     assert checks.c3_accessibility(source) == []
     assert checks.external_links(source) == []
