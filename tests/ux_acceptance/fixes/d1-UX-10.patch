@@ -1,0 +1,12 @@
+diff --git a/runai/app/static/style.css b/runai/app/static/style.css
+--- a/runai/app/static/style.css
++++ b/runai/app/static/style.css
+@@ -1,7 +1,7 @@
+ :root {
+   --ink: #0b0b0c;
+   --ink-2: #3a3a3d;
+-  --ink-3: #6e6e6e;
++  --ink-3: #6b6b6b;
+   --paper: #f0eee9;
+   --paper-2: #efece6;
+   --card: #fcfcfd;
