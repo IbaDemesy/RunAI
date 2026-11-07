@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import inspect
+import json
 import os
 import re
 import time
@@ -100,6 +101,7 @@ def build_step_result(
     answer: Any = None,
     outcome: str | None = None,
     error: str | None = None,
+    error_code: str | None = None,
     session_id: str | None = None,
     live_view_url: str | None = None,
     agent_view_url: str | None = None,
@@ -108,7 +110,17 @@ def build_step_result(
 ) -> StepResult:
     text = answer_text(answer)
     stop_point = None
-    if h_status in ("completed", "idle"):
+    result_data = {"h_status": h_status, "answer": answer, **(data or {}), "outcome": outcome, "error_code": error_code}
+    if outcome == "partial":
+        result_data["partial"] = True
+    if outcome == "blocked":
+        status = StepStatus.failed
+        error = "Blocked by the site (captcha/anti-bot or login wall)"
+    elif outcome == "infeasible":
+        status = StepStatus.failed
+        error = f"The agent judged the task infeasible: {(text or '')[:200]}"
+        result_data["retryable"] = False
+    elif h_status in ("completed", "idle"):
         if _ANTI_BOT_BLOCK.search(text or ""):
             status = StepStatus.failed
             error = error or "Blocage captcha/anti-bot signalé par l'agent."
@@ -117,7 +129,7 @@ def build_step_result(
             status = StepStatus.stopped_before_commitment if stop_point else StepStatus.completed
     elif h_status in ("failed", "timed_out"):
         status = StepStatus.failed
-        error = error or h_status
+        error = error or error_code or h_status
     elif h_status == "interrupted":
         status = StepStatus.failed
         error = error or "interrupted"
@@ -136,7 +148,7 @@ def build_step_result(
         live_view_url=_http_url(live_view_url),
         agent_view_url=_http_url(agent_view_url),
         h_session_id=session_id,
-        data={"h_status": h_status, "answer": answer, "outcome": outcome, **(data or {})},
+        data=result_data,
         error=error,
     )
 
@@ -176,12 +188,14 @@ class HRun:
         self.trace = trace
         self.agent_view_url: str | None = getattr(session, "agent_view_url", None)
         self.live_view_url: str | None = None
+        self.share_url: str | None = None
         self._screenshot_ref: tuple[str, str] | None = None
         self.browser_observation: dict[str, Any] | None = None
         self.status: str = getattr(getattr(session, "status", None), "status", None) or "pending"
         self.answer: Any = None
         self.outcome: str | None = None
         self.error: str | None = None
+        self.error_code: str | None = None
         self.last_url: str | None = None
         self.last_title: str | None = None
         self.metrics: dict[str, Any] = {}
@@ -268,6 +282,7 @@ class HRun:
         self.status = status.status
         self.outcome = getattr(status, "outcome", None) or self.outcome
         self.error = getattr(status, "error", None) or self.error
+        self.error_code = getattr(status, "error_code", None) or self.error_code
         if getattr(status, "steps", None) is not None:
             self.metrics["steps"] = status.steps
         return self.status
@@ -366,12 +381,15 @@ class HRun:
             answer=self.answer,
             outcome=self.outcome,
             error=error or self.error,
+            error_code=self.error_code,
             session_id=self.id,
             live_view_url=self.live_view_url,
             agent_view_url=self.agent_view_url,
             last_url=self.last_url,
             data={
                 "agent_view_url": self.agent_view_url,
+                "share_url": self.share_url,
+                "h_key": self.account.name,
                 "title": self.last_title,
                 "steps": self.metrics.get("steps"),
                 "total_cost": self.metrics.get("total_cost"),
@@ -461,6 +479,12 @@ class HRunner:
         self.quota_poll_s = quota_poll_s
         self.quota_timeout_s = quota_timeout_s
         self.traces_dir = traces_dir
+        try:
+            self.overrides = json.loads(os.environ.get("RUNAI_H_OVERRIDES", "{}"))
+        except json.JSONDecodeError as exc:
+            raise ValueError("RUNAI_H_OVERRIDES must be a valid JSON object") from exc
+        if not isinstance(self.overrides, dict):
+            raise ValueError("RUNAI_H_OVERRIDES must be a JSON object")  # noqa: TRY004
         if accounts is not None:
             self.accounts = list(accounts)
         elif client is not None:
@@ -582,6 +606,8 @@ class HRunner:
         if reserved:
             raise ValueError(f"Paramètres gérés par HRunner, non surchargeables : {sorted(reserved)}")
         params: dict[str, Any] = {**create_params, "agent": self.agent, "messages": guard_task(task), "queue": False}
+        if self.overrides:
+            params["overrides"] = {**self.overrides, **params.get("overrides", {})}
         if max_steps is not None:
             params["max_steps"] = max_steps
         if max_time_s is not None:
@@ -605,6 +631,16 @@ class HRunner:
                 interactive=bool(params.get("idle_timeout_s")),
                 session_handle=session_handle,
             )
+            try:
+                share = await account.client.sessions.share_session(session.id)
+                if share.share_url:
+                    run.share_url = (
+                        share.share_url if urlsplit(share.share_url).scheme
+                        else f"https://agp.eu.hcompany.ai/{share.share_url.lstrip('/')}"
+                    )
+                    run.live_view_url = run.share_url
+            except Exception as exc:  # noqa: BLE001
+                run._log("warning", f"Could not share H session: {exc}")
             run._log(
                 "session_created",
                 kind.value,
@@ -612,6 +648,7 @@ class HRunner:
                 h_key=account.name,
                 task=task,
                 agent_view_url=run.agent_view_url,
+                share_url=run.share_url,
                 max_steps=max_steps,
                 max_time_s=max_time_s,
                 start_url=start_url,

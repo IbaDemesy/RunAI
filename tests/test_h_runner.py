@@ -21,6 +21,7 @@ from runai.tracing import TraceWriter
 
 LIVE = "https://live.hcompany.ai/view/abc"
 VIEW = "https://platform.hcompany.ai/agents/sessions/s1"
+SHARE = "https://agp.eu.hcompany.ai/share/api/v1/trajectories/s1"
 
 
 def scripted_events(answer="The page title is Example Domain"):
@@ -40,9 +41,10 @@ def scripted_events(answer="The page title is Example Domain"):
 
 
 class FakeSessions:
-    def __init__(self, events=None, final_status="completed", quotas=None, create_errors=0):
+    def __init__(self, events=None, final_status="completed", quotas=None, create_errors=0, error_code=None):
         self.events = scripted_events() if events is None else events
         self.final_status = final_status
+        self.error_code = error_code
         self.quotas = list(quotas or [])
         self.create_errors = create_errors
         self.created = []
@@ -55,6 +57,9 @@ class FakeSessions:
     async def get_session_quota(self):
         available = self.quotas.pop(0) if self.quotas else 3
         return SimpleNamespace(scope="org", limit=3, active=3 - available, available=available)
+
+    async def share_session(self, session_id):
+        return SimpleNamespace(share_url=f"/share/api/v1/trajectories/{session_id}")
 
     async def create_session(self, **params):
         if self.create_errors:
@@ -81,7 +86,7 @@ class FakeSessions:
         status = self.final_status if self.served[session_id] else "running"
         if self.served[session_id] and status in ("completed", "failed", "interrupted"):
             self.active = max(0, self.active - 1)
-        return SimpleNamespace(status=status, outcome=None, error=None, steps=2)
+        return SimpleNamespace(status=status, outcome=None, error=None, error_code=self.error_code, steps=2)
 
     async def get_session(self, session_id):
         return SimpleNamespace(
@@ -133,6 +138,88 @@ def test_run_guards_task_and_returns_step_result(tmp_path):
     assert result.data["steps"] == 2
     assert result.data["agent_view_url"] == VIEW
     assert len(seen) == 4
+
+
+@pytest.mark.parametrize("share_url", [SHARE, None])
+def test_share_link_absolute_or_empty(tmp_path, share_url):
+    class Sessions(FakeSessions):
+        async def share_session(self, session_id):
+            return SimpleNamespace(share_url=share_url)
+
+    result = asyncio.run(make_runner(tmp_path, Sessions(events=[])).run(StepKind.search, "Read the title"))
+    assert result.data["share_url"] == share_url
+    assert (str(result.live_view_url) if result.live_view_url else None) == share_url
+
+
+def test_share_failure_is_nonfatal_and_logged(tmp_path):
+    class Sessions(FakeSessions):
+        async def share_session(self, session_id):
+            raise RuntimeError("Sharing unavailable")
+
+    runner = make_runner(tmp_path, Sessions(events=[]))
+    result = asyncio.run(runner.run(StepKind.search, "Read the title", mission_id="share-failed"))
+    assert result.status is StepStatus.completed
+    assert result.data["share_url"] is None
+    assert result.live_view_url is None
+    events = TraceWriter("share-failed", traces_dir=tmp_path).read()
+    assert any(e.type == "warning" and "Sharing unavailable" in e.message for e in events)
+
+
+@pytest.mark.parametrize("outcome", ["blocked", "infeasible", "partial"])
+def test_answer_outcome_mapping(tmp_path, outcome):
+    answer = "Stopped on the payment page, card number required"
+    events = scripted_events(answer)
+    events[-1]["data"]["outcome"] = outcome
+    result = asyncio.run(make_runner(tmp_path, FakeSessions(events=events)).run(StepKind.registration, "Prepare registration"))
+    assert result.data["outcome"] == outcome
+    if outcome == "blocked":
+        assert result.status is StepStatus.failed
+        assert result.error == "Blocked by the site (captcha/anti-bot or login wall)"
+    elif outcome == "infeasible":
+        assert result.status is StepStatus.failed
+        assert result.data["retryable"] is False
+        assert result.error == f"The agent judged the task infeasible: {answer}"
+    else:
+        assert result.status is StepStatus.stopped_before_commitment
+        assert result.stop_point is StopPoint.payment
+        assert result.data["partial"] is True
+
+
+def test_infeasible_answer_is_truncated():
+    result = build_step_result(StepKind.search, "completed", outcome="infeasible", answer="x" * 250)
+    assert result.error == f"The agent judged the task infeasible: {'x' * 200}"
+
+
+@pytest.mark.parametrize("error_code", [None, "environment_error", "no_answer", "answer_validation", "timeout", "insufficient_credit", "internal"])
+def test_status_error_code_is_exposed(tmp_path, error_code):
+    sessions = FakeSessions(events=[], final_status="failed", error_code=error_code)
+    result = asyncio.run(make_runner(tmp_path, sessions).run(StepKind.search, "Read the title"))
+    assert result.data["error_code"] == error_code
+    assert result.error == (error_code or "failed")
+    explicit = build_step_result(StepKind.search, "failed", error="Detailed error", error_code=error_code)
+    assert explicit.error == "Detailed error"
+
+
+def test_environment_overrides_merge_with_explicit_values(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_H_OVERRIDES", '{"agent.environments[kind=web].settle_s": 0.5, "agent.environments[kind=web].lazy": true}')
+    sessions = FakeSessions()
+    runner = make_runner(tmp_path, sessions)
+    asyncio.run(runner.run(StepKind.search, "Read the title", start_url="https://example.com", overrides={
+        "agent.environments[kind=web].settle_s": 1,
+        "agent.environments[kind=web].start_url": "https://other.example",
+    }))
+    assert sessions.created[0]["overrides"] == {
+        "agent.environments[kind=web].settle_s": 1,
+        "agent.environments[kind=web].lazy": True,
+        "agent.environments[kind=web].start_url": "https://example.com",
+    }
+
+
+@pytest.mark.parametrize("value", ["invalid", "[]", "null", "true"])
+def test_invalid_environment_overrides(tmp_path, monkeypatch, value):
+    monkeypatch.setenv("RUNAI_H_OVERRIDES", value)
+    with pytest.raises(ValueError, match="RUNAI_H_OVERRIDES must be .*JSON object"):
+        make_runner(tmp_path, FakeSessions())
 
 
 def test_guard_task_does_not_duplicate_safety_instructions():
@@ -206,6 +293,8 @@ def test_every_event_is_traced_without_screenshots(tmp_path):
     events = TraceWriter("m1", traces_dir=tmp_path).read()
     types = [event.type for event in events]
     assert types[0] == "session_created"
+    assert events[0].data["share_url"] == SHARE
+    assert events[0].data["h_key"] == "default"
     assert types[-1] == "result"
     assert "LiveViewUrlEvent" in types
     assert "AgentEvent.answer_event" in types
@@ -335,8 +424,10 @@ def test_live_browser_url_and_durable_agent_view_remain_separate(tmp_path, live)
     sessions = FakeSessions(events=[] if live is None else [{"type": "LiveViewUrlEvent", "data": {"live_view_url": live}}])
     runner = make_runner(tmp_path, sessions)
     result = asyncio.run(runner.run(StepKind.search, "Lis le titre"))
-    assert (str(result.live_view_url) if result.live_view_url else None) == live
+    assert str(result.live_view_url) == (live or SHARE)
     assert str(result.agent_view_url) == VIEW
+    assert result.data["share_url"] == SHARE
+    assert result.data["h_key"] == "default"
 
 
 def test_observation_capture_uses_owning_session_resource_not_source_url(tmp_path):
