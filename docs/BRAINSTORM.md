@@ -211,6 +211,8 @@ Le sport reste donc quasiment libre dans le showcase : ce projet fait de la plan
     - Vérifier le résultat par un autre canal que l'agent lui-même.
     - Transformer les erreurs de l'agent sur une plateforme d'inscription en skills réutilisables (par exemple « sur Njuko, le certificat se téléverse à l'étape 3 »).
 - **Divers** : HoloMobile (mobile), Halo (panneau Chrome), Privacy Layer, Snowglobe, FollowThrough, Agent Kalshi, Glassbox, HoloBlocks et HoloBricks.
+  - [HoloMobile](https://github.com/swswsw/AndroidUseH) (Hackathon SF) : un agent « mobile use » basé sur les modèles Holo. Il pilote de vraies applis Android de bout en bout : on donne une tâche en langage naturel, il voit l'écran, tape et enchaîne plusieurs étapes, y compris entre plusieurs applis, sans API.
+    *Pour RunAI* : une piste pour plus tard. Certaines inscriptions ou certains suivis passent par des applis mobiles (applis de courses, appli SNCF…). Pour le hackathon, on reste sur le web.
 - **Démos « From H » sous forme d'app web** : [HoloBlocks](https://blocks.hcompany.ai/) ([code](https://github.com/hcompai/holoblocks)). On décrit une construction ou on donne une photo, Holo la bâtit bloc par bloc en 3D, puis on peut l'exporter vers Minecraft. [HoloBricks](https://bricks.hcompany.ai/) ([code](https://github.com/hcompai/holobricks)) fait la même chose en vraies briques, et fournit la liste des pièces à commander pour la monter chez soi. Les deux sont des exemples open source d'apps web complètes (serveur Python + front npm) construites autour de l'API Agents.
 
 ### Ressources utiles pour construire
