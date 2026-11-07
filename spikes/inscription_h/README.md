@@ -1,6 +1,6 @@
 # Spike axe 2 : inscription H réelle (Njuko, Klikego)
 
-Agent `h/web-surfer-pro` (modèle holo4-27b), profil fictif Camille Martin, consigne « remplir puis s'arrêter avant
+Agent `h/web-surfer-pro` (modèle `holo4-27b` d'après `usage_per_model`), profil fictif Camille Martin, consigne « remplir puis s'arrêter avant
 paiement ». Aucun paiement, aucune soumission, aucun compte créé. 3 runs H au total, un à la fois, quota vérifié avant
 chaque run, chaque session annulée à la fin (statut final `interrupted`).
 
@@ -21,7 +21,7 @@ chaque run, chaque session annulée à la fin (statut final `interrupted`).
 
 | Run | Course (plateforme) | Session H | Étapes | Durée H | Arrêt | Statut renvoyé |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 10 km de Hyères, 21/03/2027, 22 € (Njuko) | 3c2947ae-fea1-4476-bd44-6b013d22eeab | 57 | 12 min 43 | Formulaire participant, radio obligatoire « Licence FFA / Numéro PPS » | `echec` (en fait case humaine, enum non émise) |
+| 1 | 10 km de Hyères, 21/03/2027, 22 € sur la page (H a renvoyé « 21.00 € ») (Njuko) | 3c2947ae-fea1-4476-bd44-6b013d22eeab | 57 | 12 min 43 | Formulaire participant, radio obligatoire « Licence FFA / Numéro PPS » | `echec` (en fait case humaine, enum non émise) |
 | 2 | Semi Boucle de Seine, Chatou, 21/03/2027, 43 € + 2,50 € de frais (Klikego) | 501f4316-4bb6-4762-a69f-8aebea3196ab | 40 | 3 min 13 | Même formulaire : bloc « Un compte KLIKEGO va vous être créé » (mot de passe) | `compte_requis` |
 | 3 | Grand Trail des Cadourques, Valentré 15 km, Cahors, 03/04/2027, 20 € (Njuko) | d56006bc-2dd8-4e2a-ac0d-7e3bfcce6129 | 69 | 7 min 33 | Étape règlement : « J'accepte le règlement et les CGU » obligatoire ; PPS laissé vide (autorisé par l'organisateur) | `echec` (en fait case humaine) |
 
@@ -38,8 +38,8 @@ Détails et réponses JSON complètes : `resultats/<cible>/resultat.json`, captu
 
 ## Recommandation de démo
 
-**Njuko, 10 km de Hyères (21/03/2027)** en principal : pas de compte jusqu'au panier, formulaire testé deux fois
-(10 km Hyères le 7 nov. au matin dans BRAINSTORM, puis ici), et le blocage PPS est exactement le moment
+**Njuko, 10 km de Hyères (21/03/2027)** en principal : pas de compte jusqu'au panier, même épreuve que le test de
+faisabilité de `docs/BRAINSTORM.md` (panier atteint sans compte), et le blocage PPS est exactement le moment
 « l'agent remplit, l'humain signe ». En secours : **Njuko Cadourques 15 km** (autre course Njuko, PPS facultatif à
 l'inscription, l'arrêt se fait sur la case règlement). Klikego reste jouable mais impose un mot de passe à l'humain.
 
