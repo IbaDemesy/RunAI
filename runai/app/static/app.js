@@ -137,7 +137,7 @@
     try { await action(); accepted = true; persist(); announce("Demande acceptée."); }
     catch (error) {
       if (error.status === 409 && reload) {
-        try { await reload(); announce("Cette version a changé ou la réponse a expiré. Données actualisées : vérifiez avant de répondre à nouveau."); }
+        try { await reload(); announce("Conversation mise à jour."); }
         catch (_) { announce("Actualisation impossible. Rechargez la page pour reprendre sans relancer."); }
       } else announce(error.message || "Connexion indisponible. Réessayez.");
     } finally { busy = false; render(); }
