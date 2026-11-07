@@ -1,0 +1,241 @@
+{
+  "schema_version": "journey.v1",
+  "mission_id": "fx-incomplete",
+  "revision": 1,
+  "framing_revision": 5,
+  "mode": "demo",
+  "origin_public": "Lyon",
+  "date_range": [
+    "2027-10-08",
+    "2027-10-12"
+  ],
+  "timezone": "America/Chicago",
+  "currency": "EUR",
+  "stops": [
+    {
+      "id": "home",
+      "kind": "home",
+      "label": "Lyon (ville)",
+      "coords": {
+        "lat": 45.764,
+        "lon": 4.8357
+      },
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": null,
+      "confidence": "estimated"
+    },
+    {
+      "id": "ap-out",
+      "kind": "airport",
+      "label": "Aéroport de départ à choisir",
+      "coords": null,
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": null,
+      "confidence": "unknown"
+    },
+    {
+      "id": "ap-in",
+      "kind": "airport",
+      "label": "Aéroport d'arrivée à choisir",
+      "coords": null,
+      "local_time": null,
+      "timezone": "America/Chicago",
+      "provenance": null,
+      "confidence": "unknown"
+    },
+    {
+      "id": "hotel",
+      "kind": "hotel",
+      "label": "Hôtel non choisi",
+      "coords": null,
+      "local_time": null,
+      "timezone": "America/Chicago",
+      "provenance": null,
+      "confidence": "unknown"
+    },
+    {
+      "id": "start",
+      "kind": "race_start",
+      "label": "Départ (fixture)",
+      "coords": {
+        "lat": 41.8756,
+        "lon": -87.62
+      },
+      "local_time": "2027-10-10T07:30:00-05:00",
+      "timezone": "America/Chicago",
+      "provenance": null,
+      "confidence": "illustrative"
+    }
+  ],
+  "segments": [
+    {
+      "id": "s-flight-out",
+      "from_stop_id": "ap-out",
+      "to_stop_id": "ap-in",
+      "mode": "flight",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": null,
+      "geometry_status": "unavailable",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": "https://example.org/airline-search",
+      "provenance": null,
+      "limitation": {
+        "code": "transport_not_covered",
+        "message": "Vol long-courrier non automatisé : comparer et réserver soi-même via le lien officiel.",
+        "step": "transport",
+        "manual_url": "https://example.org/airline-search"
+      }
+    },
+    {
+      "id": "s-flight-back",
+      "from_stop_id": "ap-in",
+      "to_stop_id": "ap-out",
+      "mode": "flight",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": null,
+      "geometry_status": "unavailable",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    }
+  ],
+  "chapters": [
+    {
+      "id": "home",
+      "label": "Chez moi",
+      "stop_ids": [
+        "home"
+      ],
+      "segment_ids": [],
+      "status": "available"
+    },
+    {
+      "id": "departure_hub",
+      "label": "Aéroport",
+      "stop_ids": [
+        "ap-out"
+      ],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "main_transport",
+      "label": "Vol",
+      "stop_ids": [],
+      "segment_ids": [
+        "s-flight-out"
+      ],
+      "status": "unavailable"
+    },
+    {
+      "id": "arrival_hotel",
+      "label": "Arrivée et hôtel",
+      "stop_ids": [
+        "hotel"
+      ],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "bib_pickup",
+      "label": "Dossard",
+      "stop_ids": [],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "race",
+      "label": "Départ et course",
+      "stop_ids": [
+        "start"
+      ],
+      "segment_ids": [],
+      "status": "partial"
+    },
+    {
+      "id": "return_trip",
+      "label": "Retour",
+      "stop_ids": [],
+      "segment_ids": [
+        "s-flight-back"
+      ],
+      "status": "unavailable"
+    }
+  ],
+  "budget": {
+    "currency": "EUR",
+    "cap": 2000.0,
+    "lines": [
+      {
+        "id": "c-reg",
+        "category": "registration",
+        "label": "Inscription",
+        "money": {
+          "amount": 250.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Tarif fictif",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-hotel",
+        "category": "accommodation",
+        "label": "Hôtel 4 nuits",
+        "money": null,
+        "note": "Prix inconnu"
+      },
+      {
+        "id": "c-flight",
+        "category": "transport",
+        "label": "Vols",
+        "money": null,
+        "note": "Non couvert"
+      }
+    ],
+    "known_total": 250.0,
+    "missing_line_ids": [
+      "c-hotel",
+      "c-flight"
+    ],
+    "complete": false,
+    "over_cap": null
+  },
+  "warnings": [
+    "Budget partiel : hôtel et vols non chiffrés.",
+    "Retrait des dossards inconnu."
+  ],
+  "limitations": [
+    {
+      "code": "transport_not_covered",
+      "message": "Transport hors Europe non automatisé.",
+      "step": "transport",
+      "manual_url": "https://example.org/airline-search"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "Fixture contractuelle G1",
+      "collected_at": "2026-11-07T12:00:00Z"
+    }
+  ]
+}

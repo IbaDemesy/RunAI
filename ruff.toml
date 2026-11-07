@@ -1,4 +1,5 @@
 target-version = "py311"
+extend-exclude = [".devin"]
 
 [lint]
 extend-select = ["E402"]

@@ -1,0 +1,278 @@
+{
+  "schema_version": "journey.v1",
+  "mission_id": "e1-nairobi_incomplete",
+  "revision": 0,
+  "framing_revision": 3,
+  "mode": "demo",
+  "origin_public": "Lyon",
+  "date_range": [
+    "2028-06-11",
+    "2028-06-13"
+  ],
+  "timezone": "Africa/Nairobi",
+  "currency": "EUR",
+  "stops": [
+    {
+      "id": "home",
+      "kind": "home",
+      "label": "Lyon",
+      "coords": {
+        "lat": 45.76,
+        "lon": 4.84
+      },
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "Origine publique",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    },
+    {
+      "id": "hotel",
+      "kind": "hotel",
+      "label": "Hôtel non choisi",
+      "coords": null,
+      "local_time": null,
+      "timezone": "Africa/Nairobi",
+      "provenance": null,
+      "confidence": "unknown"
+    },
+    {
+      "id": "start",
+      "kind": "race_start",
+      "label": "Nairobi",
+      "coords": {
+        "lat": -1.28,
+        "lon": 36.82
+      },
+      "local_time": "2028-06-12T09:00:00+03:00",
+      "timezone": "Africa/Nairobi",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "E1 deterministic",
+        "collected_at": "2028-01-01T00:00:00Z"
+      },
+      "confidence": "unknown"
+    }
+  ],
+  "segments": [
+    {
+      "id": "s-home-hotel",
+      "from_stop_id": "home",
+      "to_stop_id": "hotel",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": null,
+      "geometry_status": "unavailable",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": {
+        "code": "transport_not_covered",
+        "message": "Transport « bus » non couvert : organiser le trajet soi-même.",
+        "step": "transport",
+        "manual_url": null
+      }
+    },
+    {
+      "id": "s-main-back",
+      "from_stop_id": "hotel",
+      "to_stop_id": "home",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": null,
+      "geometry_status": "unavailable",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": {
+        "code": "transport_not_covered",
+        "message": "Transport retour « inconnu » non couvert : organiser soi-même.",
+        "step": "transport",
+        "manual_url": null
+      }
+    },
+    {
+      "id": "s-hotel-start",
+      "from_stop_id": "hotel",
+      "to_stop_id": "start",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": null,
+      "geometry_status": "unavailable",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    }
+  ],
+  "chapters": [
+    {
+      "id": "home",
+      "label": "Chez moi",
+      "stop_ids": [
+        "home"
+      ],
+      "segment_ids": [
+        "s-home-hotel"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "departure_hub",
+      "label": "Transport",
+      "stop_ids": [],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "main_transport",
+      "label": "Transport",
+      "stop_ids": [],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "arrival_hotel",
+      "label": "Arrivée et hôtel",
+      "stop_ids": [
+        "hotel"
+      ],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "bib_pickup",
+      "label": "Dossard",
+      "stop_ids": [],
+      "segment_ids": [],
+      "status": "unavailable"
+    },
+    {
+      "id": "race",
+      "label": "Départ et course",
+      "stop_ids": [
+        "start"
+      ],
+      "segment_ids": [
+        "s-hotel-start"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "return_trip",
+      "label": "Retour",
+      "stop_ids": [
+        "home"
+      ],
+      "segment_ids": [
+        "s-main-back"
+      ],
+      "status": "partial"
+    }
+  ],
+  "budget": {
+    "currency": "EUR",
+    "cap": 2000.0,
+    "lines": [
+      {
+        "id": "c-reg",
+        "category": "registration",
+        "label": "Inscription",
+        "money": {
+          "amount": 50.0,
+          "currency": "EUR",
+          "collected_at": "2028-01-01T00:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "E1 deterministic",
+            "collected_at": "2028-01-01T00:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-hotel",
+        "category": "accommodation",
+        "label": "Hôtel 2 nuits",
+        "money": null,
+        "note": "Prix inconnu"
+      },
+      {
+        "id": "c-transport",
+        "category": "transport",
+        "label": "Transport aller-retour",
+        "money": null,
+        "note": "Non couvert"
+      },
+      {
+        "id": "c-local",
+        "category": "local",
+        "label": "Transports locaux",
+        "money": null,
+        "note": "Non estimé"
+      }
+    ],
+    "known_total": 50.0,
+    "missing_line_ids": [
+      "c-hotel",
+      "c-transport",
+      "c-local"
+    ],
+    "complete": false,
+    "over_cap": null
+  },
+  "warnings": [
+    "Données de démonstration : course, hôtel et horaires fictifs.",
+    "Hôtel non choisi.",
+    "Retrait des dossards inconnu.",
+    "Jours et horaires de retrait du dossard non trouvés : à confirmer.",
+    "Budget partiel : postes non chiffrés exclus du total."
+  ],
+  "limitations": [
+    {
+      "code": "transport_not_covered",
+      "message": "Transport « bus » non couvert : organiser le trajet soi-même.",
+      "step": "transport",
+      "manual_url": null
+    },
+    {
+      "code": "transport_not_covered",
+      "message": "Transport retour « inconnu » non couvert : organiser soi-même.",
+      "step": "transport",
+      "manual_url": null
+    }
+  ],
+  "sources": [
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "Origine publique",
+      "collected_at": "2028-01-01T00:00:00Z"
+    },
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "E1 deterministic",
+      "collected_at": "2028-01-01T00:00:00Z"
+    }
+  ]
+}

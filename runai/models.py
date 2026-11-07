@@ -2,7 +2,16 @@ from datetime import UTC, date, datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    field_serializer,
+    field_validator,
+    model_serializer,
+)
+
+from runai.redaction import redact_secrets
 
 
 def utcnow() -> datetime:
@@ -87,6 +96,19 @@ class StepResult(BaseModel):
     data: dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
 
+    @model_serializer(mode="wrap")
+    def serialize_result(self, handler):
+        return redact_secrets(handler(self))
+
+    @field_validator("error")
+    @classmethod
+    def redact_error(cls, value: str | None) -> str | None:
+        return redact_secrets(value)
+
+    @field_serializer("error")
+    def serialize_error(self, value: str | None) -> str | None:
+        return redact_secrets(value)
+
 
 class TraceEvent(BaseModel):
     at: datetime = Field(default_factory=utcnow)
@@ -94,3 +116,7 @@ class TraceEvent(BaseModel):
     type: str
     message: str | None = None
     data: dict[str, Any] = Field(default_factory=dict)
+
+    @model_serializer(mode="wrap")
+    def serialize_event(self, handler):
+        return redact_secrets(handler(self))

@@ -1,0 +1,491 @@
+{
+  "schema_version": "journey.v1",
+  "mission_id": "fx-flight",
+  "revision": 2,
+  "framing_revision": 6,
+  "mode": "demo",
+  "origin_public": "Paris 11e",
+  "date_range": [
+    "2027-03-20",
+    "2027-03-22"
+  ],
+  "timezone": "Europe/Lisbon",
+  "currency": "EUR",
+  "stops": [
+    {
+      "id": "home",
+      "kind": "home",
+      "label": "Paris 11e (quartier)",
+      "coords": {
+        "lat": 48.859,
+        "lon": 2.38
+      },
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": null,
+      "confidence": "estimated"
+    },
+    {
+      "id": "ap-out",
+      "kind": "airport",
+      "label": "Aéroport de départ (fixture)",
+      "coords": {
+        "lat": 48.7262,
+        "lon": 2.3652
+      },
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "ap-in",
+      "kind": "airport",
+      "label": "Aéroport d'arrivée (fixture)",
+      "coords": {
+        "lat": 38.7742,
+        "lon": -9.1342
+      },
+      "local_time": null,
+      "timezone": "Europe/Lisbon",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "hotel",
+      "kind": "hotel",
+      "label": "Hôtel suggéré (fixture, non réservé)",
+      "coords": {
+        "lat": 38.7223,
+        "lon": -9.1393
+      },
+      "local_time": null,
+      "timezone": "Europe/Lisbon",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "bib",
+      "kind": "bib_pickup",
+      "label": "Retrait des dossards (fixture)",
+      "coords": {
+        "lat": 38.768,
+        "lon": -9.094
+      },
+      "local_time": "2027-03-20T16:00:00Z",
+      "timezone": "Europe/Lisbon",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "start",
+      "kind": "race_start",
+      "label": "Départ (fixture)",
+      "coords": {
+        "lat": 38.697,
+        "lon": -9.206
+      },
+      "local_time": "2027-03-21T08:30:00Z",
+      "timezone": "Europe/Lisbon",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "finish",
+      "kind": "race_finish",
+      "label": "Arrivée (fixture)",
+      "coords": {
+        "lat": 38.7075,
+        "lon": -9.1365
+      },
+      "local_time": null,
+      "timezone": "Europe/Lisbon",
+      "provenance": null,
+      "confidence": "illustrative"
+    }
+  ],
+  "segments": [
+    {
+      "id": "s-home-ap",
+      "from_stop_id": "home",
+      "to_stop_id": "ap-out",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          2.38,
+          48.859
+        ],
+        [
+          2.3652,
+          48.7262
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 45,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-flight-out",
+      "from_stop_id": "ap-out",
+      "to_stop_id": "ap-in",
+      "mode": "flight",
+      "departure": "2027-03-20T08:10:00+01:00",
+      "arrival": "2027-03-20T09:55:00Z",
+      "timezone": "Europe/Paris",
+      "geometry": [
+        [
+          2.3652,
+          48.7262
+        ],
+        [
+          -9.1342,
+          38.7742
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 165,
+      "cost": {
+        "amount": 142.0,
+        "currency": "EUR",
+        "collected_at": "2026-11-07T12:00:00Z",
+        "confidence": "estimated",
+        "provenance": {
+          "kind": "fixture",
+          "url": null,
+          "label": "Vol fictif",
+          "collected_at": "2026-11-07T12:00:00Z"
+        }
+      },
+      "automation": "automated",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": {
+        "code": "flight_arc_illustrative",
+        "message": "Arc de vol illustratif, pas une trajectoire réelle.",
+        "step": null,
+        "manual_url": null
+      }
+    },
+    {
+      "id": "s-ap-hotel",
+      "from_stop_id": "ap-in",
+      "to_stop_id": "hotel",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          -9.1342,
+          38.7742
+        ],
+        [
+          -9.1393,
+          38.7223
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 25,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-hotel-bib",
+      "from_stop_id": "hotel",
+      "to_stop_id": "bib",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          -9.1393,
+          38.7223
+        ],
+        [
+          -9.094,
+          38.768
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 30,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-hotel-start",
+      "from_stop_id": "hotel",
+      "to_stop_id": "start",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          -9.1393,
+          38.7223
+        ],
+        [
+          -9.206,
+          38.697
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 30,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-race",
+      "from_stop_id": "start",
+      "to_stop_id": "finish",
+      "mode": "race",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          -9.206,
+          38.697
+        ],
+        [
+          -9.17,
+          38.7
+        ],
+        [
+          -9.1365,
+          38.7075
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": {
+        "code": "race_track_example",
+        "message": "Tracé d'exemple, pas le parcours officiel.",
+        "step": null,
+        "manual_url": null
+      }
+    },
+    {
+      "id": "s-flight-back",
+      "from_stop_id": "ap-in",
+      "to_stop_id": "ap-out",
+      "mode": "flight",
+      "departure": "2027-03-22T11:00:00Z",
+      "arrival": "2027-03-22T14:35:00+01:00",
+      "timezone": "Europe/Lisbon",
+      "geometry": [
+        [
+          -9.1342,
+          38.7742
+        ],
+        [
+          2.3652,
+          48.7262
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 155,
+      "cost": {
+        "amount": 128.0,
+        "currency": "EUR",
+        "collected_at": "2026-11-07T12:00:00Z",
+        "confidence": "estimated",
+        "provenance": {
+          "kind": "fixture",
+          "url": null,
+          "label": "Vol fictif",
+          "collected_at": "2026-11-07T12:00:00Z"
+        }
+      },
+      "automation": "automated",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    }
+  ],
+  "chapters": [
+    {
+      "id": "home",
+      "label": "Chez moi",
+      "stop_ids": [
+        "home"
+      ],
+      "segment_ids": [
+        "s-home-ap"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "departure_hub",
+      "label": "Aéroport",
+      "stop_ids": [
+        "ap-out"
+      ],
+      "segment_ids": [],
+      "status": "available"
+    },
+    {
+      "id": "main_transport",
+      "label": "Vol",
+      "stop_ids": [
+        "ap-in"
+      ],
+      "segment_ids": [
+        "s-flight-out"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "arrival_hotel",
+      "label": "Arrivée et hôtel",
+      "stop_ids": [
+        "hotel"
+      ],
+      "segment_ids": [
+        "s-ap-hotel"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "bib_pickup",
+      "label": "Dossard",
+      "stop_ids": [
+        "bib"
+      ],
+      "segment_ids": [
+        "s-hotel-bib"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "race",
+      "label": "Départ et course",
+      "stop_ids": [
+        "start",
+        "finish"
+      ],
+      "segment_ids": [
+        "s-hotel-start",
+        "s-race"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "return_trip",
+      "label": "Retour",
+      "stop_ids": [
+        "ap-out"
+      ],
+      "segment_ids": [
+        "s-flight-back"
+      ],
+      "status": "available"
+    }
+  ],
+  "budget": {
+    "currency": "EUR",
+    "cap": 700.0,
+    "lines": [
+      {
+        "id": "c-reg",
+        "category": "registration",
+        "label": "Inscription",
+        "money": {
+          "amount": 60.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Tarif fictif",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-hotel",
+        "category": "accommodation",
+        "label": "Hôtel 2 nuits",
+        "money": {
+          "amount": 210.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Tarif fictif",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-flight",
+        "category": "transport",
+        "label": "Vols aller-retour",
+        "money": {
+          "amount": 270.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Somme des deux vols fictifs",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-local",
+        "category": "local",
+        "label": "Transports locaux",
+        "money": null,
+        "note": "Non estimé"
+      }
+    ],
+    "known_total": 540.0,
+    "missing_line_ids": [
+      "c-local"
+    ],
+    "complete": false,
+    "over_cap": null
+  },
+  "warnings": [
+    "Données de démonstration : course, vols et hôtel fictifs."
+  ],
+  "limitations": [],
+  "sources": [
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "Fixture contractuelle G1",
+      "collected_at": "2026-11-07T12:00:00Z"
+    }
+  ]
+}

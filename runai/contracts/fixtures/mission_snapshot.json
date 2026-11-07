@@ -1,0 +1,138 @@
+{
+  "schema_version": "mission.v2",
+  "mission_id": "fx-mission",
+  "framing_id": "fx-framing-ready",
+  "framing_revision": 5,
+  "mode": "demo",
+  "status": "running",
+  "sequence": 7,
+  "race": {
+    "name": "Course fictive B de Tokyo",
+    "city": "Tokyo",
+    "country": "JP",
+    "race_date": "2027-04-18",
+    "start_time": null,
+    "distance_km": 21.0975,
+    "registration_url": null,
+    "bib_pickup": null,
+    "start_location": null,
+    "sources": [
+      {
+        "url": "https://example.org/tokyo-b",
+        "title": "Fixture"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "kind": "registration",
+      "status": "waiting_for_user",
+      "summary": "Question en attente",
+      "stop_point": null,
+      "url": null,
+      "price_eur": null,
+      "live_view_url": null,
+      "h_session_id": null,
+      "data": {
+        "provenance": "fixture"
+      },
+      "error": null
+    },
+    {
+      "kind": "accommodation",
+      "status": "stopped_before_commitment",
+      "summary": "Récapitulatif atteint, non réservé",
+      "stop_point": "payment",
+      "url": null,
+      "price_eur": 640.0,
+      "live_view_url": null,
+      "h_session_id": null,
+      "data": {
+        "provenance": "fixture"
+      },
+      "error": null
+    },
+    {
+      "kind": "transport",
+      "status": "completed",
+      "summary": "Non automatisé : lien officiel manuel",
+      "stop_point": null,
+      "url": null,
+      "price_eur": null,
+      "live_view_url": null,
+      "h_session_id": null,
+      "data": {
+        "automation": "not_covered",
+        "manual_url": "https://example.org/airline-search"
+      },
+      "error": null
+    }
+  ],
+  "questions": [
+    {
+      "question_id": "hq-1",
+      "mission_id": "fx-mission",
+      "step": "registration",
+      "session_id": "fx-h-session",
+      "revision": 5,
+      "reason": "Option payante",
+      "text": "Ajouter le t-shirt finisher (15 €) ?",
+      "choices": [
+        "Oui",
+        "Non"
+      ],
+      "status": "open",
+      "answer": null,
+      "asked_at": "2026-11-07T12:00:00Z",
+      "expires_at": null
+    }
+  ],
+  "journey_revision": 1,
+  "budget": {
+    "currency": "EUR",
+    "cap": 2000.0,
+    "lines": [
+      {
+        "id": "c-reg",
+        "category": "registration",
+        "label": "Inscription",
+        "money": {
+          "amount": 250.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Tarif fictif",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-hotel",
+        "category": "accommodation",
+        "label": "Hôtel 4 nuits",
+        "money": null,
+        "note": "Prix inconnu"
+      },
+      {
+        "id": "c-flight",
+        "category": "transport",
+        "label": "Vols",
+        "money": null,
+        "note": "Non couvert"
+      }
+    ],
+    "known_total": 250.0,
+    "missing_line_ids": [
+      "c-hotel",
+      "c-flight"
+    ],
+    "complete": false,
+    "over_cap": null
+  },
+  "limitations": [],
+  "error": null
+}

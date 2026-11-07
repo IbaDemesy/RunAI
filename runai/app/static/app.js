@@ -1,417 +1,385 @@
-const STATUS_LABELS = {
-  pending: "En attente",
-  running: "En cours",
-  paused: "En pause",
-  waiting_for_user: "En attente de votre réponse",
-  stopped_before_commitment: "Arrêté avant engagement",
-  completed: "Terminé",
-  failed: "Échec",
-};
-const MISSION_LABELS = {
-  searching: "recherche de la course",
-  running: "agents en cours",
-  awaiting_human: "à vous de jouer",
-  completed: "terminée",
-  failed: "échec",
-};
-const STOP_LABELS = {
-  payment: "Paiement",
-  account_creation: "Création de compte",
-  health_declaration: "Déclaration de santé",
-  consent: "Règlement / consentement",
-  submission: "Soumission définitive",
-};
-const TERMINAL = new Set(["awaiting_human", "completed", "failed"]);
-
-const $ = (selector, root = document) => root.querySelector(selector);
-let mission = null;
-let source = null;
-let simulated = false;
-
-function element(tag, text, className) {
-  const node = document.createElement(tag);
-  if (text !== undefined && text !== null) node.textContent = text;
-  if (className) node.className = className;
-  return node;
-}
-
-async function api(path, options = {}) {
-  const response = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!response.ok) {
-    const detail = await response.json().catch(() => ({}));
-    throw new Error(detail.detail || response.statusText);
+/* Shell V2 : toute mutation passe par cette API remplaçable. */
+(function () {
+  "use strict";
+  const core = window.RunAIShellCore;
+  const screen = document.getElementById("screen");
+  const feedback = document.getElementById("feedback");
+  const storage = sessionStorage;
+  const mock = new URLSearchParams(location.search).get("mock") === "1" || window.RUNAI_MOCK;
+  const api = mock ? window.RunAIMock.createAPI({ storage }) : {
+    async request(path, body) {
+      const response = await fetch(path, body === undefined ? {} : {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!response.ok) { const error = new Error("La demande a échoué (" + response.status + "). Réessayez."); error.status = response.status; throw error; }
+      return response.json();
+    },
+  };
+  let framing, mission, events, view, plan, busy = false, page = "progress";
+  const drafts = new Map();
+  let journeyScripts, pendingFocus, voiceFraming, voiceMission, voiceAborted = false;
+  function loadJourneyScripts() {
+    if (!journeyScripts) journeyScripts = (window.RUNAI_JOURNEY_SCRIPTS || []).reduce((previous, src) => previous.then(() => new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = src; script.onload = resolve; script.onerror = resolve;
+      document.head.append(script);
+    })), Promise.resolve());
+    return journeyScripts;
   }
-  return response.json();
-}
-
-function renderRace(race) {
-  $("#race-name").textContent = race ? race.name : "Recherche de la course…";
-  const facts = $("#race-facts");
-  facts.replaceChildren();
-  $("#race-sources").replaceChildren();
-  if (!race) return;
-  const rows = [
-    ["Ville", `${race.city} (${race.country})`],
-    ["Date", race.race_date && `${race.race_date}${race.start_time ? " · " + race.start_time : ""}`],
-    ["Distance", race.distance_km && `${race.distance_km} km`],
-    ["Départ", race.start_location],
-    ["Retrait du dossard", race.bib_pickup],
-  ];
-  for (const [label, value] of rows) {
-    if (!value) continue;
-    const fact = element("div");
-    fact.append(element("dt", label), element("dd", value));
-    facts.append(fact);
+  const labels = {
+    registration: "Inscription", accommodation: "Hôtel", transport: "Transport",
+    pending: "En attente", searching: "Recherche en cours", running: "En cours", paused: "En pause",
+    waiting_for_user: "À vous de répondre", awaiting_human: "À vous de répondre",
+    stopped_before_commitment: "Préparé, avant engagement", completed: "Préparé",
+    failed: "Échec", cancelled: "Annulé", open: "Ouverte", answered: "Réponse acceptée",
+    expired: "Expirée", refused: "Refusée", payment: "Paiement", account: "Création de compte",
+    consent: "Consentement", verified: "Vérifié", estimated: "Estimé", illustrative: "Illustratif",
+    unknown: "Inconnu", fixture: "Démonstration", live: "Réel", replay: "Replay",
+    flight: "Avion", train: "Train", car: "Voiture", bus: "Autocar", local: "Transport local",
+    city: "Ville", race: "Course", edition: "Édition", race_date: "Date de course",
+    date_window: "Période", distance_km: "Distance (km)", origin: "Départ", budget: "Budget",
+    nights: "Nuits", transport_mode: "Mode de transport", preferences: "Préférences",
+  };
+  const label = (value) => labels[value] || value || "inconnu";
+  function el(tag, text, className) {
+    const node = document.createElement(tag);
+    if (text != null) node.textContent = text;
+    if (className) node.className = className;
+    return node;
   }
-  for (const item of race.sources) {
-    const li = element("li");
-    const link = element("a", item.title || item.url);
-    link.href = item.url;
-    link.target = "_blank";
-    link.rel = "noopener";
-    li.append("Source : ", link);
-    $("#race-sources").append(li);
+  function button(text, action, primary = false) {
+    const node = el("button", text, primary ? "primary" : "secondary");
+    node.type = "button"; node.disabled = busy;
+    node.onclick = () => { pendingFocus = node.dataset.focusKey; action(); }; return node;
   }
-}
-
-function stepCard(step) {
-  let card = document.getElementById(`step-${step.kind}`);
-  if (!card) {
-    card = $("#step-template").content.firstElementChild.cloneNode(true);
-    card.id = `step-${step.kind}`;
-    $(".pause", card).addEventListener("click", () => control(step.kind, "pause"));
-    $(".resume", card).addEventListener("click", () => control(step.kind, "resume"));
-    $(".message", card).addEventListener("submit", (event) => {
-      event.preventDefault();
-      const input = event.target.elements.text;
-      if (!input.value.trim()) return;
-      control(step.kind, "message", { text: input.value.trim() }).then(() => (input.value = ""));
-    });
-    $("#steps").append(card);
-  }
-  return card;
-}
-
-function renderQuestions(step, questions) {
-  const container = $(".questions", document.getElementById(`step-${step.kind}`));
-  const answers = new Map(
-    [...container.querySelectorAll(".answer-form")].map((form) => [
-      form.dataset.questionId,
-      $("input", form).value,
-    ]),
-  );
-  container.replaceChildren();
-  const items = questions.filter((question) => question.kind === step.kind);
-  container.classList.toggle("hidden", items.length === 0);
-  for (const question of items) {
-    const item = element("section", null, question.answer ? "question-history" : "agent-question");
-    item.append(element("p", question.question, "question-text"));
-    if (question.answer) {
-      item.append(element("p", `Réponse : ${question.answer}`, "question-answer"));
-      container.append(item);
-      continue;
-    }
-    const options = element("div", null, "question-options");
-    for (const option of question.options || []) {
-      const button = element("button", option);
-      button.type = "button";
-      button.addEventListener("click", () => submitAnswer(question.id, option, item));
-      options.append(button);
-    }
-    item.append(options);
-    const form = element("form", null, "row answer-form");
-    form.dataset.questionId = question.id;
-    const input = element("input");
-    input.name = "answer";
-    input.value = answers.get(question.id) || "";
-    input.maxLength = 500;
-    input.placeholder = "Votre réponse";
-    input.autocomplete = "off";
-    const send = element("button", "Envoyer");
-    send.type = "submit";
-    form.append(input, send);
-    const feedback = element("p", null, "question-feedback muted");
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      submitAnswer(question.id, input.value.trim(), item);
-    });
-    item.append(form, feedback);
-    container.append(item);
-  }
-}
-
-function renderStep(step) {
-  const card = stepCard(step);
-  card.dataset.status = step.status;
-  $(".step-label", card).textContent = step.label;
-  const status = $(".status", card);
-  status.textContent = STATUS_LABELS[step.status] || step.status;
-  status.className = `status status-${step.status}`;
-  $(".last-action", card).textContent = step.data.last_action || (step.status === "pending" ? "Agent pas encore lancé" : "");
-  $(".current-url", card).textContent = step.data.current_url || "";
-  const liveUrl = step.live_view_url || step.data.live_view_path;
-  const frame = $(".live-frame", card);
-  const link = $(".live-link", card);
-  $(".live", card).classList.toggle("hidden", !liveUrl);
-  if (liveUrl && link.getAttribute("href") !== liveUrl) {
-    link.href = liveUrl;
-    frame.src = liveUrl;
-  }
-  const summary = [step.summary, step.error && `Erreur : ${step.error}`].filter(Boolean).join(" ");
-  $(".summary", card).textContent = summary;
-  renderQuestions(step, mission.questions || []);
-  const started = Boolean(step.h_session_id);
-  const active = started && (step.status === "running" || step.status === "paused");
-  $(".pause", card).disabled = !started || step.status !== "running";
-  $(".resume", card).disabled = !started || step.status !== "paused";
-  $(".message", card).classList.toggle("hidden", !active);
-}
-
-function renderPortal(steps) {
-  const stopped = steps.filter((step) => step.status === "stopped_before_commitment");
-  const container = $("#portal-items");
-  container.replaceChildren();
-  if (!stopped.length) {
-    container.append(element("p", "Les agents travaillent encore…", "muted"));
-    $("#portal-total").textContent = "";
-    return;
-  }
-  for (const step of stopped) {
-    const item = element("div", null, "portal-item");
-    const head = element("div", null, "portal-head");
-    head.append(element("strong", step.label), element("span", `Arrêt : ${STOP_LABELS[step.stop_point] || "avant engagement"}`, "stop"));
-    if (step.price_eur !== null) head.append(element("span", `${step.price_eur.toFixed(2)} €`, "price"));
-    item.append(head, element("p", step.summary || ""), element("p", `À faire : ${step.human_action}`, "todo"));
-    if (step.url) {
-      const link = element("a", "Ouvrir la page où l'agent s'est arrêté ↗");
-      link.href = step.url;
-      link.target = "_blank";
-      link.rel = "noopener";
-      item.append(link);
-    }
-    container.append(item);
-  }
-  const total = stopped.reduce((sum, step) => sum + (step.price_eur || 0), 0);
-  const waiting = steps.filter((step) => ["pending", "running", "paused", "waiting_for_user"].includes(step.status)).length;
-  $("#portal-total").textContent =
-    `Total estimé à payer vous-même : ${total.toFixed(2)} €` + (waiting ? ` · ${waiting} agent(s) encore en cours` : "");
-}
-
-function appendEvent(event) {
-  const item = element("li");
-  const time = new Date(event.at).toLocaleTimeString("fr-FR");
-  item.append(element("time", time), element("span", event.source, `source source-${event.source.split(":")[0]}`), element("span", event.message || event.type));
-  $("#events").prepend(item);
-}
-
-const COURSE = [
-  ["search", "Recherche"],
-  ["registration", "Inscription"],
-  ["accommodation", "Hébergement"],
-  ["transport", "Transport"],
-  ["finish", "À vous de signer"],
-];
-const STEP_STATE = {
-  pending: "todo",
-  running: "active",
-  paused: "active",
-  waiting_for_user: "waiting",
-  stopped_before_commitment: "done",
-  completed: "done",
-  failed: "failed",
-};
-const STEP_NOTE = {
-  running: "en cours",
-  paused: "en pause",
-  waiting_for_user: "question pour vous",
-  stopped_before_commitment: "prêt à signer",
-  completed: "terminé",
-  failed: "échec",
-};
-
-function renderCourse(data) {
-  const course = $("#course");
-  course.replaceChildren();
-  const byKind = Object.fromEntries(data.steps.map((step) => [step.kind, step]));
-  const settled = data.steps.length > 0 && data.steps.every((step) => STEP_STATE[step.status] === "done" || step.status === "failed");
-  COURSE.forEach(([kind, label], index) => {
-    let state = "todo";
-    let note = "";
-    if (kind === "search") {
-      state = data.race ? "done" : data.status === "failed" ? "failed" : "active";
-      note = data.race ? "course trouvée" : "Linkup cherche";
-    } else if (kind === "finish") {
-      state = settled ? "active" : "todo";
-      note = settled ? "à vous" : "";
-    } else if (byKind[kind]) {
-      state = STEP_STATE[byKind[kind].status] || "todo";
-      note = STEP_NOTE[byKind[kind].status] || "";
-    }
-    const item = element("li");
-    item.dataset.state = state;
-    item.append(element("span", state === "done" ? "✓" : String(index + 1), "cp"), element("span", label), element("span", note, "cp-note"));
-    course.append(item);
-  });
-}
-
-function renderDistance(race) {
-  const node = $("#race-distance");
-  node.replaceChildren();
-  if (!race || !race.distance_km) {
-    node.textContent = "…";
-    return;
-  }
-  node.append(String(race.distance_km).replace(".", ","), element("small", "km"));
-}
-
-function render(data, withEvents = false) {
-  mission = data;
-  $("#mission").classList.remove("hidden");
-  $("#mission-id").textContent = data.id;
-  $("#mission-status").textContent = MISSION_LABELS[data.status] || data.status;
-  renderRace(data.race);
-  data.steps.forEach(renderStep);
-  renderPortal(data.steps);
-  renderCourse(data);
-  renderDistance(data.race);
-  const anyRunning = data.steps.some((step) => step.status === "running");
-  const anyPaused = data.steps.some((step) => step.status === "paused");
-  $("#pause-all").disabled = !anyRunning;
-  $("#resume-all").disabled = !anyPaused;
-  if (withEvents) {
-    $("#events").replaceChildren();
-    data.events.forEach(appendEvent);
-  }
-}
-
-function listen(id) {
-  if (source) source.close();
-  source = new EventSource(`/api/missions/${id}/events`);
-  source.addEventListener("snapshot", (event) => render(JSON.parse(event.data), true));
-  source.addEventListener("mission", (event) => {
-    const data = JSON.parse(event.data);
-    render(data);
-    if (TERMINAL.has(data.status)) source.close();
-  });
-  source.addEventListener("trace", (event) => appendEvent(JSON.parse(event.data)));
-  source.addEventListener("question", () => {
-    if (mission) api(`/api/missions/${mission.id}`).then((data) => render(data));
-  });
-  source.addEventListener("end", () => source.close());
-}
-
-async function control(kind, action, body) {
-  try {
-    await api(`/api/missions/${mission.id}/steps/${kind}/${action}`, {
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  } catch (error) {
-    alert(error.message);
-  }
-}
-
-$("#pause-all").addEventListener("click", () => api(`/api/missions/${mission.id}/pause`, { method: "POST" }));
-$("#resume-all").addEventListener("click", () => api(`/api/missions/${mission.id}/resume`, { method: "POST" }));
-
-$("#mission-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const query = $("#query").value.trim();
-  if (!query) return;
-  $("#steps").replaceChildren();
-  const data = await api("/api/missions", { method: "POST", body: JSON.stringify({ query }) });
-  history.replaceState(null, "", `?mission=${data.id}`);
-  render(data, true);
-  listen(data.id);
-});
-
-let recorder = null;
-async function transcribe(blob, input, feedback, note) {
-  feedback.textContent = "Transcription…";
-  const data = await api("/api/transcribe", {
-    method: "POST",
-    headers: { "Content-Type": blob.type || "application/octet-stream" },
-    body: blob,
-  });
-  input.value = data.text;
-  feedback.textContent = note || "Transcription reçue.";
-}
-
-async function captureToInput(input, button, feedback) {
-  if (recorder && recorder.state === "recording") {
-    recorder.stop();
-    return;
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const chunks = [];
-    recorder = new MediaRecorder(stream);
-    recorder.target = input;
-    recorder.button = button;
-    recorder.ondataavailable = (event) => chunks.push(event.data);
-    recorder.onstop = () => {
-      const stoppedRecorder = recorder;
-      stoppedRecorder.transcribing = true;
-      stream.getTracks().forEach((track) => track.stop());
-      button.textContent = button.id === "mic" ? "Dire la course" : "Micro";
-      transcribe(new Blob(chunks, { type: recorder.mimeType }), input, feedback)
-        .catch((error) => (feedback.textContent = `Transcription impossible : ${error.message}`))
-        .finally(() => {
-          if (recorder === stoppedRecorder) recorder = null;
-        });
-    };
-    recorder.start();
-    button.textContent = "Arrêter";
-    feedback.textContent = "Enregistrement… cliquez sur « Arrêter » quand vous avez fini.";
-  } catch (error) {
-    if (!simulated) {
-      feedback.textContent = `Micro indisponible : ${error.message}`;
-      return;
-    }
-    transcribe(
-      new Blob(["demo"], { type: "text/plain" }),
-      input,
-      feedback,
-      "Micro indisponible : transcription simulée.",
-    ).catch((transcribeError) => (feedback.textContent = `Transcription impossible : ${transcribeError.message}`));
-  }
-}
-
-async function submitAnswer(questionId, answer, item) {
-  const feedback = $(".question-feedback", item);
-  if (!answer) {
-    if (feedback) feedback.textContent = "Saisissez ou choisissez une réponse.";
-    return;
-  }
-  try {
-    const data = await api(
-      `/api/missions/${mission.id}/questions/${questionId}/answer`,
-      { method: "POST", body: JSON.stringify({ answer }) },
-    );
-    render(data);
-  } catch (error) {
-    if (feedback) feedback.textContent = error.message;
-  }
-}
-
-$("#mic").addEventListener("click", () => captureToInput($("#query"), $("#mic"), $("#mic-status")));
-
-(async () => {
-  const health = await api("/api/health");
-  simulated = health.simulated;
-  $("#mode").textContent = simulated ? "Mode démo : agents simulés" : "Mode réel";
-  $("#mode").classList.toggle("real", !simulated);
-  $("#mode").classList.remove("hidden");
-  const existing = new URLSearchParams(location.search).get("mission");
-  if (existing) {
+  function link(parent, url, text) {
+    if (!url) return;
     try {
-      render(await api(`/api/missions/${existing}`), true);
-      listen(existing);
-    } catch {
-      history.replaceState(null, "", "/");
+      const parsed = new URL(url);
+      if (!["https:", "http:"].includes(parsed.protocol)) return;
+      const node = el("a", text || url); node.href = parsed.href;
+      node.setAttribute("aria-label", (text || url) + " (nouvel onglet)");
+      node.target = "_blank"; node.rel = "noopener noreferrer"; parent.append(node);
+    } catch (_) { /* Une source invalide ne devient pas un lien. */ }
+  }
+  function announce(text) { feedback.textContent = text; }
+  function mode(value) {
+    document.getElementById("mode").textContent = ({ live: "Réel · live", demo: "Démonstration · demo", replay: "Relecture · replay" })[value] || "Mode non vérifié";
+  }
+  function key(id, revision) { return core.idempotencyKey(storage, id, revision, () => crypto.randomUUID()); }
+  function persist() {
+    if (framing) storage.setItem("runai:framing", framing.id);
+    if (mission) storage.setItem("runai:mission", mission.mission_id);
+  }
+  function form(parent, title, onSubmit, draftKey, value = "") {
+    const node = el("form", null, "answer-form");
+    const fieldLabel = el("label", title);
+    const input = el("input"); input.required = true; input.maxLength = 1000;
+    input.value = drafts.get(draftKey) || value;
+    input.oninput = () => drafts.set(draftKey, input.value);
+    fieldLabel.append(input);
+    const submit = button("Envoyer · " + title, () => {}, true); submit.type = "submit";
+    node.append(fieldLabel, submit);
+    node.onsubmit = (event) => { event.preventDefault(); if (!busy && input.value.trim()) onSubmit(input.value.trim()); };
+    parent.append(node);
+  }
+  function limitations(parent, values = []) {
+    for (const item of values) {
+      const row = el("p", item.message, "hint"); link(row, item.manual_url, " Ouvrir le site officiel"); parent.append(row);
     }
   }
+  function provenance(parent, money) {
+    if (!money) return;
+    parent.append(el("p", [label(money.confidence), money.provenance?.label, money.collected_at].filter(Boolean).join(" · "), "hint"));
+    link(parent, money.provenance?.url, "Source");
+  }
+  function destroyView() { if (view) { view.destroy(); view = null; } }
+  function render() {
+    const active = document.activeElement;
+    const focusKey = pendingFocus || active?.dataset.focusKey;
+    const hadFocus = pendingFocus != null || screen.contains(active);
+    pendingFocus = null;
+    const selection = active?.selectionStart;
+    destroyView(); screen.replaceChildren();
+    if (mission) { mode(mission.mode); renderMission(); }
+    else if (framing) { mode(framing.mode); renderFraming(); }
+    else renderStart();
+    if (framing?.status !== "cancelled" && mission?.status !== "cancelled") voiceControls();
+    screen.querySelectorAll("input, textarea, button").forEach((node, index) => {
+      node.dataset.focusKey = node.tagName === "BUTTON" ? "button:" + node.textContent : "field:" + index;
+    });
+    if (hadFocus) {
+      const replacement = Array.from(screen.querySelectorAll("[data-focus-key]")).find((node) => node.dataset.focusKey === focusKey && !node.disabled);
+      if (replacement) {
+        replacement.focus();
+        if (selection != null && replacement.setSelectionRange) replacement.setSelectionRange(selection, selection);
+      } else {
+        const heading = screen.querySelector("h1");
+        if (heading) { heading.tabIndex = -1; heading.focus(); }
+      }
+    }
+  }
+  async function mutate(action, reload) {
+    if (busy) return;
+    let accepted = false;
+    busy = true; screen.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+    announce("Envoi en cours…");
+    try { await action(); accepted = true; persist(); announce("Demande acceptée."); }
+    catch (error) {
+      if (error.status === 409 && reload) {
+        try { await reload(); announce("Cette version a changé ou la réponse a expiré. Données actualisées : vérifiez avant de répondre à nouveau."); }
+        catch (_) { announce("Actualisation impossible. Rechargez la page pour reprendre sans relancer."); }
+      } else announce(error.message || "Connexion indisponible. Réessayez.");
+    } finally { busy = false; render(); }
+    return accepted;
+  }
+  async function reloadFraming() {
+    framing = await api.request("/api/framings/" + encodeURIComponent(framing.id));
+    if (framing.mission_id) await loadMission(framing.mission_id);
+  }
+  async function submitReply(text, options = {}) {
+    if (!framing || mission) return;
+    if (options.revision != null && options.revision !== framing.revision) {
+      await reloadFraming(); render();
+      throw new Error("Révision vocale périmée. Vérifiez le cadrage actualisé avant de répondre.");
+    }
+    return mutate(async () => {
+      framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/replies", core.replyPayload(framing, text, options));
+      drafts.clear();
+    }, reloadFraming);
+  }
+  function renderStart() {
+    screen.className = "hero";
+    screen.append(el("h1", "Préparer ma course"), el("p", "Inscription, hôtel, transport : un séjour préparé, sans paiement ni engagement automatique.", "hero-sub"));
+    const node = el("form", null, "ask");
+    const fieldLabel = el("label", "Quelle course et quel séjour souhaitez-vous préparer ?");
+    const input = el("textarea"); input.required = true; input.maxLength = 1000; input.name = "text"; fieldLabel.append(input);
+    const submit = button("Préparer mon séjour", () => {}, true); submit.type = "submit";
+    node.append(fieldLabel, submit);
+    node.onsubmit = (event) => { event.preventDefault(); mutate(async () => {
+      framing = await api.request("/api/framings", { text: input.value.trim(), channel: "text" });
+    }); };
+    screen.append(node);
+  }
+  const voice = window.RunAIVoiceInput?.createVoiceInput({
+    getRevision: () => framing?.revision ?? 0,
+    onFramingReply: async ({ text, revision }) => {
+      if (voiceAborted || voiceFraming !== framing?.id || voiceMission !== mission?.mission_id) throw new Error("Cette demande vocale n’est plus active.");
+      let accepted;
+      if (!framing && !mission && revision === 0) {
+        accepted = await mutate(async () => { framing = await api.request("/api/framings", { text, channel: "voice" }); });
+      } else accepted = await window.RunAIShell.submitReply(text, {
+        channel: "voice", revision,
+        question_id: framing?.open_questions.find(question => question.allow_free_text)?.id,
+      });
+      if (!accepted) throw new Error("Réponse vocale non appliquée. Vérifiez la version actuelle du cadrage.");
+    },
+    onAgentsCommand: async action => {
+      if (voiceAborted || voiceMission !== mission?.mission_id) throw new Error("Cette commande vocale n’est plus active.");
+      const accepted = await mutate(async () => {
+        if (!mission) throw new Error("Aucun agent lancé.");
+        mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/" + action, {});
+      }, () => loadMission(mission.mission_id));
+      if (!accepted) throw new Error("Commande des agents non appliquée. Vérifiez leur état.");
+    },
+    view: Object.fromEntries(["pause", "play", "showChapter", "seekKm"].map(method => [method, (...args) => {
+      if (!view) throw new Error("Ouvrez Explorer pour commander la caméra.");
+      return view[method](...args);
+    }])),
+    onStateChange: state => announce(state.message || ({ listening: "Microphone actif.", transcribing: "Transcription en cours…", idle: "Microphone arrêté." }[state.state] || state.state)),
+  });
+  function voiceControls() {
+    if (!voice) return;
+    const controls = el("div", null, "question-options");
+    controls.append(button("Parler", () => {
+      voiceFraming = framing?.id; voiceMission = mission?.mission_id; voice.start();
+    }), button("Terminer l’enregistrement", () => voice.stop()));
+    screen.append(controls);
+  }
+  function renderFraming() {
+    screen.className = "shell-stack";
+    screen.append(el("h1", "Compléter ma demande"));
+    const state = core.framingState(framing);
+    if (state === "cancelled") { screen.append(el("p", "Demande annulée. Aucun agent lancé.")); return; }
+    const thread = el("ol", null, "thread");
+    for (const turn of framing.turns) thread.append(el("li", (turn.role === "user" ? "Vous : " : "RunAI : ") + turn.text));
+    screen.append(thread);
+    for (const question of framing.open_questions) {
+      const block = el("article", null, "agent-question"); block.append(el("h2", question.text));
+      const choices = el("div", null, "question-options");
+      for (const choice of question.choices) choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
+      block.append(choices);
+      if (question.allow_free_text) form(block, "Votre réponse · " + question.text, (text) => submitReply(text, { question_id: question.id }), question.id);
+      screen.append(block);
+    }
+    for (const candidate of framing.candidates) {
+      const block = el("article", null, "step");
+      block.append(el("h2", candidate.name), el("p", [candidate.city, candidate.country, candidate.race_date || "Date inconnue", candidate.distances_km.join(" / ") + " km"].join(" · ")));
+      const question = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id === candidate.id));
+      const choice = question?.choices.find((c) => c.candidate_id === candidate.id);
+      if (choice) block.append(button("Choisir cette course · " + candidate.name, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
+      link(block, candidate.official_url || candidate.sources[0]?.url, "Source officielle");
+      limitations(block, candidate.limitations); screen.append(block);
+    }
+    const slots = el("details", null, "trace"); slots.open = true; slots.append(el("summary", "Informations connues et corrections"));
+    for (const [name, slot] of Object.entries(framing.slots)) {
+      const known = ["answered", "sourced", "not_needed"].includes(slot.status);
+      const row = el("div", null, "slot-row");
+      row.append(el("p", label(name) + " : " + (known ? (slot.value == null ? "Sans objet" : typeof slot.value === "object" ? JSON.stringify(slot.value) : label(slot.value)) : "inconnu")));
+      row.append(button("Corriger · " + label(name), () => {
+        const editor = el("div"); row.append(editor);
+        form(editor, "Nouvelle valeur : " + label(name), (text) => submitReply(text, { corrections: { [name]: text } }), "slot:" + name);
+        editor.querySelector("input").focus();
+      }));
+      slots.append(row);
+    }
+    screen.append(slots);
+    if (!framing.open_questions.length && state !== "ready_to_confirm") form(screen, "Compléter ou corriger votre demande", submitReply, "reply");
+    if (state === "ready_to_confirm" && framing.summary) {
+      const summary = el("section", null, "bib shell-stack"); summary.append(el("h2", "Votre demande, avant lancement"));
+      framing.summary.lines.forEach((line) => summary.append(el("p", line)));
+      limitations(summary, framing.summary.limitations);
+      summary.append(button("Confirmer et lancer les agents", () => mutate(async () => {
+        const result = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/confirm", {
+          revision: framing.summary.revision, idempotency_key: key(framing.id, framing.summary.revision),
+        });
+        mission = result; framing.mission_id = result.mission_id; subscribe();
+      }, reloadFraming), true)); screen.append(summary);
+    }
+    limitations(screen, framing.limitations);
+    screen.append(button("Annuler la demande", () => mutate(async () => {
+      framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/cancel", {});
+    }, reloadFraming)));
+  }
+  async function loadMission(id) {
+    mission = await api.request("/api/missions/" + encodeURIComponent(id)); persist(); subscribe();
+  }
+  function subscribe() {
+    if (events) events.close();
+    if (mock || !window.EventSource || ["completed", "cancelled", "failed"].includes(mission.status)) return;
+    events = new EventSource("/api/missions/" + encodeURIComponent(mission.mission_id) + "/events");
+    const refresh = async () => {
+      try {
+        const previousStatus = mission.status;
+        mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id));
+        if (previousStatus !== mission.status) announce("Statut de la mission : " + label(mission.status));
+        if (!busy && !screen.querySelector("input:focus, textarea:focus")) render();
+      }
+      catch (_) { announce("Suivi interrompu. La reconnexion ne relance pas les agents."); }
+    };
+    for (const name of ["message", "snapshot", "mission_status", "step", "question_opened", "question_resolved", "journey_revised", "budget_updated", "trace"]) events.addEventListener(name, refresh);
+    events.onerror = () => announce("Reconnexion au suivi en cours…");
+  }
+  function questionBlock(question) {
+    const block = el("article", null, "agent-question");
+    block.append(el("h2", question.text), el("p", label(question.step) + " · " + label(question.status)));
+    if (question.reason) block.append(el("p", question.reason));
+    if (question.status !== "open") { if (question.answer) block.append(el("p", question.answer)); return block; }
+    const answer = (text) => mutate(async () => {
+      mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/questions/" + encodeURIComponent(question.question_id) + "/answer", {
+        answer: text, revision: question.revision, idempotency_key: key(question.question_id, question.revision),
+      }); drafts.delete(question.question_id);
+    }, () => loadMission(mission.mission_id));
+    const choices = el("div", null, "question-options");
+    question.choices.forEach((choice) => choices.append(button(choice, () => answer(choice))));
+    block.append(choices); form(block, "Votre réponse · " + question.text, answer, question.question_id);
+    return block;
+  }
+  function renderMission() {
+    screen.className = "shell-stack";
+    screen.append(el("h1", "Mon séjour"));
+    const questions = mission.questions || [];
+    if (questions.some((q) => q.status === "open")) {
+      const priority = el("section", null, "questions"); priority.append(el("h2", "À vous de répondre"));
+      questions.filter((q) => q.status === "open").forEach((q) => priority.append(questionBlock(q))); screen.append(priority);
+    }
+    const nav = el("nav", null, "question-options"); nav.setAttribute("aria-label", "Écrans du séjour");
+    [["progress", "Préparatifs en cours"], ["stay", "Mon séjour"], ["explore", "Explorer"]].forEach(([id, title]) => {
+      const item = button(title, () => { page = id; render(); });
+      if (page === id) item.setAttribute("aria-current", "page");
+      nav.append(item);
+    });
+    screen.append(nav, el("h2", page === "stay" ? "Mon séjour" : page === "explore" ? "Explorer" : "Préparatifs en cours"), el("p", label(mission.status)));
+    if (mission.error) screen.append(el("p", mission.error));
+    if (page === "explore") { renderExplorer(); return; }
+    if (page === "stay") {
+      screen.append(el("p", "Séjour préparé · aucun engagement automatique."), el("h3", mission.race?.name || "Course en préparation"),
+        el("p", "Date de course : " + (mission.race?.race_date || "inconnue")));
+      if (framing?.summary) screen.append(el("p", framing.summary.date_range.join(" → ")));
+      const budget = core.budgetText(mission.budget);
+      budget.lines.forEach((line, index) => { screen.append(el("p", line)); provenance(screen, mission.budget.lines[index].money); });
+      screen.append(el("p", budget.total, "total"), el("p", budget.cap));
+      if (mission.journey_revision != null) {
+        const exports = el("nav"); exports.setAttribute("aria-label", "Exporter ce séjour");
+        for (const format of ["html", "pdf", "ics"]) link(exports,
+          new URL("/api/missions/" + encodeURIComponent(mission.mission_id) + "/recap." + format + "?revision=" + mission.journey_revision, location.href).href,
+          "Exporter " + format.toUpperCase());
+        screen.append(exports);
+      }
+      for (const id of mission.budget?.missing_line_ids || []) {
+        if (!mission.budget.lines.some((line) => line.id === id)) screen.append(el("p", "Poste manquant : Prix inconnu"));
+      }
+    }
+    const steps = el("div", null, "steps");
+    for (const step of mission.steps) {
+      const block = el("article", null, "step");
+      block.append(el("h3", label(step.kind)), el("p", label(step.status), "status"), el("p", step.summary || "En attente"));
+      if (step.stop_point) block.append(el("p", "Point d’arrêt : " + label(step.stop_point)));
+      if (step.error) block.append(el("p", step.error));
+      link(block, step.data?.manual_url || step.url, "Continuer manuellement sur le site officiel");
+      const details = el("details"); details.append(el("summary", "Détails techniques"), el("p", step.h_session_id || "Session non disponible"));
+      link(details, step.live_view_url, "Ouvrir la vue de l’agent"); block.append(details); steps.append(block);
+    }
+    screen.append(steps); limitations(screen, mission.limitations);
+    questions.filter((q) => q.status !== "open").forEach((q) => screen.append(questionBlock(q)));
+    if (mission.status !== "cancelled") screen.append(button("Annuler les préparatifs", () => mutate(async () => {
+      mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/cancel", {});
+      if (events) events.close();
+    }, () => loadMission(mission.mission_id))));
+  }
+  async function renderExplorer() {
+    const container = el("div", null, "journey-map"); container.setAttribute("aria-label", "Carte du séjour"); container.setAttribute("role", "region");
+    const fallback = el("section", null, "shell-stack");
+    screen.append(container, fallback);
+    try {
+      plan = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/journey");
+      await loadJourneyScripts();
+      if (page !== "explore" || !container.isConnected) return;
+      const errors = window.RunAIJourneyContract?.validateJourneyPlan(plan) || [];
+      if (errors.length) throw new Error("Le parcours reçu est invalide. Réessayez après actualisation.");
+      mode(plan.mode);
+      const controls = el("div", null, "question-options"); screen.insertBefore(controls, container);
+      view = window.RunAIJourneyView.createJourneyView(container, { reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+        timelineContainer: fallback, errorTarget: screen,
+        onEvent: (name, detail) => {
+          window.dispatchEvent(new CustomEvent("runai:shell-journey", { detail: { name, ...detail } }));
+          if (name === window.RunAIJourneyContract.MAP_EVENTS.error && detail.fatal !== false) announce("Carte indisponible. Le parcours reste disponible dans la timeline.");
+        },
+      });
+      view.setPlan(plan);
+      plan.chapters.forEach((chapter) => controls.append(button(chapter.label, () => view?.showChapter(chapter.id))));
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) controls.append(button("Lecture", () => view?.play()));
+      controls.append(button("Pause", () => view?.pause()));
+    } catch (error) {
+      fallback.append(el("p", error.message), button("Réessayer", render));
+    }
+  }
+  window.RunAIShell = { api, submitReply };
+  window.addEventListener("pagehide", () => { voiceAborted = true; voice?.stop(); destroyView(); if (events) events.close(); });
+  async function init() {
+    render();
+    try {
+      if (mock) mode("demo");
+      else {
+        try { const health = await api.request("/api/health"); mode(health.mode); }
+        catch (_) { mode(null); announce("Mode indisponible. Vérifiez la connexion avant de préparer votre demande."); }
+      }
+      const missionId = storage.getItem("runai:mission"), framingId = storage.getItem("runai:framing");
+      if (framingId) await reloadStoredFraming(framingId);
+      if (!mission && missionId) await loadMission(missionId);
+      render();
+    } catch (error) { announce("Reprise indisponible : " + error.message + " Rechargez pour réessayer, sans nouveau lancement."); }
+  }
+  async function reloadStoredFraming(id) { framing = await api.request("/api/framings/" + encodeURIComponent(id)); if (framing.mission_id) await loadMission(framing.mission_id); }
+  init();
 })();

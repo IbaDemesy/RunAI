@@ -20,12 +20,57 @@ RunAI en utilise **4** : Devin, H Company, Gladia et Linkup.
 | Partenaire | Rôle | Utilisé ? | Documentation |
 | --- | --- | --- | --- |
 | Devin | Développement, exploration multi-agents, CI | Utilisé : PR, CI, workflow de 16 agents | [Guide du hackathon](Infos/devin_hackathon_guide.pdf) |
-| H Company | Agents de navigation et d’automatisation | Testé : 3 agents en parallèle, smoke test ; intégration prévue | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
-| Gladia | Transcription audio et traitement de la parole | Testé : smoke test sur chaque push ; interface vocale prévue | [Documentation](https://docs.gladia.io) |
-| Linkup | Recherche web, branchée comme outil des agents H | Testé : smoke test sur chaque push ; architecture « Linkup cherche, H agit » | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
+| H Company | Agents de navigation et d’automatisation | Câblé en V2 via lifecycle ; recette intégrée live restant à faire | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
+| Gladia | Transcription audio, sans TTS | Câblé au shell vocal ; smoke tests conditionnels | [Documentation](https://docs.gladia.io) |
+| Linkup | Recherche de candidats et fiche course sourcée | Câblé au cadrage V2 ; smoke tests conditionnels | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
 | Stripe | Paiements | Non prévu pour le moment | [Ressource du hackathon](Infos/stripe_credits.pdf) |
 
 Les liens utiles, documents et crédits sont regroupés dans [Infos/README.md](Infos/README.md).
+
+## V2 : préparer une course
+
+Le parcours est **cadrage → confirmation explicite → agents → JourneyPlan → exports**.
+Décrivez la course et le déplacement, précisez les informations manquantes et choisissez
+un candidat sourcé. Vérifiez le résumé avant confirmation : aucun agent ne démarre avant.
+Seules les étapes couvertes sont lancées ; leurs résultats enrichissent le même séjour
+révisé pour la carte, la timeline accessible et les exports HTML/PDF/ICS.
+
+Choisissez explicitement `RUNAI_MODE` :
+
+| Mode | Comportement |
+| --- | --- |
+| `live` | Linkup, H et Gladia réels selon les clés/SDK disponibles. Un fournisseur sans clé produit un état indisponible et une erreur honnête, jamais un repli silencieux en démo. |
+| `demo` | Candidats de fixtures et agents/transcription simulés, étiquetés démo. Ville ou critères sans fixture : limitation explicite, aucun événement de remplacement inventé. |
+| `replay` | Trace `replay.v1` explicite via `RUNAI_REPLAY_TRACE`, sans appel fournisseur ; données marquées replay. Sans trace, le démarrage est refusé. |
+
+Variables de clés, **noms seulement** : `HAI_API_KEY`, puis `HAI_API_KEY_2`,
+`HAI_API_KEY_3`, etc. sans trou dans la numérotation ; `LINKUP_API_KEY` ;
+`GLADIA_API_KEY`. **Linkup ne lit que `LINKUP_API_KEY`**, pas ses variantes numérotées.
+Ne versionnez jamais les valeurs ni `.env`.
+
+Après l'installation ci-dessous, choisissez une commande depuis la racine :
+
+```bash
+RUNAI_MODE=demo .venv/bin/python -m runai.app
+# Ou, avec les fournisseurs configurés :
+RUNAI_MODE=live .venv/bin/python -m runai.app
+# Ou, avec votre trace existante :
+RUNAI_MODE=replay RUNAI_REPLAY_TRACE=/chemin/trace.json .venv/bin/python -m runai.app
+```
+
+Ouvrez `http://127.0.0.1:8000`. Hôte et port sont réglables avec `RUNAI_APP_HOST`
+et `RUNAI_APP_PORT`. [Commandes de test hors ligne](#tester) et [détails techniques V2](docs/V2.md).
+
+**Limites actuelles :** stockage mémoire des cadrages, missions, idempotence, événements
+SSE et révisions d'export ; automatisation limitée à **Njuko / Accor / Trenitalia**
+(train et couverture Italie pour ce dernier). Les autres plateformes/transports sont
+manuels, avec lien officiel lorsqu'il est connu ; Booking.com et TAP sont exclus de
+l'automatisation. L'extraction FR/EN est heuristique et partielle : corrigez les champs
+dans le cadrage. Le profil utilisé par défaut est fictif. Aucun paiement, réservation,
+compte, consentement, déclaration de santé ou soumission engageante n'est automatisé.
+Gladia sert à transcrire, **pas à faire de la synthèse vocale (TTS)**. Les données
+Journey non fournies de façon structurée restent inconnues ; les traces JSONL peuvent
+être écrites sur disque, mais ne constituent pas un stockage persistant des missions.
 
 ## Installation
 
@@ -34,7 +79,7 @@ Depuis la racine du dépôt, avec Python installé :
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt ruff pytest
 cp .env.example .env
 ```
 
@@ -65,8 +110,10 @@ Optionnel, pour donner à un agent de code (Claude Code, Cursor, Codex) le conte
 
 ```bash
 npx skills add gladiaio/skills
-claude mcp add gladia --env GLADIA_API_KEY=... -- npx -y @gladiaio/mcp
 ```
+
+Pour le serveur MCP Gladia, configurez `GLADIA_API_KEY` dans son environnement,
+sans consigner sa valeur dans un fichier versionné.
 
 ## Tester
 
@@ -96,7 +143,19 @@ python scripts/test_linkup.py
 
 Ce test lance une vraie recherche et affiche le nombre de résultats et la première URL.
 
-Tests hors ligne (sans clé) : `ruff check .` puis `pytest -q`.
+Tests hors ligne (sans clé), avec les dépendances installées dans `.venv` :
+
+```bash
+source ~/.nvm/nvm.sh  # sur la VM : Node 24 doit aussi être dans le PATH de pytest
+.venv/bin/ruff check .
+.venv/bin/pytest -q
+node --test web/flyover/tests/*.test.js tests/contracts/*.test.js runai/app/static/tests/*.test.js web/voice/tests/*.test.js
+for script in runai/app/static/*.js web/flyover/*.js web/voice/voice-input.js; do node --check "$script" || break; done
+```
+
+Les tests UX rejouent les patches D1 sur le commit `97265c6` ; un clone de test doit
+contenir cet historique. Le job CI utilise un checkout complet et installe Node 24
+avant pytest et les suites JavaScript.
 
 ## CI/CD
 

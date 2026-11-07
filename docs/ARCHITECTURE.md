@@ -5,16 +5,22 @@ Socle commun dans `runai/`. Chaque brique a son dossier, pour que plusieurs agen
 | Dossier | Rôle | Dépend de |
 | --- | --- | --- |
 | `runai/config.py` | Clés et réglages lus depuis `.env` (`RUNAI_H_AGENT`, `RUNAI_H_MAX_CONCURRENCY`, `RUNAI_TRACES_DIR`) | — |
-| `runai/models.py` | Modèles Pydantic partagés : `RunnerProfile`, `Race`, `StepResult`, `StopPoint`, `AgentQuestion`, `TraceEvent` | — |
+| `runai/models.py` | Modèles Pydantic partagés : `RunnerProfile`, `Race`, `StepResult`, `StopPoint`, `AgentQuestion`, `TraceEvent` | `redaction` |
+| `runai/redaction.py` | Masquage récursif des clés configurées avant sérialisation publique | — |
+| `runai/contracts/` | Contrats versionnés de cadrage, mission, événements SSE, JourneyPlan ; fixtures communes | `models`, `redaction` |
+| `runai/framing/` | Extraction heuristique, dialogue et résumé révisé ; confirmation obligatoire puis `LaunchPlan` | `contracts`, `app/tasks`, `app/providers` |
 | `runai/safety.py` | Garde-fou commun : `guard_task()` ajoute les règles d'arrêt au prompt H, `detect_stop_point()` repère paiement, compte, santé, consentement, soumission | `models` |
 | `runai/tracing.py` | Journal JSONL d'une mission (`traces/`, ignoré par git) : replay, debug, réparation Devin | `models` |
 | `runai/h/` | Exécution H : lancer, suivre, pause, message, trace, limite de sessions simultanées | socle |
 | `runai/voice/` | Voix Gladia en direct et commandes vocales | socle |
-| `runai/search/` | Recherche Linkup : fiche course sourcée | socle |
-| `runai/app/` | Application web : `MissionService` (orchestrateur), portail, questions `ask_user`, vues live. `ports.py` = Protocols, `fakes.py` = mode démo, `real.py` = Linkup/H/Gladia | socle, interfaces des autres briques |
-| `web/flyover/` | Survol 3D du parcours (MapLibre) | — |
+| `runai/search/` | Recherche Linkup : candidats multi-courses et fiche course sourcée | socle, `contracts` |
+| `runai/journey/` | Projection de choix connus en JourneyPlan révisé, sans géométrie ni horaires inventés | `contracts`, `logistics` |
+| `runai/planning/` | Preuves métier, budget/éligibilité et snapshot commun des exports HTML/PDF/ICS | `contracts`, `quote`, `logistics`, `recap` |
+| `runai/app/` | FastAPI, sélection live/demo/replay, orchestration des missions confirmées, projection Journey, exports et shell carte/voix | socle, `framing`, `journey`, `planning` |
+| `web/flyover/` | Player Journey MapLibre, timeline de repli accessible et survol du parcours | contrat Journey JS, MapLibre |
+| `web/voice/` | Capture audio et commandes vocales du navigateur, cadrage/agents/caméra distincts | API transcription, shell |
 
-## Flux d'une mission (V1)
+## Flux d'une mission (V1, socle réutilisé par la V2)
 
 ```
 Utilisateur (texte, ou voix Gladia : runai/voice)
@@ -40,7 +46,7 @@ Traces JSONL (runai/tracing) ──► replay, debug, réparation par Devin
 - L'orchestrateur est du code, pas un LLM : l'enchaînement, les quotas et l'arrêt avant engagement sont garantis par le code. L'autonomie est dans les sessions H.
 - Une question `ask_user` expire avant la fin de la session H (`question_timeout_s ≤ max_time_s - 60`).
 - Le plafond hôtel retenu est le plus bas des budgets donnés (réponses aux questions de budget, requête).
-- Mode démo (`RUNAI_DEMO=1`, ou clés absentes) : mêmes Protocols, agents simulés par `fakes.py`.
+- Mode démo (`RUNAI_MODE=demo`, ou `RUNAI_DEMO=1`) : mêmes Protocols, agents simulés par `fakes.py`.
 
 ## Règles communes
 

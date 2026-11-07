@@ -3,94 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RunAI · préparer le déplacement de course</title>
+  <title>RunAI · Préparer ma course</title>
   <link rel="icon" href="data:,">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/flyover/journey.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
 </head>
 <body>
-  <header class="top">
-    <a class="brand" href="/" aria-label="RunAI, accueil">
-      <span class="brand-mark" aria-hidden="true"></span>RunAI
-    </a>
-    <span id="mode" class="badge hidden"></span>
-  </header>
-
-  <main>
-    <form id="mission-form" class="hero">
-      <h1><label for="query">Dis-moi ta course, je prépare tout le déplacement.</label></h1>
-      <p class="hero-sub">Inscription, hôtel et train : trois agents naviguent pour vous et s'arrêtent avant de payer ou de signer.</p>
-      <div class="ask">
-        <input id="query" name="query" required minlength="3" autocomplete="off"
-               placeholder="Le marathon de Milan, je pars de Paris">
-        <button type="button" id="mic" class="ghost" title="Dire la course">Dire la course</button>
-        <button type="submit" id="start" class="primary">Préparer</button>
-      </div>
-      <p id="mic-status" class="hint"></p>
-    </form>
-
-    <section id="mission" class="hidden" aria-live="polite">
-      <ol id="course" class="course" aria-label="Avancement de la mission"></ol>
-
-      <div class="bib">
-        <div class="bib-main">
-          <p class="bib-meta">Mission <code id="mission-id"></code> · <span id="mission-status"></span></p>
-          <h2 id="race-name">Recherche de la course…</h2>
-          <dl id="race-facts" class="facts"></dl>
-          <ul id="race-sources" class="sources"></ul>
-        </div>
-        <div class="bib-side">
-          <p id="race-distance" class="bib-number">…</p>
-          <div class="bib-actions">
-            <button id="pause-all" class="ghost">Tout mettre en pause</button>
-            <button id="resume-all" class="ghost">Tout reprendre</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="steps" class="steps"></div>
-
-      <section class="finish">
-        <h2>Ligne d'arrivée : à vous de signer</h2>
-        <p class="finish-sub">Chaque agent s'arrête avant tout engagement. Voici où il s'est arrêté et ce qu'il vous reste à faire.</p>
-        <div id="portal-items"><p class="hint">Les agents travaillent encore…</p></div>
-        <p id="portal-total" class="total"></p>
-      </section>
-
-      <details class="trace">
-        <summary>Journal de la mission</summary>
-        <ol id="events"></ol>
-      </details>
-    </section>
-  </main>
-
-  <template id="step-template">
-    <article class="step">
-      <header>
-        <h3 class="step-label"></h3>
-        <span class="status"></span>
-      </header>
-      <p class="last-action"></p>
-      <p class="current-url"></p>
-      <div class="live">
-        <iframe class="live-frame" title="Vue live de l'agent" loading="lazy"></iframe>
-        <a class="live-link" target="_blank" rel="noopener">Ouvrir la vue live</a>
-      </div>
-      <p class="summary"></p>
-      <div class="questions hidden"></div>
-      <div class="controls">
-        <button class="pause ghost">Pause</button>
-        <button class="resume ghost">Reprendre</button>
-      </div>
-      <form class="message">
-        <input name="text" aria-label="Message à l'agent" placeholder="Une consigne ? Ex. : prends plutôt le 10 km" autocomplete="off">
-        <button type="submit" class="ghost">Envoyer</button>
-      </form>
-    </article>
-  </template>
-
+  <header class="top"><a class="brand" href="/" aria-label="RunAI, accueil"><span class="brand-mark" aria-hidden="true"></span>RunAI</a><span id="mode" class="badge">Mode en vérification</span></header>
+  <main id="shell"><p id="feedback" role="status" aria-live="polite"></p><section id="screen"></section></main>
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin="anonymous"></script>
+  <script>
+    window.RUNAI_JOURNEY_SCRIPTS = [
+      "/static/flyover/journey-contract.js", "/static/flyover/route.js",
+      "/static/flyover/journey-data.js", "/static/flyover/journey-player.js",
+      "/static/flyover/journey-fallback.js", "/static/journey-view.js"
+    ];
+  </script>
+  <script src="/static/voice/voice-input.js"></script>
+  <script src="/static/shell-core.js"></script>
+  <script src="/static/mock-api.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
