@@ -1,0 +1,74 @@
+name: Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_h:
+        description: "Exécuter le smoke test H (consomme des crédits)"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  linkup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      LINKUP_API_KEY: ${{ secrets.LINKUP_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Skip without LINKUP_API_KEY
+        if: env.LINKUP_API_KEY == ''
+        run: echo "::notice title=Smoke test skipped::Configure the LINKUP_API_KEY repository secret."
+      - name: Install dependencies
+        if: env.LINKUP_API_KEY != ''
+        run: pip install -r requirements.txt
+      - name: Run Linkup smoke test
+        if: env.LINKUP_API_KEY != ''
+        run: python scripts/test_linkup.py
+
+  gladia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GLADIA_API_KEY: ${{ secrets.GLADIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Skip without GLADIA_API_KEY
+        if: env.GLADIA_API_KEY == ''
+        run: echo "::notice title=Smoke test skipped::Configure the GLADIA_API_KEY repository secret."
+      - name: Install dependencies
+        if: env.GLADIA_API_KEY != ''
+        run: pip install -r requirements.txt
+      - name: Run Gladia smoke test
+        if: env.GLADIA_API_KEY != ''
+        run: python scripts/test_gladia.py
+
+  h:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_h
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HAI_API_KEY: ${{ secrets.HAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Skip without HAI_API_KEY
+        if: env.HAI_API_KEY == ''
+        run: echo "::notice title=Smoke test skipped::Configure the HAI_API_KEY repository secret."
+      - name: Install dependencies
+        if: env.HAI_API_KEY != ''
+        run: pip install -r requirements.txt
+      - name: Run H smoke test
+        if: env.HAI_API_KEY != ''
+        run: python scripts/test_h.py
