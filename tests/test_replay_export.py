@@ -83,7 +83,7 @@ def test_voice_transcript_and_structured_personal_fields():
         FramingTurn(role="user", channel="voice", revision=3, text="In Milan"),
     ])
     trace = export_replay(mission)
-    assert trace.transcript == "A marathon\nIn Milan"
+    assert trace.transcript == "A marathon"
     assert trace.steps[StepKind.registration].result.data["profile"] == {
         "first_name": "[REDACTED]", "birth_date": "[REDACTED]",
     }
@@ -105,3 +105,11 @@ def test_default_replay_boots_and_finishes(monkeypatch, tmp_path):
         trace = ReplayTrace.model_validate(client.get(f"/api/missions/{mid}/replay.json").json())
         for kind in (StepKind.registration, StepKind.accommodation, StepKind.transport):
             assert trace.steps[kind].result.data["provenance"]["mode"] == "replay"
+
+
+def test_urls_with_long_numeric_ids_are_kept():
+    url = "https://in.njuko.com/race/123456789/step?id=98765432"
+    mission = Mission(id="url", query="Demo", status=MissionStatus.completed, steps={
+        StepKind.registration: StepResult(kind=StepKind.registration, data={"url": url}),
+    })
+    assert export_replay(mission).steps[StepKind.registration].result.data["url"] == url

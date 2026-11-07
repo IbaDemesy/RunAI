@@ -24,7 +24,7 @@ def _redact_personal(value: Any) -> Any:
     if isinstance(value, str):
         value = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[REDACTED]", value)
         return re.sub(
-            r"(?<![\w-])(?!\d{4}-\d{2}-\d{2})\+?\d[\d ().-]{7,}\d(?![\w-])",
+            r"(?<![\w/=?&#:.-])(?!\d{4}-\d{2}-\d{2})\+?\d[\d ().-]{7,}\d(?![\w/-])",
             "[REDACTED]", value,
         )
     return value
@@ -37,7 +37,7 @@ def export_replay(mission: Mission) -> ReplayTrace:
     trace.race = mission.race
     race_name = mission.race.name if mission.race else "Unknown race"
     trace.label = f"Replay of {race_name} recorded in {mode.value}"
-    trace.transcript = "\n".join(
-        turn.text for turn in mission.framing_turns if turn.channel == "voice"
-    ) or None
+    trace.transcript = next(
+        (turn.text for turn in mission.framing_turns if turn.channel == "voice"), None
+    )
     return ReplayTrace.model_validate(_redact_personal(redact_secrets(trace.model_dump(mode="json"))))
