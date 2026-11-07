@@ -135,6 +135,16 @@ Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents con
 **Zoom sur [Price Check](https://showcase.hcompany.ai/a/price-check-test/)** (From H) : un seul agent `h/browser` ouvre la page de tarifs d'un éditeur (dans l'exemple, linear.app/pricing) et donne le prix du moins cher des plans payants. La fiche affiche la trace du run étape par étape (« ouvre linear.app », « clique sur le bouton Billed yearly », « répond »), avec le raisonnement de l'agent à chaque étape. Dans l'exemple, l'agent remarque que le tarif annuel est affiché par défaut et bascule sur le mensuel : 12 $ au lieu de 10 $.
 *À reprendre pour RunAI* : afficher ce genre de trace étape par étape dans notre vue de supervision. Et prévoir que l'agent vérifie les options qui changent un prix (annuel ou mensuel, distance de course, options payantes) avant de présenter le récap au coureur.
 
+**Zoom sur [Add to cart](https://github.com/hcompai/agents-api-demos/tree/main/examples/add_to_cart)** (From H, 3 runs sur 3 réussis) : un seul fichier Python et quelques lignes du SDK `hai-agents` autour d'un prompt en langage naturel. L'agent (`holo4-27b`, `h/browser`, skills `h/planning` et `h/answering`) cherche un album sur Amazon, l'ajoute au panier et vérifie qu'il y est, sans utiliser l'API du magasin. Le prompt se termine par « Do not check out », et le champ `added_to_cart` ne vaut `true` que si la page panier affiche bien l'article.
+*À reprendre pour RunAI* : c'est le point de départ le plus simple pour le **test de faisabilité**. On garde la même logique d'arrêt avant le paiement, avec un booléen vérifié à l'écran (par exemple `form_ready_for_payment`).
+
+**Zoom sur [Pricehunter](https://github.com/lmveprog/pricehunter)** (communauté) : on colle le lien d'un produit. Des agents web H lisent la page, cherchent des codes promo pour ce magasin et les testent dans le panier. D'autres cherchent le même produit neuf chez des revendeurs fiables. On suit chaque navigateur en direct, puis on obtient une seule réponse : où acheter, et avec quel code.
+- `server.py` en FastAPI : chaque agent est une session de l'API Agents (`h/web-surfer-flash`), avec un schéma JSON passé dans `agent.answer_format` pour recevoir des réponses structurées.
+- `web/index.html` : une seule page, sans étape de build.
+- Le **filtre de sécurité** (même variante, neuf, vendu par le magasin, en stock) tourne **côté serveur, pas seulement dans le prompt**.
+
+*À reprendre pour RunAI* : c'est presque notre architecture (plusieurs sessions H en parallèle, vue live, une réponse consolidée). Le code est sous licence MIT, donc on peut s'en inspirer directement. À retenir surtout : valider côté serveur ce que l'agent renvoie (bonne course, bonne distance, prix, arrêt avant le paiement) au lieu de se fier uniquement au prompt.
+
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
