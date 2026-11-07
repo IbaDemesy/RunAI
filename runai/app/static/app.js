@@ -174,7 +174,7 @@
     node.onsubmit = (event) => {
       event.preventDefault();
       if (busy || !input.value.trim()) return;
-      const text = input.value.trim(); input.value = ""; drafts.delete(draftKey);
+      const text = input.value.trim(); input.value = "";
       node.className += " sending"; showPending(text); onSubmit(text);
     };
     parent.append(node);
