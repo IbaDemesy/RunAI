@@ -1,6 +1,7 @@
 {
   "aliases": ["milano marathon", "milan marathon", "marathon de milan", "maratona di milano"],
   "year": 2027,
+  "exclude_words": ["relay", "staffetta", "half", "mezza", "semi", "10k", "family", "kids", "junior"],
   "rules": {
     "race_name": "Wizz Air Milano Marathon 2027",
     "race_date": "2027-04-04",

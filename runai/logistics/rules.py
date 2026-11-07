@@ -234,6 +234,8 @@ def find_fixture(name: str, year: int | None = None) -> RaceRules | None:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if year is not None and payload.get("year") not in (None, year):
             continue
+        if any(f" {_normalize(word)} " in normalized for word in payload.get("exclude_words", [])):
+            continue
         if any(f" {_normalize(alias)} " in normalized for alias in payload.get("aliases", [])):
             return RaceRules.model_validate(payload["rules"])
     return None

@@ -95,6 +95,7 @@ def test_milan_fixture_is_sourced_and_used_without_network(milan):
 def test_fixture_matching_respects_year_and_aliases():
     assert find_fixture("Marathon de Milan", 2027)
     assert find_fixture("Milano Marathon 2026") is None
+    assert find_fixture("Milano Marathon Relay 2027") is None
     assert find_fixture("Wizz Air Milano Marathon", 2026) is None
     assert find_fixture("Marathon de Paris 2027") is None
 
