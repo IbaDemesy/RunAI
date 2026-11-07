@@ -18,6 +18,7 @@ from runai.models import StepKind
 
 STATIC_DIR = Path(__file__).parent / "static"
 KEEPALIVE_SECONDS = 15
+MAX_AUDIO_BYTES = 10 * 1024 * 1024
 
 
 class MissionRequest(BaseModel):
@@ -158,7 +159,15 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.post("/api/transcribe")
     async def transcribe(request: Request) -> dict:
-        audio = await request.body()
+        too_large = HTTPException(status_code=413, detail="Audio trop volumineux")
+        if int(request.headers.get("content-length") or 0) > MAX_AUDIO_BYTES:
+            raise too_large
+        audio = bytearray()
+        async for chunk in request.stream():
+            audio.extend(chunk)
+            if len(audio) > MAX_AUDIO_BYTES:
+                raise too_large
+        audio = bytes(audio)
         if not audio:
             raise HTTPException(status_code=400, detail="Audio vide")
         content_type = request.headers.get("content-type", "application/octet-stream")

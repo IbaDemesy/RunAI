@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
 from runai.app.mission import MissionService, MissionStatus
-from runai.app.server import create_app
+from runai.app.server import MAX_AUDIO_BYTES, create_app
 from runai.app.tasks import HUMAN_ACTIONS, build_task
 from runai.models import (
     Race,
@@ -324,3 +324,5 @@ def test_api_transcribe_uses_voice_port(tmp_path):
         )
         assert response.json() == {"text": FakeTranscriber.TEXT}
         assert client.post("/api/transcribe", content=b"").status_code == 400
+        oversized = b"0" * (MAX_AUDIO_BYTES + 1)
+        assert client.post("/api/transcribe", content=oversized).status_code == 413
