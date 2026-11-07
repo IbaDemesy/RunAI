@@ -1,0 +1,92 @@
+{
+  "query": {
+    "distance_km": 10.0,
+    "distance_label": "10 km",
+    "tolerance_km": 1.0,
+    "date_from": "2027-03-01",
+    "date_to": "2027-04-30",
+    "origin_city": "Paris",
+    "max_travel_h": 1.5,
+    "travel_mode": "ground",
+    "terrain": "plat",
+    "race_size": "indifferent",
+    "zone_hint": "en Ile-de-France (Paris et alentours)",
+    "foreign": false,
+    "seed_races": []
+  },
+  "candidates": [
+    {
+      "name": "Trail 10 km",
+      "race_date": "2027-03-21",
+      "city": "Paris",
+      "country": "France",
+      "distance_km": 10.0,
+      "elevation_gain_m": null,
+      "platform": "Njuko",
+      "registration_url": "https://www.ecotrailparis.com",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Inscriptions ouvertes",
+      "status_from_search": "Inscriptions ouvertes",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.0,
+      "sources": [
+        "https://www.ecotrailparis.com",
+        "https://sasdepart.fr/ecotrail-paris-2027-les-inscriptions-sont-deja-ouvertes-et-le-80-km-se-remplit/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "La Grande Course RATP du Grand Paris",
+      "race_date": "2027-03-14",
+      "city": "Saint-Denis",
+      "country": "France",
+      "distance_km": 10.0,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://lagrandecourse.fr/",
+      "official_url": null,
+      "participants": null,
+      "status": "pas_encore_ouvert",
+      "status_source": "page",
+      "status_evidence": "Inscrivez-vous à la newsletter pour être informés de l'ouverture des inscriptions 2027",
+      "status_from_search": "inconnu",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.13,
+      "sources": [
+        "https://lagrandecourse.fr/",
+        "https://www.sortiraparis.com/id/hobi/olahraga-dan-kesejahteraan/articles/135931-lomba-besar-grand-paris-2027-semi-maraton-10-km-dan-5-km-pada-14-maret"
+      ],
+      "seed": false
+    }
+  ],
+  "rejected": [],
+  "metrics": {
+    "search_calls": 4,
+    "fetch_calls": 3,
+    "fetch_errors": 0,
+    "skipped_fetches": 0,
+    "total_s": 20.35,
+    "phases_s": {
+      "decouverte": 5.94,
+      "filtre_geo": 1.61,
+      "url_inscription": 2.76,
+      "verification": 10.03
+    },
+    "cost_usd_estimated": 0.056,
+    "second_round": true
+  },
+  "created_at": "2026-11-07T12:00:00Z",
+  "origin": "spike/trouver_courses (p1_debutant_10k_paris, run réel du 07/11/2026)",
+  "notes": [
+    "mesuré : 20.35 s, delta solde Linkup 0.038 $"
+  ]
+}

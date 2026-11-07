@@ -1,0 +1,363 @@
+{
+  "query": {
+    "distance_km": 21.0975,
+    "distance_label": "semi-marathon",
+    "tolerance_km": 1.27,
+    "date_from": "2027-03-01",
+    "date_to": "2027-05-31",
+    "origin_city": "Paris",
+    "max_travel_h": 2.0,
+    "travel_mode": "flight",
+    "terrain": "plat",
+    "race_size": "grande",
+    "zone_hint": "en Europe hors de France (Espagne, Portugal, Italie, Belgique, Pays-Bas, Allemagne, Royaume-Uni, Irlande, Danemark...)",
+    "foreign": true,
+    "seed_races": []
+  },
+  "candidates": [
+    {
+      "name": "Green Park Reading Half Marathon",
+      "race_date": "2027-03-21",
+      "city": "Reading",
+      "country": "Royaume-Uni",
+      "distance_km": 21.0975,
+      "elevation_gain_m": 140.0,
+      "platform": "Site officiel Reading Half Marathon (plateforme non précisée)",
+      "registration_url": "https://www.readinghalfmarathon.com/pages/step-one-choose-event",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "2027 ENTRIES OPEN NOW",
+      "status_from_search": "Inscriptions ouvertes",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 1.0,
+      "sources": [
+        "https://running.life/fr/evenement/reading-half-marathon",
+        "https://www.readinghalfmarathon.com/pages/step-one-choose-event"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Hastings Half Marathon",
+      "race_date": "2027-03-21",
+      "city": "Hastings",
+      "country": "Royaume-Uni",
+      "distance_km": 21.08,
+      "elevation_gain_m": null,
+      "platform": "Nice Work Race Management",
+      "registration_url": "https://www.nice-work.org.uk/e/hastings-half-marathon-13433",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Enter Now",
+      "status_from_search": "Inscriptions ouvertes",
+      "price_eur": null,
+      "price_tier": "Standard Pricing",
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.84,
+      "sources": [
+        "https://www.nice-work.org.uk/e/hastings-half-marathon-13433",
+        "https://running.life/fr/evenement/hastings-half-marathon/2027-03-21"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Leuven Half Marathon",
+      "race_date": "2027-04-11",
+      "city": "Leuven",
+      "country": "Belgique",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": "Inscription en ligne sur le site officiel (plateforme tierce non précisée).",
+      "registration_url": "https://leuvenmarathon.com/fr/inscriptions/",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Les inscriptions sont ouvertes en ligne jusqu’au samedi 10.04.2027, dans la limite des places disponibles pour la distance que vous avez choisie.",
+      "status_from_search": "Ouvertes en ligne jusqu’au 10 avril 2027, dans la limite des places disponibles.",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.88,
+      "sources": [
+        "https://running.life/fr/evenement/leuven-marathon",
+        "https://leuvenmarathon.com/fr/inscriptions/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "HOKA Hackney Half",
+      "race_date": "2027-05-16",
+      "city": "London",
+      "country": "Royaume-Uni",
+      "distance_km": 21.1,
+      "elevation_gain_m": null,
+      "platform": "Run for Charity (lien de place caritative ; une inscription générale officielle n’est pas confirmée par les informations fournies)",
+      "registration_url": "https://runforcharity.com/charity-registration/arthritis-uk/hoka-hackney-half/register",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Good Availability",
+      "status_from_search": "Des places caritatives sont proposées via Run for Charity. L’ouverture ou la disponibilité des inscriptions générales n’est pas confirmée par les informations fournies ; le D+ n’est pas indiqué.",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.96,
+      "sources": [
+        "https://runforcharity.com/charity-registration/arthritis-uk/hoka-hackney-half/register",
+        "https://running.life/fr/evenement/wizz-air-hackney-half"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Night Marathon Luxembourg",
+      "race_date": "2027-05-08",
+      "city": "Luxembourg",
+      "country": "Luxembourg",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": "Njuko",
+      "registration_url": "https://in.njuko.com/20-ing-night-marathon-luxembourg-2027?currentPage=select-competition",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "page",
+      "status_evidence": null,
+      "status_from_search": "Inscriptions ouvertes jusqu’au 24 mars 2027, sous réserve des places disponibles.",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": "The Linkup API returned a fetch error (400). The provided URL might not be found or can't be fetched.",
+      "km_from_origin": null,
+      "travel_h_est": 0.89,
+      "sources": [
+        "https://in.njuko.com/20-ing-night-marathon-luxembourg-2027?currentPage=select-competition",
+        "https://running.life/fr/evenement/ing-night-marathon-luxembourg"
+      ],
+      "seed": false
+    },
+    {
+      "name": "The London Landmarks Half Marathon",
+      "race_date": "2027-04-04",
+      "city": "London",
+      "country": "Royaume-Uni",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://llhm.co.uk/",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "non_lu",
+      "status_evidence": null,
+      "status_from_search": "Inscriptions générales 2027 closes selon les informations disponibles ; des places caritatives peuvent encore être proposées par certains partenaires.",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.96,
+      "sources": [
+        "https://running.life/fr/evenement/london-landmarks-half-marathon",
+        "https://llhm.co.uk/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Sofico Gent Half Marathon",
+      "race_date": "2027-03-21",
+      "city": "Gand",
+      "country": "Belgique",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://soficogentmarathon.com/fr/inscrire/",
+      "official_url": null,
+      "participants": null,
+      "status": "pas_encore_ouvert",
+      "status_source": "page",
+      "status_evidence": "Les inscriptions pour l’édition anniversaire ouvrent le mardi 8 septembre 2026 à 11 h 00.",
+      "status_from_search": "Inscriptions ouvertes ; inscription en ligne possible jusqu’au 20 mars 2027 à 23 h 59, dans la limite des dossards disponibles. La plateforme d’inscription et le dénivelé ne sont pas précisés dans les informations fournies.",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.85,
+      "sources": [
+        "https://soficogentmarathon.com/fr/inscrire/",
+        "https://running.life/fr/evenement/gent-marathon"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Amgen Singelloop Breda",
+      "race_date": "2027-04-04",
+      "city": "Breda",
+      "country": "Pays-Bas",
+      "distance_km": 21.1,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://www.amgensingelloopbreda.nl/en/sign-up",
+      "official_url": null,
+      "participants": null,
+      "status": "complet",
+      "status_source": "page",
+      "status_evidence": "SOLD OUT",
+      "status_from_search": "Complet",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.97,
+      "sources": [
+        "https://running.life/fr/evenement/singelloop-breda",
+        "https://www.amgensingelloopbreda.nl/en/sign-up"
+      ],
+      "seed": false
+    }
+  ],
+  "rejected": [
+    {
+      "name": "Media Maratón ciudad de Málaga",
+      "race_date": "2027-03-07",
+      "city": "Málaga",
+      "why": "trajet estime 2.44 h > 2.0 h"
+    },
+    {
+      "name": "Meia Maratona de Lisboa",
+      "race_date": "2027-03-07",
+      "city": "Alfama",
+      "why": "trajet estime 2.44 h > 2.0 h"
+    },
+    {
+      "name": "Semi de Paris",
+      "race_date": "2027-03-07",
+      "city": "Paris",
+      "why": "en France alors que l'etranger est demande"
+    },
+    {
+      "name": "Athina Half Marathon",
+      "race_date": "2027-03-07",
+      "city": "Athens",
+      "why": "trajet estime 3.29 h > 2.0 h"
+    },
+    {
+      "name": "CPC Loop Den Haag",
+      "race_date": "2027-03-14",
+      "city": "Den Haag",
+      "why": "trajet estime 12.81 h > 2.0 h"
+    },
+    {
+      "name": "Mostar Half Marathon",
+      "race_date": "2027-03-20",
+      "city": "Mostar",
+      "why": "trajet estime 2.28 h > 2.0 h"
+    },
+    {
+      "name": "La Valette Marathon",
+      "race_date": "2027-03-21",
+      "city": "Msida",
+      "why": "trajet estime 2.34 h > 2.0 h"
+    },
+    {
+      "name": "Limassol Marathon",
+      "race_date": "2027-04-03",
+      "city": "Limassol",
+      "why": "trajet estime 4.45 h > 2.0 h"
+    },
+    {
+      "name": "Półmaraton Warszawski",
+      "race_date": "2027-04-04",
+      "city": "Warsaw",
+      "why": "trajet estime 2.32 h > 2.0 h"
+    },
+    {
+      "name": "Belgrade Marathon",
+      "race_date": "2027-04-17",
+      "city": "Belgrade",
+      "why": "trajet estime 2.43 h > 2.0 h"
+    },
+    {
+      "name": "Gdynia Półmaraton",
+      "race_date": "2027-04-24",
+      "city": "Gdynia",
+      "why": "trajet estime 2.2 h > 2.0 h"
+    },
+    {
+      "name": "Bergen City Marathon",
+      "race_date": "2027-04-24",
+      "city": "Bergen",
+      "why": "trajet estime 2.23 h > 2.0 h"
+    },
+    {
+      "name": "Maratona da Europa – Aveiro",
+      "race_date": "2027-04-24",
+      "city": "Aveiro",
+      "why": "trajet estime 2.18 h > 2.0 h"
+    },
+    {
+      "name": "Marathon International de Biarritz",
+      "race_date": "2027-04-24",
+      "city": "Biarritz",
+      "why": "en France alors que l'etranger est demande"
+    },
+    {
+      "name": "Bucharest Half Marathon",
+      "race_date": "2027-05-08",
+      "city": "Bucharest",
+      "why": "trajet estime 2.99 h > 2.0 h"
+    },
+    {
+      "name": "Białystok Półmaraton",
+      "race_date": "2027-05-08",
+      "city": "Białystok",
+      "why": "trajet estime 2.53 h > 2.0 h"
+    },
+    {
+      "name": "Rimi Riga Marathon",
+      "race_date": "2027-05-15",
+      "city": "Riga",
+      "why": "trajet estime 2.77 h > 2.0 h"
+    },
+    {
+      "name": "Göteborgsvarvet",
+      "race_date": "2027-05-22",
+      "city": "Göteborg",
+      "why": "trajet estime 2.06 h > 2.0 h"
+    },
+    {
+      "name": "Meia Maratona do Douro Vinhateiro",
+      "race_date": "2027-05-30",
+      "city": "Peso da Régua",
+      "why": "trajet estime 2.06 h > 2.0 h"
+    }
+  ],
+  "metrics": {
+    "search_calls": 10,
+    "fetch_calls": 9,
+    "fetch_errors": 1,
+    "skipped_fetches": 0,
+    "total_s": 60.8,
+    "phases_s": {
+      "decouverte": 36.15,
+      "filtre_geo": 7.98,
+      "url_inscription": 6.42,
+      "verification": 10.25
+    },
+    "cost_usd_estimated": 0.152,
+    "second_round": false
+  },
+  "created_at": "2026-11-07T12:00:00Z",
+  "origin": "spike/trouver_courses (p4_semi_etranger_vol_2h, run réel du 07/11/2026)",
+  "notes": [
+    "mesuré : 60.8 s, delta solde Linkup 0.104 $"
+  ]
+}

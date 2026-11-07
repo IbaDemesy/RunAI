@@ -1,0 +1,262 @@
+{
+  "query": {
+    "distance_km": 21.0975,
+    "distance_label": "semi-marathon",
+    "tolerance_km": 1.27,
+    "date_from": "2027-03-01",
+    "date_to": "2027-05-31",
+    "origin_city": "Paris",
+    "max_travel_h": 5.0,
+    "travel_mode": "ground",
+    "terrain": "plat",
+    "race_size": "grande",
+    "zone_hint": "en France",
+    "foreign": false,
+    "seed_races": []
+  },
+  "candidates": [
+    {
+      "name": "Abalone Marathon de Nantes — Semi-marathon",
+      "race_date": "2027-04-25",
+      "city": "Nantes",
+      "country": "France",
+      "distance_km": 21.0975,
+      "elevation_gain_m": 115.0,
+      "platform": null,
+      "registration_url": "https://www.marathondenantes.com",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "S'INSCRIRE",
+      "status_from_search": "complet",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 4.95,
+      "sources": [
+        "https://www.marathondenantes.com",
+        "https://sasdepart.fr/marathon-de-nantes-2027-inscription-date-prix-comment-decrocher-ton-dossard/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Semi Marathon Boucle de Seine",
+      "race_date": "2027-03-21",
+      "city": "Chatou",
+      "country": "France",
+      "distance_km": 21.097,
+      "elevation_gain_m": null,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/semi-marathon-boucle-de-seine-2027/course-a-pied-running/1790283994662-1",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "S'inscrire",
+      "status_from_search": "inconnu",
+      "price_eur": 40.0,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 0.21,
+      "sources": [
+        "https://www.klikego.com/inscription/semi-marathon-boucle-de-seine-2027/course-a-pied-running/1790283994662-1"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Semi-marathon de Crevin 7eme Edition 21.100 km",
+      "race_date": "2027-04-03",
+      "city": "Crevin",
+      "country": "France",
+      "distance_km": 21.1,
+      "elevation_gain_m": 205.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/100km-n07-marathon-semi-marathon-de-crevin-et-la-crevinoise-2027/running-course-a-pied/1516494105802-20",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "S'inscrire",
+      "status_from_search": "inconnu",
+      "price_eur": 18.2,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 4.52,
+      "sources": [
+        "https://www.klikego.com/inscription/100km-n07-marathon-semi-marathon-de-crevin-et-la-crevinoise-2027/running-course-a-pied/1516494105802-20"
+      ],
+      "seed": false
+    },
+    {
+      "name": "SEMI-MARATHON ET LE DIX SYLVANAIS",
+      "race_date": "2027-03-07",
+      "city": "SAINT SYLVAIN D'ANJOU",
+      "country": "France",
+      "distance_km": 21.0,
+      "elevation_gain_m": null,
+      "platform": "Espace Compétition",
+      "registration_url": "https://espace-competition.com/index.php?comp=3243&module=inscription",
+      "official_url": null,
+      "participants": null,
+      "status": "ouvert",
+      "status_source": "page",
+      "status_evidence": "Ouvert\n104 places restantes",
+      "status_from_search": "inconnu",
+      "price_eur": 18.0,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": null,
+      "sources": [
+        "https://espace-competition.com/index.php?comp=3243&module=inscription"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Semi-marathon de Paris",
+      "race_date": "2027-03-07",
+      "city": "Paris",
+      "country": "France",
+      "distance_km": 21.0975,
+      "elevation_gain_m": null,
+      "platform": "Plateforme officielle HOKA Semi de Paris / formulaire de tirage au sort",
+      "registration_url": "https://in.reg.hokasemimarathondeparis.com/semi-2027",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "page",
+      "status_evidence": null,
+      "status_from_search": "pas encore ouvertes",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": "The Linkup API returned a fetch error (400). The provided URL might not be found or can't be fetched.",
+      "km_from_origin": null,
+      "travel_h_est": 0.0,
+      "sources": [
+        "https://in.reg.hokasemimarathondeparis.com/semi-2027",
+        "https://www.jds.fr/paris/sports/courses/harmonie-mutuelle-semi-de-paris-261493_A"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Semi-marathon de Cabourg 2027",
+      "race_date": "2027-03-07",
+      "city": "Cabourg",
+      "country": "France",
+      "distance_km": 21.097,
+      "elevation_gain_m": 36.0,
+      "platform": "TimePulse",
+      "registration_url": "https://timepulsesports.com/calendrier/1013",
+      "official_url": null,
+      "participants": null,
+      "status": "pas_encore_ouvert",
+      "status_source": "page",
+      "status_evidence": "Pas encore ouvert",
+      "status_from_search": "inconnu",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 2.68,
+      "sources": [
+        "https://unidivers.fr/event/semi-marathon-de-cabourg-cabourg-calvados-2027-03-06/",
+        "https://timepulsesports.com/calendrier/1013"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Semi-marathon de Chinon",
+      "race_date": "2027-04-04",
+      "city": "Chinon",
+      "country": "France",
+      "distance_km": 21.1,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://sasdepart.fr/route/marathon-chinon/",
+      "official_url": null,
+      "participants": null,
+      "status": "complet",
+      "status_source": "agregateur",
+      "status_evidence": "Le semi-marathon est complet",
+      "status_from_search": "inconnu",
+      "price_eur": 22.0,
+      "price_tier": "Jusqu’au 31 décembre 2026",
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": 3.53,
+      "sources": [
+        "https://sasdepart.fr/route/marathon-chinon/"
+      ],
+      "seed": false
+    },
+    {
+      "name": "Semi-marathon des Sources du Lac d'Annecy",
+      "race_date": "2027-09-26",
+      "city": "Doussard",
+      "country": "France",
+      "distance_km": 21.1,
+      "elevation_gain_m": null,
+      "platform": null,
+      "registration_url": "https://sasdepart.fr/route/semi-sources-lac-annecy/",
+      "official_url": null,
+      "participants": null,
+      "status": "a_verifier",
+      "status_source": "agregateur",
+      "status_evidence": "Inscriptions 2027 : rien d’annoncé.",
+      "status_from_search": "pas encore ouvertes",
+      "price_eur": null,
+      "price_tier": null,
+      "check_error": null,
+      "km_from_origin": null,
+      "travel_h_est": null,
+      "sources": [
+        "https://sasdepart.fr/route/semi-sources-lac-annecy/"
+      ],
+      "seed": false
+    }
+  ],
+  "rejected": [
+    {
+      "name": "Semi-Marathon de Mulhouse",
+      "race_date": "2027-03-21",
+      "city": "Mulhouse",
+      "why": "trajet estime 5.61 h > 5.0 h"
+    },
+    {
+      "name": "Semi-Marathon de La Rochelle",
+      "race_date": "2027-03-28",
+      "city": "La Rochelle",
+      "why": "trajet estime 5.75 h > 5.0 h"
+    },
+    {
+      "name": "Semi-marathon Locronan Plogonnec Quimper",
+      "race_date": null,
+      "city": "Quimper",
+      "why": "trajet estime 7.01 h > 5.0 h"
+    }
+  ],
+  "metrics": {
+    "search_calls": 4,
+    "fetch_calls": 9,
+    "fetch_errors": 1,
+    "skipped_fetches": 0,
+    "total_s": 26.45,
+    "phases_s": {
+      "decouverte": 11.16,
+      "filtre_geo": 2.47,
+      "url_inscription": 3.11,
+      "verification": 9.72
+    },
+    "cost_usd_estimated": 0.11599999999999998,
+    "second_round": false
+  },
+  "created_at": "2026-11-07T12:00:00Z",
+  "origin": "spike/trouver_courses (p2_semi_rapide_france, run réel du 07/11/2026)",
+  "notes": [
+    "mesuré : 26.45 s, delta solde Linkup 0.068 $"
+  ]
+}
