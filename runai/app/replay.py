@@ -8,7 +8,7 @@ import asyncio
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_serializer
 
 from runai.app.ports import AskUser, EventSink
 from runai.app.providers import ProviderUnavailableError, provenance_data
@@ -21,6 +21,7 @@ from runai.models import (
     StepStatus,
     TraceEvent,
 )
+from runai.redaction import redact_secrets
 
 
 class ReplayQuestion(BaseModel):
@@ -42,6 +43,10 @@ class ReplayTrace(BaseModel):
     transcript: str | None = None
     steps: dict[StepKind, ReplayStep] = Field(default_factory=dict)
 
+    @model_serializer(mode="wrap")
+    def serialize_trace(self, handler):
+        return redact_secrets(handler(self))
+
     @classmethod
     def load(cls, path: Path) -> "ReplayTrace":
         return cls.model_validate_json(Path(path).read_text(encoding="utf-8"))
@@ -54,6 +59,7 @@ class ReplayTrace(BaseModel):
         cls, snapshot: dict[str, Any], label: str | None = None
     ) -> "ReplayTrace":
         """Construit une trace depuis `Mission.snapshot(include_events=True)`."""
+        snapshot = redact_secrets(snapshot)
         steps: dict[StepKind, ReplayStep] = {}
         events = [TraceEvent.model_validate(e) for e in snapshot.get("events", [])]
         questions = snapshot.get("questions", [])

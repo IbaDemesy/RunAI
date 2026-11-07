@@ -72,11 +72,6 @@ def test_environment_keys_are_not_implicitly_serialized(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize("surface", ["snapshot", "sse", "replay"])
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="E3: les sorties libres ne filtrent pas les clés reflétées par un fournisseur",
-)
 def test_provider_echoed_key_is_redacted(surface, monkeypatch, tmp_path):
     monkeypatch.setenv("HAI_API_KEY", SENTINEL)
     step = StepResult(kind=StepKind.transport, error=f"provider error: {SENTINEL}")
@@ -96,11 +91,6 @@ def test_provider_echoed_key_is_redacted(surface, monkeypatch, tmp_path):
     assert SENTINEL not in output
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="E3: HLifecycle recopie str(exc) sans masquer les clés fournisseur",
-)
 def test_lifecycle_exception_does_not_echo_key(monkeypatch):
     monkeypatch.setenv("HAI_API_KEY", SENTINEL)
 
