@@ -16,11 +16,11 @@ class Node {
   focus() {}
 }
 
-async function setup(withMission = false, question = null) {
+async function setup(withMission = false, question = null, slots = {}) {
   const screen = new Node("section"), feedback = new Node("p"), badge = new Node("span");
   const calls = [], listeners = {};
   const values = new Map(withMission ? [["runai:mission", "m-test"]] : []);
-  const session = revision => ({ id: "f-test", revision, mode: "demo", status: "collecting", turns: [], open_questions: question ? [question] : [], candidates: [], limitations: [], slots: {} });
+  const session = revision => ({ id: "f-test", revision, mode: "demo", status: "collecting", turns: [], open_questions: question ? [question] : [], candidates: [], limitations: [], slots });
   let current = session(1), conflict = false, options;
   const mission = { mission_id: "m-test", status: "running", mode: "demo", steps: [], questions: [], limitations: [] };
   const window = {
@@ -48,7 +48,39 @@ async function setup(withMission = false, question = null) {
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../app.js"), "utf8"), context);
   await new Promise(resolve => setImmediate(resolve));
   const speak = () => screen.querySelectorAll().find(node => node.textContent === "Parler").onclick();
-  return { options, calls, speak, listeners, conflict: () => { conflict = true; } };
+  return { options, calls, speak, listeners, screen, badge, feedback, conflict: () => { conflict = true; } };
+}
+
+test("English shell labels, compact budget, sourced date and accessible actions", async () => {
+  const question = { id: "origin", text: "Where are you leaving from?", choices: [], allow_free_text: true };
+  const { options, screen, badge, speak } = await setup(false, question, {
+    budget: { status: "answered", value: 800.0 },
+    race_date: { status: "sourced", value: "2027-04-01" },
+    date_window: { status: "missing", value: null },
+  });
+  assert.equal(badge.textContent, "Mode: Demo");
+  assert.ok(screen.querySelectorAll().some(node => node.textContent === "Where do you want to run?"));
+  speak(); await options.onFramingReply({ text: "A spring marathon, from Lyon", revision: 0 });
+  const nodes = screen.querySelectorAll();
+  assert.ok(nodes.some(node => node.textContent === "€800 max"));
+  assert.equal(nodes.some(node => node.textContent === "Period ?"), false);
+  assert.ok(nodes.some(node => node.textContent === "Send" && node.attributes["aria-label"].includes(question.text)));
+  assert.ok(nodes.some(node => node.textContent === "Edit" && node.attributes["aria-label"] === "Edit · Budget"));
+});
+
+test("Empty dates retain the period prompt; request conflicts use English feedback", async () => {
+  const { options, screen, feedback, conflict, speak } = await setup(false, null, { date_window: { status: "missing", value: null } });
+  speak(); await options.onFramingReply({ text: "A race", revision: 0 });
+  assert.ok(screen.querySelectorAll().some(node => node.textContent === "Period ?"));
+  speak(); conflict();
+  assert.equal(await windowlessReply(options), false);
+  assert.equal(feedback.textContent, "Conversation updated.");
+});
+
+async function windowlessReply(options) {
+  try { await options.onFramingReply({ text: "More details", revision: 1 }); }
+  catch (error) { assert.match(error.message, /non appliquée/); return false; }
+  return true;
 }
 
 test("voix initiale et multi-tours utilisent framing, aucune mission directe ; version périmée non envoyée", async () => {
@@ -59,7 +91,7 @@ test("voix initiale et multi-tours utilisent framing, aucune mission directe ; v
   speak(); await options.onFramingReply({ text: "précision", revision: 1 });
   assert.equal(options.getRevision(), 2);
   const count = calls.filter(call => call.url.endsWith("/replies")).length;
-  await assert.rejects(options.onFramingReply({ text: "ancienne réponse", revision: 1 }), /périmée/);
+  await assert.rejects(options.onFramingReply({ text: "ancienne réponse", revision: 1 }), /expired/);
   assert.equal(calls.filter(call => call.url.endsWith("/replies")).length, count);
   speak(); conflict();
   await assert.rejects(options.onFramingReply({ text: "réponse en conflit", revision: 2 }), /non appliquée/);

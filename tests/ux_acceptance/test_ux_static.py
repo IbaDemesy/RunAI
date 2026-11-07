@@ -76,7 +76,7 @@ def patched(tmp_path_factory):
 
 @pytest.mark.parametrize("identifier,filename,expected,severity", DEFECTS, ids=[r[0] for r in DEFECTS])
 def test_corrective_patch(patched, identifier, filename, expected, severity):
-    assert checks.defect((patched / filename).read_text(), identifier) == []
+    assert checks.defect((patched / filename).read_text(), identifier, language="fr") == []
 
 
 def test_corrected_palette(patched):
@@ -89,7 +89,7 @@ def test_patches_preserve_regressions(patched):
     assert checks.external_links(app) == []
     assert checks.reduced_motion_option(app) == []
     assert checks.css_accessibility((patched / "style.css").read_text()) == []
-    assert checks.html_basics((patched / "live.html").read_text(), feedback=False) == []
+    assert checks.html_basics((patched / "live.html").read_text(), feedback=False, language="fr") == []
 
 
 def test_c3_contracts():

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vue live simulée</title>
+  <title>Simulated live view</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -11,13 +11,13 @@
   <div class="browser">
     <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><code id="url">about:blank</code></div>
     <div class="browser-body">
-      <p class="muted">Vue live simulée · <span id="label"></span> · <span id="status" role="status" aria-live="polite"></span></p>
-      <h2 id="action">En attente de l'agent…</h2>
+      <p class="muted">Simulated live view · <span id="label"></span> · <span id="status" role="status" aria-live="polite"></span></p>
+      <h2 id="action">Waiting for the agent…</h2>
       <ol id="history"></ol>
     </div>
   </div>
   <script>
-    const STATUS = { pending: "en attente", running: "en cours", paused: "en pause", stopped_before_commitment: "arrêté avant engagement", completed: "terminé", failed: "échec" };
+    const STATUS = { pending: "Waiting", searching: "Searching", running: "Running", paused: "Paused", waiting_for_user: "Your turn", awaiting_human: "Prepared — finish on the official site", stopped_before_commitment: "Stopped before commitment", completed: "Done", failed: "Failed", cancelled: "Cancelled" };
     const session = new URLSearchParams(location.search).get("session");
     async function refresh() {
       const response = await fetch(`/api/live/${encodeURIComponent(session)}`);
@@ -26,7 +26,7 @@
       document.getElementById("label").textContent = live.label;
       document.getElementById("status").textContent = STATUS[live.step.status] || live.step.status;
       document.getElementById("url").textContent = live.step.data.current_url || "about:blank";
-      document.getElementById("action").textContent = live.step.data.last_action || "En attente de l'agent…";
+      document.getElementById("action").textContent = live.step.data.last_action || "Waiting for the agent…";
       const list = document.getElementById("history");
       list.replaceChildren(...live.history.map((event) => {
         const item = document.createElement("li");
