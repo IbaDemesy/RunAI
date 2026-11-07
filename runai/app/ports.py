@@ -5,12 +5,20 @@ ces Protocols pour être branchées dans `MissionService` à la place des fakes.
 """
 
 from collections.abc import Awaitable, Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from runai.app.tasks import TripBrief
+    from runai.search.logistics_sweep import LogisticsSweep
 
 from runai.models import Race, RunnerProfile, StepKind, StepResult, TraceEvent
 
 EventSink = Callable[[TraceEvent], None]
 AskUser = Callable[[str, list[str]], Awaitable[str]]
+
+
+class LogisticsSweeper(Protocol):
+    async def sweep(self, race: Race, brief: "TripBrief", timeout_s: float = 15) -> "LogisticsSweep": ...
 
 
 class RaceSearch(Protocol):

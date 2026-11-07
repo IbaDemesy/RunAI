@@ -19,6 +19,7 @@ from runai.contracts.common import DataMode, Limitation
 from runai.contracts.journey import Budget
 from runai.models import AgentQuestion, Race, StepKind, StepResult, utcnow
 from runai.redaction import redact_secrets
+from runai.search.logistics_sweep import LogisticsSweep
 
 EVENTS_SCHEMA_VERSION = "events.v1"
 MISSION_SCHEMA_VERSION = "mission.v2"
@@ -127,6 +128,7 @@ MissionStatusV2 = Literal[
 
 
 class MissionSnapshot(BaseModel):
+    linkup: LogisticsSweep | None = None
     schema_version: Literal["mission.v2"] = MISSION_SCHEMA_VERSION
     mission_id: str
     framing_id: str

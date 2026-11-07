@@ -14,7 +14,13 @@ from typing import Any
 from pydantic import BaseModel, Field, HttpUrl
 
 from runai.app.mission_journey import project_journey
-from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
+from runai.app.ports import (
+    AgentRun,
+    BrowserAgents,
+    LogisticsSweeper,
+    RaceSearch,
+    Transcriber,
+)
 from runai.app.providers import UnavailableBrowserAgents
 from runai.app.tasks import (
     STEP_LABELS,
@@ -41,6 +47,8 @@ from runai.models import (
 from runai.planning.recap_adapter import recap_from_journey
 from runai.redaction import redact_secrets
 from runai.safety import detect_stop_point, guard_task
+from runai.search.checks import host_of
+from runai.search.logistics_sweep import LogisticsSweep
 from runai.tracing import TraceWriter
 
 logger = logging.getLogger(__name__)
@@ -68,6 +76,7 @@ QUESTION_TIMEOUT_ANSWER = "Pas de réponse de l'utilisateur : arrête-toi ici et
 
 
 class Mission(BaseModel):
+    linkup: LogisticsSweep | None = None
     id: str
     query: str
     status: MissionStatus = MissionStatus.searching
@@ -124,8 +133,10 @@ class MissionService:
         max_concurrency: int | None = 3,
         simulated: bool = False,
         question_timeout_s: float | None = None,
+        sweeper: LogisticsSweeper | None = None,
     ):
         self.search = search
+        self.sweeper = sweeper
         self.agents = agents
         self.transcriber = transcriber
         self.profile = profile or RunnerProfile()
@@ -209,6 +220,7 @@ class MissionService:
             framing_revision=plan.revision, mode=plan.mode,
             status=mission.status.value, sequence=len(mission.envelopes),
             race=mission.race, steps=self._snapshot_steps(mission),
+            linkup=mission.linkup,
             questions=[q for q in self.questions.questions.values() if q.mission_id == mission.id],
             limitations=mission.limitations, error=mission.error,
             journey_revision=mission.journey.revision if mission.journey else None,
@@ -565,6 +577,28 @@ class MissionService:
 
     async def _run_mission(self, mission: Mission) -> None:
         mission.status = MissionStatus.running
+        if self.sweeper is not None and mission.plan.mode is DataMode.live:
+            try:
+                sweep = await asyncio.wait_for(
+                    self.sweeper.sweep(mission.race, mission.plan.brief, timeout_s=15), 15.1
+                )
+                mission.linkup = sweep
+                self._record(mission, TraceEvent(
+                    source="linkup", type="linkup_sweep",
+                    message=f"Linkup: {len(sweep.hotels)} hotels, {len(sweep.transport_operators)} operators in {sweep.latency_s:.1f} s",
+                    data=sweep.model_dump(mode="json"),
+                ))
+                registration = mission.plan.steps[StepKind.registration]
+                if sweep.race_form_url and host_of(sweep.race_form_url) == host_of(registration.start_url):
+                    registration.start_url = str(sweep.race_form_url)
+                if not sweep.calls:
+                    mission.limitations.append(Limitation(
+                        code="linkup_sweep_unavailable", message="Linkup logistics sweep timed out."
+                    ))
+            except Exception:  # noqa: BLE001 - optional discovery must never block agents
+                mission.limitations.append(Limitation(
+                    code="linkup_sweep_unavailable", message="Linkup logistics sweep unavailable."
+                ))
         await asyncio.gather(*(self._run_step(mission, kind) for kind in mission.plan.automated_steps()))
         if mission.status is MissionStatus.cancelled:
             return

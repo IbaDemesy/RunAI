@@ -38,6 +38,8 @@ from runai.models import StepKind
 from runai.planning import recap_adapter
 from runai.redaction import redact_secrets
 from runai.search.candidates import LinkupCandidateSearch
+from runai.search.linkup_search import default_client
+from runai.search.logistics_sweep import LinkupLogisticsSweeper
 
 STATIC_DIR = Path(__file__).parent / "static"
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -70,6 +72,9 @@ def build_service(mode: DataMode | None = None, delay: float | None = None) -> M
         # Agents simulés : aucun slot H à partager, les missions ne s'attendent pas.
         max_concurrency=None if providers.simulated else settings.h_max_concurrency,
         simulated=providers.simulated, question_timeout_s=timeout,
+        sweeper=LinkupLogisticsSweeper(default_client())
+        if providers.mode is DataMode.live and providers.health["linkup"].status is ProviderStatus.ok
+        else None,
     )
     service.providers = providers
     return service

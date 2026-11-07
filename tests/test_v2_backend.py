@@ -56,6 +56,66 @@ def finish(client, mid):
     pytest.fail("Mission non terminée")
 
 
+@pytest.mark.parametrize("live", [True, False])
+def test_linkup_snapshot_and_stream(tmp_path, live):
+    from runai.app.candidates import FixtureCandidateSearch
+    from runai.app.fakes import DEMO_RACES
+    from runai.search.logistics_sweep import LogisticsSweep
+
+    class Sweeper:
+        async def sweep(self, race, brief, timeout_s=15):
+            from urllib.parse import urlsplit
+
+            host = urlsplit(str(race.registration_url)).netloc
+            return LogisticsSweep(calls=2, latency_s=1.25,
+                                  race_form_url=f"https://{host}/specific-race-form")
+
+    service = build_demo_service(delay=0)
+    service.traces_dir = tmp_path
+    if live:
+        service.providers.mode = DataMode.live
+        service.simulated = False
+        service.sweeper = Sweeper()
+    app = create_app(service)
+    if live:
+        app.state.framing.search = FixtureCandidateSearch(list(DEMO_RACES.values()), DataMode.demo)
+    with TestClient(app) as client:
+        session = prepare(client, "Tokyo")
+        mid = confirm(client, session).json()["mission_id"]
+        snapshot = finish(client, mid)
+        stream = client.get(f"/api/missions/{mid}/events").text
+        if live:
+            assert snapshot["linkup"]["calls"] == 2
+            assert service.get(mid).plan.steps[next(iter(service.get(mid).plan.steps))].start_url.endswith("/specific-race-form")
+            assert '"type":"linkup_sweep"' in stream
+        else:
+            assert snapshot["linkup"] is None
+            assert service.sweeper is None
+            assert '"type":"linkup_sweep"' not in stream
+
+
+def test_linkup_failure_does_not_fail_mission(tmp_path):
+    from runai.app.candidates import FixtureCandidateSearch
+    from runai.app.fakes import DEMO_RACES
+
+    class Sweeper:
+        async def sweep(self, race, brief, timeout_s=15):
+            raise RuntimeError("Search unavailable")
+
+    service = build_demo_service(delay=0)
+    service.traces_dir = tmp_path
+    service.providers.mode = DataMode.live
+    service.sweeper = Sweeper()
+    app = create_app(service)
+    app.state.framing.search = FixtureCandidateSearch(list(DEMO_RACES.values()), DataMode.demo)
+    with TestClient(app) as client:
+        mid = confirm(client, prepare(client, "Tokyo")).json()["mission_id"]
+        snapshot = finish(client, mid)
+        assert snapshot["status"] != "failed"
+        assert snapshot["linkup"] is None
+        assert "linkup_sweep_unavailable" in {item["code"] for item in snapshot["limitations"]}
+
+
 @pytest.mark.parametrize(("city", "channel"), [("Milan", "text"), ("Tokyo", "voice")])
 def test_confirmed_demo_mission_is_idempotent_and_sse_resumes(tmp_path, city, channel):
     service = build_demo_service(delay=0)
