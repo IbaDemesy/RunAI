@@ -123,8 +123,14 @@ def test_reproduces_fixture_structure(build, fixture):
     plan, ref = build(), JourneyPlan.model_validate(load_fixture(fixture))
     JourneyPlan.model_validate(plan.model_dump(mode="json"))
     assert [c.id for c in plan.chapters] == list(ChapterId)
-    assert sorted(kinds(plan)) == sorted(kinds(ref))
-    assert chapter_stop_kinds(plan) == chapter_stop_kinds(ref)
+    assert set(kinds(plan)) == set(kinds(ref))
+    actual_chapters, fixture_chapters = chapter_stop_kinds(plan), chapter_stop_kinds(ref)
+    for cid in ChapterId:
+        if cid is ChapterId.return_trip:
+            assert set(fixture_chapters[cid]) <= set(actual_chapters[cid])
+            assert "home" in actual_chapters[cid]
+        else:
+            assert actual_chapters[cid] == fixture_chapters[cid]
     assert {s.mode for s in plan.segments} - {s.mode for s in ref.segments} == set()
     assert plan.timezone == ref.timezone
     assert plan.budget.complete is False  # transports locaux non estimés
@@ -185,7 +191,7 @@ def test_arrival_after_start_and_bib_missed_are_flagged():
     ok = build_journey_plan(s, inputs.model_copy(update={"race": race}), mission_id="m", mode=DataMode.demo)
     assert not {"arrival_after_start", "bib_pickup_missed"} & {lim.code for lim in ok.limitations}
     bib = next(st for st in ok.stops if st.id == "bib")
-    assert bib.local_time.date() == date(2027, 10, 16)
+    assert bib.local_time is None  # Published opening windows are not a chosen visit appointment.
 
 
 def test_bib_closing_time_without_rules():
@@ -278,3 +284,107 @@ def test_live_plan_rejects_fixture_data_and_keeps_sources():
     live = build_journey_plan(s, train_inputs(prov=LINKUP), mission_id="m", mode=DataMode.live)
     assert live.sources == [LINKUP]
     assert not any("démonstration" in w for w in live.warnings)
+
+
+@pytest.mark.parametrize("raw", ["12 rue de la Roquette", "12 rue de la Roquette 75011 Paris",
+                                "Rue de la Roquette", "東京都新宿区西新宿2-8-1"])
+def test_unseparated_private_address_is_not_public(raw):
+    assert public_origin(raw) == "Origine non précisée"
+
+
+def test_return_is_door_to_door_with_its_own_stops_and_times():
+    inputs = train_inputs()
+    plan = train_plan()
+    segments = {s.id: s for s in plan.segments}
+    stops = {s.id: s for s in plan.stops}
+    back = segments["s-main-back"]
+    assert stops[back.from_stop_id].local_time == inputs.return_trip.depart
+    assert stops[back.to_stop_id].local_time == inputs.return_trip.arrive
+    assert any(s.from_stop_id == "hotel" and s.to_stop_id == back.from_stop_id for s in plan.segments)
+    assert any(s.from_stop_id == back.to_stop_id and s.to_stop_id == "home" for s in plan.segments)
+    chapter = next(c for c in plan.chapters if c.id is ChapterId.return_trip)
+    assert len(chapter.segment_ids) == 3
+
+
+@pytest.mark.parametrize("return_mode,expected", [("flight", "flight"), ("bus", "local")])
+def test_return_mode_is_not_copied_from_outbound(return_mode, expected):
+    inputs = train_inputs()
+    inputs.return_trip.mode = return_mode
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    back = next(seg for seg in plan.segments if seg.id == "s-main-back")
+    assert back.mode.value == expected
+    if return_mode == "bus":
+        assert back.limitation.code == "transport_not_covered"
+        assert back.automation is not Automation.automated
+
+
+def test_bib_deadline_is_not_a_visit_appointment():
+    inputs = train_inputs()
+    inputs.race.bib_pickup_closes = at("Europe/Amsterdam", 2027, 10, 16, 18)
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    assert next(stop for stop in plan.stops if stop.id == "bib").local_time is None
+    assert any("2027-10-16T18:00:00+02:00" in warning for warning in plan.warnings)
+
+
+def test_partial_transport_preserves_the_known_leg_in_total():
+    inputs = train_inputs()
+    inputs.return_trip.cost = None
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    assert plan.budget.known_total == 95 + 240 + 89
+    assert not plan.budget.complete and plan.budget.over_cap is None
+
+
+def test_duration_is_elapsed_time_across_dst_change():
+    inputs = train_inputs()
+    inputs.outbound.depart = at("Europe/Paris", 2027, 10, 31, 1, 30)
+    inputs.outbound.arrive = at("Europe/Paris", 2027, 10, 31, 3, 30)
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    assert next(seg for seg in plan.segments if seg.id == "s-main-out").duration_min == 180
+
+
+def test_live_rejects_fixture_rules_even_without_fixture_places():
+    inputs = train_inputs(prov=LINKUP)
+    inputs.race.rules = RaceRules(race_name="Fixture", origin="fixture", start_time=datetime(2000, 1, 1, 9).time())
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train")
+    with pytest.raises(ValueError, match="fixture"):
+        build_journey_plan(s, inputs, mission_id="m", mode=DataMode.live)
+
+
+def test_private_home_details_are_not_reexposed_by_sources_or_geometry():
+    inputs = train_inputs()
+    inputs.home.provenance = Provenance(kind="human", label="12 rue privée", url="https://maps.example/?q=12-rue-privee", collected_at=AT)
+    inputs.outbound.mode = "bus"
+    inputs.outbound.geometry = [(3.057312, 50.629234), (4.88, 52.36)]
+    inputs.outbound.geometry_verified = True
+    inputs.outbound.provenance = LINKUP
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "bus")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    dumped = plan.model_dump_json()
+    assert "privée" not in dumped and "privee" not in dumped and "3.057312" not in dumped
+    assert next(seg for seg in plan.segments if seg.id == "s-home-hotel").geometry_status is GeometryStatus.illustrative
+
+
+def test_unknown_start_does_not_invent_a_blocking_nine_oclock_departure():
+    inputs = train_inputs()
+    inputs.race.start_time = None
+    inputs.outbound.arrive = at("Europe/Amsterdam", 2027, 10, 17, 10)
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    assert next(stop for stop in plan.stops if stop.id == "start").local_time is None
+    assert "arrival_after_start" not in {lim.code for lim in plan.limitations}
+    assert "Heure de départ à confirmer." in plan.warnings
+
+
+def test_unsupported_outbound_cannot_claim_automation():
+    inputs = train_inputs()
+    inputs.outbound.mode = "bus"
+    inputs.outbound.automation = Automation.automated
+    s = summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "bus")
+    plan = build_journey_plan(s, inputs, mission_id="m", mode=DataMode.demo)
+    segment = next(seg for seg in plan.segments if seg.id == "s-home-hotel")
+    assert segment.automation is Automation.manual
+    assert segment.limitation.code == "transport_not_covered"

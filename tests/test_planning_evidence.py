@@ -114,3 +114,19 @@ def test_sheet_limitations():
     assert [limit.code for limit in limits] == ["missing_race_date", "issue_registration_url"]
     assert all(str(limit.manual_url) == "https://race.example/" for limit in limits)
     assert sheet_limitations(RaceSheet(query="Run")) == []
+
+
+def test_mutually_exclusive_entry_paths_are_not_summed_without_human_choice():
+    regulation = RaceRules(race_name="Run", entry_paths=[
+        EntryPath(id="licensed", label="Licence", requirements=[
+            Requirement(kind="license", label="Licence", cost_eur=0)]),
+        EntryPath(id="visitor", label="Visiteur", requirements=[
+            Requirement(kind="runcard", label="Carte", cost_eur=15)]),
+    ])
+    lines = rules_cost_lines(regulation, now=NOW)
+    assert all(line.money is None for line in lines)
+    assert all("choisir" in line.note for line in lines)
+    selected = rules_cost_lines(regulation, entry_path_id="visitor", now=NOW)
+    assert len(selected) == 1 and selected[0].money.amount == 15
+    with pytest.raises(ValueError, match="inconnue"):
+        rules_cost_lines(regulation, entry_path_id="invented", now=NOW)

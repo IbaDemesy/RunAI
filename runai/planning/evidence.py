@@ -52,17 +52,23 @@ def quote_cost_lines(devis: Devis, options_choisies: Iterable[str] = (), *,
     return result
 
 
-def _requirements(rules: RaceRules):
+def _requirements(rules: RaceRules, entry_path_id: str | None = None):
     for path in rules.entry_paths:
+        if entry_path_id is not None and path.id != entry_path_id:
+            continue
         for i, requirement in enumerate(path.requirements):
             source = requirement.source or path.source or rules.field_sources.get("entry_paths")
             yield f"requirement-{path.id}-{i}", requirement, source
 
 
-def rules_cost_lines(rules: RaceRules, *, now: datetime | None = None) -> list[CostLine]:
+def rules_cost_lines(rules: RaceRules, *, entry_path_id: str | None = None,
+                     now: datetime | None = None) -> list[CostLine]:
+    if entry_path_id is not None and not any(path.id == entry_path_id for path in rules.entry_paths):
+        raise ValueError(f"Voie d'inscription inconnue : {entry_path_id}")
     at = now or utcnow()
     out = []
-    for identifier, requirement, source in _requirements(rules):
+    unchosen = entry_path_id is None and len(rules.entry_paths) > 1
+    for identifier, requirement, source in _requirements(rules, entry_path_id):
         provenance = Provenance(
             kind=ProvenanceKind.fixture if rules.origin == "fixture" else ProvenanceKind.linkup,
             url=source.url if source else rules.regulation_url,
@@ -72,8 +78,10 @@ def rules_cost_lines(rules: RaceRules, *, now: datetime | None = None) -> list[C
             id=identifier, category=CostCategory.other, label=requirement.label,
             money=Money(amount=requirement.cost_eur, currency="EUR", collected_at=at,
                         provenance=provenance, confidence=Confidence.estimated)
-            if requirement.cost_eur is not None else None,
-            note=requirement.detail if requirement.cost_eur is not None else "Coût non publié, à confirmer.",
+            if requirement.cost_eur is not None and not unchosen else None,
+            note=(f"Voie à choisir par l'humain ; coût publié : {requirement.cost_eur} EUR."
+                  if unchosen and requirement.cost_eur is not None else "Voie à choisir par l'humain."
+                  if unchosen else requirement.detail if requirement.cost_eur is not None else "Coût non publié, à confirmer."),
         ))
     return out
 

@@ -129,3 +129,16 @@ def test_invalid_provider_payload():
     client.search = lambda **kwargs: {"unexpected": []}
     with pytest.raises(CandidateSearchError):
         asyncio.run(LinkupCandidateSearch(client).search(slots(city="Tokyo")))
+
+
+def test_same_name_and_date_in_different_cities_are_distinct_choices():
+    client = FakeClient([row(city="Springfield", country="US"), row(city="Springfield", country="AU"),
+                         row(city="Sydney", country="AU")])
+    result = asyncio.run(LinkupCandidateSearch(client).find_candidates(slots(race="City Run")))
+    assert len(result) == len({r.id for r in result}) == 3
+
+
+@pytest.mark.parametrize("distances", [[-1], [0], [float("nan")], [float("inf")]])
+def test_invalid_distances_do_not_become_sourced_candidates(distances):
+    client = FakeClient([row(distances_km=distances)])
+    assert asyncio.run(LinkupCandidateSearch(client).find_candidates(slots(city="Tokyo"))) == []

@@ -4,7 +4,7 @@ import asyncio
 import hashlib
 import json
 from datetime import date
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, HttpUrl, ValidationError
 
@@ -30,7 +30,7 @@ class _Candidate(BaseModel):
     city: str = ""
     country: str = ""
     race_date: str | None = None
-    distances_km: list[float] = Field(default_factory=list)
+    distances_km: list[Annotated[float, Field(gt=0, allow_inf_nan=False)]] = Field(default_factory=list)
     official_url: HttpUrl | None = None
     registration_url: HttpUrl | None = None
     source_url: HttpUrl | None = None
@@ -144,7 +144,8 @@ class LinkupCandidateSearch:
                 limits.append(Limitation(code="registration_url_unverified", step="registration",
                                          message="Lien d'inscription non officiel : vérification humaine requise.",
                                          manual_url=official))
-            key = norm_name(row.name) + ":" + (when.isoformat() if when else "unknown")
+            key = json.dumps([norm_name(row.name), norm_name(row.city), norm_name(row.country),
+                              when.isoformat() if when else "unknown"])
             candidate = RaceCandidate(
                 id="race-" + hashlib.sha256(key.encode()).hexdigest()[:20], name=row.name,
                 city=row.city, country=row.country, race_date=when, distances_km=row.distances_km,
