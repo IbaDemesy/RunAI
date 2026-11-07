@@ -75,6 +75,7 @@ def test_scope_drives_generic_tasks():
         medical="certificat",
     )
     query = scope.query()
+    assert "certificat" in query and "certificat" not in scope.search_query()
     registration = build_task(
         StepKind.registration, race, RunnerProfile(), query=query, scope=scope
     )

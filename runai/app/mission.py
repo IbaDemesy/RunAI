@@ -406,7 +406,9 @@ class MissionService:
 
     async def _run_mission(self, mission: Mission) -> None:
         try:
-            mission.race = await self.search.find_race(mission.query)
+            mission.race = await self.search.find_race(
+                mission.scope.search_query() if mission.scope else mission.query
+            )
         except Exception as error:  # noqa: BLE001 - toute erreur de brique doit remonter au portail
             mission.status = MissionStatus.failed
             mission.error = f"Recherche impossible : {error}"

@@ -62,6 +62,9 @@ class Scope(BaseModel):
             return value or None
         return value
 
+    def search_query(self) -> str:
+        return self.model_copy(update={"medical": None}).query()
+
     def query(self) -> str:
         parts = [self.race.rstrip(".")]
         if self.departure_city:
