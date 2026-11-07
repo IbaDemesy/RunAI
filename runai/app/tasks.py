@@ -37,7 +37,9 @@ STOP_RULES = (
     "« BLOCAGE CAPTCHA/ANTI-BOT », avec l'URL et l'étape atteintes."
 )
 _AMOUNT = r"(?:\d{1,3}(?:[ .]\d{3})+|\d+)(?:[,.]\d{1,2})?"
-_CURRENCY_AMOUNT = re.compile(rf"(?P<amount>{_AMOUNT})\s*(?:€|EUR|euros?)", re.IGNORECASE)
+_CURRENCY_AMOUNT = re.compile(
+    rf"(?P<amount>{_AMOUNT})\s*(?:€|EUR|euros?)", re.IGNORECASE
+)
 _BUDGET_AMOUNT = re.compile(
     rf"(?:budget(?:\s+max(?:imum)?)?|max(?:imum)?)\D{{0,24}}(?P<amount>{_AMOUNT})",
     re.IGNORECASE,
@@ -97,13 +99,36 @@ def _profile_lines(profile: RunnerProfile) -> str:
 
 
 _MONTHS = (
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
 )
 
 
 def _fr_date(day: date) -> str:
     return f"{day.day} {_MONTHS[day.month - 1]} {day.year}"
+
+
+DEPARTURE = re.compile(
+    r"\b(?:je pars d[e']|je partirai d[e']|départ d[e']|au départ d[e']|depuis)\s*"
+    r"(?P<city>[^,.;!?\n]{2,40}?)"
+    r"(?=\s+(?:et|avec|pour|en|le|la|les|mais|ou|à|au|vers|demain|ce|cette)\b|\s*[,.;!?\n]|\s*$)",
+    re.IGNORECASE,
+)
+
+
+def extract_departure_city(text: str) -> str | None:
+    match = DEPARTURE.search(text)
+    return match.group("city").strip() if match else None
 
 
 def stay_dates(race: Race) -> tuple[date, date] | None:
@@ -189,7 +214,11 @@ def build_task(
             f"{ASK_USER_RULES} {STOP_RULES}"
         )
     elif kind is StepKind.transport:
-        origin = scope.departure_city if scope and scope.departure_city else profile.city
+        origin = (
+            (scope.departure_city if scope else None)
+            or extract_departure_city(query)
+            or profile.city
+        )
         when = (
             f"aller le {_fr_date(dates[0])} et retour le {_fr_date(dates[1])}"
             if dates

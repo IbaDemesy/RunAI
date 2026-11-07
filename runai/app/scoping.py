@@ -9,6 +9,7 @@ from typing import Literal, Protocol
 import httpx
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from runai.app.tasks import DEPARTURE as _DEPARTURE
 from runai.app.tasks import extract_budget_per_night
 
 MAX_QUESTIONS = 3
@@ -153,10 +154,6 @@ class HoloScoper:
         return parse_turn(content)
 
 
-_DEPARTURE = re.compile(
-    r"\b(?:je pars d[e']|je partirai d[e']|départ d[e']|au départ d[e']|depuis)\s*(?P<city>[^,.;!?\n]{2,40})",
-    re.IGNORECASE,
-)
 _TRAVEL_TIME = re.compile(r"\b(?:le )?(?:matin|après-midi|soir)\b", re.IGNORECASE)
 _LAUNCH = re.compile(r"^\s*(?:go|lance|vas[- ]?y|c'est bon|ok)\b", re.IGNORECASE)
 _FAKE_QUESTIONS = (

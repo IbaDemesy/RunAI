@@ -127,3 +127,25 @@ def test_scope_endpoint_then_launch(client):
     assert mission["scope"]["budget_per_night"] == 150
     assert "Budget hôtel max 150 € par nuit" in mission["query"]
     assert client.post("/api/scope", json={"messages": []}).status_code == 422
+
+
+@pytest.mark.anyio
+async def test_fake_scoper_keeps_only_the_city_as_departure():
+    turn = await FakeScoper(delay=0).next_turn(
+        _messages(
+            ("user", "Marathon de Milan, je pars de Lyon et je veux partir le matin")
+        )
+    )
+    assert turn.scope.departure_city == "Lyon"
+    assert turn.scope.travel_time == "le matin"
+
+
+def test_transport_departs_from_the_city_in_an_unscoped_query():
+    race = Race(name="Marathon de Milan", city="Milan", country="IT")
+    task = build_task(
+        StepKind.transport,
+        race,
+        RunnerProfile(),
+        query="Marathon de Milan, je pars de Lyon",
+    )
+    assert "Lyon" in task
