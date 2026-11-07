@@ -58,7 +58,10 @@ def test_confirmation_once_and_cancelled_or_stale_never_launch(city, channel):
 
         session = await engine.create(
             FramingCreate(
-                text=f"Une course à {city} depuis Lyon, 800 euros, 2 nuits, en avion",
+                text=(
+                    f"Une course à {city}, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, en avion"
+                ),
                 channel=channel,
             )
         )

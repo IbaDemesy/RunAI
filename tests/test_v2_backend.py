@@ -10,7 +10,14 @@ from runai.search.candidates import CandidateSearchError
 
 
 def prepare(client, city, *, channel="text", nights=2):
-    response = client.post("/api/framings", json={"text": f"une course à {city}", "channel": channel})
+    distance = "42.195 km" if city == "Milan" else "10 km"
+    period = "avril 2027" if city == "Milan" else "juin 2028"
+    mode = "train" if city == "Milan" else "avion"
+    text = (
+        f"une course à {city}, {distance} en {period}, depuis Lyon, "
+        f"900 euros, {nights} nuits, {mode}"
+    )
+    response = client.post("/api/framings", json={"text": text, "channel": channel})
     assert response.status_code == 201
     session = response.json()
     assert session["status"] == "choosing_candidate"
@@ -91,7 +98,12 @@ def test_unknown_demo_city_has_no_invented_candidate_or_launch(tmp_path):
     service = build_demo_service(delay=0)
     service.traces_dir = tmp_path
     with TestClient(create_app(service)) as client:
-        session = client.post("/api/framings", json={"text": "une course à Nairobi"}).json()
+        session = client.post("/api/framings", json={
+            "text": (
+                "une course à Nairobi, 10 km en octobre 2028, depuis Mombasa, "
+                "900 euros, 2 nuits, bus"
+            )
+        }).json()
         assert session["candidates"] == []
         assert any(l["code"] == "fixture_missing" and "cette ville" in l["message"] for l in session["limitations"])
         assert confirm(client, session).status_code == 409
@@ -119,7 +131,12 @@ def test_live_missing_keys_and_linkup_failure_are_honest(monkeypatch, tmp_path):
         health = client.get("/api/health").json()
         assert health["mode"] == "live" and not health["simulated"]
         assert set(health["providers"].values()) == {"missing_key"}
-        session = client.post("/api/framings", json={"text": "une course à Tokyo"}).json()
+        session = client.post("/api/framings", json={
+            "text": (
+                "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                "900 euros, 2 nuits, train"
+            )
+        }).json()
         assert session["candidates"] == []
         assert any(l["code"] == "candidate_provider_error" for l in session["limitations"])
         assert client.post("/api/transcribe", content=b"audio").status_code == 503
@@ -133,7 +150,12 @@ def test_live_missing_keys_and_linkup_failure_are_honest(monkeypatch, tmp_path):
                 raise CandidateSearchError(f"Linkup indisponible : {secret}")
 
         app.state.framing.search = BrokenSearch()
-        broken = client.post("/api/framings", json={"text": "une course à Chicago"}).json()
+        broken = client.post("/api/framings", json={
+            "text": (
+                "une course à Chicago, 10 km en juin 2028, depuis Lyon, "
+                "900 euros, 2 nuits, train"
+            )
+        }).json()
         assert any(l["message"] == "Linkup indisponible : [REDACTED]" for l in broken["limitations"])
         assert secret not in json.dumps(broken)
 
@@ -226,9 +248,19 @@ def test_replay_candidates_only_match_trace_and_keep_replay_provenance(tmp_path,
     monkeypatch.setenv("RUNAI_REPLAY_TRACE", str(trace))
     service = build_service(mode=DataMode.replay, delay=0)
     with TestClient(create_app(service)) as client:
-        session = client.post("/api/framings", json={"text": "une course à Tokyo"}).json()
+        session = client.post("/api/framings", json={
+            "text": (
+                "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                "900 euros, 2 nuits, train"
+            )
+        }).json()
         assert session["candidates"][0]["provenance"]["kind"] == "replay"
-        other = client.post("/api/framings", json={"text": "une course à Milan"}).json()
+        other = client.post("/api/framings", json={
+            "text": (
+                "une course à Milan, 42.195 km en avril 2027, depuis Lyon, "
+                "900 euros, 2 nuits, train"
+            )
+        }).json()
         assert not other["candidates"]
 
 

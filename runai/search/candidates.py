@@ -89,8 +89,12 @@ def build_candidate_prompt(
     relaxed: bool = False,
     location_constraint: str | None = None,
 ) -> str:
-    known = {name.value: slots[name].value for name in SEARCH_SLOTS
-             if name in slots and slots[name].is_known and slots[name].value is not None}
+    known = {
+        "city_or_region_or_country" if name is SlotName.city else name.value:
+        slots[name].value
+        for name in SEARCH_SLOTS
+        if name in slots and slots[name].is_known and slots[name].value is not None
+    }
     prompt = (
         "Find running race candidates matching only these known constraints: "
         + json.dumps(known, ensure_ascii=False, default=str)

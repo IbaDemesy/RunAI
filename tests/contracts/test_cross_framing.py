@@ -60,7 +60,10 @@ def snapshot(session):
 async def prepared(engine, channel="text"):
     session = await engine.create(
         FramingCreate(
-            text="une course à Tokyo depuis Lyon, 800 euros, 2 nuits, en avion",
+            text=(
+                "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                "800 euros, 2 nuits, en avion"
+            ),
             channel=channel,
         )
     )
@@ -93,28 +96,30 @@ def test_discovery_accepts_unlisted_cities_without_guessing(city):
     async def run():
         search = Discovery()
         engine = FramingEngine(search, DataMode.demo)
-        session = await engine.create(FramingCreate(text=f"une course à {city}"))
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    f"une course à {city}, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, avion"
+                )
+            )
+        )
         assert search.cities == [city]
         assert session.status == FramingStatus.choosing_candidate
-        assert {k: s.value for k, s in session.slots.items() if s.is_known} == {
-            SlotName.city: city
-        }
+        assert session.slots[SlotName.city].value == city
+        assert session.slots[SlotName.distance_km].value == 10
+        assert session.slots[SlotName.origin].value == "Lyon"
+        assert session.slots[SlotName.budget].value == 800
+        assert session.slots[SlotName.nights].value == 2
+        assert session.slots[SlotName.transport_mode].value == "flight"
+        assert session.slots[SlotName.race].value is None
         assert session.summary is None and session.selected_candidate_id is None
         session = await engine.reply(
             session.id, FramingReply(revision=1, choice_id="event-1")
         )
         assert session.selected_candidate_id == "event-1"
-        asked = {s for q in session.open_questions for s in q.slots}
-        assert {
-            SlotName.origin,
-            SlotName.nights,
-            SlotName.budget,
-            SlotName.transport_mode,
-        } <= asked
-        assert (
-            not {SlotName.city, SlotName.race, SlotName.race_date, SlotName.distance_km}
-            & asked
-        )
+        assert session.status is FramingStatus.ready_to_confirm
+        assert session.summary.race.city == city
         session = await engine.reply(
             session.id, FramingReply(revision=2, corrections={SlotName.origin: "Lyon"})
         )
@@ -127,13 +132,43 @@ def test_discovery_accepts_unlisted_cities_without_guessing(city):
 
 def test_empty_discovery_asks_date_distance_and_origin():
     async def run():
-        session = await FramingEngine(Discovery(0)).create(
+        search = Discovery(0)
+        engine = FramingEngine(search)
+        session = await engine.create(
             FramingCreate(text="une course à Lisbonne")
         )
-        assert {SlotName.race_date, SlotName.distance_km, SlotName.origin} <= {
-            s for q in session.open_questions for s in q.slots
-        }
+        assert search.cities == []
+        assert [q.slots for q in session.open_questions] == [
+            [SlotName.distance_km],
+            [SlotName.date_window],
+            [SlotName.origin],
+            [SlotName.budget],
+            [SlotName.nights],
+            [SlotName.transport_mode],
+        ]
         assert session.slots[SlotName.origin].value is None
+        for answer in (
+            "10 km",
+            "juin 2028",
+            "Lyon",
+            "800 euros",
+            "2 nuits",
+            "avion",
+        ):
+            question = session.open_questions[0]
+            session = await engine.reply(
+                session.id,
+                FramingReply(
+                    revision=session.revision,
+                    question_id=question.id,
+                    text=answer,
+                ),
+            )
+        assert search.cities == ["Lisbonne"]
+        assert {s for q in session.open_questions for s in q.slots} == {
+            SlotName.race,
+            SlotName.race_date,
+        }
 
     asyncio.run(run())
 
@@ -145,7 +180,10 @@ def test_city_correction_invalidates_old_summary_and_candidate_question(channel)
         engine = FramingEngine(search, DataMode.demo)
         initial = await engine.create(
             FramingCreate(
-                text="une course à Tokyo depuis Lyon, 800 euros, 2 nuits, en avion",
+                text=(
+                    "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, en avion"
+                ),
                 channel=channel,
             )
         )
@@ -169,8 +207,9 @@ def test_city_correction_invalidates_old_summary_and_candidate_question(channel)
         assert all(c.city == "Nairobi" for c in corrected.candidates)
         for name in (SlotName.origin, SlotName.budget, SlotName.nights, SlotName.transport_mode):
             assert corrected.slots[name] == ready.slots[name]
-        for name in (SlotName.race, SlotName.race_date, SlotName.distance_km):
+        for name in (SlotName.race, SlotName.race_date):
             assert not corrected.slots[name].is_known
+        assert corrected.slots[SlotName.distance_km].value == 10
         with pytest.raises(FramingError, match="Question périmée"):
             await engine.reply(
                 ready.id,
@@ -303,7 +342,10 @@ def test_api_launch_is_explicit_and_conflicts_are_http_409():
         response = client.post(
             "/api/framings",
             json={
-                "text": "une course à Tokyo depuis Lyon, 800 euros, 2 nuits, en avion"
+                "text": (
+                    "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, en avion"
+                )
             },
         )
         assert response.status_code == 201

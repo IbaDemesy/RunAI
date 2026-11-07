@@ -31,7 +31,12 @@ class Search:
 def test_origin_is_public_before_storage_exposure_and_agent_task(origin, public):
     async def run():
         engine = FramingEngine(Search(), DataMode.demo)
-        session = await engine.create(FramingCreate(text="course à Rome depuis Lyon, 800 euros, 2 nuits, en train"))
+        session = await engine.create(FramingCreate(
+            text=(
+                "course à Rome, 10 km en juin 2028, depuis Lyon, "
+                "800 euros, 2 nuits, en train"
+            )
+        ))
         session = await engine.reply(session.id, FramingReply(revision=session.revision, choice_id="race"))
         session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={"origin": origin}))
         assert session.slots[SlotName.origin].value == public
@@ -53,7 +58,12 @@ def test_origin_is_public_before_storage_exposure_and_agent_task(origin, public)
 def test_dated_candidate_button_label_is_not_a_date_correction():
     async def run():
         engine = FramingEngine(Search(), DataMode.demo)
-        session = await engine.create(FramingCreate(text="course à Rome depuis Lyon, 800 euros, 2 nuits, en train"))
+        session = await engine.create(FramingCreate(
+            text=(
+                "course à Rome, 10 km en juin 2028, depuis Lyon, "
+                "800 euros, 2 nuits, en train"
+            )
+        ))
         question = session.open_questions[0]
         choice = question.choices[0]
         session = await engine.reply(session.id, FramingReply(
@@ -82,7 +92,6 @@ def test_candidate_without_city_keeps_city_unknown_and_requests_it(city):
         assert session.summary is None
         question = next(q for q in session.open_questions if SlotName.city in q.slots)
         session = await engine.reply(session.id, FramingReply(revision=session.revision, question_id=question.id, text="Rome"))
-        session = await engine.reply(session.id, FramingReply(revision=session.revision, choice_id="race"))
         assert session.summary.race.city == "Rome"
         session.status = FramingStatus.confirmed
         session.confirmed_revision = session.revision

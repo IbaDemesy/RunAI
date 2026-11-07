@@ -45,27 +45,20 @@ def test_rounded_official_distance_is_selectable_until_summary():
     async def run():
         engine = FramingEngine(Search(), DataMode.demo)
         session = await engine.create(
-            FramingCreate(text="un semi-marathon à Lisbonne édition 2027")
+            FramingCreate(
+                text=(
+                    "un semi-marathon à Lisbonne en mars 2027 depuis Nantes, "
+                    "500 euros, 2 nuits, train"
+                )
+            )
         )
         assert session.slots[SlotName.city].value == "Lisbonne"
         assert session.slots[SlotName.distance_km].value == 21.0975
         session = await engine.reply(
             session.id, FramingReply(revision=session.revision, choice_id="edp")
         )
-        assert session.selected_candidate_id == "edp" and session.open_questions
-        session = await engine.reply(
-            session.id,
-            FramingReply(
-                revision=session.revision,
-                corrections={
-                    SlotName.origin: "Nantes",
-                    SlotName.budget: 500,
-                    SlotName.nights: 2,
-                    SlotName.transport_mode: "train",
-                },
-            ),
-        )
-        assert session.status == FramingStatus.ready_to_confirm, session.open_questions
+        assert session.selected_candidate_id == "edp"
+        assert session.status == FramingStatus.ready_to_confirm
         assert session.summary.race.distance_km == 21.097
         assert session.summary.race.name == "EDP Lisbon Half Marathon"
 

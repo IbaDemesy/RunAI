@@ -151,7 +151,13 @@ class LegacyCandidateSearch:
 async def test_engine_does_not_pass_request_text_to_legacy_finders():
     engine = FramingEngine(LegacyCandidateSearch(), DataMode.demo)
     session = await engine.create(
-        FramingCreate(text="une course à Milan", channel="text")
+        FramingCreate(
+            text=(
+                "une course à Milan, 42.195 km en avril 2027, depuis Lyon, "
+                "300 euros, 2 nuits, train"
+            ),
+            channel="text",
+        )
     )
     assert not session.candidates
 
@@ -160,7 +166,15 @@ async def test_engine_does_not_pass_request_text_to_legacy_finders():
 async def test_candidate_question_is_announced_plainly_not_rephrased():
     phraser = Recorder()
     engine = FramingEngine(TwoCandidates(), DataMode.demo, phraser=phraser)
-    session = await engine.create(FramingCreate(text="une course à Milan", channel="text"))
+    session = await engine.create(
+        FramingCreate(
+            text=(
+                "une course à Milan, 42.195 km en avril 2027, depuis Lyon, "
+                "300 euros, 2 nuits, train"
+            ),
+            channel="text",
+        )
+    )
     if not session.candidates:
         pytest.skip("aucun candidat de démonstration pour Milan")
     assert session.turns[-1].role == "assistant"

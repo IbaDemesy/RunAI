@@ -47,12 +47,18 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
         result[SlotName.race] = named_race[0].strip(" ,;.!?")
     else:
         named_race = re.search(
-            r"\b(?!(?i:trail|run|marathon|semi)(?:-marathon)?\b)"
-            r"[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*?(?i:trail|run|marathon)[\wÀ-ž'’\-]*"
-            r"(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*"
+            r"\bMarathon\s+de\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*"
             + boundary,
             text,
         )
+        if not named_race:
+            named_race = re.search(
+                r"\b(?!(?i:trail|run|marathon|semi)(?:-marathon)?\b)"
+                r"[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*?(?i:trail|run|marathon)[\wÀ-ž'’\-]*"
+                r"(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*"
+                + boundary,
+                text,
+            )
         if named_race:
             result[SlotName.race] = named_race[0].strip(" ,;.!?")
     distance = re.search(r"\b(\d+(?:[.,]\d+)?)\s*km\b", text, re.IGNORECASE)
