@@ -113,6 +113,8 @@ class RealAgentRun:
             result.price_eur = None
             if typed.get("currency") == "EUR":
                 result.price_eur = typed.get("total_price", typed.get("price"))
+                if self.kind is StepKind.registration and result.price_eur is not None:
+                    result.price_eur += typed.get("fees") or 0
             else:
                 result.data["price_currency"] = typed.get("currency")
             if answer.final_url:

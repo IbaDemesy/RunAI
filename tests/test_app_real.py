@@ -218,6 +218,23 @@ def test_real_agent_uses_typed_answer(screen, expected):
 
 
 @pytest.mark.parametrize("currency", ["USD", None, "EUR"])
+@pytest.mark.parametrize("fees", [None, 0, 5.5])
+def test_registration_price_includes_displayed_fees(currency, fees):
+    class Run:
+        id = "registration-fees"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.registration, status=StepStatus.completed,
+                data={"answer": {"stop_screen": "payment", "price": 50,
+                                 "currency": currency, "fees": fees}},
+            )
+
+    result = asyncio.run(RealAgentRun(Run(), StepKind.registration, lambda e: None, 10).wait())
+    assert result.price_eur == (50 + (fees or 0) if currency == "EUR" else None)
+
+
+@pytest.mark.parametrize("currency", ["USD", None, "EUR"])
 def test_typed_hotel_price_cannot_fall_back_to_summary(currency):
     class Run:
         id = "missing-price"
