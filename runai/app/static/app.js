@@ -336,23 +336,48 @@
       const details = el("details"); details.append(el("summary", "Détails techniques"), el("p", step.h_session_id || "Session non disponible")); content.append(details);
       let liveUrl;
       try { const url = new URL(step.live_view_url); if (url.protocol === "https:") liveUrl = url.href; } catch (_) { /* Pas de vue embarquée sans URL HTTPS. */ }
+      const observation = step.data?.browser_observation;
+      const hasCapture = Number.isInteger(observation?.revision) && observation.revision > 0;
+      const panelKey = active && liveUrl ? liveUrl : "captures";
       let panel = block.querySelector(".agent-live");
-      if (panel && (!active || panel.dataset.url !== liveUrl)) { panel.remove(); panel = null; block.dataset.expanded = "false"; }
-      if (active && liveUrl && !panel) {
-        panel = el("details", null, "agent-live"); panel.dataset.url = liveUrl;
-        panel.append(el("summary", "Computer use en direct · " + label(step.kind)));
+      if (panel && (!(hasCapture || active && liveUrl) || panel.dataset.url !== panelKey)) { panel.remove(); panel = null; block.dataset.expanded = "false"; }
+      if ((hasCapture || active && liveUrl) && !panel) {
+        panel = el("details", null, "agent-live"); panel.dataset.url = panelKey;
+        panel.append(el("summary", "Agent en direct · " + label(step.kind)));
         const enlarge = button("Agrandir", () => {
           const expanded = block.dataset.expanded !== "true";
           block.dataset.expanded = String(expanded); enlarge.textContent = expanded ? "Réduire" : "Agrandir";
         });
-        panel.append(enlarge, el("p", "Si la vue ne s’affiche pas, ouvrez-la dans un onglet. Elle expire à la fin de l’exécution."));
-        link(panel, liveUrl, "Ouvrir dans un onglet");
+        panel.append(enlarge, el("p", "", "agent-page"), el("div", null, "agent-page-url"), el("p", "", "agent-capture-status"));
+        if (active && liveUrl) {
+          panel.append(el("p", "Si la vue ne s’affiche pas, ouvrez-la dans un onglet. Elle expire à la fin de l’exécution."));
+          link(panel, liveUrl, "Ouvrir dans un onglet");
+        }
         panel.ontoggle = () => {
-          if (!panel.open || panel.querySelector("iframe")) return;
-          const frame = el("iframe"); frame.src = liveUrl; frame.title = "Vue en direct de l’agent · " + label(step.kind);
-          frame.setAttribute("sandbox", "allow-scripts allow-same-origin"); frame.setAttribute("referrerpolicy", "no-referrer"); panel.append(frame);
+          if (!panel.open) return;
+          if (panel.dataset.screenshot && !panel.querySelector("img")) {
+            const image = el("img"); image.alt = "Dernière capture du navigateur H · " + label(step.kind);
+            image.onerror = () => { image.hidden = true; panel.querySelector(".agent-capture-status").textContent = "Capture indisponible. Attendez la prochaine observation ou ouvrez Replay H."; };
+            image.onload = () => { image.hidden = false; };
+            image.src = panel.dataset.screenshot; panel.append(image);
+          }
+          if (active && liveUrl && !panel.querySelector("iframe")) {
+            const frame = el("iframe"); frame.src = liveUrl; frame.title = "Vue en direct de l’agent · " + label(step.kind);
+            frame.setAttribute("sandbox", "allow-scripts allow-same-origin"); frame.setAttribute("referrerpolicy", "no-referrer"); panel.append(frame);
+          }
         };
         block.append(panel);
+      }
+      if (panel && hasCapture) {
+        panel.querySelector(".agent-page").textContent = observation.title || "Titre de page non renseigné";
+        const pageUrl = panel.querySelector(".agent-page-url"); pageUrl.replaceChildren(); link(pageUrl, observation.url, observation.url);
+        const source = "/api/missions/" + encodeURIComponent(mission.mission_id) + "/steps/" + encodeURIComponent(step.kind) + "/screenshot?v=" + observation.revision;
+        if (panel.dataset.screenshot !== source) {
+          panel.dataset.screenshot = source;
+          panel.querySelector(".agent-capture-status").textContent = active ? "Captures H actualisées au fil des observations, pas un flux vidéo." : "Dernière capture H · étape terminée.";
+          const image = panel.querySelector("img"); if (image) { image.hidden = false; image.src = source; }
+        }
+        if (!active && !panel.querySelector("img")?.hidden) panel.querySelector(".agent-capture-status").textContent = "Dernière capture H · étape terminée.";
       }
     }
   }

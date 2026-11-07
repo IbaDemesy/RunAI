@@ -149,3 +149,24 @@ test("commande vocale avec fenêtre live ouverte : les boutons restent utilisabl
   assert.ok(screen.querySelectorAll("button").every(node => !node.disabled));
   assert.equal(screen.querySelector(".agent-live"), panel);
 });
+
+test("sans LiveViewURL, les observations H affichent une capture proxifiée révisée et le lien replay reste séparé", async () => {
+  const step = { kind: "accommodation", status: "running", agent_view_url: "https://platform.hcompany.ai/agents/sessions/s1",
+    data: { browser_observation: { revision: 1, url: "https://all.accor.com/", title: "Chambres disponibles" } } };
+  const { screen, sources, update } = await setup("running", [], step);
+  const panel = screen.querySelector(".agent-live");
+  assert.ok(panel);
+  panel.open = true; panel.ontoggle();
+  const image = screen.querySelector("img");
+  assert.equal(image.src, "/api/missions/mission-test/steps/accommodation/screenshot?v=1");
+  assert.match(panel.textContent, /Chambres disponibles/);
+  assert.equal(screen.querySelector("iframe"), null);
+  update({ steps: [{ ...step, data: { browser_observation: { revision: 2, url: "https://all.accor.com/rooms", title: "Tarifs" } } }] });
+  await sources[0].handlers.get("trace")();
+  assert.equal(screen.querySelector("img"), image);
+  assert.equal(image.src, "/api/missions/mission-test/steps/accommodation/screenshot?v=2");
+  assert.match(panel.textContent, /Tarifs/);
+  image.onerror();
+  assert.match(panel.textContent, /Capture indisponible/);
+  assert.equal(screen.querySelectorAll("a").some(node => node.textContent === "Replay H"), true);
+});

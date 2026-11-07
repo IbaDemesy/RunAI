@@ -133,6 +133,7 @@ class MissionService:
         )
         self.missions: dict[str, Mission] = {}
         self._runs: dict[tuple[str, StepKind], AgentRun] = {}
+        self._capture_runs: dict[tuple[str, StepKind], AgentRun] = {}
         self._writers: dict[str, TraceWriter] = {}
         self._subscribers: dict[
             str, set[asyncio.Queue[tuple[str, dict[str, Any]]]]
@@ -480,6 +481,9 @@ class MissionService:
                     step.data["last_action"] = event.message
                 if run := self._runs.get((mission.id, StepKind(step_name))):
                     self._set_agent_views(step, run)
+                    if observation := getattr(run, "browser_observation", None):
+                        step.data["browser_observation"] = observation
+                        self._capture_runs[(mission.id, StepKind(step_name))] = run
                 if event.data.get("url"):
                     step.data["current_url"] = event.data["url"]
         self._publish(mission, ("trace", event.model_dump(mode="json")))

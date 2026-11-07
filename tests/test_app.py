@@ -28,6 +28,7 @@ from runai.contracts.framing import FramingConfirm, FramingCreate, FramingReply
 from runai.contracts.mission import HumanAnswer
 from runai.framing.engine import FramingEngine
 from runai.framing.launch import LaunchPlan, StepPlan
+from runai.h.runner import HRun
 from runai.models import (
     AgentQuestion,
     Race,
@@ -55,6 +56,7 @@ def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, mon
     service._runs[(mission.id, StepKind.registration)] = SimpleNamespace(
         session_id="h-session", live_view_url="https://live.example.org/browser",
         agent_view_url="https://platform.hcompany.ai/agent-view/test",
+        browser_observation={"revision": 1, "url": "https://example.com/", "title": "Page H"},
     )
     event = TraceEvent(source="h", type="action", message="Lecture FAKE-H-PROGRESS-SENTINEL",
                        data={"step": "registration", "h_session_id": "h-session"})
@@ -77,11 +79,48 @@ def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, mon
         {"at": mission.events[2].at.isoformat(), "message": "running", "type": "AgentRunStatusChangeEvent"},
     ]
     assert step["data"]["events"] == 2
+    assert step["data"]["browser_observation"] == {"revision": 1, "url": "https://example.com/", "title": "Page H"}
     assert snapshot["steps"][1]["data"]["history"] == []
     state = next(envelope for envelope in reversed(mission.envelopes) if envelope.type == "step")
     assert state.payload["steps"][0]["live_view_url"] == step["live_view_url"]
     assert state.payload["steps"][0]["agent_view_url"] == step["agent_view_url"]
+    assert state.payload["steps"][0]["data"]["browser_observation"] == step["data"]["browser_observation"]
     assert "FAKE-H-PROGRESS-SENTINEL" not in state.to_sse()
+
+
+@pytest.mark.parametrize("outcome", ["normal", "missing", "failure", "badpng", "oversized", "cross_session"])
+def test_screenshot_proxy_uses_owning_sdk_and_never_exposes_source(tmp_path, outcome):
+    calls = []
+    png = b"\x89PNG\r\n\x1a\nimage"
+
+    class Resources:
+        async def get_session_resource(self, id, bucket, key):
+            calls.append((id, bucket, key))
+            if outcome == "failure":
+                raise RuntimeError("FAKE-SCREENSHOT-TOKEN")
+            yield b"x" * (8 * 1024 * 1024 + 1) if outcome == "oversized" else b"html" if outcome == "badpng" else png
+
+    service = make_service(tmp_path)
+    mission = Mission(id="capture-test", query="course", status=MissionStatus.completed, plan=unit_plan(),
+                      steps={kind: StepResult(kind=kind) for kind in AGENT_KINDS})
+    service.missions[mission.id] = mission
+    owner = SimpleNamespace(client=SimpleNamespace(sessions=Resources()))
+    run = HRun(None, owner, SimpleNamespace(id="s1"), StepKind.registration, TraceWriter("capture-test", traces_dir=tmp_path))
+    sid = "other-session" if outcome == "cross_session" else "s1"
+    if outcome != "missing":
+        run._capture_reference(f"https://agp.eu.hcompany.ai/api/v1/trajectories/{sid}/resources/screens/{sid}/shot.png?token=FAKE-SCREENSHOT-TOKEN", {})
+    service._capture_runs[(mission.id, StepKind.registration)] = run
+    with TestClient(create_app(service)) as client:
+        response = client.get("/api/missions/capture-test/steps/registration/screenshot")
+        assert response.status_code == (404 if outcome in {"missing", "cross_session"} else 502 if outcome in {"failure", "badpng", "oversized"} else 200)
+        assert "FAKE-SCREENSHOT-TOKEN" not in response.text
+        if outcome == "normal":
+            assert response.content == png
+            assert response.headers["content-type"] == "image/png"
+            assert response.headers["cache-control"] == "no-store"
+        assert calls == ([] if outcome in {"missing", "cross_session"} else [("s1", "screens", "s1/shot.png")])
+        assert client.get("/api/missions/unknown/steps/registration/screenshot").status_code == 404
+        assert client.get("/api/missions/capture-test/steps/accommodation/screenshot").status_code == 404
 
 
 @pytest.fixture

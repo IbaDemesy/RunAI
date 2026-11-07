@@ -339,6 +339,28 @@ def test_live_browser_url_and_durable_agent_view_remain_separate(tmp_path, live)
     assert str(result.agent_view_url) == VIEW
 
 
+def test_observation_capture_uses_owning_session_resource_not_source_url(tmp_path):
+    class Sessions(FakeSessions):
+        async def get_session_resource(self, id, bucket, key):
+            self.calls.append((id, bucket, key))
+            yield b"\x89PNG\r\n\x1a\nimage"
+
+    sessions = Sessions(events=[{"type": "AgentEvent", "data": {"kind": "observation_event",
+        "image": {"type": "url", "media_type": "image/png", "source":
+                  "https://agp.eu.hcompany.ai/api/v1/trajectories/s1/resources/screens/s1/screenshot-1.png?token=PRIVATE"},
+        "metadata": {"url": "https://example.com/", "title": "La page"}}}])
+
+    async def scenario():
+        run = await make_runner(tmp_path, sessions).start(StepKind.registration, "Lis la page")
+        await run.wait()
+        assert run.browser_observation == {"revision": 1, "url": "https://example.com/", "title": "La page"}
+        assert await run.get_screenshot() == b"\x89PNG\r\n\x1a\nimage"
+        assert sessions.calls[-1] == ("s1", "screens", "s1/screenshot-1.png")
+        assert "PRIVATE" not in str(run._result().model_dump())
+
+    asyncio.run(scenario())
+
+
 def test_event_helpers():
     assert event_label({"type": "AgentEvent", "data": {"kind": "policy_event"}}) == "AgentEvent.policy_event"
     assert event_summary({"type": "AgentRunStatusChangeEvent", "data": {"status": "paused"}}) == "paused"

@@ -146,6 +146,13 @@ class LifecycleAgentRun:
     def agent_view_url(self):
         return getattr(self.job.run, "agent_view_url", None)
 
+    @property
+    def browser_observation(self):
+        return getattr(self.job.run, "browser_observation", None)
+
+    async def get_screenshot(self):
+        return await self.job.run.get_screenshot() if self.job.run else None
+
     async def pause(self):
         await self.lifecycle.pause(self.job.job_id)
 
