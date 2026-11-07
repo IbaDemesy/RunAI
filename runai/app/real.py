@@ -6,7 +6,6 @@ import re
 from collections.abc import AsyncIterable, Callable
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
 from hai_agents.tools import Tool, tool
 
@@ -28,10 +27,6 @@ _HOTEL_PRICE_TOTAL = re.compile(
     re.IGNORECASE,
 )
 
-
-def _njuko_url(url: str) -> bool:
-    host = (urlsplit(url).hostname or "").lower()
-    return host == "njuko.com" or host.endswith(".njuko.com")
 
 
 class RealRaceSearch:
@@ -134,11 +129,7 @@ class RealBrowserAgents:
         query: str = "",
     ) -> RealAgentRun:
         start_url = None
-        if kind is StepKind.registration:
-            if not race.registration_url or not _njuko_url(str(race.registration_url)):
-                raise RuntimeError(
-                    "Lien d'inscription Njuko manquant ; Klikego et les autres plateformes sont interdits."
-                )
+        if kind is StepKind.registration and race.registration_url:
             start_url = str(race.registration_url)
         run = await self.runner.start(
             kind,
