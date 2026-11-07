@@ -143,7 +143,7 @@ function renderPortal(steps) {
     container.append(item);
   }
   const total = stopped.reduce((sum, step) => sum + (step.price_eur || 0), 0);
-  const waiting = steps.length - stopped.length;
+  const waiting = steps.filter((step) => ["pending", "running", "paused"].includes(step.status)).length;
   $("#portal-total").textContent =
     `Total estimé à payer vous-même : ${total.toFixed(2)} €` + (waiting ? ` · ${waiting} agent(s) encore en cours` : "");
 }
