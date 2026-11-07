@@ -1,4 +1,4 @@
-"""Implémentations factices : la démo tourne de bout en bout sans aucune clé ni appel réseau."""
+"""Recorded demo implementations requiring no credentials or network calls."""
 
 import asyncio
 import unicodedata
@@ -22,36 +22,48 @@ from runai.safety import STOP_INSTRUCTIONS
 
 DEMO_RACES: dict[str, Race] = {
     "milan": Race(
-        name="Milano Marathon (démo)",
+        name="Milano Marathon (demo)",
         city="Milan",
         country="IT",
         race_date=date(2027, 4, 11),
         start_time="09:00",
         distance_km=42.195,
         registration_url="https://in.njuko.com/runai-demo-milan",
-        bib_pickup="Village marathon, la veille (donnée factice)",
-        start_location="Piazza Duomo (donnée factice)",
+        bib_pickup="Expo village, the day before (demo data)",
+        start_location="Piazza Duomo (demo data)",
         sources=[
-            Source(url="https://example.org/milano-marathon", title="Source factice")
+            Source(url="https://www.milanomarathon.it", title="Demo source")
         ],
     ),
     "lisbon": Race(
-        name="Lisbon 10K (démo)",
-        city="Lisbonne",
+        name="Lisbon 10K (demo)",
+        city="Lisbon",
         country="PT",
         race_date=date(2027, 3, 14),
         start_time="10:30",
         distance_km=10,
-        registration_url="https://example.org/lisbon-10k/inscription",
-        bib_pickup="Expo course, la veille (donnée factice)",
-        start_location="Praça do Comércio (donnée factice)",
-        sources=[Source(url="https://example.org/lisbon-10k", title="Source factice")],
+        registration_url="https://demo.runai.local/lisbon-10k/registration",
+        bib_pickup="Race expo, the day before (demo data)",
+        start_location="Commerce Square (demo data)",
+        sources=[Source(url="https://demo.runai.local/lisbon-10k", title="Demo source")],
     ),
     "tokyo": Race(
-        name="Tokyo 10K (démo)", city="Tokyo", country="JP",
+        name="Tokyo 10K (demo)", city="Tokyo", country="JP",
         race_date=date(2028, 6, 12), distance_km=10,
         registration_url="https://in.njuko.com/runai-demo-tokyo",
-        sources=[Source(url="https://example.org/tokyo-10k", title="Fixture démo, pas un événement réel")],
+        sources=[Source(url="https://demo.runai.local/tokyo-10k", title="Recorded demo, not a real event")],
+    ),
+    "valencia": Race(
+        name="Valencia Half Marathon (demo)", city="Valencia", country="ES",
+        race_date=date(2027, 10, 24), distance_km=21.0975,
+        registration_url="https://demo.runai.local/valencia-half/registration",
+        sources=[Source(url="https://demo.runai.local/valencia-half", title="Demo source")],
+    ),
+    "chamonix": Race(
+        name="Chamonix Trail 23K (demo)", city="Chamonix", country="FR",
+        race_date=date(2027, 7, 18), distance_km=23,
+        registration_url="https://demo.runai.local/chamonix-trail/registration",
+        sources=[Source(url="https://demo.runai.local/chamonix-trail", title="Demo source")],
     ),
 }
 
@@ -74,7 +86,7 @@ class FakeRaceSearch:
             aliases = _LISBON_WORDS if key == "lisbon" else (key, _normalize(race.city))
             if any(word in _normalize(query) for word in aliases):
                 return race.model_copy(deep=True)
-        raise ValueError("Pas de fixture démo pour cette ville")
+        raise ValueError("No demo fixture for this city")
 
 
 @dataclass(frozen=True)
@@ -88,61 +100,61 @@ class _Script:
 SCRIPTS: dict[StepKind, _Script] = {
     StepKind.registration: _Script(
         actions=(
-            ("Ouverture de la page d'inscription", "https://example.org/inscription"),
-            ("Choix de la distance", "https://example.org/inscription/distance"),
+            ("Open the registration page", ""),
+            ("Select the distance", "/distance"),
             (
-                "Saisie du nom et du prénom (profil fictif)",
-                "https://example.org/inscription/coureur",
+                "Enter the runner name (demo profile)",
+                "/runner",
             ),
             (
-                "Saisie de l'e-mail et de la date de naissance",
-                "https://example.org/inscription/coureur",
+                "Enter email and date of birth",
+                "/runner",
             ),
             (
-                "Page « Règlement et certificat médical » atteinte",
-                "https://example.org/inscription/reglement",
+                "Reach the rules and medical certificate page",
+                "/rules",
             ),
         ),
-        summary="Formulaire pré-rempli ; arrêt avant la case « J'accepte le règlement ».",
+        summary="Registration form pre-filled — stopped before accepting the rules",
         stop_point=StopPoint.consent,
         price_eur=75.0,
     ),
     StepKind.accommodation: _Script(
         actions=(
-            ("Recherche d'hôtels près du départ", "https://example.org/hotels"),
+            ("Search hotels near the start", "https://demo.runai.local/hotels"),
             (
-                "Filtre : annulation gratuite",
-                "https://example.org/hotels?free_cancel=1",
+                "Filter for free cancellation",
+                "https://demo.runai.local/hotels?free_cancel=1",
             ),
             (
-                "Sélection de l'hôtel le plus proche du départ",
-                "https://example.org/hotels/42",
+                "Select the hotel nearest the start",
+                "https://demo.runai.local/hotels/42",
             ),
             (
-                "Saisie des coordonnées du voyageur (profil fictif)",
-                "https://example.org/hotels/42/guest",
+                "Enter guest details (demo profile)",
+                "https://demo.runai.local/hotels/42/guest",
             ),
-            ("Page de paiement atteinte", "https://example.org/hotels/42/payment"),
+            ("Reach the payment page", "https://demo.runai.local/hotels/42/payment"),
         ),
-        summary="Chambre sélectionnée pour la veille de la course ; arrêt avant le paiement.",
+        summary="Room selected for the night before the race — stopped before payment",
         stop_point=StopPoint.payment,
         price_eur=129.0,
     ),
     StepKind.transport: _Script(
         actions=(
-            ("Recherche d'un aller-retour", "https://example.org/trains"),
+            ("Search for a round trip", "https://demo.runai.local/trains"),
             (
-                "Choix de l'aller la veille de la course",
-                "https://example.org/trains/outbound",
+                "Select outbound travel the day before the race",
+                "https://demo.runai.local/trains/outbound",
             ),
-            ("Choix du retour après l'arrivée", "https://example.org/trains/return"),
+            ("Select return travel after the finish", "https://demo.runai.local/trains/return"),
             (
-                "Saisie du passager (profil fictif)",
-                "https://example.org/trains/passenger",
+                "Enter passenger details (demo profile)",
+                "https://demo.runai.local/trains/passenger",
             ),
-            ("Page de paiement atteinte", "https://example.org/trains/payment"),
+            ("Reach the payment page", "https://demo.runai.local/trains/payment"),
         ),
-        summary="Aller-retour sélectionné ; arrêt avant le paiement.",
+        summary="Round trip selected — stopped before payment",
         stop_point=StopPoint.payment,
         price_eur=89.0,
     ),
@@ -151,17 +163,13 @@ SCRIPTS: dict[StepKind, _Script] = {
 QUESTIONS: dict[StepKind, list[tuple[str, list[str]]]] = {
     StepKind.registration: [
         (
-            "Quel sas souhaitez-vous examiner (démo) ?",
-            ["Découverte", "Performance"],
-        ),
-        (
-            "Quel temps visez-vous ? (pour le sas de départ)",
-            ["moins de 3h30", "3h30–4h", "plus de 4h"],
+            "Which start corral should I pick?",
+            ["Under 3h30", "3h30–4h", "Over 4h"],
         ),
     ],
     StepKind.accommodation: [],
     StepKind.transport: [
-        ("Préférence horaire pour le trajet confirmé (démo) ?", ["matin", "après-midi"]),
+        ("Preferred departure time for the confirmed trip (demo)?", ["Morning", "Afternoon"]),
     ],
 }
 
@@ -204,7 +212,7 @@ class FakeAgentRun:
         self.received.append(text)
         instruction = text.removesuffix(STOP_INSTRUCTIONS).strip()
         self._messages.append(instruction)
-        self._emit("message_ack", f"Consigne reçue : « {instruction} »")
+        self._emit("message_ack", f"Instruction received: {instruction}")
 
     async def wait(self) -> StepResult:
         return await self._task
@@ -237,24 +245,28 @@ class FakeAgentRun:
             for question, options in questions
         ]
         for message, url in script.actions:
+            if self.kind is StepKind.registration:
+                base = str(self.race.registration_url) if self.race and self.race.registration_url else "https://demo.runai.local/registration"
+                url = base.rstrip("/") + url
             await asyncio.sleep(self._delay)
             await self._resumed.wait()
-            self._emit("action", f"Démo — {self.race.name if self.race else 'course de fixture'} : {message}", url)
+            self._emit("action", f"Demo — {self.race.name if self.race else 'recorded race'}: {message}", url)
         await asyncio.sleep(self._delay)
         await self._resumed.wait()
-        context = f"{self.brief.city} · {self.brief.race_date} · {self.brief.nights} nuits" if self.brief else "fixture"
-        summary = f"Démo — {context} : {script.summary}"
-        summary += f" Réponses utilisateur : {' ; '.join(answers)}."
+        context = f"{self.brief.city} · {self.brief.race_date} · {self.brief.nights} nights" if self.brief else "fixture"
+        summary = f"Demo — {context}: {script.summary}"
+        if answers:
+            summary += f" Your answers: {'; '.join(answers)}."
         if self._messages:
-            summary += f" Consignes appliquées : {' ; '.join(self._messages)}."
+            summary += f" Instructions applied: {'; '.join(self._messages)}."
         return StepResult(
             kind=self.kind,
             status=StepStatus.stopped_before_commitment,
             summary=summary,
             stop_point=script.stop_point,
-            url=script.actions[-1][1],
+            url=url,
             price_eur=script.price_eur,
-            data={"simulated": True, "provenance": {"mode": "demo", "kind": "fixture"}},
+            data={"headline": script.summary, "simulated": True, "provenance": {"mode": "demo", "kind": "fixture"}},
         )
 
 
@@ -282,7 +294,7 @@ class FakeBrowserAgents:
 
 
 class FakeTranscriber:
-    TEXT = "Je veux courir le marathon de Milan, je pars de Paris."
+    TEXT = "I want to run the Milan marathon, leaving from Paris."
 
     def __init__(self, delay: float = 0.5):
         self.delay = delay
