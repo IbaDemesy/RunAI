@@ -25,6 +25,7 @@ from runai.app.providers import (
     build_providers,
     provider_health,
 )
+from runai.app.screenshots import build_screenshot_router
 from runai.app.tasks import STEP_LABELS
 from runai.config import get_settings
 from runai.contracts.common import DataMode
@@ -123,6 +124,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     engine = FramingEngine(search=candidate_search(selected.providers), mode=selected.providers.mode)
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
+    app.include_router(build_screenshot_router(selected))
     app.mount("/static/contract-fixtures", StaticFiles(directory=ROOT_DIR / "runai/contracts/fixtures"), name="contract-fixtures")
     app.mount("/static/flyover", StaticFiles(directory=ROOT_DIR / "web/flyover"), name="flyover")
     app.mount("/static/voice", StaticFiles(directory=ROOT_DIR / "web/voice"), name="voice")

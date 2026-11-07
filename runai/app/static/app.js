@@ -29,8 +29,8 @@
   const labels = {
     registration: "Inscription", accommodation: "Hôtel", transport: "Transport",
     pending: "En attente", searching: "Recherche en cours", running: "En cours", paused: "En pause",
-    waiting_for_user: "À vous de répondre", awaiting_human: "À vous de répondre",
-    stopped_before_commitment: "Préparé, avant engagement", completed: "Préparé",
+    waiting_for_user: "À vous de répondre", awaiting_human: "Préparatifs terminés · à finaliser manuellement sur le site officiel",
+    stopped_before_commitment: "À finaliser vous-même", completed: "Préparé",
     failed: "Échec", cancelled: "Annulé", open: "Ouverte", answered: "Réponse acceptée",
     expired: "Expirée", refused: "Refusée", payment: "Paiement", account: "Création de compte",
     consent: "Consentement", verified: "Vérifié", estimated: "Estimé", illustrative: "Illustratif",
@@ -95,6 +95,14 @@
   }
   function destroyView() { if (view) { view.destroy(); view = null; } }
   function render() {
+    const steps = screen.querySelector(".steps");
+    if (mission && page === "progress" && steps?.dataset.context === agentContext() &&
+        (screen.querySelector(".agent-live[open]") || screen.querySelector(".agent-history[open]"))) {
+      renderAgentSteps(steps);
+      screen.querySelectorAll("button").forEach(node => { node.disabled = busy; });
+      pendingFocus = null;
+      return;
+    }
     const active = document.activeElement;
     const focusKey = pendingFocus || active?.dataset.focusKey;
     const hadFocus = pendingFocus != null || screen.contains(active);
@@ -255,20 +263,25 @@
     mission = await api.request("/api/missions/" + encodeURIComponent(id)); persist(); subscribe();
   }
   function subscribe() {
-    if (events) events.close();
-    if (mock || !window.EventSource || ["completed", "cancelled", "failed"].includes(mission.status)) return;
-    events = new EventSource("/api/missions/" + encodeURIComponent(mission.mission_id) + "/events");
+    if (events) { events.close(); events = null; }
+    const terminal = () => ["awaiting_human", "completed", "cancelled", "failed"].includes(mission.status);
+    if (mock || !window.EventSource || terminal()) return;
+    const source = events = new EventSource("/api/missions/" + encodeURIComponent(mission.mission_id) + "/events");
     const refresh = async () => {
       try {
         const previousStatus = mission.status;
         mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id));
-        if (previousStatus !== mission.status) announce("Statut de la mission : " + label(mission.status));
+        if (terminal()) {
+          source.onerror = null; source.close();
+          if (events === source) events = null;
+        }
+        if (previousStatus !== mission.status || terminal()) announce("Statut de la mission : " + label(mission.status));
         if (!busy && !screen.querySelector("input:focus, textarea:focus")) render();
       }
       catch (_) { announce("Suivi interrompu. La reconnexion ne relance pas les agents."); }
     };
-    for (const name of ["message", "snapshot", "mission_status", "step", "question_opened", "question_resolved", "journey_revised", "budget_updated", "trace"]) events.addEventListener(name, refresh);
-    events.onerror = () => announce("Reconnexion au suivi en cours…");
+    for (const name of ["message", "snapshot", "mission_status", "step", "question_opened", "question_resolved", "journey_revised", "budget_updated", "trace"]) source.addEventListener(name, refresh);
+    source.onerror = () => { if (!terminal()) announce("Reconnexion au suivi en cours…"); };
   }
   function questionBlock(question) {
     const block = el("article", null, "agent-question");
@@ -285,6 +298,90 @@
     block.append(choices); form(block, "Votre réponse · " + question.text, answer, question.question_id);
     return block;
   }
+  function agentContext() {
+    return JSON.stringify([mission.mission_id, mission.status, mission.questions, mission.limitations, mission.error]);
+  }
+  function renderAgentSteps(steps) {
+    steps.dataset.context = agentContext();
+    for (const step of mission.steps) {
+      let block = Array.from(steps.children).find(node => node.dataset.kind === step.kind);
+      if (!block) {
+        block = el("article", null, "step"); block.dataset.kind = step.kind;
+        block.append(el("div", null, "agent-content")); steps.append(block);
+      }
+      const content = block.querySelector(".agent-content");
+      const active = ["running", "paused", "waiting_for_user"].includes(step.status);
+      content.replaceChildren(el("h3", label(step.kind)), el("p", label(step.status), "status"), el("p", step.summary || "En attente"));
+      content.append(el("p", step.data?.last_action || "Aucune action H reçue pour cette étape.", "last-action"));
+      if (step.stop_point) content.append(el("p", "Point d’arrêt : " + label(step.stop_point)));
+      if (step.error) content.append(el("p", step.error));
+      link(content, step.data?.manual_url || step.url, "Continuer manuellement sur le site officiel");
+      if (active) link(content, step.live_view_url, "Voir l’agent en direct");
+      link(content, step.agent_view_url, "Replay H");
+      if (step.agent_view_url) content.append(el("p", "Le replay nécessite une connexion à votre organisation H."));
+      let history = block.querySelector(".agent-history");
+      if (!history) {
+        history = el("details", null, "agent-history");
+        history.append(el("summary", "Historique de l’agent"), el("div", null, "agent-events")); block.append(history);
+      }
+      const list = el("ol");
+      for (const event of step.data?.history || []) {
+        const item = el("li"), time = new Date(event.at);
+        if (!Number.isNaN(time.getTime())) {
+          const stamp = el("time", time.toLocaleString("fr-FR")); stamp.setAttribute("datetime", event.at); item.append(stamp);
+        }
+        item.append(el("span", event.message || event.type)); list.append(item);
+      }
+      history.querySelector(".agent-events").replaceChildren(list.children.length ? list : el("p", "Aucun événement reçu pour cette étape."));
+      const details = el("details"); details.append(el("summary", "Détails techniques"), el("p", step.h_session_id || "Session non disponible")); content.append(details);
+      let liveUrl;
+      try { const url = new URL(step.live_view_url); if (url.protocol === "https:") liveUrl = url.href; } catch (_) { /* Pas de vue embarquée sans URL HTTPS. */ }
+      const observation = step.data?.browser_observation;
+      const hasCapture = Number.isInteger(observation?.revision) && observation.revision > 0;
+      const panelKey = active && liveUrl ? liveUrl : "captures";
+      let panel = block.querySelector(".agent-live");
+      if (panel && (!(hasCapture || active && liveUrl) || panel.dataset.url !== panelKey)) { panel.remove(); panel = null; block.dataset.expanded = "false"; }
+      if ((hasCapture || active && liveUrl) && !panel) {
+        panel = el("details", null, "agent-live"); panel.dataset.url = panelKey;
+        panel.append(el("summary", "Agent en direct · " + label(step.kind)));
+        const enlarge = button("Agrandir", () => {
+          const expanded = block.dataset.expanded !== "true";
+          block.dataset.expanded = String(expanded); enlarge.textContent = expanded ? "Réduire" : "Agrandir";
+        });
+        panel.append(enlarge, el("p", "", "agent-page"), el("div", null, "agent-page-url"), el("p", "", "agent-capture-status"));
+        if (active && liveUrl) {
+          panel.append(el("p", "Si la vue ne s’affiche pas, ouvrez-la dans un onglet. Elle expire à la fin de l’exécution."));
+          link(panel, liveUrl, "Ouvrir dans un onglet");
+        }
+        panel.ontoggle = () => {
+          if (!panel.open) return;
+          if (panel.dataset.screenshot && !panel.querySelector("img")) {
+            const image = el("img"); image.alt = "Dernière capture du navigateur H · " + label(step.kind);
+            image.onerror = () => { image.hidden = true; panel.querySelector(".agent-capture-status").textContent = "Capture indisponible. Attendez la prochaine observation ou ouvrez Replay H."; };
+            image.onload = () => { image.hidden = false; };
+            image.src = panel.dataset.screenshot; panel.append(image);
+          }
+          if (active && liveUrl && !panel.querySelector("iframe")) {
+            const frame = el("iframe"); frame.src = liveUrl; frame.title = "Vue en direct de l’agent · " + label(step.kind);
+            frame.setAttribute("sandbox", "allow-scripts allow-same-origin"); frame.setAttribute("referrerpolicy", "no-referrer"); panel.append(frame);
+          }
+        };
+        block.append(panel);
+      }
+      if (panel && hasCapture) {
+        panel.querySelector(".agent-page").textContent = observation.title || "Titre de page non renseigné";
+        const pageUrl = panel.querySelector(".agent-page-url"); pageUrl.replaceChildren(); link(pageUrl, observation.url, observation.url);
+        const source = "/api/missions/" + encodeURIComponent(mission.mission_id) + "/steps/" + encodeURIComponent(step.kind) + "/screenshot?v=" + observation.revision;
+        if (panel.dataset.screenshot !== source) {
+          panel.dataset.screenshot = source;
+          panel.querySelector(".agent-capture-status").textContent = active ? "Captures H actualisées au fil des observations, pas un flux vidéo." : "Dernière capture H · étape terminée.";
+          const image = panel.querySelector("img"); if (image) { image.hidden = false; image.src = source; }
+          if (panel.open) panel.ontoggle();
+        }
+        if (!active && !panel.querySelector("img")?.hidden) panel.querySelector(".agent-capture-status").textContent = "Dernière capture H · étape terminée.";
+      }
+    }
+  }
   function renderMission() {
     screen.className = "shell-stack";
     screen.append(el("h1", "Mon séjour"));
@@ -299,7 +396,8 @@
       if (page === id) item.setAttribute("aria-current", "page");
       nav.append(item);
     });
-    screen.append(nav, el("h2", page === "stay" ? "Mon séjour" : page === "explore" ? "Explorer" : "Préparatifs en cours"), el("p", label(mission.status)));
+    const statusText = mission.status === "awaiting_human" && questions.some(q => q.status === "open") ? label("waiting_for_user") : label(mission.status);
+    screen.append(nav, el("h2", page === "stay" ? "Mon séjour" : page === "explore" ? "Explorer" : "Préparatifs en cours"), el("p", statusText));
     if (mission.error) screen.append(el("p", mission.error));
     if (page === "explore") { renderExplorer(); return; }
     if (page === "stay") {
@@ -321,15 +419,7 @@
       }
     }
     const steps = el("div", null, "steps");
-    for (const step of mission.steps) {
-      const block = el("article", null, "step");
-      block.append(el("h3", label(step.kind)), el("p", label(step.status), "status"), el("p", step.summary || "En attente"));
-      if (step.stop_point) block.append(el("p", "Point d’arrêt : " + label(step.stop_point)));
-      if (step.error) block.append(el("p", step.error));
-      link(block, step.data?.manual_url || step.url, "Continuer manuellement sur le site officiel");
-      const details = el("details"); details.append(el("summary", "Détails techniques"), el("p", step.h_session_id || "Session non disponible"));
-      link(details, step.live_view_url, "Ouvrir la vue de l’agent"); block.append(details); steps.append(block);
-    }
+    renderAgentSteps(steps);
     screen.append(steps); limitations(screen, mission.limitations);
     questions.filter((q) => q.status !== "open").forEach((q) => screen.append(questionBlock(q)));
     if (mission.status !== "cancelled") screen.append(button("Annuler les préparatifs", () => mutate(async () => {

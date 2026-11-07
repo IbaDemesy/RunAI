@@ -7,6 +7,7 @@ import time
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any, Self
+from urllib.parse import unquote, urlsplit
 
 from hai_agents import AsyncClient
 from hai_agents.errors import TooManyRequestsError
@@ -101,6 +102,7 @@ def build_step_result(
     error: str | None = None,
     session_id: str | None = None,
     live_view_url: str | None = None,
+    agent_view_url: str | None = None,
     last_url: str | None = None,
     data: dict[str, Any] | None = None,
 ) -> StepResult:
@@ -132,6 +134,7 @@ def build_step_result(
         stop_point=stop_point,
         url=_http_url(last_url),
         live_view_url=_http_url(live_view_url),
+        agent_view_url=_http_url(agent_view_url),
         h_session_id=session_id,
         data={"h_status": h_status, "answer": answer, "outcome": outcome, **(data or {})},
         error=error,
@@ -173,6 +176,8 @@ class HRun:
         self.trace = trace
         self.agent_view_url: str | None = getattr(session, "agent_view_url", None)
         self.live_view_url: str | None = None
+        self._screenshot_ref: tuple[str, str] | None = None
+        self.browser_observation: dict[str, Any] | None = None
         self.status: str = getattr(getattr(session, "status", None), "status", None) or "pending"
         self.answer: Any = None
         self.outcome: str | None = None
@@ -221,9 +226,42 @@ class HRun:
                 metadata = data.get("metadata") or {}
                 self.last_url = metadata.get("url") or self.last_url
                 self.last_title = metadata.get("title") or self.last_title
+                image = data.get("image")
+                if isinstance(image, dict) and image.get("type") == "url" and image.get("media_type") == "image/png":
+                    self._capture_reference(image.get("source"), metadata)
             elif kind == "answer_event":
                 self.answer = data.get("answer")
                 self.outcome = data.get("outcome") or self.outcome
+
+    def _capture_reference(self, source: str | None, metadata: dict[str, Any]) -> None:
+        if not isinstance(source, str):
+            return
+        try:
+            url = urlsplit(source)
+            prefix = f"/api/v1/trajectories/{self.id}/resources/"
+            if url.scheme != "https" or not url.path.startswith(prefix):
+                return
+            parts = unquote(url.path[len(prefix):]).split("/")
+            if len(parts) < 3 or parts[1] != self.id or any(part in (".", "..") or not re.fullmatch(r"[\w.-]+", part) for part in parts):
+                return
+        except ValueError:
+            return
+        reference = (parts[0], "/".join(parts[1:]))
+        if reference != self._screenshot_ref:
+            revision = (self.browser_observation or {}).get("revision", 0) + 1
+            self._screenshot_ref = reference
+            self.browser_observation = {"revision": revision, "url": metadata.get("url"), "title": metadata.get("title")}
+
+    async def get_screenshot(self) -> bytes | None:
+        if self._screenshot_ref is None:
+            return None
+        bucket, key = self._screenshot_ref
+        content = bytearray()
+        async for chunk in self._sessions.get_session_resource(self.id, bucket, key):
+            if len(content) + len(chunk) > 8 * 1024 * 1024:
+                raise RuntimeError("Capture H trop volumineuse.")
+            content.extend(chunk)
+        return bytes(content)
 
     async def refresh_status(self) -> str:
         status = await self._sessions.get_session_status(self.id)
@@ -329,7 +367,8 @@ class HRun:
             outcome=self.outcome,
             error=error or self.error,
             session_id=self.id,
-            live_view_url=self.live_view_url or self.agent_view_url,
+            live_view_url=self.live_view_url,
+            agent_view_url=self.agent_view_url,
             last_url=self.last_url,
             data={
                 "agent_view_url": self.agent_view_url,
