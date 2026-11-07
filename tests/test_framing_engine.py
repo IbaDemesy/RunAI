@@ -3,7 +3,7 @@ from datetime import date
 
 import pytest
 
-from runai.contracts.common import DataMode, Provenance
+from runai.contracts.common import DataMode, Limitation, Provenance
 from runai.contracts.framing import (
     FramingConfirm,
     FramingCreate,
@@ -20,9 +20,10 @@ from runai.models import Source
 
 
 class Search:
-    def __init__(self, count=0, fail=False):
+    def __init__(self, count=0, fail=False, close_match=False):
         self.count = count
         self.fail = fail
+        self.close_match = close_match
         self.calls = []
 
     async def find_candidates(self, slots):
@@ -39,6 +40,14 @@ class Search:
                 distances_km=[10],
                 sources=[Source(url="https://example.org/race")],
                 provenance=Provenance(kind="fixture", url="https://example.org/race"),
+                limitations=[
+                    Limitation(
+                        code="close_match",
+                        message="Proche de votre demande, pas exactement ce que vous avez demandé.",
+                    )
+                ]
+                if self.close_match
+                else [],
             )
             for i in range(self.count)
         ]
@@ -109,6 +118,51 @@ def test_extraction_explicit_only():
     )
 
 
+def test_named_race_capture_and_numeric_location_boundary():
+    templiers = extract_slots("le trail des Templiers à Millau")
+    assert templiers[SlotName.race] == "trail des Templiers"
+    assert templiers[SlotName.city] == "Millau"
+
+    ecotrail = extract_slots("Ecotrail Paris 45 km")
+    assert ecotrail[SlotName.race] == "Ecotrail Paris"
+    assert SlotName.city not in ecotrail
+    assert ecotrail[SlotName.distance_km] == 45
+
+    lausanne = extract_slots("une course de 20 km à Lausanne")
+    assert lausanne[SlotName.city] == "Lausanne"
+    assert lausanne[SlotName.distance_km] == 20
+
+    origin = extract_slots("course à Tokyo depuis 20 km de Lyon")
+    assert SlotName.origin not in origin
+
+
+@pytest.mark.parametrize(
+    ("text", "city", "distance"),
+    [
+        ("marathon de Paris", "Paris", 42.195),
+        ("semi-marathon de Bordeaux", "Bordeaux", 21.0975),
+        ("un 10 km à Nantes", "Nantes", 10),
+    ],
+)
+def test_generic_race_forms_do_not_become_named_race(text, city, distance):
+    values = extract_slots(text)
+    assert values[SlotName.city] == city
+    assert values[SlotName.distance_km] == distance
+    assert SlotName.race not in values
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("course à Tokyo en mars", "mars 2027"),
+        ("course à Tokyo en novembre", "novembre 2026"),
+        ("course à Tokyo au mois de mai", "mai 2027"),
+    ],
+)
+def test_month_without_year_uses_next_occurrence(text, expected):
+    assert extract_slots(text, today=date(2026, 11, 7))[SlotName.date_window] == expected
+
+
 def test_candidates_selection_and_channel_parity():
     async def run():
         states = []
@@ -120,6 +174,9 @@ def test_candidates_selection_and_channel_parity():
             assert session.status == FramingStatus.choosing_candidate
             assert session.slots[SlotName.race].value is None
             assert len(session.open_questions[0].choices) == 3
+            assert session.open_questions[0].text == (
+                "Quel événement souhaitez-vous ? Vérifiez les sources et l'édition."
+            )
             session = await engine.reply(
                 session.id, FramingReply(revision=1, choice_id="c1", channel=channel)
             )
@@ -128,6 +185,43 @@ def test_candidates_selection_and_channel_parity():
             assert session.turns[-1].channel == channel
             states.append({k: s.value for k, s in session.slots.items()})
         assert states[0] == states[1]
+
+    asyncio.run(run())
+
+
+def test_close_candidates_use_close_match_choice_copy():
+    async def run():
+        session = await FramingEngine(
+            Search(2, close_match=True), DataMode.demo
+        ).create(FramingCreate(text="course à Tokyo"))
+        question = session.open_questions[0]
+        assert question.text == (
+            "Je n'ai pas trouvé exactement votre course. Voici les plus proches — "
+            "laquelle vous intéresse ?"
+        )
+        assert question.choices[0].label == (
+            "Course 0 — 2028-06-12 · proche de votre demande"
+        )
+        assert question.choices[-1].id == "none"
+        assert question.choices[-1].label == "Aucune, je précise"
+
+    asyncio.run(run())
+
+
+def test_no_candidates_message_explains_that_search_was_expanded():
+    async def run():
+        session = await FramingEngine(Search(), DataMode.demo).create(
+            FramingCreate(text="course à Tokyo")
+        )
+        limitation = next(
+            limitation
+            for limitation in session.limitations
+            if limitation.code == "no_candidates"
+        )
+        assert limitation.message == (
+            "Je n'ai trouvé aucune course correspondante, même en élargissant. "
+            "Donnez le nom officiel de la course ou le lien de son site."
+        )
 
     asyncio.run(run())
 

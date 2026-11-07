@@ -285,27 +285,49 @@ class FramingEngine:
                 session.limitations.append(
                     Limitation(
                         code="no_candidates",
-                        message="Aucun événement sourcé trouvé ; précisez le nom officiel ou son URL pour une préparation manuelle.",
+                        message=(
+                            "Je n'ai trouvé aucune course correspondante, même en élargissant. "
+                            "Donnez le nom officiel de la course ou le lien de son site."
+                        ),
                     )
                 )
         if session.candidates and not session.selected_candidate_id:
             session.status = FramingStatus.choosing_candidate
+            close_matches_only = all(
+                any(limitation.code == "close_match" for limitation in candidate.limitations)
+                for candidate in session.candidates
+            )
             session.open_questions.append(
                 FramingQuestion(
                     id=uuid4().hex,
                     slots=[SlotName.race],
-                    text="Quel événement souhaitez-vous ? Vérifiez les sources et l'édition.",
+                    text=(
+                        "Je n'ai pas trouvé exactement votre course. Voici les plus proches — "
+                        "laquelle vous intéresse ?"
+                        if close_matches_only
+                        else "Quel événement souhaitez-vous ? Vérifiez les sources et l'édition."
+                    ),
                     revision=session.revision,
                     choices=[
                         FramingChoice(
                             id=c.id,
                             candidate_id=c.id,
-                            label=f"{c.name} — {c.race_date or 'date inconnue'}",
+                            label=(
+                                f"{c.name} — {c.race_date or 'date à confirmer'}"
+                                + (
+                                    " · proche de votre demande"
+                                    if any(
+                                        limitation.code == "close_match"
+                                        for limitation in c.limitations
+                                    )
+                                    else ""
+                                )
+                            ),
                             value=c.model_dump(mode="json"),
                         )
                         for c in session.candidates
                     ]
-                    + [FramingChoice(id="none", label="Aucun de ceux-ci")],
+                    + [FramingChoice(id="none", label="Aucune, je précise")],
                 )
             )
             return

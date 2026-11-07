@@ -21,20 +21,40 @@ MONTHS = [
 ]
 
 
-def extract_slots(text: str) -> dict[SlotName, object]:
+def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object]:
     result: dict[SlotName, object] = {}
-    boundary = r"(?=\s+(?:depuis|from|au départ|en|in|le|pour|avec|budget|au|on|édition|edition|\d)\b|[,;.!?]|$)"
+    boundary = r"(?=\s+(?:depuis|from|au départ|en|in|le|pour|avec|budget|au|on|édition|edition|\d+)\b|[,;.!?]|$)"
     for slot, prefix in (
         (SlotName.origin, r"(?:depuis|au départ de|départ de|from)"),
         (SlotName.city, r"(?:à|in|(?:marathon|semi|course|race) de)"),
     ):
         match = re.search(
-            r"\b" + prefix + r"\s+([\wÀ-ž][\wÀ-ž '\-]*?)" + boundary,
+            r"\b" + prefix + r"\s+([^\W\d_][\wÀ-ž '\-]*?)" + boundary,
             text,
             re.IGNORECASE,
         )
         if match and not re.search(r"\b(?:ou|or)\b", match[1], re.IGNORECASE):
             result[slot] = match[1].strip()
+    named_race = re.search(
+        r"\b(?i:ultra-trail|trail|ultra|course|corrida|foulées|ekiden|raid)"
+        r"\s+(?i:des|du|de la|de l['’]|d['’])\s*"
+        r"[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*"
+        r"(?=\s+(?i:à|a|depuis|from|au départ|en|in|le|pour|avec|budget|au|on|"
+        r"édition|edition|\d+)\b|[,;.!?]|$)",
+        text,
+    )
+    if named_race:
+        result[SlotName.race] = named_race[0].strip(" ,;.!?")
+    else:
+        named_race = re.search(
+            r"\b(?!(?i:trail|run|marathon|semi)(?:-marathon)?\b)"
+            r"[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*?(?i:trail|run|marathon)[\wÀ-ž'’\-]*"
+            r"(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*"
+            + boundary,
+            text,
+        )
+        if named_race:
+            result[SlotName.race] = named_race[0].strip(" ,;.!?")
     distance = re.search(r"\b(\d+(?:[.,]\d+)?)\s*km\b", text, re.IGNORECASE)
     if distance:
         result[SlotName.distance_km] = float(distance[1].replace(",", "."))
@@ -63,6 +83,19 @@ def extract_slots(text: str) -> dict[SlotName, object]:
             )
             if window:
                 result[SlotName.date_window] = window[0]
+            else:
+                month_only = re.search(
+                    r"\b(?:(?:en|in)\s+(?:mois\s+de\s+)?|au\s+mois\s+de\s+)("
+                    + "|".join(MONTHS)
+                    + r")\b",
+                    text,
+                    re.IGNORECASE,
+                )
+                if month_only:
+                    current = today or date.today()
+                    month = MONTHS.index(month_only[1].lower()) + 1
+                    year = current.year + (month < current.month)
+                    result[SlotName.date_window] = f"{month_only[1].lower()} {year}"
     except ValueError:
         pass
     edition = re.search(r"\b(?:édition|edition)\s+(\d{4})\b", text, re.IGNORECASE)
