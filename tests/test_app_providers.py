@@ -58,6 +58,30 @@ def test_health_error_when_sdk_missing(monkeypatch):
     assert provider_health(ALL_KEYS)["linkup"].status is ProviderStatus.error
 
 
+@pytest.mark.parametrize(
+    ("render_commit", "runai_commit", "service", "version"),
+    [
+        ("123456789abcdef", "abcdef123456789", "runai-live", "1234567"),
+        (None, None, None, "dev"),
+        (None, "abcdef123456789", None, "abcdef1"),
+        ("", "abcdef123456789", None, "abcdef1"),
+    ],
+)
+def test_health_deployment_metadata(monkeypatch, render_commit, runai_commit, service, version):
+    for name, value in {
+        "RENDER_GIT_COMMIT": render_commit,
+        "RUNAI_GIT_COMMIT": runai_commit,
+        "RENDER_SERVICE_NAME": service,
+    }.items():
+        if value is None:
+            monkeypatch.delenv(name, raising=False)
+        else:
+            monkeypatch.setenv(name, value)
+    payload = build_providers(DataMode.demo, env={}, delay=0).health_payload()
+    assert payload["version"] == version
+    assert payload["service"] == service
+
+
 def test_live_without_keys_fails_explicitly_and_never_uses_fakes():
     providers = build_providers(DataMode.live, env={})
     assert providers.mode is DataMode.live and not providers.simulated

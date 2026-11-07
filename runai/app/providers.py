@@ -246,6 +246,8 @@ class ProviderSet:
         """Corps de `GET /api/health` (contrat G1)."""
         return {
             "ok": True,
+            "version": (os.getenv("RENDER_GIT_COMMIT") or os.getenv("RUNAI_GIT_COMMIT") or "dev")[:7],
+            "service": os.getenv("RENDER_SERVICE_NAME"),
             "mode": self.mode.value,
             "simulated": self.simulated,
             "providers": {name: h.status.value for name, h in self.health.items()},
