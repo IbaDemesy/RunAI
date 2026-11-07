@@ -205,7 +205,8 @@ def extract_rules(
     if use_fixtures and not refresh and (fixture := find_fixture(name, year)):
         return fixture
     directory = None if cache_dir is False else cache_dir or default_cache_dir()
-    cache_file = directory / f"{slugify(name)}.json" if directory else None
+    edition = name if year is None or str(year) in name else f"{name} {year}"
+    cache_file = directory / f"{slugify(edition)}.json" if directory else None
     if cache_file and cache_file.is_file() and not refresh:
         rules = RaceRules.model_validate_json(cache_file.read_text(encoding="utf-8"))
         return rules.model_copy(update={"origin": "cache"})

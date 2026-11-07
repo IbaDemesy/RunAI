@@ -113,6 +113,14 @@ def test_extract_rules_calls_linkup_once_then_uses_cache(tmp_path):
     assert len(client.calls) == 2
 
 
+def test_cache_is_per_edition(tmp_path):
+    client = FakeLinkup(LINKUP_HALF)
+    for year in (2027, 2028):
+        extract_rules(Race(name="Semi de Test", city="Test", country="FR", race_date=date(year, 3, 14)),
+                      client=client, cache_dir=tmp_path)
+    assert len(client.calls) == 2
+
+
 def test_parse_rules_response_keeps_sources_per_field_and_drops_bad_values(half):
     assert half.country_code == "FR" and half.timezone == "Europe/Paris"
     assert half.start_time == time(9, 30)
