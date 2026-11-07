@@ -341,8 +341,9 @@
   function overview() {
     if (!state.track) return;
     pause();
+    const wide = map.getContainer().clientWidth > 640;
     map.fitBounds(R.bounds(state.track.points), {
-      padding: { top: 60, bottom: 40, left: 300, right: 60 },
+      padding: wide ? { top: 60, bottom: 40, left: 300, right: 60 } : 30,
       pitch: 55,
       bearing: -20,
       duration: 1200,
