@@ -9,6 +9,7 @@ from runai.search import (
     IssueLevel,
     NominatimGeocoder,
     RaceSheet,
+    check_sheet,
     locate_race,
     parse_response,
     search_race,
@@ -260,3 +261,16 @@ def test_follow_up_never_searches_a_rejected_registration_domain():
     client = FakeLinkup([_response(first), _response({})])
     search_race("marathon de Milan 2027", client=client, verify_registration=False, today=TODAY)
     assert client.searches[1]["include_domains"] == ["milanomarathon.it"]
+
+
+def test_aggregator_link_on_official_page_is_never_trusted():
+    data = {**MILAN, "registration_url": "https://cheap-bibs.example.com/milan"}
+    page = "[Register](https://www.ahotu.com/event/milano-marathon/registration)"
+    client = FakeLinkup([_response(data)], pages={MILAN["official_url"]: page})
+    sheet = search_race("marathon de Milan 2027", client=client, follow_up=False, today=TODAY)
+    assert str(sheet.registration_url) == "https://cheap-bibs.example.com/milan"
+    assert not sheet.is_reliable
+
+    sheet.registration_url = "https://www.ahotu.com/event/milano-marathon"
+    sheet.registration_verified = True
+    assert "registration_url" in _fields(check_sheet(sheet, today=TODAY), IssueLevel.error)

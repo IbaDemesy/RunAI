@@ -11,6 +11,7 @@ from runai.search.checks import (
     KNOWN_REGISTRATION_PLATFORMS,
     check_sheet,
     host_of,
+    is_aggregator,
     missing_fields,
     on_domain,
     registration_url_issue,
@@ -282,7 +283,7 @@ def links_on_page(client: SearchClient, url: str) -> list[str]:
 
 def _is_registration_link(link: str, official_host: str) -> bool:
     host = host_of(link)
-    if host == official_host:
+    if host == official_host or is_aggregator(host):
         return False
     return any(on_domain(host, domain) for domain in KNOWN_REGISTRATION_PLATFORMS) or bool(
         _REGISTRATION_HINT.search(link)

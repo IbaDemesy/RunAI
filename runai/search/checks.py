@@ -81,17 +81,21 @@ def expected_distance_km(query: str) -> float | None:
     return None
 
 
+def is_aggregator(host: str) -> bool:
+    return any(on_domain(host, domain) for domain in AGGREGATOR_DOMAINS)
+
+
 def registration_url_issue(sheet: RaceSheet) -> Issue | None:
-    if sheet.registration_url is None or sheet.registration_verified:
+    if sheet.registration_url is None:
         return None
     host = host_of(sheet.registration_url)
-    if any(on_domain(host, domain) for domain in AGGREGATOR_DOMAINS):
+    if is_aggregator(host):
         return Issue(
             field="registration_url",
             level=IssueLevel.error,
             message=f"{host} est un agrégateur, pas le site officiel ni une plateforme d'inscription",
         )
-    if any(on_domain(host, domain) for domain in KNOWN_REGISTRATION_PLATFORMS):
+    if sheet.registration_verified or any(on_domain(host, domain) for domain in KNOWN_REGISTRATION_PLATFORMS):
         return None
     if sheet.official_url is not None and on_domain(host, base_domain(host_of(sheet.official_url))):
         return None
