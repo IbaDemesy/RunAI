@@ -197,17 +197,9 @@ class LinkupCandidateSearch:
                 continue
             rows.append((row, parse_date(row.race_date)))
         accepted_rows: list[tuple[_Candidate, date | None, list[Source]]] = []
+        future_events = set()
         target = slots.get(SlotName.distance_km)
         for row, when in rows:
-            if (
-                not close_match
-                and target
-                and target.is_known
-                and target.value is not None
-                and row.distances_km
-                and matching_distance(row.distances_km, float(target.value)) is None
-            ):
-                continue
             urls = {str(s.url) for s in row.sources}
             urls.update(
                 str(u)
@@ -221,13 +213,27 @@ class LinkupCandidateSearch:
                     *(s for s in response_sources if str(s.url) in urls),
                 ]
             )
-            if sources:
-                accepted_rows.append((row, when, sources))
-        future_events = {
+            if not sources:
+                continue
+            if (
+                not close_match
+                and target
+                and target.is_known
+                and target.value is not None
+                and row.distances_km
+                and matching_distance(row.distances_km, float(target.value)) is None
+            ):
+                if when and when >= today:
+                    future_events.add(
+                        (norm_name(row.name), norm_name(row.city), norm_name(row.country))
+                    )
+                continue
+            accepted_rows.append((row, when, sources))
+        future_events.update(
             (norm_name(row.name), norm_name(row.city), norm_name(row.country))
             for row, when, _ in accepted_rows
             if when and when >= today
-        }
+        )
         merged: dict[str, RaceCandidate] = {}
         for row, when, sources in accepted_rows:
             event = (norm_name(row.name), norm_name(row.city), norm_name(row.country))

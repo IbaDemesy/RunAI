@@ -183,6 +183,23 @@ def test_filtered_future_row_does_not_hide_sourced_past_edition():
     ]
 
 
+def test_future_distance_mismatch_hides_past_edition():
+    client = FakeClient(responses=[
+        [
+            row("Recurring Race", race_date="2020-06-01", distances_km=[21.1]),
+            row("Recurring Race", race_date="2030-06-01", distances_km=[10]),
+        ],
+        [],
+    ])
+    result = asyncio.run(
+        LinkupCandidateSearch(client, today=date(2029, 1, 1)).search(
+            slots(city="Tokyo", distance_km=21.1)
+        )
+    )
+    assert result.candidates == []
+    assert len(client.calls) == 2
+
+
 def test_next_edition_lookup_updates_past_only_candidate_when_sourced():
     client = FakeClient(
         [row(
