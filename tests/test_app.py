@@ -186,6 +186,43 @@ def test_hotel_budget_overrun_is_marked_failed():
     assert "HORS BUDGET" in filtered.summary
 
 
+def test_hotel_choice_with_prices_per_night_does_not_raise_budget_ceiling():
+    mission = Mission(
+        id="hotel-choice-budget-test",
+        query="Marathon de Milan",
+        steps={kind: StepResult(kind=kind) for kind in AGENT_KINDS},
+        questions=[
+            AgentQuestion(
+                id="budget",
+                kind=StepKind.accommodation,
+                question="Budget max par nuit ?",
+                options=["150 €"],
+                answer="150 €",
+            ),
+            AgentQuestion(
+                id="hotel-choice",
+                kind=StepKind.accommodation,
+                question="Lequel ? Ibis 180 € par nuit ou Novotel 210 € par nuit",
+                options=["Ibis 180 € par nuit", "Novotel 210 € par nuit"],
+                answer="Novotel 210 € par nuit",
+            ),
+        ],
+    )
+    result = StepResult(
+        kind=StepKind.accommodation,
+        status=StepStatus.stopped_before_commitment,
+        summary="Novotel disponible.",
+        price_eur=350,
+    )
+
+    filtered = MissionService._validate_hotel_budget(mission, result)
+
+    assert filtered.status is StepStatus.failed
+    assert filtered.data["budget_max_per_night_eur"] == 150
+    assert filtered.data["over_budget"] is True
+    assert "HORS BUDGET" in filtered.summary
+
+
 def test_rephrased_hotel_budget_question_sets_the_per_night_ceiling():
     mission = Mission(
         id="rephrased-budget-test",

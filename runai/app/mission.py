@@ -503,19 +503,18 @@ class MissionService:
         if result.kind is not StepKind.accommodation or result.status is StepStatus.failed:
             return result
 
-        budget = next(
-            (
-                parsed
-                for question in reversed(mission.questions)
-                if question.kind is StepKind.accommodation
-                and _BUDGET_QUESTION.search(question.question)
-                and question.answer
-                and (parsed := extract_budget_per_night(question.answer)) is not None
-            ),
-            None,
-        )
-        if budget is None:
-            budget = extract_budget_per_night(mission.query, require_context=True)
+        budgets = [
+            parsed
+            for question in mission.questions
+            if question.kind is StepKind.accommodation
+            and _BUDGET_QUESTION.search(question.question)
+            and question.answer
+            and (parsed := extract_budget_per_night(question.answer)) is not None
+        ]
+        query_budget = extract_budget_per_night(mission.query, require_context=True)
+        if query_budget is not None:
+            budgets.append(query_budget)
+        budget = min(budgets) if budgets else None
         if result.price_eur is None and budget is None:
             return result
         if budget is None:
