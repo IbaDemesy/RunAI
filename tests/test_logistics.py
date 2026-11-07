@@ -228,6 +228,13 @@ def test_foreign_licence_needs_explicit_acceptance():
     data = {key: value for key, value in LINKUP_HALF.items() if key != "foreign_license_accepted"}
     rules = parse_rules_response("Semi de Test", SimpleNamespace(data=data))
     assert rules.entry_paths[0].licenses == [LicenseKind.host_federation]
+    assert rules.entry_paths[1].id == "foreign_license_unconfirmed"
+    foreign = RunnerSituation(license=LicenseKind.foreign_federation)
+    verdict = eligibility(rules, RunnerProfile(), foreign, today=TODAY)
+    assert verdict.light is Light.orange and verdict.entry_path_id == "foreign_license_unconfirmed"
+    assert "entry_path_unconfirmed" in {r.code for r in verdict.reasons}
+    refused = parse_rules_response("Semi de Test", SimpleNamespace(data={**data, "foreign_license_accepted": False}))
+    assert [p.id for p in refused.entry_paths] == ["license", "no_license"]
 
 
 def test_incomplete_rules_without_goal_are_not_green(half):

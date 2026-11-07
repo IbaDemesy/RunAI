@@ -305,22 +305,38 @@ def parse_rules_response(name: str, response: Any) -> RaceRules:
 def _entry_paths(data: dict[str, Any], source: FieldSource | None) -> list[EntryPath]:
     paths: list[EntryPath] = []
     if _bool(data.get("license_accepted")):
+        foreign = _bool(data.get("foreign_license_accepted"))
+        license = Requirement(
+            kind=RequirementKind.license,
+            label="Licence valide le jour de la course",
+            detail=_text(data.get("license_details")),
+        )
         paths.append(
             EntryPath(
                 id="license",
                 label="Avec licence d'athlétisme",
-                licenses=[LicenseKind.host_federation]
-                + ([LicenseKind.foreign_federation] if _bool(data.get("foreign_license_accepted")) else []),
-                requirements=[
-                    Requirement(
-                        kind=RequirementKind.license,
-                        label="Licence valide le jour de la course",
-                        detail=_text(data.get("license_details")),
-                    )
-                ],
+                licenses=[LicenseKind.host_federation] + ([LicenseKind.foreign_federation] if foreign else []),
+                requirements=[license],
                 source=source,
             )
         )
+        if foreign is None:
+            paths.append(
+                EntryPath(
+                    id="foreign_license_unconfirmed",
+                    label="Avec licence d'une fédération étrangère",
+                    licenses=[LicenseKind.foreign_federation],
+                    requirements=[
+                        license,
+                        Requirement(
+                            kind=RequirementKind.other,
+                            label="Faire confirmer par l'organisateur que votre licence étrangère est acceptée",
+                        ),
+                    ],
+                    to_confirm="le règlement ne précise pas si les licences étrangères sont acceptées",
+                    source=source,
+                )
+            )
     certificate = _bool(data.get("medical_certificate_required"))
     runcard = _bool(data.get("runcard_required"))
     details = _text(data.get("medical_certificate_details"))

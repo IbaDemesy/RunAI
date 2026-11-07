@@ -148,6 +148,15 @@ def _document_reasons(
             )
         ]
     path_source = str(path.source.url) if path.source else source
+    if path.to_confirm:
+        return [
+            Reason(
+                level=Light.orange,
+                code="entry_path_unconfirmed",
+                message=f"Voie « {path.label} » : {path.to_confirm}.",
+                source_url=path_source,
+            )
+        ]
     certificate = next((r for r in path.requirements if r.kind is RequirementKind.medical_certificate), None)
     if certificate and not situation.has_valid_medical_certificate:
         message = f"Voie « {path.label} » : {certificate.label}."

@@ -62,7 +62,8 @@ class LicenseKind(str, Enum):
 class EntryPath(BaseModel):
     """Une voie d'inscription du règlement (ex. Runcard + certificat pour un étranger résidant à l'étranger).
 
-    `None` sur un critère = indifférent ; `licenses` = types de licence acceptés sur cette voie.
+    `None` sur un critère = indifférent ; `licenses` = types de licence acceptés sur cette voie ;
+    `to_confirm` = voie déduite mais non confirmée par le règlement (jamais verte).
     """
 
     id: str
@@ -73,6 +74,7 @@ class EntryPath(BaseModel):
     licenses: list[LicenseKind] | None = None
     requirements: list[Requirement] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
+    to_confirm: str | None = None
     source: FieldSource | None = None
 
 
