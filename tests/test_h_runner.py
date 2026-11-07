@@ -440,3 +440,15 @@ def test_concurrent_launches_use_other_free_key(tmp_path):
 
     runs = asyncio.run(scenario())
     assert sorted(run.account.name for run in runs) == ["k1", "k2"]
+
+
+def test_429_retry_waits_poll_interval(tmp_path):
+    sessions = FakeSessions(create_errors=1)
+    runner = make_runner(tmp_path, sessions, quota_poll_s=0.2)
+
+    async def scenario():
+        started = asyncio.get_running_loop().time()
+        await runner.run(StepKind.search, "x")
+        return asyncio.get_running_loop().time() - started
+
+    assert asyncio.run(scenario()) >= 0.2

@@ -479,6 +479,7 @@ class HRunner:
                     return account, await account.client.sessions.create_session(**params)
                 except TooManyRequestsError:
                     self._release(account)
+                    releases = self._releases  # notre propre libération ne doit pas sauter l'attente
                     seen[account.name] = "429"
                 except BaseException:
                     self._release(account)
