@@ -6,7 +6,7 @@ import pytest
 from runai.contracts.common import DataMode
 from runai.contracts.framing import FramingCreate, FramingTurn
 from runai.framing.engine import FramingEngine
-from runai.framing.holo import HoloPhraser, TemplatePhraser
+from runai.framing.holo import HoloPhraser, TemplatePhraser, clean_extraction
 
 TURNS = [FramingTurn(role="user", text="Un marathon au printemps", revision=1)]
 
@@ -94,6 +94,11 @@ async def test_holo_extract_parses_and_cleans_json():
     assert await phraser.extract("une course en décembre, Paris de préférence", {}) == {
         "city": "Paris", "date_window": "décembre 2026", "nights": 2,
     }
+
+
+@pytest.mark.anyio
+async def test_clean_extraction_ignores_unhashable_transport():
+    assert clean_extraction({"transport_mode": ["train"], "nights": 1}) == {"nights": 1}
 
 
 @pytest.mark.anyio

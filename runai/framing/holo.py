@@ -69,7 +69,7 @@ def clean_extraction(raw: object) -> dict[str, object]:
         elif name == "nights":
             if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 30:
                 values[name] = value
-        elif name == "transport_mode" and value in TRANSPORTS:
+        elif name == "transport_mode" and isinstance(value, str) and value in TRANSPORTS:
             values[name] = value
     return values
 
