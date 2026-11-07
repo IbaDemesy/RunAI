@@ -22,6 +22,8 @@ import urllib.request
 from pathlib import Path
 from typing import Self
 
+from dotenv import dotenv_values
+
 ROOT = Path(__file__).resolve().parents[1]
 BOOT_TIMEOUT_S = 20.0
 PARTNER_KEY_PREFIXES = ("HAI_API_KEY", "LINKUP_API_KEY", "GLADIA_API_KEY")
@@ -60,6 +62,8 @@ def child_env(overrides: dict[str, str] | None = None) -> dict[str, str]:
         if not key.startswith(PARTNER_KEY_PREFIXES + (APP_ENV_PREFIX,))
     }
     env.update(dict.fromkeys(BLANKED_KEYS, ""))
+    # Same for anything a local `.env` sets (e.g. RUNAI_BASIC_AUTH): the child sees only the overrides.
+    env.update(dict.fromkeys(dotenv_values(ROOT / ".env"), ""))
     env["PYTHONUNBUFFERED"] = "1"
     env.update(overrides or {})
     return env
@@ -118,6 +122,8 @@ class BootedApp:
         self.stop()
 
     def output(self) -> str:
+        if self._log.closed:
+            return ""
         self._log.flush()
         self._log.seek(0)
         return self._log.read()
@@ -167,6 +173,7 @@ class BootedApp:
         if self.process is not None:
             _terminate(self.process)
             self.process = None
+        self._log.close()
 
 
 def write_demo_trace(path: Path) -> Path:
@@ -193,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory() as tmp:
         overrides["RUNAI_TRACES_DIR"] = tmp
         if args.mode == "replay":
-            trace = args.replay_trace or write_demo_trace(Path(tmp) / "replay.json")
+            trace = args.replay_trace.resolve() if args.replay_trace else write_demo_trace(Path(tmp) / "replay.json")
             overrides["RUNAI_REPLAY_TRACE"] = str(trace)
         try:
             with BootedApp(overrides) as app:
