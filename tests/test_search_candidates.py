@@ -270,6 +270,67 @@ def test_next_edition_lookup_updates_past_only_candidate_when_sourced():
     assert "https://race.example/" in lookup["query"]
 
 
+def test_next_edition_lookup_updates_unknown_date_without_clearing_registration_url():
+    registration_url = "https://race.example/registration"
+    client = FakeClient(
+        [row("Undated Race", race_date=None, registration_url=registration_url)],
+        next_edition_responses={
+            "Undated Race": SimpleNamespace(
+                data={
+                    "race_date": "2030-06-01",
+                    "source_url": "https://race.example/next-edition",
+                },
+                sources=[],
+            )
+        },
+    )
+    candidate = asyncio.run(
+        LinkupCandidateSearch(client, today=date(2029, 1, 1)).find_candidates(
+            slots(city="Tokyo")
+        )
+    )[0]
+    assert candidate.race_date == date(2030, 6, 1)
+    assert str(candidate.registration_url) == registration_url
+    assert not any(
+        limitation.code in {"next_edition_unconfirmed", "race_date_unknown"}
+        for limitation in candidate.limitations
+    )
+    assert len(candidate.sources) == 2
+
+
+def test_next_edition_lookup_prioritizes_past_only_and_caps_total_at_three():
+    names = ["Past A", "Past B", "Undated A", "Undated B"]
+    rows = [
+        row(name, race_date="2020-06-01" if name.startswith("Past") else None)
+        for name in names
+    ]
+    client = FakeClient(
+        rows,
+        next_edition_responses={
+            name: SimpleNamespace(data={}, sources=[]) for name in names
+        },
+    )
+    results = asyncio.run(
+        LinkupCandidateSearch(client, today=date(2029, 1, 1)).find_candidates(
+            slots(city="Tokyo")
+        )
+    )
+    lookups = [
+        kwargs["query"]
+        for kwargs, _ in client.calls
+        if kwargs["query"].startswith("Find the date of the next edition")
+    ]
+    looked_up = [
+        query.split('of the running race "', 1)[1].split('" in ', 1)[0]
+        for query in lookups
+    ]
+    assert looked_up == ["Past A", "Past B", "Undated A"]
+    assert len(lookups) == 3
+    undated_b = next(candidate for candidate in results if candidate.name == "Undated B")
+    assert undated_b.race_date is None
+    assert undated_b.limitations[0].code == "race_date_unknown"
+
+
 @pytest.mark.parametrize("outcome", ["empty", "past", "error", "blocked_source"])
 def test_next_edition_lookup_failure_or_unverified_data_keeps_candidate(outcome):
     if outcome == "empty":

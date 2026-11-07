@@ -328,14 +328,23 @@ class LinkupCandidateSearch:
     async def _lookup_next_editions(
         self, candidates: list[RaceCandidate], today: date
     ) -> list[RaceCandidate]:
-        pending = [
+        past_only = [
             candidate
             for candidate in candidates
             if any(
                 limitation.code == "next_edition_unconfirmed"
                 for limitation in candidate.limitations
             )
-        ][:3]
+        ]
+        unknown_date = [
+            candidate
+            for candidate in candidates
+            if any(
+                limitation.code == "race_date_unknown"
+                for limitation in candidate.limitations
+            )
+        ]
+        pending = [*past_only, *unknown_date][:3]
         results = await asyncio.gather(
             *(
                 asyncio.to_thread(self._search_next_edition, candidate, today)
@@ -347,12 +356,13 @@ class LinkupCandidateSearch:
                 continue
             race_date, sources = result
             candidate.race_date = race_date
-            candidate.registration_url = None
+            if candidate in past_only:
+                candidate.registration_url = None
             candidate.sources = _sources([*candidate.sources, *sources])
             candidate.limitations = [
                 limitation
                 for limitation in candidate.limitations
-                if limitation.code != "next_edition_unconfirmed"
+                if limitation.code not in {"next_edition_unconfirmed", "race_date_unknown"}
             ]
         return candidates
 
