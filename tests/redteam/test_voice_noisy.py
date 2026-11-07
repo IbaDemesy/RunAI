@@ -111,8 +111,7 @@ def test_transcribe_rejects_large_header_before_reading(demo_app, monkeypatch):
         assert "Body must not be read" not in response.text
 
 
-@pytest.mark.xfail(strict=True, reason="Transcribe route exposes provider exceptions outside the allowed scope")
-def test_transcribe_provider_error_is_safe(demo_app, monkeypatch):
+def test_transcribe_provider_error_is_safe(demo_app, monkeypatch, caplog):
     async def fail(*args):
         raise RuntimeError("private provider exception sentinel")
 
@@ -120,5 +119,8 @@ def test_transcribe_provider_error_is_safe(demo_app, monkeypatch):
     with TestClient(demo_app) as client:
         response = client.post("/api/transcribe", content=b"audio")
         assert response.status_code == 503
+        assert response.json() == {"detail": "Audio transcription is temporarily unavailable."}
         assert "private provider exception sentinel" not in response.text
         assert "Traceback" not in response.text
+    assert "Audio transcription failed" in caplog.text
+    assert "private provider exception sentinel" in caplog.text

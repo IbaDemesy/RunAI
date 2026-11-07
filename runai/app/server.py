@@ -1,6 +1,7 @@
 """Backend FastAPI : API des missions, flux SSE et page web du portail."""
 
 import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -43,6 +44,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 ROOT_DIR = Path(__file__).resolve().parents[2]
 KEEPALIVE_SECONDS = 15
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
+logger = logging.getLogger(__name__)
 
 
 class MissionRequest(BaseModel):
@@ -326,8 +328,9 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         content_type = request.headers.get("content-type", "application/octet-stream")
         try:
             return redact_secrets({"text": await get_service().transcribe(audio, content_type), "mode": selected.providers.mode.value})
-        except Exception as error:  # noqa: BLE001 - erreur fournisseur exposée sans faux résultat
-            raise HTTPException(503, redact_secrets(str(error))) from None
+        except Exception:
+            logger.exception("Audio transcription failed")
+            raise HTTPException(503, "Audio transcription is temporarily unavailable.") from None
 
     @app.get("/api/live/{session_id}")
     async def live_session(session_id: str) -> dict:
