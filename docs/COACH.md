@@ -43,7 +43,7 @@ du 07/11/2026) et les 4 profils mesurés du spike (`debutant_10k_paris`, `semi_f
 ## Mesures
 
 Mesuré (Linkup, 07/11/2026) : 20 à 61 s par profil, 0,04 à 0,10 $ (delta de solde), 8/12 courses
-« ouvertes » confirmées par H sur le spike ; run Milan : 49 s, 0,098 $ réels (0,152 $ estimés
+« ouvertes » confirmées par H sur le spike ; run Milan : 49 s, delta de solde 0,098 $ (indicatif : clé partagée entre agents ; 0,152 $ estimés
 par `FinderMetrics`), 5 courses ouvertes dont Milan. Pages Njuko (SPA) illisibles par `/fetch` →
 `a_verifier` sans appel.
 Estimé, à valider par un coach : bornes de confiance, semaines de préparation, plafonds d'âge,
