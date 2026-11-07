@@ -28,7 +28,7 @@ r.races[0].to_race()                       # runai.models.Race pour lancer une m
 | `QUESTIONS` | 5 questions (fréquence/volume, sortie longue, chrono récent, ancienneté/âge, objectifs). `CUSTOM_VOCABULARY` pour Gladia. |
 | `extract_profile(text, llm_json=None)` | Parseur à règles (ou JSON LLM via `llm_prompt()`), puis `plausibility_issues()` : allure, sortie > volume hebdo, chrono hors bornes → champ remis à `None` + question à reposer. Ne devine jamais (« 14 10 km » → vide). |
 | `assess(profile, weeks_available=None)` | Daniels/VDOT (chrono), Cooper, sortie d'entraînement ou déclaratif ; Riegel pour la borne haute ; garde-fous (marathon < 12 sem. bloqué, débutant marathon ≥ 24 sem., < 3 sorties/sem. → marathon déconseillé, plafonds jeunes). |
-| `recommend_races(assessment, preferences, mode=…)` | `replay` = cache uniquement (démo, sans réseau, `CacheMiss` sinon) ; `live` = Linkup puis écriture en cache ; `auto` = cache sinon live. Bloquant (20–60 s en live). |
+| `recommend_races(assessment, preferences, mode=…)` | `replay` = cache uniquement (démo, sans réseau, `CacheMiss` sinon) ; `live` = Linkup puis écriture en cache ; `auto` = cache de moins de 24 h (`max_cache_age`) sinon live. Bloquant (20–60 s en live). |
 | `rank_races(assessment, discovery)` | Classement déterministe sans réseau : courses citées, puis ouvertes, complétées par `a_verifier` jusqu'à 3 ; exclut complet/fermé/hors fenêtre/préparation insuffisante/doublons. |
 
 ## Mode démo (cache/fixtures)

@@ -226,3 +226,20 @@ def test_default_distance_is_feasible_at_window_start(camille):
     prefs = RacePreferences(date_from=date(2026, 12, 5), date_to=date(2027, 6, 30))
     query, _ = build_query(camille, prefs, TODAY)
     assert query.distance_km < 42
+
+
+def test_auto_mode_ignores_stale_cache_but_replay_uses_it(camille):
+    prefs = DEMO_PREFERENCES["milan"]
+
+    class Live:
+        def run(self, query):
+            return DiscoveryResult(query=query, origin="live")
+
+    class NoWrite(DiscoveryCache):
+        def put(self, result):
+            return self.path(result.query)
+
+    cache = NoWrite()
+    live = recommend_races(camille, prefs, finder=Live(), cache=cache, today=TODAY)
+    assert not live.from_cache and live.races == []
+    assert recommend_races(camille, prefs, mode="replay", cache=cache, today=TODAY).from_cache

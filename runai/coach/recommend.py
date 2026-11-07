@@ -2,7 +2,7 @@
 
 import re
 import unicodedata
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 
 from runai.coach.cache import DiscoveryCache
@@ -297,18 +297,22 @@ def recommend_races(
     finder: RaceFinder | None = None,
     cache: DiscoveryCache | None = None,
     today: date | None = None,
+    max_cache_age: timedelta | None = timedelta(hours=24),
 ) -> Recommendations:
     """3 à 5 courses adaptées au niveau, avec raison lisible et statut d'inscription.
 
     - `mode="replay"` : uniquement le cache (fixtures de démo), aucun réseau ; `CacheMiss` sinon.
     - `mode="live"` : Linkup (20 à 60 s mesurés, ~0,07 $), puis écriture dans le cache.
-    - `mode="auto"` (défaut) : cache si présent, sinon live.
+    - `mode="auto"` (défaut) : cache s'il a moins de `max_cache_age` (les statuts changent), sinon live.
     Bloquant : depuis FastAPI, appeler via `anyio.to_thread.run_sync`.
     """
     preferences = preferences or RacePreferences()
     cache = cache or DiscoveryCache()
     query, warnings = build_query(assessment, preferences, today)
     discovery = None if mode == "live" else cache.get(query)
+    stale = discovery is not None and max_cache_age is not None and datetime.now(UTC) - discovery.created_at > max_cache_age
+    if mode == "auto" and stale:
+        discovery = None
     from_cache = discovery is not None
     if discovery is None:
         if mode == "replay":
