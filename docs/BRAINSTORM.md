@@ -132,6 +132,9 @@ Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents con
 | **Hiking Routes in Google Maps** (Hackathon SF) | Planifie des randonnées urbaines et les trace dans Google Maps | Seul projet lié au sport ou à l'outdoor |
 | **Add to cart**, **Product availability**, **Price Check**, **Pricehunter** | Démos e-commerce : panier, stock, prix, codes promo | Briques de navigation e-commerce, sans orchestration |
 
+**Zoom sur [Price Check](https://showcase.hcompany.ai/a/price-check-test/)** (From H) : un seul agent `h/browser` ouvre la page de tarifs d'un éditeur (dans l'exemple, linear.app/pricing) et donne le prix du moins cher des plans payants. La fiche affiche la trace du run étape par étape (« ouvre linear.app », « clique sur le bouton Billed yearly », « répond »), avec le raisonnement de l'agent à chaque étape. Dans l'exemple, l'agent remarque que le tarif annuel est affiché par défaut et bascule sur le mensuel : 12 $ au lieu de 10 $.
+*À reprendre pour RunAI* : afficher ce genre de trace étape par étape dans notre vue de supervision. Et prévoir que l'agent vérifie les options qui changent un prix (annuel ou mensuel, distance de course, options payantes) avant de présenter le récap au coureur.
+
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
