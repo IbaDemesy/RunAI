@@ -22,6 +22,7 @@ from runai.contracts.framing import (
     SlotStatus,
     assert_launchable,
     check_reply_revision,
+    matching_distance,
     missing_slots,
 )
 from runai.contracts.mission import MissionSnapshot
@@ -291,13 +292,11 @@ class FramingEngine:
             None,
         )
         distance = session.slots[SlotName.distance_km]
-        if (
-            candidate
-            and candidate.distances_km
-            and distance.is_known
-            and float(distance.value) not in candidate.distances_km
-        ):
-            raise FramingError("Distance non proposée par cet événement")
+        race_km = float(distance.value) if distance.is_known else None
+        if candidate and candidate.distances_km and race_km is not None:
+            race_km = matching_distance(candidate.distances_km, race_km)
+            if race_km is None:
+                raise FramingError("Distance non proposée par cet événement")
         for name in missing:
             session.open_questions.append(
                 FramingQuestion(
@@ -311,7 +310,7 @@ class FramingEngine:
             return
         value = lambda name: session.slots[name].value
         race = (
-            candidate.to_race(float(value(SlotName.distance_km)))
+            candidate.to_race(race_km)
             if candidate
             else Race(
                 name=value(SlotName.race),

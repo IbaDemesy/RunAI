@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, HttpUrl, ValidationError
 
 from runai.coach.finder import AGGREGATORS, EXCLUDED_DOMAINS, norm_name, parse_date
 from runai.contracts.common import Limitation, Provenance, ProvenanceKind
-from runai.contracts.framing import RaceCandidate, Slot, SlotName
+from runai.contracts.framing import RaceCandidate, Slot, SlotName, matching_distance
 from runai.models import Source
 from runai.search.checks import host_of, is_aggregator, on_domain
 from runai.search.linkup_search import SearchClient, default_client
@@ -122,10 +122,14 @@ class LinkupCandidateSearch:
             if when and when < (self.today or date.today()):
                 continue
             target = slots.get(SlotName.distance_km)
-            if target and target.is_known and target.value is not None and row.distances_km:
-                km = float(target.value)
-                if not any(abs(d - km) <= max(0.5, km * 0.03) for d in row.distances_km):
-                    continue
+            if (
+                target
+                and target.is_known
+                and target.value is not None
+                and row.distances_km
+                and matching_distance(row.distances_km, float(target.value)) is None
+            ):
+                continue
             urls = {str(s.url) for s in row.sources}
             urls.update(str(u) for u in (row.source_url, row.official_url, row.registration_url) if u)
             sources = _sources([

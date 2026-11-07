@@ -23,7 +23,7 @@ MONTHS = [
 
 def extract_slots(text: str) -> dict[SlotName, object]:
     result: dict[SlotName, object] = {}
-    boundary = r"(?=\s+(?:depuis|from|au départ|en|in|le|pour|avec|budget|au|on|\d)\b|[,;.!?]|$)"
+    boundary = r"(?=\s+(?:depuis|from|au départ|en|in|le|pour|avec|budget|au|on|édition|edition|\d)\b|[,;.!?]|$)"
     for slot, prefix in (
         (SlotName.origin, r"(?:depuis|au départ de|départ de|from)"),
         (SlotName.city, r"(?:à|in|(?:marathon|semi|course|race) de)"),
@@ -66,6 +66,8 @@ def extract_slots(text: str) -> dict[SlotName, object]:
     except ValueError:
         pass
     edition = re.search(r"\b(?:édition|edition)\s+(\d{4})\b", text, re.IGNORECASE)
+    if not edition:
+        edition = re.search(r"\b(?:en|in)\s+(\d{4})\b", text, re.IGNORECASE)
     if edition:
         result[SlotName.edition] = edition[1]
     budget = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(?:€|euros?\b)", text, re.IGNORECASE)
