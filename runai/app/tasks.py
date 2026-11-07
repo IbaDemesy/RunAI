@@ -121,7 +121,8 @@ def _fr_date(day: date) -> str:
 DEPARTURE = re.compile(
     r"\b(?:je pars d[e']|je partirai d[e']|départ d[e']|au départ d[e']|depuis)\s*"
     r"(?P<city>[^,.;!?\n]{2,40}?)"
-    r"(?=\s+(?:et|avec|pour|en|le|la|les|mais|ou|à|au|vers|demain|ce|cette)\b|\s*[,.;!?\n]|\s*$)",
+    r"(?=\s+(?:et|avec|pour|mais|ou|à|au|vers|demain|ce|cette)\b"
+    r"|\s+(?:en|le|la|les)\b(?!\s+(?-i:[A-ZÀ-Ý]))|\s*[,.;!?\n]|\s*$)",
     re.IGNORECASE,
 )
 

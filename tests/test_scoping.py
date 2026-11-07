@@ -149,3 +149,10 @@ def test_transport_departs_from_the_city_in_an_unscoped_query():
         query="Marathon de Milan, je pars de Lyon",
     )
     assert "Lyon" in task
+
+
+def test_departure_keeps_compound_city_names():
+    from runai.app.tasks import extract_departure_city
+
+    assert extract_departure_city("je pars d'Aix en Provence") == "Aix en Provence"
+    assert extract_departure_city("je pars de Lyon en train le matin") == "Lyon"
