@@ -3,11 +3,18 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from runai.models import StepKind, StepStatus, StopPoint
 
 TimelineTag = Literal["course", "a_payer", "info", "conseil"]
+
+
+def http_url_or_none(value: str | None) -> str | None:
+    """Refuse les schémas autres que http(s) (ex. `javascript:`) dans les liens du récap."""
+    if value is not None and not value.lower().startswith(("http://", "https://")):
+        raise ValueError(f"URL http(s) attendue : {value[:40]!r}")
+    return value
 
 
 class TimelineItem(BaseModel):
@@ -37,6 +44,11 @@ class RecapSource(BaseModel):
     found_by: str = "Linkup"
     used_for: str = ""
 
+    @field_validator("url")
+    @classmethod
+    def _http_only(cls, v: str | None) -> str | None:
+        return http_url_or_none(v)
+
 
 class FieldRow(BaseModel):
     label: str
@@ -60,6 +72,11 @@ class RecapMission(BaseModel):
     human_action: str
     capture_data_uri: str | None = Field(None, description="Capture PNG en data: URI (dernière vue avant l'arrêt)")
     error: str | None = None
+
+    @field_validator("finalize_url", "live_view_url")
+    @classmethod
+    def _http_only(cls, v: str | None) -> str | None:
+        return http_url_or_none(v)
 
     @property
     def is_ready(self) -> bool:
