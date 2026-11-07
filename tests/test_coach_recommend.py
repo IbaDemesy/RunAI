@@ -243,13 +243,3 @@ def test_auto_mode_ignores_stale_cache_but_replay_uses_it(camille):
     live = recommend_races(camille, prefs, finder=Live(), cache=cache, today=TODAY, max_cache_age=timedelta(0))
     assert not live.from_cache and live.races == []
     assert recommend_races(camille, prefs, mode="replay", cache=cache, today=TODAY).from_cache
-
-
-def test_homonym_cities_far_apart_are_kept(camille):
-    q = _query(travel_mode="flight")
-    cands = [
-        CandidateRace(name="Semi Lille", race_date=date(2027, 4, 4), city="Lille", distance_km=21.1, status=S.ouvert, travel_h_est=1.0),
-        CandidateRace(name="Halve Lille", race_date=date(2027, 4, 4), city="Lille", distance_km=21.1, status=S.ouvert, travel_h_est=3.5),
-    ]
-    names = {r.name for r in rank_races(camille, DiscoveryResult(query=q, candidates=cands), TODAY).races}
-    assert names == {"Semi Lille", "Halve Lille"}

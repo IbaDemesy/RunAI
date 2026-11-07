@@ -230,10 +230,7 @@ def _same_event(a: RaceRecommendation, b: RaceRecommendation) -> bool:
     """Même date et même lieu : Linkup renvoie souvent la même course sous plusieurs noms/langues."""
     if a.race_date is None or a.race_date != b.race_date or not (a.city and b.city):
         return False
-    if _city_key(a.city) != _city_key(b.city):
-        return False
-    # pays souvent écrit dans des langues différentes : homonymes départagés par le trajet
-    return a.travel_h_est is None or b.travel_h_est is None or abs(a.travel_h_est - b.travel_h_est) < 1
+    return _city_key(a.city) == _city_key(b.city)
 
 
 def _city_key(city: str) -> str:
