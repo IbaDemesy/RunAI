@@ -1,0 +1,487 @@
+{
+  "schema_version": "journey.v1",
+  "mission_id": "fx-train",
+  "revision": 1,
+  "framing_revision": 4,
+  "mode": "demo",
+  "origin_public": "Lille",
+  "date_range": [
+    "2027-10-16",
+    "2027-10-18"
+  ],
+  "timezone": "Europe/Amsterdam",
+  "currency": "EUR",
+  "stops": [
+    {
+      "id": "home",
+      "kind": "home",
+      "label": "Lille (ville)",
+      "coords": {
+        "lat": 50.6292,
+        "lon": 3.0573
+      },
+      "local_time": null,
+      "timezone": "Europe/Paris",
+      "provenance": null,
+      "confidence": "estimated"
+    },
+    {
+      "id": "st-out",
+      "kind": "station",
+      "label": "Gare de départ (fixture)",
+      "coords": {
+        "lat": 50.639,
+        "lon": 3.0756
+      },
+      "local_time": "2027-10-16T09:00:00+01:00",
+      "timezone": "Europe/Paris",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "Gare fictive",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "confidence": "illustrative"
+    },
+    {
+      "id": "st-in",
+      "kind": "station",
+      "label": "Gare d'arrivée (fixture)",
+      "coords": {
+        "lat": 52.3791,
+        "lon": 4.9003
+      },
+      "local_time": "2027-10-16T11:40:00+01:00",
+      "timezone": "Europe/Amsterdam",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "hotel",
+      "kind": "hotel",
+      "label": "Hôtel suggéré (fixture, non réservé)",
+      "coords": {
+        "lat": 52.36,
+        "lon": 4.88
+      },
+      "local_time": null,
+      "timezone": "Europe/Amsterdam",
+      "provenance": {
+        "kind": "fixture",
+        "url": null,
+        "label": "Hôtel fictif",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "confidence": "illustrative"
+    },
+    {
+      "id": "bib",
+      "kind": "bib_pickup",
+      "label": "Retrait des dossards (fixture)",
+      "coords": {
+        "lat": 52.343,
+        "lon": 4.854
+      },
+      "local_time": "2027-10-16T15:00:00+02:00",
+      "timezone": "Europe/Amsterdam",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "start",
+      "kind": "race_start",
+      "label": "Départ (fixture)",
+      "coords": {
+        "lat": 52.3433,
+        "lon": 4.8536
+      },
+      "local_time": "2027-10-17T09:30:00+02:00",
+      "timezone": "Europe/Amsterdam",
+      "provenance": null,
+      "confidence": "illustrative"
+    },
+    {
+      "id": "finish",
+      "kind": "race_finish",
+      "label": "Arrivée (fixture)",
+      "coords": {
+        "lat": 52.3433,
+        "lon": 4.8536
+      },
+      "local_time": null,
+      "timezone": "Europe/Amsterdam",
+      "provenance": null,
+      "confidence": "illustrative"
+    }
+  ],
+  "segments": [
+    {
+      "id": "s-home-st",
+      "from_stop_id": "home",
+      "to_stop_id": "st-out",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          3.0573,
+          50.6292
+        ],
+        [
+          3.0756,
+          50.639
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 20,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-train-out",
+      "from_stop_id": "st-out",
+      "to_stop_id": "st-in",
+      "mode": "train",
+      "departure": "2027-10-16T09:00:00+02:00",
+      "arrival": "2027-10-16T11:40:00+02:00",
+      "timezone": "Europe/Paris",
+      "geometry": [
+        [
+          3.0756,
+          50.639
+        ],
+        [
+          4.3517,
+          50.8503
+        ],
+        [
+          4.9003,
+          52.3791
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 160,
+      "cost": {
+        "amount": 89.0,
+        "currency": "EUR",
+        "collected_at": "2026-11-07T12:00:00Z",
+        "confidence": "estimated",
+        "provenance": {
+          "kind": "fixture",
+          "url": null,
+          "label": "Prix train fictif",
+          "collected_at": "2026-11-07T12:00:00Z"
+        }
+      },
+      "automation": "manual",
+      "manual_url": "https://example.org/train-operator",
+      "provenance": null,
+      "limitation": {
+        "code": "transport_manual",
+        "message": "Opérateur ferroviaire non automatisé : vérifier et réserver soi-même.",
+        "step": "transport",
+        "manual_url": "https://example.org/train-operator"
+      }
+    },
+    {
+      "id": "s-st-hotel",
+      "from_stop_id": "st-in",
+      "to_stop_id": "hotel",
+      "mode": "local",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          4.9003,
+          52.3791
+        ],
+        [
+          4.88,
+          52.36
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 20,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-hotel-bib",
+      "from_stop_id": "hotel",
+      "to_stop_id": "bib",
+      "mode": "walk",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          4.88,
+          52.36
+        ],
+        [
+          4.854,
+          52.343
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 35,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-hotel-start",
+      "from_stop_id": "hotel",
+      "to_stop_id": "start",
+      "mode": "walk",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": [
+        [
+          4.88,
+          52.36
+        ],
+        [
+          4.8536,
+          52.3433
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 35,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": null
+    },
+    {
+      "id": "s-race",
+      "from_stop_id": "start",
+      "to_stop_id": "finish",
+      "mode": "race",
+      "departure": null,
+      "arrival": null,
+      "timezone": null,
+      "geometry": null,
+      "geometry_status": "unavailable",
+      "duration_min": null,
+      "cost": null,
+      "automation": "not_covered",
+      "manual_url": null,
+      "provenance": null,
+      "limitation": {
+        "code": "race_track_unavailable",
+        "message": "Tracé officiel non fourni : pas de survol de course.",
+        "step": null,
+        "manual_url": null
+      }
+    },
+    {
+      "id": "s-train-back",
+      "from_stop_id": "st-in",
+      "to_stop_id": "st-out",
+      "mode": "train",
+      "departure": "2027-10-18T10:00:00+02:00",
+      "arrival": "2027-10-18T12:40:00+02:00",
+      "timezone": "Europe/Amsterdam",
+      "geometry": [
+        [
+          4.9003,
+          52.3791
+        ],
+        [
+          4.3517,
+          50.8503
+        ],
+        [
+          3.0756,
+          50.639
+        ]
+      ],
+      "geometry_status": "illustrative",
+      "duration_min": 160,
+      "cost": {
+        "amount": 79.0,
+        "currency": "EUR",
+        "collected_at": "2026-11-07T12:00:00Z",
+        "confidence": "estimated",
+        "provenance": {
+          "kind": "fixture",
+          "url": null,
+          "label": "Prix train fictif",
+          "collected_at": "2026-11-07T12:00:00Z"
+        }
+      },
+      "automation": "manual",
+      "manual_url": "https://example.org/train-operator",
+      "provenance": null,
+      "limitation": null
+    }
+  ],
+  "chapters": [
+    {
+      "id": "home",
+      "label": "Chez moi",
+      "stop_ids": [
+        "home"
+      ],
+      "segment_ids": [
+        "s-home-st"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "departure_hub",
+      "label": "Gare",
+      "stop_ids": [
+        "st-out"
+      ],
+      "segment_ids": [],
+      "status": "available"
+    },
+    {
+      "id": "main_transport",
+      "label": "Train",
+      "stop_ids": [
+        "st-in"
+      ],
+      "segment_ids": [
+        "s-train-out"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "arrival_hotel",
+      "label": "Arrivée et hôtel",
+      "stop_ids": [
+        "hotel"
+      ],
+      "segment_ids": [
+        "s-st-hotel"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "bib_pickup",
+      "label": "Dossard",
+      "stop_ids": [
+        "bib"
+      ],
+      "segment_ids": [
+        "s-hotel-bib"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "race",
+      "label": "Départ et course",
+      "stop_ids": [
+        "start",
+        "finish"
+      ],
+      "segment_ids": [
+        "s-hotel-start",
+        "s-race"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "return_trip",
+      "label": "Retour",
+      "stop_ids": [
+        "st-out"
+      ],
+      "segment_ids": [
+        "s-train-back"
+      ],
+      "status": "available"
+    }
+  ],
+  "budget": {
+    "currency": "EUR",
+    "cap": 600.0,
+    "lines": [
+      {
+        "id": "c-reg",
+        "category": "registration",
+        "label": "Inscription",
+        "money": {
+          "amount": 95.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Tarif fictif",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-hotel",
+        "category": "accommodation",
+        "label": "Hôtel 2 nuits",
+        "money": {
+          "amount": 240.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Tarif fictif",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      },
+      {
+        "id": "c-train",
+        "category": "transport",
+        "label": "Train aller-retour",
+        "money": {
+          "amount": 168.0,
+          "currency": "EUR",
+          "collected_at": "2026-11-07T12:00:00Z",
+          "confidence": "estimated",
+          "provenance": {
+            "kind": "fixture",
+            "url": null,
+            "label": "Somme des deux trajets fictifs",
+            "collected_at": "2026-11-07T12:00:00Z"
+          }
+        },
+        "note": null
+      }
+    ],
+    "known_total": 503.0,
+    "missing_line_ids": [],
+    "complete": true,
+    "over_cap": false
+  },
+  "warnings": [
+    "Données de démonstration : course, hôtel et horaires fictifs."
+  ],
+  "limitations": [],
+  "sources": [
+    {
+      "kind": "fixture",
+      "url": null,
+      "label": "Fixture contractuelle G1",
+      "collected_at": "2026-11-07T12:00:00Z"
+    }
+  ]
+}

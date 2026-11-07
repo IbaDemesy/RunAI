@@ -1,0 +1,52 @@
+import pytest
+
+from runai.app.replay import ReplayTrace
+from runai.contracts.mission import EventEnvelope
+from runai.models import StepKind, StepResult
+from runai.redaction import redact_secrets
+
+
+@pytest.mark.parametrize("name", ["HAI_API_KEY", "GLADIA_API_KEY_2", "LINKUP_API_KEY_17"])
+def test_nested_payload_masks_configured_variants(monkeypatch, name):
+    secret = "provider-secret-123456"
+    monkeypatch.setenv(name, secret)
+    value = {"nested": [f"error {secret}", (secret, None, 42)], secret: "value"}
+    assert redact_secrets(value) == {
+        "nested": ["error [REDACTED]", ("[REDACTED]", None, 42)], "[REDACTED]": "value"
+    }
+    assert value["nested"][0] == f"error {secret}"
+
+
+def test_empty_short_and_normal_values_unchanged(monkeypatch):
+    monkeypatch.setenv("HAI_API_KEY", "")
+    monkeypatch.setenv("GLADIA_API_KEY_2", "Paris")
+    value = {"url": "https://example.org/race?city=Paris", "city": "Paris", "empty": ""}
+    assert redact_secrets(value) == value
+    assert redact_secrets(None) is None
+
+
+def test_publication_masks_mutated_values(monkeypatch, tmp_path):
+    secret = "provider-secret-123456"
+    monkeypatch.setenv("LINKUP_API_KEY_2", secret)
+    event = EventEnvelope.build("m1", 0, "error", {})
+    event.payload["nested"] = [{"message": secret}]
+    assert secret not in event.to_sse()
+    step = StepResult(kind=StepKind.transport)
+    step.error = secret
+    assert secret not in step.model_dump_json()
+    trace = ReplayTrace(label="trace")
+    trace.transcript = secret
+    path = tmp_path / "trace.json"
+    trace.dump(path)
+    assert secret not in path.read_text()
+
+
+def test_replay_snapshot_masks_raw_events(monkeypatch):
+    secret = "provider-secret-123456"
+    monkeypatch.setenv("HAI_API_KEY_3", secret)
+    trace = ReplayTrace.from_mission_snapshot({
+        "id": "m1", "steps": [{"kind": "transport"}],
+        "events": [{"source": "h", "type": "error", "message": secret,
+                    "data": {"step": "transport"}}],
+    })
+    assert trace.steps[StepKind.transport].events[0].message == "[REDACTED]"

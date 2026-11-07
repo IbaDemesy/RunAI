@@ -1,0 +1,207 @@
+{
+  "schema_version": "framing.v1",
+  "id": "fx-framing-candidates",
+  "mode": "demo",
+  "status": "choosing_candidate",
+  "revision": 2,
+  "slots": {
+    "city": {
+      "name": "city",
+      "status": "answered",
+      "value": "Tokyo",
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "race": {
+      "name": "race",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "edition": {
+      "name": "edition",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "race_date": {
+      "name": "race_date",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "date_window": {
+      "name": "date_window",
+      "status": "answered",
+      "value": [
+        "2027-03-01",
+        "2027-04-30"
+      ],
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "distance_km": {
+      "name": "distance_km",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "origin": {
+      "name": "origin",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "budget": {
+      "name": "budget",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "nights": {
+      "name": "nights",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "transport_mode": {
+      "name": "transport_mode",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    },
+    "preferences": {
+      "name": "preferences",
+      "status": "unknown",
+      "value": null,
+      "provenance": null,
+      "revision": 0
+    }
+  },
+  "candidates": [
+    {
+      "id": "cand-a",
+      "name": "Course fictive A de Tokyo",
+      "city": "Tokyo",
+      "country": "JP",
+      "race_date": "2027-03-07",
+      "distances_km": [
+        42.195
+      ],
+      "official_url": "https://example.org/tokyo-a",
+      "registration_url": null,
+      "sources": [
+        {
+          "url": "https://example.org/tokyo-a",
+          "title": "Fixture"
+        }
+      ],
+      "provenance": {
+        "kind": "fixture",
+        "url": "https://example.org/tokyo-a",
+        "label": "Candidat fictif",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "limitations": [
+        {
+          "code": "registration_lottery",
+          "message": "Inscription par tirage au sort : préparation manuelle.",
+          "step": "registration",
+          "manual_url": null
+        }
+      ]
+    },
+    {
+      "id": "cand-b",
+      "name": "Course fictive B de Tokyo",
+      "city": "Tokyo",
+      "country": "JP",
+      "race_date": "2027-04-18",
+      "distances_km": [
+        10.0,
+        21.0975
+      ],
+      "official_url": "https://example.org/tokyo-b",
+      "registration_url": null,
+      "sources": [
+        {
+          "url": "https://example.org/tokyo-b",
+          "title": "Fixture"
+        }
+      ],
+      "provenance": {
+        "kind": "fixture",
+        "url": "https://example.org/tokyo-b",
+        "label": "Candidat fictif",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "limitations": []
+    }
+  ],
+  "selected_candidate_id": null,
+  "open_questions": [
+    {
+      "id": "q-cand",
+      "slots": [
+        "race"
+      ],
+      "text": "Laquelle de ces courses ?",
+      "choices": [
+        {
+          "id": "ch-cand-a",
+          "label": "Course fictive A de Tokyo — 2027-03-07",
+          "value": null,
+          "candidate_id": "cand-a"
+        },
+        {
+          "id": "ch-cand-b",
+          "label": "Course fictive B de Tokyo — 2027-04-18",
+          "value": null,
+          "candidate_id": "cand-b"
+        }
+      ],
+      "allow_free_text": true,
+      "revision": 2
+    }
+  ],
+  "turns": [
+    {
+      "role": "user",
+      "channel": "text",
+      "text": "Une course à Tokyo au printemps 2027",
+      "revision": 1,
+      "at": "2026-11-07T12:00:00Z"
+    },
+    {
+      "role": "assistant",
+      "channel": "text",
+      "text": "J'ai trouvé deux événements sourcés.",
+      "revision": 2,
+      "at": "2026-11-07T12:00:00Z"
+    }
+  ],
+  "summary": null,
+  "limitations": [],
+  "confirmed_revision": null,
+  "confirm_key": null,
+  "mission_id": null,
+  "created_at": "2026-11-07T16:55:06.442663Z"
+}

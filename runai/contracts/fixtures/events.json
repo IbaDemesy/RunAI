@@ -1,0 +1,59 @@
+[
+  {
+    "schema_version": "events.v1",
+    "event_id": "fx-mission:0",
+    "sequence": 0,
+    "mission_id": "fx-mission",
+    "emitted_at": "2026-11-07T12:00:00Z",
+    "type": "snapshot",
+    "payload": {
+      "status": "searching"
+    }
+  },
+  {
+    "schema_version": "events.v1",
+    "event_id": "fx-mission:1",
+    "sequence": 1,
+    "mission_id": "fx-mission",
+    "emitted_at": "2026-11-07T12:00:00Z",
+    "type": "step",
+    "payload": {
+      "kind": "registration",
+      "status": "running"
+    }
+  },
+  {
+    "schema_version": "events.v1",
+    "event_id": "fx-mission:2",
+    "sequence": 2,
+    "mission_id": "fx-mission",
+    "emitted_at": "2026-11-07T12:00:00Z",
+    "type": "question_opened",
+    "payload": {
+      "question_id": "hq-1"
+    }
+  },
+  {
+    "schema_version": "events.v1",
+    "event_id": "fx-mission:3",
+    "sequence": 3,
+    "mission_id": "fx-mission",
+    "emitted_at": "2026-11-07T12:00:00Z",
+    "type": "question_resolved",
+    "payload": {
+      "question_id": "hq-1",
+      "status": "answered"
+    }
+  },
+  {
+    "schema_version": "events.v1",
+    "event_id": "fx-mission:4",
+    "sequence": 4,
+    "mission_id": "fx-mission",
+    "emitted_at": "2026-11-07T12:00:00Z",
+    "type": "journey_revised",
+    "payload": {
+      "revision": 1
+    }
+  }
+]

@@ -1,7 +1,11 @@
 """Consignes envoyées aux agents et actions laissées à l'humain au portail."""
 
 import re
+from datetime import date
 
+from pydantic import BaseModel, Field
+
+from runai.app.providers import FORBIDDEN_ACCOMMODATION_SITES
 from runai.models import Race, RunnerProfile, StepKind, StopPoint
 from runai.safety import guard_task
 
@@ -47,7 +51,7 @@ _PER_NIGHT_BUDGET = re.compile(
 
 
 def extract_budget_per_night(
-    text: str, *, require_context: bool = False
+    text: str, *, require_context: bool = False, nights: int = 2
 ) -> float | None:
     search_text = text
     if require_context:
@@ -73,7 +77,7 @@ def extract_budget_per_night(
         amount = amount.replace(".", "")
     budget = float(amount)
     if _TOTAL_BUDGET.search(text) and not _PER_NIGHT_BUDGET.search(text):
-        budget /= 2
+        budget /= max(nights, 1)
     return budget
 
 
@@ -91,64 +95,195 @@ def _profile_lines(profile: RunnerProfile) -> str:
     )
 
 
+class TripBrief(BaseModel):
+    """Données confirmées par l'humain ou sourcées ; None = inconnu, l'agent doit demander."""
+
+    race_label: str
+    city: str
+    country: str
+    race_date: date | None = None
+    distance_km: float | None = None
+    arrival: date | None = None
+    departure: date | None = None
+    nights: int | None = None
+    origin: str | None = None
+    budget_total_eur: float | None = None
+    budget_per_night_eur: float | None = None
+    transport_mode: str | None = None
+    preferences: str | None = None
+    hotel_landmarks: list[str] = Field(default_factory=list)
+    health_question: str | None = None
+    registration_platform: str | None = None
+    accommodation_site: str | None = None
+    accommodation_url: str | None = None
+    transport_site: str | None = None
+    transport_url: str | None = None
+
+
+DEFAULT_HEALTH_QUESTION = (
+    "Avez-vous le certificat médical, la licence ou le justificatif de santé exigé "
+    "par l'organisateur ?"
+)
+_MONTHS = (
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+)
+_TRANSPORT_LABELS = {"train": "train", "flight": "avion", "bus": "bus", "car": "voiture"}
+
+
+def fr_date(value: date) -> str:
+    return f"{value.day} {_MONTHS[value.month - 1]} {value.year}"
+
+
+def _km(value: float) -> str:
+    return f"{value:g}".replace(".", ",")
+
+
+def brief_from_race(race: Race, query: str = "") -> TripBrief:
+    """Brief minimal tiré d'une fiche course seule : tout le reste est inconnu."""
+    label = race.name
+    if race.race_date and str(race.race_date.year) not in label:
+        label = f"{label} {race.race_date.year}"
+    return TripBrief(
+        race_label=label,
+        city=race.city,
+        country=race.country,
+        race_date=race.race_date,
+        distance_km=race.distance_km,
+        budget_per_night_eur=extract_budget_per_night(query, require_context=True),
+        hotel_landmarks=[x for x in (race.start_location, race.bib_pickup) if x],
+    )
+
+
+def _registration_task(race: Race, brief: TripBrief, profile: RunnerProfile) -> str:
+    platform = brief.registration_platform or "la plateforme officielle"
+    url = race.registration_url or "le lien officiel fourni par la recherche"
+    distance = brief.distance_km or race.distance_km
+    distance_text = (
+        f" ({_km(distance)} km)"
+        if distance
+        else " (distance inconnue : demande-la avec ask_user avant de choisir)"
+    )
+    question = brief.health_question or DEFAULT_HEALTH_QUESTION
+    return (
+        f"Prépare l'inscription à {brief.race_label} sur {platform}, "
+        f"à partir du lien officiel fourni : {url}{distance_text}. "
+        f"N'utilise jamais Klikego ni un revendeur ; si le lien fourni n'est pas sur "
+        f"{platform}, arrête-toi et signale que le lien officiel manque. "
+        "Continue en invité. Utilise uniquement le profil fictif ci-dessous et "
+        "remplis seulement les champs nécessaires. Si l'inscription en invité "
+        "n'est pas possible, arrête-toi avant toute création de compte. "
+        f"Avant de poursuivre, demande exactement avec ask_user : « {question} » "
+        "Ne coche aucune case de santé, ne fournis aucun numéro et ne téléverse aucun "
+        "document ; arrête-toi à la déclaration de santé si elle apparaît, sinon au "
+        f"paiement. {_profile_lines(profile)} {ASK_USER_RULES} {STOP_RULES}"
+    )
+
+
+def _stay_text(brief: TripBrief) -> str:
+    if brief.arrival and brief.departure:
+        nights = brief.nights or (brief.departure - brief.arrival).days
+        return (
+            f"arrivée le {fr_date(brief.arrival)} et départ le "
+            f"{fr_date(brief.departure)} ({nights} nuits)"
+        )
+    return (
+        "dates de séjour inconnues : demande d'abord avec ask_user les dates "
+        "d'arrivée et de départ, n'invente aucune date"
+    )
+
+
+def _budget_text(brief: TripBrief, nights: int | None) -> str:
+    stay = f"les {nights} nuits" if nights else "le séjour"
+    if brief.budget_per_night_eur is not None:
+        per_night = brief.budget_per_night_eur
+        total = f", soit {per_night * nights:g} € maximum pour {stay}" if nights else ""
+        return (
+            f"Budget maximal déjà donné : {per_night:g} € par nuit{total}. "
+            "Respecte strictement ce plafond."
+        )
+    if brief.budget_total_eur is not None:
+        return (
+            f"Budget total du voyage déjà donné : {brief.budget_total_eur:g} € tous "
+            f"postes confondus ; le total pour {stay} ne doit jamais dépasser ce montant. "
+            "Signale le montant restant pour les autres postes."
+        )
+    return (
+        "Avant toute recherche, demande avec ask_user : « Budget max par nuit ? » "
+        "avec les options « 100 € », « 150 € », « 200 € ». Attends la réponse avant "
+        "d'ouvrir le site."
+    )
+
+
+def _accommodation_task(brief: TripBrief) -> str:
+    if not brief.accommodation_site:
+        raise ValueError("Hébergement non automatisé : aucun site officiel autorisé.")
+    nights = brief.nights
+    if nights is None and brief.arrival and brief.departure:
+        nights = (brief.departure - brief.arrival).days
+    near = (
+        f"près de : {' ; '.join(brief.hotel_landmarks)}"
+        if brief.hotel_landmarks
+        else "au plus près du départ de la course"
+    )
+    price_tag = f"PRIX_TOTAL_{nights}_NUITS" if nights else "PRIX_TOTAL_SEJOUR"
+    site = brief.accommodation_site
+    if brief.accommodation_url:
+        site = f"{site} ({brief.accommodation_url})"
+    preferences = (
+        f"Préférences de l'utilisateur : {brief.preferences}. " if brief.preferences else ""
+    )
+    return (
+        f"Trouve un hôtel à {brief.city} ({brief.country}) pour 1 adulte, "
+        f"{_stay_text(brief)}, {near}. {_budget_text(brief, nights)} {preferences}"
+        f"Va exclusivement sur le {site} ; "
+        f"{', '.join(FORBIDDEN_ACCOMMODATION_SITES)} et tout autre agrégateur sont "
+        "interdits. Compare les offres disponibles et ne choisis qu'un tarif dont le "
+        "total respecte le plafond. Si aucune offre ne respecte le budget, ne la "
+        "présente pas comme convenable et indique qu'aucune option abordable n'a été "
+        "trouvée. Arrête-toi au récapitulatif avant paiement, sans réserver. Affiche "
+        "les prix en euros si le site le permet. Dans la réponse finale, donne le prix "
+        f"total exact sous la forme {price_tag}: 123.45 EUR ; si le total est absent, "
+        f"écris {price_tag}: INCONNU. {ASK_USER_RULES} {STOP_RULES}"
+    )
+
+
+def _transport_task(brief: TripBrief) -> str:
+    if not brief.transport_site:
+        raise ValueError("Transport non automatisé : aucun vendeur officiel validé.")
+    mode = _TRANSPORT_LABELS.get(brief.transport_mode or "", brief.transport_mode or "")
+    mode_text = f" en {mode}" if mode else ""
+    origin = brief.origin or "(ville de départ inconnue : demande-la avec ask_user)"
+    dates = (
+        f"aller le {fr_date(brief.arrival)} et retour le {fr_date(brief.departure)}"
+        if brief.arrival and brief.departure
+        else "dates inconnues : demande-les avec ask_user, n'en invente aucune"
+    )
+    site = brief.transport_site
+    if brief.transport_url and brief.transport_url.split("//")[-1] not in site:
+        site = f"{site} ({brief.transport_url})"
+    return (
+        f"Cherche un aller-retour{mode_text} {origin} → {brief.city} sur {site} pour "
+        f"1 adulte : {dates}. N'utilise aucun autre vendeur et jamais TAP. Si "
+        "plusieurs horaires ou tarifs sont possibles, demande à l'utilisateur de "
+        f"choisir ; ne devine pas. {ASK_USER_RULES} {STOP_RULES}"
+    )
+
+
 def build_task(
     kind: StepKind,
     race: Race,
     profile: RunnerProfile,
-    query: str = "",
+    *,
+    brief: TripBrief,
 ) -> str:
+    """Consigne H d'une étape à partir du cadrage confirmé."""
     if kind is StepKind.registration:
-        url = race.registration_url or "le lien Njuko de la fiche Linkup"
-        distance = f" ({race.distance_km:g} km)" if race.distance_km else " (42,195 km)"
-        task = (
-            f"Prépare l'inscription au Wizz Air Milano Marathon 2027 sur Njuko, "
-            f"à partir du lien Njuko fourni par Linkup : {url}{distance}. "
-            "N'utilise jamais Klikego ; si le lien fourni n'est pas sur Njuko, arrête-toi "
-            "et signale que le lien Njuko manque. "
-            "Continue en invité. Utilise uniquement le profil fictif ci-dessous et "
-            "remplis seulement les champs nécessaires. Si l'inscription en invité "
-            "n'est pas possible, arrête-toi avant toute création de compte. "
-            "Avant de poursuivre, demande exactement avec ask_user : « Avez-vous une "
-            "Runcard ou un certificat médical de compétition (ECG d'effort) ? » "
-            "Ne coche aucune "
-            "case de santé, ne fournis aucun numéro et ne téléverse aucun document ; "
-            "arrête-toi à la déclaration de santé si elle apparaît, sinon au paiement. "
-            f"{_profile_lines(profile)} {ASK_USER_RULES} {STOP_RULES}"
-        )
+        task = _registration_task(race, brief, profile)
     elif kind is StepKind.accommodation:
-        budget = extract_budget_per_night(query, require_context=True)
-        budget_instruction = (
-            f"Budget maximal déjà donné : {budget:g} € par nuit, soit "
-            f"{budget * 2:g} € maximum pour les deux nuits. Respecte strictement ce plafond."
-            if budget is not None
-            else "Avant toute recherche, demande avec ask_user : « Budget max par nuit ? » "
-            "avec les options « 100 € », « 150 € », « 200 € ». Attends la réponse avant "
-            "d'ouvrir le site."
-        )
-        task = (
-            "Trouve un hôtel à Milan pour 1 adulte, arrivée le 3 avril 2027 et départ "
-            "le 5 avril 2027 (2 nuits), près du départ Corso Sempione ou du retrait "
-            "des dossards Via Moncucco 35. "
-            f"{budget_instruction} Va exclusivement sur le site officiel Accor "
-            "(https://all.accor.com) ; Booking.com, Expedia, Hotels.com, Airbnb et tout "
-            "autre agrégateur sont interdits. Compare les offres Accor disponibles et "
-            "ne choisis qu'un tarif dont le total des deux nuits respecte le plafond. "
-            "Si aucune offre ne respecte le budget, ne la présente pas comme convenable "
-            "et indique qu'aucune option abordable n'a été trouvée. "
-            "Arrête-toi au récapitulatif avant paiement, sans réserver. Dans la réponse "
-            "finale, donne le prix total exact sous la forme "
-            "PRIX_TOTAL_2_NUITS: 123.45 EUR ; si le total est absent, écris "
-            "PRIX_TOTAL_2_NUITS: INCONNU. "
-            f"{ASK_USER_RULES} {STOP_RULES}"
-        )
+        task = _accommodation_task(brief)
     elif kind is StepKind.transport:
-        task = (
-            "Cherche un aller-retour en train Paris → Milano sur trenitalia.com pour "
-            "1 adulte : aller le 3 avril 2027 et retour le 5 avril 2027. N'utilise "
-            "aucun autre vendeur et jamais TAP. Si plusieurs horaires ou tarifs sont "
-            "possibles, demande à l'utilisateur de choisir ; ne devine pas. "
-            f"{ASK_USER_RULES} {STOP_RULES}"
-        )
+        task = _transport_task(brief)
     else:
         raise ValueError(f"Pas d'agent de navigation pour l'étape {kind.value}")
     return guard_task(task)
