@@ -376,6 +376,7 @@
           panel.dataset.screenshot = source;
           panel.querySelector(".agent-capture-status").textContent = active ? "Captures H actualisées au fil des observations, pas un flux vidéo." : "Dernière capture H · étape terminée.";
           const image = panel.querySelector("img"); if (image) { image.hidden = false; image.src = source; }
+          if (panel.open) panel.ontoggle();
         }
         if (!active && !panel.querySelector("img")?.hidden) panel.querySelector(".agent-capture-status").textContent = "Dernière capture H · étape terminée.";
       }

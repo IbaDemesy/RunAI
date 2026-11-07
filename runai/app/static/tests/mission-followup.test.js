@@ -170,3 +170,14 @@ test("sans LiveViewURL, les observations H affichent une capture proxifiée rév
   assert.match(panel.textContent, /Capture indisponible/);
   assert.equal(screen.querySelectorAll("a").some(node => node.textContent === "Replay H"), true);
 });
+
+test("la première capture apparaît aussi quand la fenêtre live est déjà ouverte", async () => {
+  const step = { kind: "accommodation", status: "running", live_view_url: "https://live.example.org/browser", data: {} };
+  const { screen, sources, update } = await setup("running", [], step);
+  const panel = screen.querySelector(".agent-live"); panel.open = true; panel.ontoggle();
+  assert.equal(panel.querySelector("img"), null);
+  update({ steps: [{ ...step, data: { browser_observation: { revision: 1, title: "Première capture", url: "https://example.com/" } } }] });
+  await sources[0].handlers.get("trace")();
+  assert.equal(screen.querySelector(".agent-live"), panel);
+  assert.equal(panel.querySelector("img")?.src, "/api/missions/mission-test/steps/accommodation/screenshot?v=1");
+});
