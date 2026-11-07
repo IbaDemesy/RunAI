@@ -205,8 +205,10 @@ class FramingEngine:
                         raise FramingError(
                             f"Please enter a valid number for {slot.value}."
                         ) from exc
+            holo_values = {}
             if not choice and reply.text:
-                values = await self._holo_fill(session, reply.text, values) | values
+                holo_values = await self._holo_fill(session, reply.text, values)
+                values = holo_values | values
             if not values and choice is None and session.turns:
                 raise FramingError(guidance)
             self._validate(values)
@@ -223,7 +225,11 @@ class FramingEngine:
             discovery_changed = any(
                 name in values
                 and session.slots[name].is_known
-                and session.slots[name].value is not None
+                and not (
+                    name == SlotName.date_window
+                    and name in holo_values
+                    and session.slots[name].value is None
+                )
                 and values[name] != session.slots[name].value
                 for name in (
                     SlotName.city,

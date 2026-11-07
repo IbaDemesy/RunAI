@@ -844,6 +844,34 @@ def test_candidate_rejection_and_correction_preserve_known_answers():
     asyncio.run(run())
 
 
+def test_specific_period_correction_invalidates_selected_flexible_race():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search)
+        session = await engine.create(FramingCreate(
+            text="course à Tokyo, 10 km, depuis Lyon, 800 euros, 2 nuits, train"
+        ))
+        question = next(q for q in session.open_questions if q.slots == [SlotName.date_window])
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text="any time"
+        ))
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0"
+        ))
+        assert session.status == FramingStatus.ready_to_confirm
+        assert session.slots[SlotName.date_window].value is None
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.date_window: "October"}
+        ))
+        assert session.selected_candidate_id is None
+        assert session.summary is None
+        assert session.status == FramingStatus.choosing_candidate
+        assert len(search.calls) == 2
+        assert search.calls[-1][SlotName.date_window].value == "October"
+
+    asyncio.run(run())
+
+
 def test_french_conjunction_car_is_not_a_transport_mode():
     assert SlotName.transport_mode not in extract_slots(
         "je viens car je veux courir à Tokyo"
