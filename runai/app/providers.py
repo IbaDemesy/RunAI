@@ -289,14 +289,18 @@ def build_providers(
             ReplayTrace,
             ReplayTranscriber,
         )
+        from runai.config import ROOT
 
         path = replay_trace or (
             Path(env["RUNAI_REPLAY_TRACE"]) if env.get("RUNAI_REPLAY_TRACE") else None
         )
         if path is None:
-            raise ValueError(
-                "Mode replay : RUNAI_REPLAY_TRACE (fichier replay.v1) est requis."
-            )
+            path = ROOT / "fixtures" / "replay" / "default.json"
+            if not path.is_file():
+                raise ValueError(
+                    "Replay mode: the default replay.v1 trace is missing. "
+                    "Set RUNAI_REPLAY_TRACE to a recorded trace file."
+                )
         trace = ReplayTrace.load(path)
         return ProviderSet(
             mode,

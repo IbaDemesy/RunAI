@@ -116,7 +116,8 @@ def test_demo_results_are_labeled_demo():
     assert result.data["provenance"]["kind"] == "fixture"
 
 
-def test_replay_requires_a_trace():
+def test_replay_requires_a_trace_when_default_is_missing(monkeypatch, tmp_path):
+    monkeypatch.setattr("runai.config.ROOT", tmp_path)
     with pytest.raises(ValueError, match="RUNAI_REPLAY_TRACE"):
         build_providers(DataMode.replay, env={})
 

@@ -93,7 +93,7 @@ class ReplayTrace(BaseModel):
 
 
 def _replay_label(trace: ReplayTrace) -> str:
-    return f"Replay de « {trace.label} » (enregistré en {trace.recorded_mode.value})"
+    return f"Replay of “{trace.label}” (recorded in {trace.recorded_mode.value})"
 
 
 class ReplayRaceSearch:
@@ -103,7 +103,7 @@ class ReplayRaceSearch:
     async def find_race(self, query: str) -> Race:
         if self.trace.race is None:
             raise ProviderUnavailableError(
-                "Replay : aucune fiche course dans la trace."
+                "Replay: no race details in the trace."
             )
         return self.trace.race.model_copy(deep=True)
 
@@ -115,7 +115,7 @@ class ReplayTranscriber:
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         if not self.trace.transcript:
             raise ProviderUnavailableError(
-                "Replay : aucune transcription dans la trace."
+                "Replay: no transcript in the trace."
             )
         return self.trace.transcript
 
@@ -161,7 +161,7 @@ class ReplayRun:
             result = StepResult(
                 kind=self.kind,
                 status=StepStatus.failed,
-                error="Étape absente de la trace rejouée.",
+                error="Step missing from the replayed trace.",
             )
         else:
             for question in step.questions:
