@@ -101,6 +101,10 @@ RULES_SCHEMA: dict[str, Any] = {
         "min_age": {"type": "integer", "description": "Minimum age to enter the main race"},
         "license_accepted": {"type": "boolean", "description": "Is an athletics federation licence accepted?"},
         "license_details": {"type": "string", "description": "Which licences are accepted"},
+        "foreign_license_accepted": {
+            "type": "boolean",
+            "description": "Are licences from foreign federations (World Athletics members) explicitly accepted?",
+        },
         "medical_certificate_required": {
             "type": "boolean",
             "description": "Do runners without licence need a medical certificate (or PPS in France)?",
@@ -305,7 +309,8 @@ def _entry_paths(data: dict[str, Any], source: FieldSource | None) -> list[Entry
             EntryPath(
                 id="license",
                 label="Avec licence d'athlétisme",
-                licenses=[LicenseKind.host_federation, LicenseKind.foreign_federation],
+                licenses=[LicenseKind.host_federation]
+                + ([LicenseKind.foreign_federation] if _bool(data.get("foreign_license_accepted")) else []),
                 requirements=[
                     Requirement(
                         kind=RequirementKind.license,
