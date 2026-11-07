@@ -55,7 +55,13 @@ def friendly_error(text: str) -> str:
         return _CAPTCHA_ERROR
     if "timeout" in lowered or "timed out" in lowered:
         return _TIMEOUT_ERROR
-    if any(token in lowered for token in ("401", "403", "api key", "hai_api_key", "unauthorized")):
+    if (
+        any(token in lowered for token in ("api key", "hai_api_key", "unauthorized", "forbidden"))
+        or re.search(
+            r"\b(?:http|status|code|erreur)\D{0,3}40[13]\b(?!\s*(?:€|euros?\b))",
+            lowered,
+        )
+    ):
         return _SERVICE_ERROR
     if text and text[0].isupper() and not re.search(
         r"traceback|error|exception", text, re.IGNORECASE

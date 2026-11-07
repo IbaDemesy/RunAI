@@ -126,6 +126,10 @@ def test_observation_headline_truncates_long_title():
             "Le service d'agents est indisponible pour le moment.",
         ),
         (
+            "HORS BUDGET : 401 € dépasse 403 euros pour 2 nuits.",
+            "HORS BUDGET : 401 € dépasse 403 euros pour 2 nuits.",
+        ),
+        (
             "Hébergement non automatisé : aucun site officiel autorisé.",
             "Hébergement non automatisé : aucun site officiel autorisé.",
         ),
