@@ -310,6 +310,9 @@ def test_race_day_pickup_must_end_before_corrals_close(half):
     assert "bib_pickup_missed" in {a.code for a in late.alerts} and not late.ok
     early = build_timeline(None, rules, arrival=_train(race_day, time(5, 0), time(7, 0), destination="Test"))
     assert "bib_pickup_missed" not in {a.code for a in early.alerts}
+    too_late = PickupWindow(day=race_day, opens=time(9, 0), closes=time(12, 0))
+    impossible = build_timeline(None, rules.model_copy(update={"bib_pickup_windows": [too_late]}))
+    assert "bib_pickup_missed" in {a.code for a in impossible.alerts} and not impossible.ok
 
 
 def test_timeline_without_logistics_flags_assumptions(half):

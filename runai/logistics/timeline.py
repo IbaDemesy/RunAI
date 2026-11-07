@@ -229,7 +229,7 @@ def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest) -> 
         window
         for window in rules.bib_pickup_windows
         if window.day < race_day
-        or (window.day == race_day and rules.bib_pickup_race_day and at(window.day, window.opens) + MIN_PICKUP_SLOT <= latest)
+        or (window.day == race_day and rules.bib_pickup_race_day)
     ]
     detail = "Pièce d'identité + e-mail de confirmation ; documents d'inscription téléversés avant le retrait."
     if not windows:
@@ -249,26 +249,21 @@ def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest) -> 
             )
         )
         return
-    if arrive is None:
-        window = windows[-1]
-        begin = at(window.day, window.opens)
-        add(begin, begin + PICKUP_DURATION, title="Retrait du dossard", kind="bib_pickup", location=location,
-            detail=detail, assumption=True, source_url=source)
-        return
-    ready = arrive + (timedelta(minutes=hotel.minutes_to_bib_pickup) if hotel else STATION_TO_PICKUP)
-    for window in windows:
+    ready = arrive + (timedelta(minutes=hotel.minutes_to_bib_pickup) if hotel else STATION_TO_PICKUP) if arrive else None
+    for window in windows if arrive else reversed(windows):
         opens, closes = at(window.day, window.opens), at(window.day, window.closes)
         if window.day == race_day:
             closes = min(closes, latest)
-        begin = max(opens, ready)
+        begin = max(opens, ready) if ready else opens
         if begin + MIN_PICKUP_SLOT <= closes:
             add(begin, min(begin + PICKUP_DURATION, closes), title="Retrait du dossard", kind="bib_pickup",
                 location=location, detail=f"Ouvert {window.opens:%H:%M}-{window.closes:%H:%M}. {detail}",
-                source_url=source)
+                assumption=arrive is None, source_url=source)
             return
     last = windows[-1]
+    when = f"Arrivée {arrive:%a %d/%m %H:%M} : trop tard" if arrive else "Aucun créneau possible"
     message = (
-        f"Arrivée {arrive:%a %d/%m %H:%M} : trop tard pour le retrait du dossard "
+        f"{when} pour le retrait du dossard avant la fermeture des sas "
         f"(dernier créneau le {last.day:%d/%m} jusqu'à {last.closes:%H:%M}). Prendre un trajet plus tôt"
     )
     if rules.bib_pickup_proxy_allowed:
