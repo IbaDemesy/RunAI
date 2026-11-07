@@ -29,6 +29,16 @@ let source = null;
 let simulated = false;
 let ticker = null;
 let lastEventAt = NaN;
+let chat = [];
+let scope = null;
+const SCOPE_LABELS = {
+  race: "Course",
+  departure_city: "Départ",
+  budget_per_night: "Budget hôtel",
+  travel_time: "Horaire de départ",
+  medical: "Justificatif médical",
+  notes: "Notes",
+};
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -365,15 +375,84 @@ async function control(kind, action, body) {
 $("#pause-all").addEventListener("click", () => api(`/api/missions/${mission.id}/pause`, { method: "POST" }));
 $("#resume-all").addEventListener("click", () => api(`/api/missions/${mission.id}/resume`, { method: "POST" }));
 
-$("#mission-form").addEventListener("submit", async (event) => {
+function bubble(role, text) {
+  const item = element("li", text, `bubble ${role}`);
+  $("#chat").append(item);
+  item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  return item;
+}
+
+function renderScope(value) {
+  scope = value;
+  const facts = $("#scope-facts");
+  facts.replaceChildren();
+  Object.entries(SCOPE_LABELS).forEach(([key, label]) => {
+    const raw = value?.[key];
+    if (raw === null || raw === undefined || raw === "") return;
+    facts.append(element("dt", label), element("dd", key === "budget_per_night" ? `${raw} € / nuit max` : String(raw)));
+  });
+}
+
+async function converse(text) {
+  chat.push({ role: "user", content: text });
+  bubble("user", text);
+  const thinking = bubble("assistant thinking", "RunAI réfléchit…");
+  $("#chat-input").disabled = true;
+  $("#launch").disabled = true;
+  try {
+    const turn = await api("/api/scope", { method: "POST", body: JSON.stringify({ messages: chat }) });
+    thinking.remove();
+    chat.push({ role: "assistant", content: turn.reply });
+    bubble("assistant", turn.reply);
+    if (turn.scope) renderScope(turn.scope);
+    $("#scope-recap").classList.toggle("hidden", !turn.ready);
+  } catch (error) {
+    thinking.textContent = `Le cadrage a échoué : ${error.message}`;
+    thinking.classList.remove("thinking");
+  } finally {
+    $("#chat-input").disabled = false;
+    $("#launch").disabled = false;
+    $("#chat-input").focus();
+  }
+}
+
+$("#mission-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const query = $("#query").value.trim();
   if (!query) return;
-  $("#steps").replaceChildren();
-  const data = await api("/api/missions", { method: "POST", body: JSON.stringify({ query }) });
-  history.replaceState(null, "", `?mission=${data.id}`);
-  render(data, true);
-  listen(data.id);
+  chat = [];
+  scope = null;
+  if (source) source.close();
+  history.replaceState(null, "", location.pathname);
+  $("#mission").classList.add("hidden");
+  $("#chat").replaceChildren();
+  $("#scope-recap").classList.add("hidden");
+  $("#scoping").classList.remove("hidden");
+  converse(query);
+});
+
+$("#chat-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = $("#chat-input").value.trim();
+  if (!text) return;
+  $("#chat-input").value = "";
+  converse(text);
+});
+
+$("#launch").addEventListener("click", async () => {
+  if (!scope) return;
+  $("#launch").disabled = true;
+  try {
+    $("#steps").replaceChildren();
+    const data = await api("/api/missions", { method: "POST", body: JSON.stringify({ query: scope.race, scope }) });
+    history.replaceState(null, "", `?mission=${data.id}`);
+    $("#scoping").classList.add("hidden");
+    render(data, true);
+    listen(data.id);
+  } catch (error) {
+    alert(error.message);
+    $("#launch").disabled = false;
+  }
 });
 
 let recorder = null;

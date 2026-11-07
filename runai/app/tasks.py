@@ -1,9 +1,14 @@
 """Consignes envoyées aux agents et actions laissées à l'humain au portail."""
 
 import re
+from datetime import date, timedelta
+from typing import TYPE_CHECKING
 
 from runai.models import Race, RunnerProfile, StepKind, StopPoint
 from runai.safety import guard_task
+
+if TYPE_CHECKING:
+    from runai.app.scoping import Scope
 
 STEP_LABELS: dict[StepKind, str] = {
     StepKind.search: "Recherche",
@@ -91,32 +96,74 @@ def _profile_lines(profile: RunnerProfile) -> str:
     )
 
 
+_MONTHS = (
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+)
+
+
+def _fr_date(day: date) -> str:
+    return f"{day.day} {_MONTHS[day.month - 1]} {day.year}"
+
+
+def stay_dates(race: Race) -> tuple[date, date] | None:
+    if race.race_date is None:
+        return None
+    return race.race_date - timedelta(days=1), race.race_date + timedelta(days=1)
+
+
+def _race_label(race: Race) -> str:
+    distance = f", {race.distance_km:g} km" if race.distance_km else ""
+    when = f", le {_fr_date(race.race_date)}" if race.race_date else ""
+    return f"{race.name} ({race.city}, {race.country}{distance}{when})"
+
+
 def build_task(
     kind: StepKind,
     race: Race,
     profile: RunnerProfile,
     query: str = "",
+    scope: "Scope | None" = None,
 ) -> str:
+    dates = stay_dates(race)
+    stay = (
+        f"arrivée le {_fr_date(dates[0])} et départ le {_fr_date(dates[1])} (2 nuits)"
+        if dates
+        else "pour 2 nuits : la veille et le soir de la course (vérifie d'abord la date sur le site officiel)"
+    )
+    notes = f" Contraintes du coureur : {scope.notes}." if scope and scope.notes else ""
     if kind is StepKind.registration:
-        url = race.registration_url or "le lien Njuko de la fiche Linkup"
-        distance = f" ({race.distance_km:g} km)" if race.distance_km else " (42,195 km)"
+        start = (
+            f"Commence par la page d'inscription trouvée : {race.registration_url}. "
+            if race.registration_url
+            else "Trouve d'abord la page d'inscription officielle (site de l'organisateur "
+            "ou billetterie qu'il désigne) par une recherche web. "
+        )
+        medical = (
+            f"Justificatif médical déjà indiqué par le coureur : « {scope.medical} » ; "
+            "ne le redemande pas. "
+            if scope and scope.medical
+            else "Si la course exige un justificatif médical, demande avec ask_user : "
+            "« Avez-vous un certificat médical, une licence ou un PPS valable pour cette course ? » "
+        )
         task = (
-            f"Prépare l'inscription au Wizz Air Milano Marathon 2027 sur Njuko, "
-            f"à partir du lien Njuko fourni par Linkup : {url}{distance}. "
-            "N'utilise jamais Klikego ; si le lien fourni n'est pas sur Njuko, arrête-toi "
-            "et signale que le lien Njuko manque. "
+            f"Prépare l'inscription à {_race_label(race)}. {start}"
+            "Passe uniquement par le site officiel de la course ou la billetterie qu'il "
+            "désigne, jamais par un revendeur de dossards. "
             "Continue en invité. Utilise uniquement le profil fictif ci-dessous et "
             "remplis seulement les champs nécessaires. Si l'inscription en invité "
             "n'est pas possible, arrête-toi avant toute création de compte. "
-            "Avant de poursuivre, demande exactement avec ask_user : « Avez-vous une "
-            "Runcard ou un certificat médical de compétition (ECG d'effort) ? » "
-            "Ne coche aucune "
-            "case de santé, ne fournis aucun numéro et ne téléverse aucun document ; "
-            "arrête-toi à la déclaration de santé si elle apparaît, sinon au paiement. "
+            f"{medical}Ne coche aucune case de santé, ne fournis aucun numéro et ne "
+            "téléverse aucun document ; arrête-toi à la déclaration de santé si elle "
+            f"apparaît, sinon au paiement.{notes} "
             f"{_profile_lines(profile)} {ASK_USER_RULES} {STOP_RULES}"
         )
     elif kind is StepKind.accommodation:
-        budget = extract_budget_per_night(query, require_context=True)
+        budget = (
+            scope.budget_per_night
+            if scope and scope.budget_per_night
+            else extract_budget_per_night(query, require_context=True)
+        )
         budget_instruction = (
             f"Budget maximal déjà donné : {budget:g} € par nuit, soit "
             f"{budget * 2:g} € maximum pour les deux nuits. Respecte strictement ce plafond."
@@ -125,16 +172,16 @@ def build_task(
             "avec les options « 100 € », « 150 € », « 200 € ». Attends la réponse avant "
             "d'ouvrir le site."
         )
+        near = race.start_location or race.bib_pickup or "du départ de la course"
         task = (
-            "Trouve un hôtel à Milan pour 1 adulte, arrivée le 3 avril 2027 et départ "
-            "le 5 avril 2027 (2 nuits), près du départ Corso Sempione ou du retrait "
-            "des dossards Via Moncucco 35. "
-            f"{budget_instruction} Va exclusivement sur le site officiel Accor "
-            "(https://all.accor.com) ; Booking.com, Expedia, Hotels.com, Airbnb et tout "
-            "autre agrégateur sont interdits. Compare les offres Accor disponibles et "
-            "ne choisis qu'un tarif dont le total des deux nuits respecte le plafond. "
+            f"Trouve un hôtel à {race.city} ({race.country}) pour 1 adulte, {stay}, "
+            f"près de {near}, pour {race.name}. {budget_instruction} "
+            "Utilise un site de réservation grand public (site officiel d'une chaîne "
+            "hôtelière, Booking.com ou équivalent), sans créer de compte ni passer par "
+            "une location entre particuliers. Compare plusieurs offres et ne choisis "
+            "qu'un tarif dont le total des deux nuits respecte le plafond. "
             "Si aucune offre ne respecte le budget, ne la présente pas comme convenable "
-            "et indique qu'aucune option abordable n'a été trouvée. "
+            f"et indique qu'aucune option abordable n'a été trouvée.{notes} "
             "Arrête-toi au récapitulatif avant paiement, sans réserver. Dans la réponse "
             "finale, donne le prix total exact sous la forme "
             "PRIX_TOTAL_2_NUITS: 123.45 EUR ; si le total est absent, écris "
@@ -142,11 +189,26 @@ def build_task(
             f"{ASK_USER_RULES} {STOP_RULES}"
         )
     elif kind is StepKind.transport:
+        origin = scope.departure_city if scope and scope.departure_city else profile.city
+        when = (
+            f"aller le {_fr_date(dates[0])} et retour le {_fr_date(dates[1])}"
+            if dates
+            else "aller la veille de la course et retour le lendemain (vérifie la date sur le site officiel)"
+        )
+        timing = (
+            f"Horaire de départ préféré déjà donné : {scope.travel_time} ; ne le redemande pas. "
+            if scope and scope.travel_time
+            else "Si plusieurs horaires ou tarifs sont possibles, demande à l'utilisateur "
+            "de choisir ; ne devine pas. "
+        )
         task = (
-            "Cherche un aller-retour en train Paris → Milano sur trenitalia.com pour "
-            "1 adulte : aller le 3 avril 2027 et retour le 5 avril 2027. N'utilise "
-            "aucun autre vendeur et jamais TAP. Si plusieurs horaires ou tarifs sont "
-            "possibles, demande à l'utilisateur de choisir ; ne devine pas. "
+            f"Cherche un aller-retour {origin} → {race.city} ({race.country}) pour "
+            f"1 adulte, pour {race.name} : {when}. Choisis le mode adapté : le train si "
+            "le trajet dure moins de 7 h environ (site officiel de l'opérateur "
+            "ferroviaire : SNCF Connect, Trenitalia, Renfe, Deutsche Bahn…), sinon "
+            "l'avion (compare sur Google Flights, puis ouvre le site de la compagnie). "
+            "Si le départ est dans la ville de la course, indique qu'aucun transport "
+            f"n'est nécessaire et arrête-toi. {timing}Ne crée aucun compte.{notes} "
             f"{ASK_USER_RULES} {STOP_RULES}"
         )
     else:

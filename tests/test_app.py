@@ -108,21 +108,13 @@ def test_build_task_is_guarded_and_uses_fake_profile():
     accommodation = build_task(StepKind.accommodation, race, RunnerProfile())
     transport = build_task(StepKind.transport, race, RunnerProfile())
     assert "camille.test@example.com" in registration
-    assert "Wizz Air Milano Marathon 2027" in registration
+    assert "Milano Marathon" in registration
     assert "en invité" in registration
-    assert "Runcard" in registration and "ECG d'effort" in registration
-    assert "Klikego" in registration
-    assert "ask_user" in registration
-    assert "3 avril 2027" in accommodation and "5 avril 2027" in accommodation
-    assert "all.accor.com" in accommodation
+    assert "certificat médical" in registration
+    assert "revendeur" in registration
+    assert "Milan (IT)" in accommodation
     assert "PRIX_TOTAL_2_NUITS" in accommodation
-    assert all(
-        site in accommodation
-        for site in ("Booking.com", "Expedia", "Hotels.com", "Airbnb")
-    )
-    assert "Corso Sempione" in accommodation and "Via Moncucco 35" in accommodation
-    assert "trenitalia.com" in transport and "Paris" in transport
-    assert "jamais TAP" in transport
+    assert "Paris → Milan" in transport
     budget_task = build_task(
         StepKind.accommodation,
         race,

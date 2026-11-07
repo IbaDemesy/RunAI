@@ -14,6 +14,7 @@ from typing import Any
 from pydantic import BaseModel, Field, HttpUrl
 
 from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
+from runai.app.scoping import ChatMessage, FakeScoper, Scope, Scoper, ScopeTurn
 from runai.app.tasks import (
     STEP_LABELS,
     build_task,
@@ -63,6 +64,7 @@ class Mission(BaseModel):
     query: str
     status: MissionStatus = MissionStatus.searching
     created_at: datetime = Field(default_factory=utcnow)
+    scope: Scope | None = None
     race: Race | None = None
     steps: dict[StepKind, StepResult]
     questions: list[AgentQuestion] = Field(default_factory=list)
@@ -108,10 +110,12 @@ class MissionService:
         max_concurrency: int = 3,
         simulated: bool = False,
         question_timeout_s: float | None = None,
+        scoper: Scoper | None = None,
     ):
         self.search = search
         self.agents = agents
         self.transcriber = transcriber
+        self.scoper = scoper or FakeScoper(delay=0)
         self.profile = profile or RunnerProfile()
         self.traces_dir = traces_dir
         self.simulated = simulated
@@ -131,11 +135,15 @@ class MissionService:
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._loop: asyncio.AbstractEventLoop | None = None
 
-    async def create(self, query: str) -> Mission:
+    async def scope(self, messages: list[ChatMessage]) -> ScopeTurn:
+        return await self.scoper.next_turn(messages)
+
+    async def create(self, query: str, scope: Scope | None = None) -> Mission:
         self._loop = asyncio.get_running_loop()
         mission = Mission(
             id=uuid.uuid4().hex[:12],
-            query=query.strip(),
+            query=scope.query() if scope else query.strip(),
+            scope=scope,
             steps={kind: StepResult(kind=kind) for kind in AGENT_STEPS},
         )
         self.missions[mission.id] = mission
@@ -450,7 +458,11 @@ class MissionService:
             )
             try:
                 task = build_task(
-                    kind, mission.race, self.profile, query=mission.query
+                    kind,
+                    mission.race,
+                    self.profile,
+                    query=mission.query,
+                    scope=mission.scope,
                 )
 
                 async def ask_user(question: str, options: list[str]) -> str:

@@ -195,3 +195,15 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+.scoping { display: grid; gap: 12px; margin-bottom: 24px; }
+.chat { list-style: none; display: grid; gap: 8px; padding: 0; }
+.bubble { max-width: 75%; padding: 10px 14px; border-radius: 14px; line-height: 1.4; }
+.bubble.user { justify-self: end; background: var(--ink); color: var(--paper, #fff); border-bottom-right-radius: 4px; }
+.bubble.assistant { justify-self: start; background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.bubble.thinking { color: var(--ink-3); }
+.bubble.thinking::after { content: ""; display: inline-block; width: 1.2em; animation: dots 1.2s steps(4, end) infinite; }
+.chat-ask { margin-top: 0; }
+.scope-recap { display: grid; gap: 12px; padding: 16px; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 12px; }
+.scope-recap h2 { font-size: 1.1rem; }
+.scope-recap .primary { justify-self: start; }

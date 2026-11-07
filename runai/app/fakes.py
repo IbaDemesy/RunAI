@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from runai.app.ports import AskUser, EventSink
+from runai.app.scoping import MEDICAL_LABEL, TRAVEL_TIME_LABEL
 from runai.app.tasks import extract_budget_per_night
 from runai.models import (
     Race,
@@ -223,6 +224,10 @@ class FakeAgentRun:
             and extract_budget_per_night(self.query, require_context=True) is not None
         ):
             questions = []
+        if self.kind is StepKind.transport and TRAVEL_TIME_LABEL in self.query:
+            questions = []
+        if self.kind is StepKind.registration and MEDICAL_LABEL in self.query:
+            questions = questions[1:]
         answers = [
             await self._ask_user(question, options)
             for question, options in questions

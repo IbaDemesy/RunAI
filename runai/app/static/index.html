@@ -31,6 +31,19 @@
       <p id="mic-status" class="hint"></p>
     </form>
 
+    <section id="scoping" class="scoping hidden" aria-label="Cadrage avec RunAI">
+      <ol id="chat" class="chat" aria-live="polite"></ol>
+      <form id="chat-form" class="ask chat-ask">
+        <input id="chat-input" name="message" required autocomplete="off" placeholder="Votre réponse">
+        <button type="submit" class="ghost">Envoyer</button>
+      </form>
+      <div id="scope-recap" class="scope-recap hidden">
+        <h2>Votre cadrage</h2>
+        <dl id="scope-facts" class="facts"></dl>
+        <button type="button" id="launch" class="primary">Lancer les agents</button>
+      </div>
+    </section>
+
     <section id="mission" class="hidden" aria-live="polite">
       <ol id="course" class="course" aria-label="Avancement de la mission"></ol>
       <div id="activity" class="activity" data-state="busy">

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from runai.app.fakes import FakeBrowserAgents, FakeRaceSearch, FakeTranscriber
 from runai.app.mission import MissionError, MissionService
+from runai.app.scoping import ChatMessage, FakeScoper, HoloScoper, Scope, ScopeError
 from runai.app.tasks import STEP_LABELS
 from runai.config import get_settings
 from runai.h.runner import api_keys_from_env
@@ -24,6 +25,11 @@ MAX_AUDIO_BYTES = 10 * 1024 * 1024
 
 class MissionRequest(BaseModel):
     query: str = Field(min_length=3, max_length=500)
+    scope: Scope | None = None
+
+
+class ScopeRequest(BaseModel):
+    messages: list[ChatMessage] = Field(min_length=1, max_length=20)
 
 
 class MessageRequest(BaseModel):
@@ -42,6 +48,7 @@ def build_demo_service(delay: float | None = None) -> MissionService:
         FakeBrowserAgents(delay=delay),
         FakeTranscriber(delay=delay / 3),
         traces_dir=settings.traces_dir,
+        scoper=FakeScoper(delay=delay / 3),
         max_concurrency=settings.h_max_concurrency,
         simulated=True,
     )
@@ -77,6 +84,7 @@ def build_service() -> MissionService:
         max_concurrency=settings.h_max_concurrency,
         simulated=False,
         question_timeout_s=question_timeout_s,
+        scoper=HoloScoper(api_keys_from_env()[0][1]),
     )
 
 
@@ -110,9 +118,17 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             "simulated": selected.simulated,
         }
 
+    @app.post("/api/scope")
+    async def scope(body: ScopeRequest) -> dict:
+        try:
+            turn = await get_service().scope(body.messages)
+        except ScopeError as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
+        return turn.model_dump(mode="json")
+
     @app.post("/api/missions", status_code=201)
     async def create_mission(body: MissionRequest) -> dict:
-        mission = await get_service().create(body.query)
+        mission = await get_service().create(body.query, scope=body.scope)
         return mission.snapshot(include_events=True)
 
     @app.get("/api/missions/{mission_id}")
