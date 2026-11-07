@@ -44,6 +44,7 @@ def test_save_reload_and_render_profile(service):
             "email": "runner@real.org", "confirm_real_data": True,
             "phone": "+33123456789", "license_number": "private-license-123456789",
             "birth_date": "1990-02-03",
+            "pps_number": "private-pps-sentinel",
         })
         assert response.status_code == 200
         assert response.json()["fictional"] is False
@@ -57,6 +58,8 @@ def test_save_reload_and_render_profile(service):
     assert "phone: +33123456789" in task
     assert "Runner profile:" in task
     assert "emergency contact" not in task
+    assert "private-pps-sentinel" not in task
+    assert "pps number:" not in task
 
 
 @pytest.mark.parametrize("content", [None, "not json", '{"birth_date":"bad"}', "[]"])

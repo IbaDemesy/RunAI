@@ -101,7 +101,7 @@ def _profile_lines(profile: RunnerProfile) -> str:
             f"nationality {profile.nationality}, city {profile.city}."
         )
     for field in ("phone", "emergency_contact_name", "emergency_contact_phone",
-                  "license_number", "pps_number", "tshirt_size", "estimated_finish_time"):
+                  "license_number", "tshirt_size", "estimated_finish_time"):
         if value := getattr(profile, field):
             text += f" {field.replace('_', ' ')}: {value}."
     return text
