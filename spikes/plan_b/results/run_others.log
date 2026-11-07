@@ -1,0 +1,12 @@
+Hyundai Mitja Marató Barcelona by Brooks | 2027-02-14 | statut=open (linkup_fetch) : Register
+  waitlist: False  [https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/] The official FAQ and rules provided do not mention a waiting list; its existence or sign-up process could not be confirm
+  resale: False  [https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/] The official FAQ and rules provided do not mention an official bib resale or exchange platform; none could be confirmed.
+  transfer: False  [https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/] The FAQ asks whether a registration can be transferred and points to Article 7 of the rules, but the supplied FAQ text d
+  ALT 2027-03-07 (+21 j) Run Tune Up - Bologna | flight 100 min | Not specified in the available official information; an event listing identifies Ahotu as the official registration partner, but does not establish the registration platform. | 40.0 EUR | https://www.bolognamarathon.run/en/run-tune-up
+  rejetées: 1 | metrics: {'total_s': 25.35, 'stages_s': {'options_officielles': 3.44, 'statut': 7.56, 'alternatives': 17.79}, 'linkup_calls': {'search_standard_structured': 8, 'fetch_js_schema': 2}, 'linkup_cost_usd_computed': 0.06, 'linkup_balance_delta_usd': 0.078}
+
+Zurich Maratón de Sevilla 2027 | 2027-02-21 | statut=open (linkup_fetch) : Online at [www.zurichmaratonsevilla.es](http://www.zurichmaratonsevilla.es/), in the registration section.
+  waitlist: True https://www.zurichmaratonsevilla.es/en/zms-regulations [https://www.zurichmaratonsevilla.es/en/zms-regulations] The official 2027 regulations say priority is given to runners who registered for the 2026 waiting list and wish to ente
+  resale: False  [https://www.zurichmaratonsevilla.es/en/zms-regulations] No official bib resale or exchange platform is identified in the supplied official FAQ or regulations; its existence cou
+  transfer: False  [https://www.zurichmaratonsevilla.es/en/zms-regulations] The supplied official FAQ and regulations do not state whether a 2027 registration can be transferred to another runner.
+  rejetées: 5 | metrics: {'total_s': 22.55, 'stages_s': {'options_officielles': 4.14, 'statut': 9.55, 'alternatives': 13.0}, 'linkup_calls': {'search_standard_structured': 9, 'fetch_js_schema': 2}, 'linkup_cost_usd_computed': 0.066, 'linkup_balance_delta_usd': 0.157}

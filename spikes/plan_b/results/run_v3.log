@@ -1,0 +1,20 @@
+EDP Meia Maratona de Lisboa 2027 | 2027-03-07 | statut=sold_out (linkup_fetch) : As provas EDP Meia Maratona de Lisboa, Vodafone 10K e Luso 7K estão esgotadas
+  waitlist: False  [https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847] No official waiting list is confirmed in the provided organiser information. The 2027 ballot rules describe a random sel
+  resale: False  [https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847] No official bib resale or exchange platform is confirmed in the available official FAQ or rules.
+  transfer: False  [https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847] The provided official information does not state that registration may be transferred to another runner. Permission for 
+  ALT 2027-03-14 (+7 j) Liverpool Half Marathon - Liverpool | flight 90 min | ACTIVE (endurancecui.active.com) | None EUR | https://www.btrliverpool.com/events/liverpool-half-marathon/
+  ALT 2027-03-21 (+14 j) Frankfurter Mainova Halbmarathon - Frankfurt | flight 75 min | Official event website; the specific online registration platform is not identified in the available information. | 55.0 EUR | https://frankfurter-halbmarathon.de/ausschreibung
+  ALT 2027-03-21 (+14 j) Milan Half Marathon (Stramilano) - Milan | flight 90 min | Official Stramilano website; third-party ticketing platform not identified | 45.0 EUR | https://www.stramilano.it/?lang=en
+  rejetées: 7 | metrics: {'total_s': 34.22, 'stages_s': {'options_officielles': 2.99, 'statut': 12.35, 'alternatives': 21.87}, 'linkup_calls': {'search_standard_structured': 20, 'fetch_js_schema': 7, 'no_result': 1}, 'linkup_cost_usd_computed': 0.162, 'linkup_balance_delta_usd': 0.254}
+
+Hyundai Mitja Marató Barcelona by Brooks | 2027-02-14 | statut=sold_out (linkup_search) : “ha tancat inscripcions després d’exhaurir els 40.000 dorsals disponibles” (“has closed registrations after exhausting all 40,000 available bibs”).
+  waitlist: False  [https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/] The provided official FAQ and rules do not mention an official waiting list. Its existence could not be confirmed from t
+  resale: False  [https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/] The provided official FAQ and rules do not mention an official bib resale or exchange platform. Its existence could not 
+  transfer: False  [https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/] The FAQ links to Article 7 of the rules for the transfer question, but the supplied rules excerpt does not include that 
+  rejetées: 5 | metrics: {'total_s': 26.2, 'stages_s': {'options_officielles': 2.88, 'statut': 8.25, 'alternatives': 17.96}, 'linkup_calls': {'search_standard_structured': 14, 'fetch_js_schema': 2, 'no_result': 1}, 'linkup_cost_usd_computed': 0.096, 'linkup_balance_delta_usd': 0.163}
+
+Zurich Maratón de Sevilla 2027 | 2027-02-21 | statut=sold_out (linkup_search) : “Once the 20,000 race bibs available for the Zurich Maratón Sevilla 2027 sell out, the waiting list will open.”
+  waitlist: True https://www.zurichmaratonsevilla.es/en/zms-regulations [https://www.zurichmaratonsevilla.es/en/zms-regulations] The official 2027 regulations describe priority for people who were on the 2026 waiting list and say they may register d
+  resale: False  [https://www.zurichmaratonsevilla.es/en/zms-regulations] No official bib resale or exchange platform is identified in the supplied organiser FAQ or regulations; its existence ca
+  transfer: False  [https://www.zurichmaratonsevilla.es/en/zms-regulations] The supplied official materials do not explicitly state whether a 2027 registration can be transferred to another runner
+  rejetées: 5 | metrics: {'total_s': 28.28, 'stages_s': {'options_officielles': 3.41, 'statut': 11.17, 'alternatives': 17.12}, 'linkup_calls': {'search_standard_structured': 16, 'fetch_js_schema': 3}, 'linkup_cost_usd_computed': 0.114, 'linkup_balance_delta_usd': 0.122}

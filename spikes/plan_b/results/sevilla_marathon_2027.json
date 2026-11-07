@@ -1,0 +1,107 @@
+{
+  "target": {
+    "query": "Zurich Maratón de Sevilla 2027 (Seville marathon, February 2027)",
+    "name": "Zurich Maratón de Sevilla 2027",
+    "date": "2027-02-21",
+    "distance_km": 42.195,
+    "city": "Seville",
+    "country": "Spain",
+    "official_url": "https://www.zurichmaratonsevilla.es/",
+    "registration_url": "https://www.zurichmaratonsevilla.es/en/zms-registrations",
+    "status": {
+      "status": "sold_out",
+      "evidence": "“Once the 20,000 race bibs available for the Zurich Maratón Sevilla 2027 sell out, the waiting list will open.”",
+      "source_url": "https://www.zurichmaratonsevilla.es/en/zms-registrations",
+      "checked_by": "linkup_search"
+    },
+    "status_details": [
+      {
+        "status": "sold_out",
+        "evidence": "“Once the 20,000 race bibs available for the Zurich Maratón Sevilla 2027 sell out, the waiting list will open.”",
+        "source_url": "https://www.zurichmaratonsevilla.es/en/zms-registrations",
+        "checked_by": "linkup_search"
+      },
+      {
+        "status": "not_yet_open",
+        "evidence": "3\n\nfrom April 17\n\nRegistration open to the general public.",
+        "source_url": "https://www.zurichmaratonsevilla.es/en/zms-registrations",
+        "checked_by": "linkup_fetch"
+      }
+    ]
+  },
+  "unavailable": true,
+  "official_options": [
+    {
+      "kind": "waitlist",
+      "available": true,
+      "url": "https://www.zurichmaratonsevilla.es/en/zms-regulations",
+      "how": "The official 2027 regulations describe priority for people who were on the 2026 waiting list and say they may register during a second four-day loyalty period (April 11–14, 2026), if they did not get a place through the 2026 waitlist. The supplied official information does not establish that a new waitlist for the 2027 race is currently open.",
+      "source_url": "https://www.zurichmaratonsevilla.es/en/zms-regulations"
+    },
+    {
+      "kind": "resale",
+      "available": false,
+      "url": null,
+      "how": "No official bib resale or exchange platform is identified in the supplied organiser FAQ or regulations; its existence cannot be confirmed from these materials.",
+      "source_url": "https://www.zurichmaratonsevilla.es/en/zms-regulations"
+    },
+    {
+      "kind": "transfer",
+      "available": false,
+      "url": null,
+      "how": "The supplied official materials do not explicitly state whether a 2027 registration can be transferred to another runner. They do not provide a transfer procedure, so transfer permission cannot be confirmed.",
+      "source_url": "https://www.zurichmaratonsevilla.es/en/zms-regulations"
+    }
+  ],
+  "alternatives": [],
+  "window": [
+    "2027-01-31",
+    "2027-03-14"
+  ],
+  "rejected": [
+    {
+      "name": "No confirmed races found in the requested date window",
+      "city": "",
+      "date": "",
+      "reason": "date inconnue"
+    },
+    {
+      "name": "Copenhagen Marathon",
+      "city": "Copenhagen",
+      "date": "2027-05-09",
+      "reason": "hors fenêtre 2027-01-31..2027-03-14"
+    },
+    {
+      "name": "Vodafone Prague Marathon",
+      "city": "Prague",
+      "date": "2027-05-02",
+      "reason": "hors fenêtre 2027-01-31..2027-03-14"
+    },
+    {
+      "name": "Bologna Marathon",
+      "city": "Bologna",
+      "date": "2027-03-07",
+      "reason": "statut open (linkup_search)"
+    },
+    {
+      "name": "Zurich Barcelona Marathon",
+      "city": "Barcelona",
+      "date": "2027-03-14",
+      "reason": "statut sold_out (linkup_fetch)"
+    }
+  ],
+  "metrics": {
+    "total_s": 28.28,
+    "stages_s": {
+      "options_officielles": 3.41,
+      "statut": 11.17,
+      "alternatives": 17.12
+    },
+    "linkup_calls": {
+      "search_standard_structured": 16,
+      "fetch_js_schema": 3
+    },
+    "linkup_cost_usd_computed": 0.114,
+    "linkup_balance_delta_usd": 0.122
+  }
+}

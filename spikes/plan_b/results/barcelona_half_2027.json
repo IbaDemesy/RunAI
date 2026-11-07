@@ -1,0 +1,108 @@
+{
+  "target": {
+    "query": "Hyundai Mitja Marató Barcelona 2027 (Barcelona half marathon, February 2027)",
+    "name": "Hyundai Mitja Marató Barcelona by Brooks",
+    "date": "2027-02-14",
+    "distance_km": 21.097,
+    "city": "Barcelona",
+    "country": "Spain",
+    "official_url": "https://www.mitjamarato.barcelona/",
+    "registration_url": "https://www.rockthesport.com/en/event/hyundai-mitja-marato-barcelona-by-brooks-2027/my-registration",
+    "status": {
+      "status": "sold_out",
+      "evidence": "“ha tancat inscripcions després d’exhaurir els 40.000 dorsals disponibles” (“has closed registrations after exhausting all 40,000 available bibs”).",
+      "source_url": "https://www.mitjamarato.barcelona/",
+      "checked_by": "linkup_search"
+    },
+    "status_details": [
+      {
+        "status": "sold_out",
+        "evidence": "“ha tancat inscripcions després d’exhaurir els 40.000 dorsals disponibles” (“has closed registrations after exhausting all 40,000 available bibs”).",
+        "source_url": "https://www.mitjamarato.barcelona/",
+        "checked_by": "linkup_search"
+      },
+      {
+        "status": "open",
+        "evidence": "[Register](https://www.rockthesport.com/en/event/hyundai-mitja-marato-barcelona-by-brooks-2027/registration/select-rate)",
+        "source_url": "https://www.rockthesport.com/en/event/hyundai-mitja-marato-barcelona-by-brooks-2027/my-registration",
+        "checked_by": "linkup_fetch"
+      }
+    ]
+  },
+  "unavailable": true,
+  "official_options": [
+    {
+      "kind": "waitlist",
+      "available": false,
+      "url": null,
+      "how": "The provided official FAQ and rules do not mention an official waiting list. Its existence could not be confirmed from the available information.",
+      "source_url": "https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/"
+    },
+    {
+      "kind": "resale",
+      "available": false,
+      "url": null,
+      "how": "The provided official FAQ and rules do not mention an official bib resale or exchange platform. Its existence could not be confirmed from the available information.",
+      "source_url": "https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/"
+    },
+    {
+      "kind": "transfer",
+      "available": false,
+      "url": null,
+      "how": "The FAQ links to Article 7 of the rules for the transfer question, but the supplied rules excerpt does not include that article’s text. The available information therefore does not establish whether a registration can be transferred.",
+      "source_url": "https://www.mitjamarato.barcelona/en/i-am-a-runner/frequently-asked-questions/"
+    }
+  ],
+  "alternatives": [],
+  "window": [
+    "2027-01-24",
+    "2027-03-07"
+  ],
+  "rejected": [
+    {
+      "name": "Barcelona Half Marathon",
+      "city": "Barcelona",
+      "date": "2027-02-14",
+      "reason": "course visée"
+    },
+    {
+      "name": "CORIME Barletta Marathon & Half Marathon",
+      "city": "Barletta",
+      "date": "2027-02-14",
+      "reason": "durée depuis Paris inconnue (ville hors table)"
+    },
+    {
+      "name": "Coelmo Napoli City Half Marathon",
+      "city": "Naples",
+      "date": "2027-02-21",
+      "reason": "flight 140 min > 120 min"
+    },
+    {
+      "name": "NN Half Marathon (NN CPC Loop Den Haag)",
+      "city": "The Hague",
+      "date": "2027-03-14",
+      "reason": "hors fenêtre 2027-01-24..2027-03-07"
+    },
+    {
+      "name": "HOKA Semi de Paris (Paris Half Marathon)",
+      "city": "Paris",
+      "date": "2027-03-07",
+      "reason": "statut closed (linkup_search)"
+    }
+  ],
+  "metrics": {
+    "total_s": 26.2,
+    "stages_s": {
+      "options_officielles": 2.88,
+      "statut": 8.25,
+      "alternatives": 17.96
+    },
+    "linkup_calls": {
+      "search_standard_structured": 14,
+      "fetch_js_schema": 2,
+      "no_result": 1
+    },
+    "linkup_cost_usd_computed": 0.096,
+    "linkup_balance_delta_usd": 0.163
+  }
+}

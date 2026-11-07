@@ -1,0 +1,37 @@
+{
+  "quota_before": {
+    "scope": "org",
+    "limit": 3,
+    "active": 2,
+    "available": 1
+  },
+  "waited_s": 300,
+  "url": "https://meia-maratona.inscricoes.maratonaportugal.com/",
+  "session_id": "a9db3ef5-7541-4b6d-9053-bcf25c844a71",
+  "status": "idle",
+  "outcome": "None",
+  "error": null,
+  "answer": {
+    "race_selected": true,
+    "page_kind": "waiting_list",
+    "heading": "Lista de Espera",
+    "waitlist_text": "As organizações para a prova em que se pretende inscrire esgotaram. Se desejar, pode deixar-nos o seu contacto e, na eventualidade de haver desistências, avisaremos todos os contactos récolhidos para o efeito. (Translation: Registrations for the race you wish to register for are sold out. If you wish, you can leave your contact details with us, and in the event of cancellations, we will notify all collected contacts accordingly.)",
+    "required_fields": [
+      "Nome (First Name)",
+      "Felido (Last Name)",
+      "Email",
+      "Nacionalidade (Nationality)"
+    ],
+    "sold_out_banner": "ESGOTADA",
+    "current_url": "https://meia-maratona.inscricoes.maratonaportugal.com/waitinglist.aspx?lang=&prova_id=3769"
+  },
+  "n_events": 27,
+  "duration_s": 37.8,
+  "cancelled": true,
+  "quota_after": {
+    "scope": "org",
+    "limit": 3,
+    "active": 1,
+    "available": 2
+  }
+}

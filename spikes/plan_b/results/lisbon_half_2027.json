@@ -1,0 +1,235 @@
+{
+  "target": {
+    "query": "EDP Meia Maratona de Lisboa 2027 (semi-marathon de Lisbonne, 21,1 km, mars 2027)",
+    "name": "EDP Meia Maratona de Lisboa 2027",
+    "date": "2027-03-07",
+    "distance_km": 21.1,
+    "city": "Lisbon",
+    "country": "Portugal",
+    "official_url": "https://maratonaclubedeportugal.com/corrida-marco/edp-meia-maratona-de-lisboa/",
+    "registration_url": "https://meia-maratona.inscricoes.maratonaportugal.com/",
+    "status": {
+      "status": "sold_out",
+      "evidence": "As provas EDP Meia Maratona de Lisboa, Vodafone 10K e Luso 7K estão esgotadas",
+      "source_url": "https://meia-maratona.inscricoes.maratonaportugal.com/",
+      "checked_by": "linkup_fetch"
+    },
+    "status_details": [
+      {
+        "status": "closed",
+        "evidence": "“O sorteio em que está a tentar registar-se já se encontra encerrado. Já não é possível submeter novas candidaturas.”",
+        "source_url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/Ballot/Sucesso.aspx?lang=pt_pt&ticket=84ef281c9313471fa0cbd8eff695aa74&m=lottery_closed",
+        "checked_by": "linkup_search"
+      },
+      {
+        "status": "sold_out",
+        "evidence": "As provas EDP Meia Maratona de Lisboa, Vodafone 10K e Luso 7K estão esgotadas",
+        "source_url": "https://meia-maratona.inscricoes.maratonaportugal.com/",
+        "checked_by": "linkup_fetch"
+      }
+    ]
+  },
+  "unavailable": true,
+  "official_options": [
+    {
+      "kind": "waitlist",
+      "available": false,
+      "url": null,
+      "how": "No official waiting list is confirmed in the provided organiser information. The 2027 ballot rules describe a random selection but do not mention a waiting list.",
+      "source_url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847"
+    },
+    {
+      "kind": "resale",
+      "available": false,
+      "url": null,
+      "how": "No official bib resale or exchange platform is confirmed in the available official FAQ or rules.",
+      "source_url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847"
+    },
+    {
+      "kind": "transfer",
+      "available": false,
+      "url": null,
+      "how": "The provided official information does not state that registration may be transferred to another runner. Permission for another person to collect a participant’s bib is only a collection arrangement, not evidence that the entry can be transferred.",
+      "source_url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847"
+    }
+  ],
+  "alternatives": [
+    {
+      "name": "Liverpool Half Marathon",
+      "city": "Liverpool",
+      "country": "United Kingdom",
+      "date": "2027-03-14",
+      "days_from_target": 7,
+      "distance_km": 21.1,
+      "registration_url": "https://www.btrliverpool.com/events/liverpool-half-marathon/",
+      "platform": "ACTIVE (endurancecui.active.com)",
+      "price_eur": null,
+      "status": {
+        "status": "open",
+        "evidence": "[Secure your 2027 entry](https://endurancecui.active.com/event-reg/select-race?e=96803721)",
+        "source_url": "https://www.btrliverpool.com/events/liverpool-half-marathon/",
+        "checked_by": "linkup_fetch"
+      },
+      "status_details": [
+        {
+          "status": "open",
+          "evidence": "A race listing says 2027 registration is open and directs runners to ACTIVE. The official BTR page links to entries, but the supplied information does not confirm the live entry status there.",
+          "source_url": "https://marathonscout.com/races/btr-liverpool-half-marathon",
+          "checked_by": "linkup_search"
+        },
+        {
+          "status": "open",
+          "evidence": "[Secure your 2027 entry](https://endurancecui.active.com/event-reg/select-race?e=96803721)",
+          "source_url": "https://www.btrliverpool.com/events/liverpool-half-marathon/",
+          "checked_by": "linkup_fetch"
+        }
+      ],
+      "travel": {
+        "mode": "flight",
+        "minutes": 90,
+        "via": null,
+        "estimated": true
+      },
+      "verified_open": true
+    },
+    {
+      "name": "Frankfurter Mainova Halbmarathon",
+      "city": "Frankfurt",
+      "country": "Germany",
+      "date": "2027-03-21",
+      "days_from_target": 14,
+      "distance_km": 21.1,
+      "registration_url": "https://frankfurter-halbmarathon.de/ausschreibung",
+      "platform": "Official event website; the specific online registration platform is not identified in the available information.",
+      "price_eur": 55.0,
+      "status": {
+        "status": "open",
+        "evidence": "Zur Online-Anmeldung hier. Der Teilnahmebeitrag für den 25. Mainova Halbmarathon Frankfurt beträgt einheitlich 55,- €.",
+        "source_url": "https://frankfurter-halbmarathon.de/ausschreibung",
+        "checked_by": "linkup_fetch"
+      },
+      "status_details": [
+        {
+          "status": "open",
+          "evidence": "The official event announcement lists a registration deadline of 2027-01-31 and allows online late registration through 2027-03-14 if places remain. The available information does not confirm current availability, but the listed deadline has not passed as of 2026-11-07.",
+          "source_url": "https://spoferan.com/events/frankfurter-mainova-halbmarathon",
+          "checked_by": "linkup_search"
+        },
+        {
+          "status": "open",
+          "evidence": "Zur Online-Anmeldung hier. Der Teilnahmebeitrag für den 25. Mainova Halbmarathon Frankfurt beträgt einheitlich 55,- €.",
+          "source_url": "https://frankfurter-halbmarathon.de/ausschreibung",
+          "checked_by": "linkup_fetch"
+        }
+      ],
+      "travel": {
+        "mode": "flight",
+        "minutes": 75,
+        "via": null,
+        "estimated": true
+      },
+      "verified_open": true
+    },
+    {
+      "name": "Milan Half Marathon (Stramilano)",
+      "city": "Milan",
+      "country": "Italy",
+      "date": "2027-03-21",
+      "days_from_target": 14,
+      "distance_km": 21.1,
+      "registration_url": "https://www.stramilano.it/?lang=en",
+      "platform": "Official Stramilano website; third-party ticketing platform not identified",
+      "price_eur": 45.0,
+      "status": {
+        "status": "open",
+        "evidence": "[Register Now](https://www.endu.net/events/stramilano-2)",
+        "source_url": "https://www.stramilano.it/?lang=en",
+        "checked_by": "linkup_fetch"
+      },
+      "status_details": [
+        {
+          "status": "unknown",
+          "evidence": "The available listing says registration opens in January and closes in March, but does not confirm whether 2027 registration is currently open. It advises checking the official site.",
+          "source_url": "https://marathon-index.com/races/milan-half-marathon/",
+          "checked_by": "linkup_search"
+        },
+        {
+          "status": "open",
+          "evidence": "[Register Now](https://www.endu.net/events/stramilano-2)",
+          "source_url": "https://www.stramilano.it/?lang=en",
+          "checked_by": "linkup_fetch"
+        }
+      ],
+      "travel": {
+        "mode": "flight",
+        "minutes": 90,
+        "via": null,
+        "estimated": true
+      },
+      "verified_open": true
+    }
+  ],
+  "window": [
+    "2027-02-14",
+    "2027-03-28"
+  ],
+  "rejected": [
+    {
+      "name": "Roma-Ostia Half Marathon",
+      "city": "Rome",
+      "date": "2027-02-28",
+      "reason": "flight 125 min > 120 min"
+    },
+    {
+      "name": "Middlesbrough Half Marathon",
+      "city": "Middlesbrough",
+      "date": "2027-03-07",
+      "reason": "durée depuis Paris inconnue (ville hors table)"
+    },
+    {
+      "name": "No matching races confirmed in the provided information",
+      "city": "",
+      "date": "",
+      "reason": "date inconnue"
+    },
+    {
+      "name": "Generali Prague Half Marathon",
+      "city": "Prague",
+      "date": "2027-04-03",
+      "reason": "hors fenêtre 2027-02-14..2027-03-28"
+    },
+    {
+      "name": "HOKA Paris Half Marathon",
+      "city": "Paris",
+      "date": "2027-03-07",
+      "reason": "statut closed (linkup_search)"
+    },
+    {
+      "name": "Zorg en Zekerheid Half Marathon (KPMG Lentemarathon)",
+      "city": "Amstelveen",
+      "date": "2027-03-21",
+      "reason": "statut sold_out (linkup_fetch)"
+    },
+    {
+      "name": "Barcelona Half Marathon",
+      "city": "Barcelona",
+      "date": "2027-02-14",
+      "reason": "statut sold_out (linkup_search)"
+    }
+  ],
+  "metrics": {
+    "total_s": 34.22,
+    "stages_s": {
+      "options_officielles": 2.99,
+      "statut": 12.35,
+      "alternatives": 21.87
+    },
+    "linkup_calls": {
+      "search_standard_structured": 20,
+      "fetch_js_schema": 7,
+      "no_result": 1
+    },
+    "linkup_cost_usd_computed": 0.162,
+    "linkup_balance_delta_usd": 0.254
+  }
+}
