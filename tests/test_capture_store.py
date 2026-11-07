@@ -107,6 +107,35 @@ def test_capture_without_event_loop_is_safe(tmp_path, caplog):
     assert "without a running event loop" in caplog.text
 
 
+def test_capture_drops_frame_when_revision_changes_during_fetch(tmp_path):
+    async def scenario():
+        started = asyncio.Event()
+        release = asyncio.Event()
+
+        class SlowRun(FakeRun):
+            browser_observation = {"revision": 1}
+
+            async def get_screenshot(self):
+                started.set()
+                await release.wait()
+                return PNG
+
+        store = CaptureStore(tmp_path)
+        run = SlowRun()
+        store.schedule("mission1", KIND, run.browser_observation, run)
+        await started.wait()
+        run.browser_observation = {"revision": 2}
+        release.set()
+        await asyncio.gather(*store.tasks)
+        assert store.index("mission1", KIND.value) == []
+        assert not store.frame_path("mission1", KIND.value, 1).exists()
+        store.schedule("mission1", KIND, run.browser_observation, run)
+        await asyncio.gather(*store.tasks)
+        assert [entry["revision"] for entry in store.index("mission1", KIND.value)] == [2]
+
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize("inline", [False, True])
 def test_replay_frames_and_existing_endpoint(tmp_path, inline):
     async def scenario():

@@ -69,6 +69,9 @@ class CaptureStore:
                     return
                 async with asyncio.timeout(20):
                     content = await run.get_screenshot()
+                current = getattr(run, "browser_observation", None)
+                if current is not None and current.get("revision") != revision:
+                    return
                 if content is None or not content.startswith(PNG_MAGIC):
                     raise ValueError("Invalid PNG screenshot")
                 entry = {key: observation.get(key) for key in ("revision", "url", "title")}
