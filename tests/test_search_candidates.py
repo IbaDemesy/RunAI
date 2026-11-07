@@ -166,6 +166,23 @@ def test_past_edition_is_dropped_when_same_event_has_future_edition():
     assert results[0].limitations == []
 
 
+def test_filtered_future_row_does_not_hide_sourced_past_edition():
+    client = FakeClient([
+        row("Recurring Race", race_date="2020-06-01"),
+        row("Recurring Race", race_date="2030-06-01", source_url=None),
+    ])
+    results = asyncio.run(
+        LinkupCandidateSearch(client, today=date(2029, 1, 1)).find_candidates(
+            slots(city="Tokyo")
+        )
+    )
+    assert len(results) == 1
+    assert results[0].race_date is None
+    assert [limitation.code for limitation in results[0].limitations] == [
+        "next_edition_unconfirmed"
+    ]
+
+
 def test_next_edition_lookup_updates_past_only_candidate_when_sourced():
     client = FakeClient(
         [row(

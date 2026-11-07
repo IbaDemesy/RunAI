@@ -196,24 +196,12 @@ class LinkupCandidateSearch:
             except ValidationError:
                 continue
             rows.append((row, parse_date(row.race_date)))
-        future_events = {
-            (norm_name(row.name), norm_name(row.city), norm_name(row.country))
-            for row, when in rows
-            if when and when >= today
-        }
-        merged: dict[str, RaceCandidate] = {}
+        accepted_rows: list[tuple[_Candidate, date | None, list[Source]]] = []
+        target = slots.get(SlotName.distance_km)
         for row, when in rows:
-            event = (norm_name(row.name), norm_name(row.city), norm_name(row.country))
-            past_date = when if when and when < today else None
-            if past_date:
-                if event in future_events:
-                    continue
-                when = None
-            target = slots.get(SlotName.distance_km)
             if (
                 not close_match
-                and
-                target
+                and target
                 and target.is_known
                 and target.value is not None
                 and row.distances_km
@@ -221,13 +209,33 @@ class LinkupCandidateSearch:
             ):
                 continue
             urls = {str(s.url) for s in row.sources}
-            urls.update(str(u) for u in (row.source_url, row.official_url, row.registration_url) if u)
-            sources = _sources([
-                *([str(row.source_url)] if row.source_url else []), *row.sources,
-                *(s for s in response_sources if str(s.url) in urls),
-            ])
-            if not sources:
-                continue
+            urls.update(
+                str(u)
+                for u in (row.source_url, row.official_url, row.registration_url)
+                if u
+            )
+            sources = _sources(
+                [
+                    *([str(row.source_url)] if row.source_url else []),
+                    *row.sources,
+                    *(s for s in response_sources if str(s.url) in urls),
+                ]
+            )
+            if sources:
+                accepted_rows.append((row, when, sources))
+        future_events = {
+            (norm_name(row.name), norm_name(row.city), norm_name(row.country))
+            for row, when, _ in accepted_rows
+            if when and when >= today
+        }
+        merged: dict[str, RaceCandidate] = {}
+        for row, when, sources in accepted_rows:
+            event = (norm_name(row.name), norm_name(row.city), norm_name(row.country))
+            past_date = when if when and when < today else None
+            if past_date:
+                if event in future_events:
+                    continue
+                when = None
             limits = []
             if past_date:
                 limits.append(Limitation(
