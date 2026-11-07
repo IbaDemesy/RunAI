@@ -79,3 +79,16 @@ def test_repository_fixture_hygiene():
                 if document.strip():
                     failures.extend(f"{path.relative_to(root)}: {issue}" for issue in find_violations(json.loads(document)))
     assert not failures, "\n".join(failures)
+
+
+def test_scrub_keeps_message_and_null_phone():
+    from scripts.scrub_trace import scrub_event
+
+    event = {
+        "message": "Opened https://agp.hcompany.ai/api/v1/trajectories/abc then call +33 6 12 34 56 78",
+        "phone": None,
+    }
+    clean = scrub_event(event)
+    assert clean["phone"] is None
+    assert clean["message"].startswith("Opened [REDACTED] then call")
+    assert "12 34 56" not in clean["message"]

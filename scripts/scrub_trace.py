@@ -13,6 +13,9 @@ _H_KEY = re.compile(r"\bhk-[A-Za-z0-9_-]+", re.IGNORECASE)
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 _PRIVATE_KEYS = {"agent_view_url", "live_view_url"}
 _RESOURCE = re.compile(r"/api/v1/trajectories/", re.IGNORECASE)
+_RESOURCE_URL = re.compile(r"(?:https?://\S*?)?/api/v1/trajectories/[^\s\"'<>]*", re.IGNORECASE)
+_PHONE = re.compile(r"(?<![\w+])(?:\+\d{1,3}[ .-]?\(?\d{1,4}\)?(?:[ .-]?\d{2,4}){2,4}|0[1-9](?:[ .-]?\d{2}){4})(?!\w)")
+_PHONE_PLACEHOLDER = "+33000000000"
 _PHONE_KEYS = {"phone", "phone_number", "telephone", "mobile"}
 
 
@@ -23,18 +26,16 @@ def scrub_event(obj: Any) -> Any:
     def walk(value: Any) -> Any:
         if isinstance(value, dict):
             return {
-                walk(key): "+33000000000" if key.lower() in _PHONE_KEYS else walk(item)
+                walk(key): _PHONE_PLACEHOLDER if key.lower() in _PHONE_KEYS and item else walk(item)
                 for key, item in value.items()
-                if key.lower() not in _PRIVATE_KEYS
-                and not _RESOURCE.search(key)
-                and not (isinstance(item, str) and _RESOURCE.search(item))
+                if key.lower() not in _PRIVATE_KEYS and not _RESOURCE.search(key)
             }
         if isinstance(value, list):
-            return [walk(item) for item in value if not (isinstance(item, str) and _RESOURCE.search(item))]
+            return [walk(item) for item in value]
         if isinstance(value, str):
-            if _RESOURCE.search(value):
-                return "[REDACTED]"
+            value = _RESOURCE_URL.sub("[REDACTED]", value)
             value = _H_KEY.sub("[REDACTED]", value)
+            value = _PHONE.sub(_PHONE_PLACEHOLDER, value)
             value = value.replace(RunnerProfile().email, "runner@example.com")
             return _EMAIL.sub(
                 lambda match: match.group() if match[1].lower() == "example.com" else "runner@example.com", value
