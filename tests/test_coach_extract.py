@@ -87,4 +87,5 @@ def test_extract_profile_falls_back_to_rules_on_bad_llm_output():
 def test_number_words_and_ranges():
     p = extract_rule_based("Je cours trois fois par semaine, entre vingt et trente kilomètres par semaine. J'ai vingt et un ans.")
     assert p.weekly_km == 25 and p.age == 21
+    assert extract_rule_based("Entre vingt et un et trente km par semaine.").weekly_km == 25.5
     assert extract_rule_based("Je fais deux et trois km par semaine").weekly_km == 3
