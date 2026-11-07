@@ -53,6 +53,8 @@
     let destroyed = false;
     let buttons = new Map();
     let articles = new Map();
+    let disclosures = new Map();
+    let narrow = false;
     let actions = new Map();
     let playButton;
     let pauseButton;
@@ -164,6 +166,8 @@
     function render() {
       buttons = new Map();
       articles = new Map();
+      disclosures = new Map();
+      narrow = win.matchMedia?.('(max-width: 640px)')?.matches ?? false;
       actions = new Map();
       playButton = null;
       pauseButton = null;
@@ -207,11 +211,20 @@
         const item = el("li");
         const article = el("article");
         article.setAttribute("aria-label", chapter.label);
-        article.append(el("h3", chapter.label), el("p", STATUS[chapter.status] || "À compléter", "journey-chapter-state"));
+        const disclosure = el("details");
+        const summary = el("summary", chapter.label);
+        disclosure.append(summary);
+        disclosure.open = !narrow || chapter.id === selected;
+        disclosure.addEventListener("toggle", () => {
+          if (chapter.id === selected) disclosure.open = true;
+        });
+        disclosures.set(chapter.id, disclosure);
+        article.append(disclosure);
+        disclosure.append(el("p", STATUS[chapter.status] || "À compléter", "journey-chapter-state"));
         for (const stopId of chapter.stop_ids) {
           const stop = stops.get(stopId);
-          article.append(el("p", stop.label, "journey-stop"));
-          article.append(el("p", `${timeText(stop.local_time, stop.timezone)}${stop.coords ? "" : " — Localisation non renseignée"}`));
+          disclosure.append(el("p", stop.label, "journey-stop"));
+          disclosure.append(el("p", `${timeText(stop.local_time, stop.timezone)}${stop.coords ? "" : " — Localisation non renseignée"}`));
         }
         for (const segmentId of chapter.segment_ids) {
           const segment = segments.get(segmentId);
@@ -224,9 +237,9 @@
           detail.append(el("p", AUTOMATION[segment.automation] || "Non automatisé"));
           if (safeUrl(segment.manual_url)) addLink(detail, "Ouvrir le site manuellement", segment.manual_url);
           addLimitation(detail, segment.limitation);
-          article.append(detail);
+          disclosure.append(detail);
         }
-        if (!chapter.stop_ids.length && !chapter.segment_ids.length) article.append(el("p", "Informations non renseignées. À compléter avec vous."));
+        if (!chapter.stop_ids.length && !chapter.segment_ids.length) disclosure.append(el("p", "Informations non renseignées. À compléter avec vous."));
         articles.set(chapter.id, article);
         item.append(article);
         timeline.append(item);
@@ -245,7 +258,9 @@
         if (id === selected) button.setAttribute("aria-current", "step");
         else button.removeAttribute("aria-current");
         articles.get(id).setAttribute("data-selected", String(id === selected));
+        disclosures.get(id).open = !narrow || id === selected;
       }
+      buttons.get(selected)?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
     }
 
     function updateControls() {
@@ -428,6 +443,7 @@
       content.replaceChildren();
       buttons.clear();
       articles.clear();
+      disclosures.clear();
       actions.clear();
       playButton = null;
       pauseButton = null;

@@ -53,17 +53,24 @@
 .journey-fallback .journey-timeline > li::marker { font-weight: 700; }
 .journey-fallback article { padding: 16px; border: 1px solid var(--line, #dcd8d0); }
 .journey-fallback article[data-selected="true"] { border: 2px solid var(--ink, #0b0b0c); }
+.journey-fallback summary { min-height: 44px; padding: 8px; font-weight: 700; cursor: pointer; border: 1px solid var(--line, #dcd8d0); }
 .journey-fallback .journey-stop, .journey-fallback .journey-chapter-state { font-weight: 600; }
 .journey-fallback .journey-segment { padding-inline-start: 14px; margin-block: 18px; }
 .journey-fallback .journey-budget, .journey-fallback .journey-sources { margin-block: 24px; padding-block-start: 20px; border-block-start: 1px solid var(--line, #dcd8d0); }
 .journey-fallback .journey-warning, .journey-fallback .journey-limitation { padding-inline-start: 12px; border-inline-start: 3px solid currentColor; }
 
+@media (max-width: 640px) {
+  .journey-fallback .journey-chapters { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; padding: 4px; }
+  .journey-fallback .journey-chapters > li { flex: 0 0 auto; }
+  .journey-fallback .journey-chapters button { min-height: 44px; white-space: nowrap; scroll-snap-align: start; }
+  .journey-fallback .journey-controls { gap: 6px; }
+  .journey-fallback .journey-timeline > li { padding-bottom: 8px; }
+  .journey-fallback article { padding: 6px; }
+}
+
 @media (max-width: 480px) {
-  .journey-fallback .journey-controls, .journey-fallback .journey-chapters { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .journey-fallback .journey-chapters button, .journey-fallback .journey-controls button { width: 100%; }
   .journey-fallback .journey-timeline { padding-inline-start: 20px; }
   .journey-fallback .journey-timeline > li { padding-inline-start: 2px; }
-  .journey-fallback article { padding: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -75,5 +82,7 @@
 }
 
 @media (forced-colors: active) {
+  .journey-fallback .journey-chapters, .journey-fallback details, .journey-fallback summary { border: 1px solid CanvasText; }
+  .journey-fallback :focus-visible { outline: 3px solid Highlight; }
   .journey-fallback button[aria-current="step"] { outline: 2px solid Highlight; outline-offset: -4px; }
 }

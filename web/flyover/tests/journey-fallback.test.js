@@ -40,6 +40,7 @@ class Element extends EventTarget {
   }
   contains(node) { return node === this || this.children.some((c) => c.contains(node)); }
   focus() { this.ownerDocument.activeElement = this; }
+  scrollIntoView(options) { this.scrollOptions = options; }
 }
 
 function descendants(node, predicate) {
@@ -57,7 +58,7 @@ function setup(options = {}) {
   media.matches = !!options.matches;
   const browser = {
     CustomEvent: DetailEvent,
-    matchMedia: () => media,
+    matchMedia: options.noMatchMedia ? undefined : (query) => query === "(max-width: 640px)" ? { matches: !!options.narrow } : media,
     setTimeout: (fn) => { timers.set(++nextTimer, fn); return nextTimer; },
     clearTimeout: (id) => timers.delete(id),
   };
@@ -115,7 +116,7 @@ test("unknown coordinates, dates and money remain unknown; manual links and non-
 });
 
 test("native chapter buttons support arrows/Home/End without stealing focus on programmatic updates", () => {
-  const { container, view, doc, interact, events } = setup();
+  const { container, view, doc, interact, events } = setup({ narrow: true });
   view.setPlan(load());
   const first = byAttr(container, "data-chapter", "home");
   first.focus();
@@ -132,7 +133,41 @@ test("native chapter buttons support arrows/Home/End without stealing focus on p
   view.showChapter("race");
   assert.equal(doc.activeElement, first);
   assert.equal(events.at(-1).detail.chapterId, "race");
+  assert.equal(byAttr(container, "role", "status").getAttribute("aria-live"), "polite");
+  assert.deepEqual({ ...byAttr(container, "data-chapter", "race").scrollOptions }, { inline: "nearest", block: "nearest" });
   assert.throws(() => view.showChapter("fake"), /chapitre/i);
+});
+
+for (const options of [{ narrow: true }, { narrow: false }, { noMatchMedia: true }]) {
+  test(`chapter disclosures reflect screen size ${JSON.stringify(options)} and always expand the current chapter`, () => {
+    const { container, view } = setup(options);
+    view.setPlan(load());
+    const details = byTag(container, "details");
+    assert.equal(details.length, 7);
+    assert.equal(details[0].open, true);
+    assert.ok(details.slice(1).every((detail) => detail.open === !options.narrow));
+    assert.equal(byTag(container, "summary").length, 7);
+    view.showChapter("race");
+    const articles = byTag(container, "article");
+    for (const article of articles) {
+      assert.equal(byTag(article, "details")[0].open, !options.narrow || article.getAttribute("data-selected") === "true");
+    }
+    const current = byTag(byAttr(container, "data-selected", "true"), "details")[0];
+    current.open = false;
+    current.dispatchEvent(new Event("toggle"));
+    assert.equal(current.open, true);
+  });
+}
+
+test("empty chapters render no disclosures and absent scrolling APIs remain safe", () => {
+  const { container, view } = setup({ narrow: true });
+  const plan = load();
+  plan.chapters = [];
+  view.setPlan(plan);
+  assert.equal(byTag(container, "details").length, 0);
+  view.setPlan(load());
+  byAttr(container, "data-chapter", "race").scrollIntoView = undefined;
+  assert.equal(view.showChapter("race"), true);
 });
 
 test("plan replacement keeps chapter focus, discards previous content and cancels playback", () => {
