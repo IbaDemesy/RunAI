@@ -83,13 +83,27 @@ def verifier_devis(
         v.ecarts.append(
             f"palier actuel : agent {pa:g} €, source {ps:g} €{_tier_hint(pa, source, tolerance_eur)}"
         )
-    if (
+    if source.frais_service_eur and devis.frais_service_eur is None:
+        v.ecarts.append(
+            f"frais non rapportés par l'agent : source {source.frais_service_eur:g} €"
+        )
+    elif (
         devis.frais_service_eur is not None
         and source.frais_service_eur is not None
         and abs(devis.frais_service_eur - source.frais_service_eur) > tolerance_eur
     ):
         v.ecarts.append(
             f"frais : agent {devis.frais_service_eur:g} €, source {source.frais_service_eur:g} €"
+        )
+    if (
+        source.frais_service_eur
+        and source.frais_inclus_dans_prix is not None
+        and devis.frais_inclus_dans_prix is not None
+        and devis.frais_inclus_dans_prix != source.frais_inclus_dans_prix
+    ):
+        v.ecarts.append(
+            f"inclusion des frais : agent {devis.frais_inclus_dans_prix}, "
+            f"source {source.frais_inclus_dans_prix}"
         )
     for o in devis.options:
         s = _find_option(o, source.options)
@@ -105,9 +119,7 @@ def verifier_devis(
             )
     for s in source.options:
         if s.obligatoire and not any(_find_option(o, [s]) for o in devis.options):
-            v.avertissements.append(
-                f"option obligatoire non rapportée par l'agent : {s.nom}"
-            )
+            v.ecarts.append(f"option obligatoire non rapportée par l'agent : {s.nom}")
     if devis.complet != source.complet:
         v.ecarts.append(f"complet : agent {devis.complet}, source {source.complet}")
     return v

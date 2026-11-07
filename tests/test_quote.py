@@ -272,6 +272,21 @@ def test_verifier_devis_against_source(milan):
     assert any("agent 12 €, source 10 €" in e for e in v.ecarts)
 
 
+def test_verifier_devis_fees_and_mandatory(milan):
+    v = verifier_devis(_agent(milan, frais_service_eur=None), milan)
+    assert not v.ok and any("frais non rapportés" in e for e in v.ecarts)
+    src = milan.model_copy(
+        update={
+            "frais_inclus_dans_prix": False,
+            "options": [OptionPayante(nom="Pass santé", prix_eur=5, obligatoire=True)],
+        }
+    )
+    agent = _agent(src, frais_inclus_dans_prix=True, options=[])
+    v = verifier_devis(agent, src)
+    assert any("inclusion des frais" in e for e in v.ecarts)
+    assert any("obligatoire non rapportée" in e for e in v.ecarts)
+
+
 def test_verifier_devis_internal_checks(milan):
     v = verifier_devis(_agent(milan, total_minimal_eur=100, rien_soumis=False))
     assert len(v.ecarts) == 2

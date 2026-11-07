@@ -41,7 +41,8 @@ Relevé en ligne de commande :
 ## Limites
 
 - **Frais Njuko** : le montant (5 € à Milan) est cherché dans les textes du formulaire ; l'API ne dit pas s'il est inclus. `frais_inclus_dans_prix=None` : non compté dans le total, avertissement, et `verifier_prix` accepte le prix avec ou sans frais.
-- **Options obligatoires** : selon le drapeau `required` de Njuko. À Milan l'option « tourisme sportif » (5 €) n'est pas marquée obligatoire alors qu'elle conditionne l'inscription non compétitive : à confirmer au panier.
+- **Options obligatoires** : selon le drapeau `required` de Njuko. À Milan l'option « tourisme sportif » (5 €) n'est pas marquée obligatoire alors qu'elle conditionne l'inscription non compétitive : à confirmer au panier. Une option `required` qui propose une variante gratuite (« non merci », design standard) n’est pas comptée comme obligatoire ; les sections masquées sont ignorées.
+- **Contrôle** : `verifier_devis` signale comme écart les frais connus de la source mais absents du devis agent, une inclusion des frais contradictoire et une option obligatoire non rapportée. `fetch_klikego_*` refuse toute URL hors `https://*.klikego.com` et ne suit pas les redirections.
 - Prix d'option = prix minimal parmi ses variantes (tailles).
 - Klikego : extraction par motifs sur le HTML, fragile ; date de bascule « dernière minute » non affichée. Jamais au-delà de la fiche (« S'inscrire » crée un compte, CGU anti-robots).
 - Pas de cache : un appel = un relevé daté (`releve_le`). Aucune charge : appeler à la demande, pas en boucle.
