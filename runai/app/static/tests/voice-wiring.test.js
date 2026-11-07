@@ -16,11 +16,11 @@ class Node {
   focus() {}
 }
 
-async function setup(withMission = false) {
+async function setup(withMission = false, question = null) {
   const screen = new Node("section"), feedback = new Node("p"), badge = new Node("span");
   const calls = [], listeners = {};
   const values = new Map(withMission ? [["runai:mission", "m-test"]] : []);
-  const session = revision => ({ id: "f-test", revision, mode: "demo", status: "collecting", turns: [], open_questions: [], candidates: [], limitations: [], slots: {} });
+  const session = revision => ({ id: "f-test", revision, mode: "demo", status: "collecting", turns: [], open_questions: question ? [question] : [], candidates: [], limitations: [], slots: {} });
   let current = session(1), conflict = false, options;
   const mission = { mission_id: "m-test", status: "running", mode: "demo", steps: [], questions: [], limitations: [] };
   const window = {
@@ -78,4 +78,16 @@ test("pause/reprise vocales appellent les agents, pas la caméra ; page quittée
   listeners.pagehide();
   await assert.rejects(options.onAgentsCommand("pause"), /plus active/);
   assert.equal(calls.length, count);
+});
+
+test("une ville vocale brève répond à la question ouverte comme le formulaire texte", async () => {
+  const question = { id: "city-question", text: "Dans quelle ville ?", slots: ["city"], choices: [], allow_free_text: true };
+  const { options, speak, calls } = await setup(false, question);
+  speak(); await options.onFramingReply({ text: "une course", revision: 0 });
+  speak(); await options.onFramingReply({ text: "Tokyo", revision: 1 });
+  const payload = calls.find(call => call.url.endsWith("/replies")).payload;
+  assert.equal(payload.question_id, question.id);
+  assert.equal(payload.text, "Tokyo");
+  assert.equal(payload.channel, "voice");
+  assert.equal(payload.revision, 1);
 });

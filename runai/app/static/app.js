@@ -168,7 +168,10 @@
       let accepted;
       if (!framing && !mission && revision === 0) {
         accepted = await mutate(async () => { framing = await api.request("/api/framings", { text, channel: "voice" }); });
-      } else accepted = await window.RunAIShell.submitReply(text, { channel: "voice", revision });
+      } else accepted = await window.RunAIShell.submitReply(text, {
+        channel: "voice", revision,
+        question_id: framing?.open_questions.find(question => question.allow_free_text)?.id,
+      });
       if (!accepted) throw new Error("Réponse vocale non appliquée. Vérifiez la version actuelle du cadrage.");
     },
     onAgentsCommand: async action => {
