@@ -79,7 +79,12 @@ def _normalize(text: str) -> str:
     t = re.sub(r"(\d) (\d{3})\b", r"\1\2", t)
     for word, value in sorted(_NUMBER_WORDS.items(), key=lambda kv: -len(kv[0])):
         t = re.sub(rf"\b{word}\b", str(value), t)
-    t = re.sub(r"\b(\d+) et (\d+)\b", lambda m: str(int(m[1]) + int(m[2])), t)
+    t = re.sub(r"\bentre (\d+) et (\d+)\b", lambda m: f"{(int(m[1]) + int(m[2])) / 2:g}", t)
+    t = re.sub(
+        r"\b(\d+) et (\d+)\b",
+        lambda m: str(int(m[1]) + int(m[2])) if int(m[1]) % 10 == 0 and int(m[2]) in (1, 11) else m[0],
+        t,
+    )  # « vingt et un », « soixante et onze »
     t = re.sub(r"\b(\d+)[- ](\d)\b", lambda m: str(int(m[1]) + int(m[2])) if int(m[1]) % 10 == 0 else m[0], t)
     t = re.sub(r"\b(\d+) et demi(e)?\b", lambda m: f"{m[1]}.5", t)
     return t.replace("kilomètres", "km").replace("kilometres", "km").replace("bornes", "km")
