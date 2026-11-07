@@ -106,7 +106,8 @@ def default_timeline(race: Race) -> list[TimelineItem]:
         items.append(TimelineItem(
             start=datetime.combine(race.race_date, time(0), tzinfo=tz), time_known=False,
             title=f"Course : {race.name}",
-            detail=(f"départ {race.start_time} (heure locale)" if race.start_time else "heure de départ à confirmer"),
+            detail=(f"départ {t:%H:%M} (heure locale)" if (t := parse_start_time(race.start_time))
+                    else "heure de départ à confirmer"),
             location=race.start_location, tag="course",
         ))
     return items

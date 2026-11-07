@@ -248,3 +248,8 @@ def test_default_notice_depends_on_profile():
     real = recap_from_mission(_race(), RunnerProfile(email="vrai@coureur.fr"), [])
     assert "fictif" in fake.notice and "fictif" not in real.notice
     assert "Rien n'a été payé" in real.notice
+
+
+def test_invalid_start_time_not_shown_as_departure():
+    course = next(t for t in default_timeline(_race(start_time="09:75")) if t.tag == "course")
+    assert course.detail == "heure de départ à confirmer"
