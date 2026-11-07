@@ -4,14 +4,31 @@
 
 ## Contexte du hackathon
 
-- **Computer Use Agents Hackathon**, H Company x 42AI, les 7 et 8 novembre 2026 à Paris.
+- **Computer Use Agents Hackathon**, H Company x 42AI, les 7 et 8 novembre 2026 à Paris (La Maison by Motier Ventures). [Page de l'événement](https://builderbase.com/track-dashboard/h-company-42ai-computer-use-agents-hackathon/event-site), [Discord](https://discord.gg/WjmTcMW9e).
 - **Rendu : dimanche 8 novembre à 14h00.** Pitchs finaux à 15h45.
+- Outils H : [Agents API](https://hub.hcompany.ai/agents-api/introduction) et [modèles](https://hub.hcompany.ai/models-api/introduction). Mentorat 1:1 avec les chercheurs et ingénieurs de H sur place.
 - Défi : un agent qui navigue sur des sites, des applis desktop ou des interfaces logicielles pour accomplir une **vraie tâche utile**. La démo doit montrer **le problème, les actions de l'agent, puis le résultat**.
 - Équipes de 1 à 4 personnes.
-- Prix : 5 000 €, 3 000 € et 2 000 € pour le podium. Prix sponsors **Best Use of Gladia** (1 000 €) et **Best Use of Devin** (1 000 €). Prix réseaux sociaux : meilleur post LinkedIn et meilleur post X (500 € chacun).
-- Règle : utiliser **au moins 3 partenaires**.
+- Prix : 5 000 €, 3 000 € et 2 000 € pour le podium. Prix sponsors **Best Use of Gladia** (1 000 €) et **Best Use of Devin** (1 000 €). Prix réseaux sociaux : meilleur post LinkedIn et meilleur post X (500 € chacun). Total : 13 000 € en cash. Les membres des 3 équipes du podium gagnent aussi un mois gratuit de coworking Morning Nomade.
+- Règle : utiliser **au moins 3 partenaires**. Partenaires : H, Gladia, Linkup, Cognition (Devin), Stripe et Morning (coworking, pas un outil technique).
+
+### Planning
+
+| Quand | Quoi |
+| --- | --- |
+| Sam. 7, 10h30 | Début du hacking |
+| Sam. 7, 21h00 | Plus d'entrée dans le lieu |
+| Dim. 8, 8h00 | Réouverture du lieu |
+| **Dim. 8, 14h00** | **Rendu des projets** |
+| Dim. 8, 14h30 | Premier tour de jugement |
+| Dim. 8, 15h45 | Pitchs finaux |
+| Dim. 8, 17h45 | Annonce des gagnants |
+
+Horaires de Paris, susceptibles de petits ajustements.
 
 ### Grille du jury
+
+Jurés : Mathieu Astruc, Axel Darmouni, Thibaut Le Boulaire, Maxime Langevin, Alexis Deprez, zak a, Nolwenn Guiban, Denis Charrier, Amel Negra, Mathieu Diaz.
 
 | Critère | Poids | Question posée |
 | --- | --- | --- |
