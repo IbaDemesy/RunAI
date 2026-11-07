@@ -119,8 +119,8 @@ class RealBrowserAgents:
         max_time_s: float | None = None,
     ):
         self.runner = runner or HRunner(traces_dir=traces_dir)
-        self.max_steps = max_steps or int(os.getenv("RUNAI_H_MAX_STEPS", "30"))
-        self.max_time_s = max_time_s or float(os.getenv("RUNAI_H_MAX_TIME_S", "240"))
+        self.max_steps = max_steps or int(os.getenv("RUNAI_H_MAX_STEPS", "60"))
+        self.max_time_s = max_time_s or float(os.getenv("RUNAI_H_MAX_TIME_S", "900"))
 
     async def start(
         self,

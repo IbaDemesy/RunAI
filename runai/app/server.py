@@ -64,13 +64,19 @@ def build_service() -> MissionService:
         if settings.gladia_api_key
         else FakeTranscriber(delay=delay / 3)
     )
+    agents = RealBrowserAgents(traces_dir=settings.traces_dir)
+    question_timeout_s = min(
+        float(os.getenv("RUNAI_QUESTION_TIMEOUT_S", "600")),
+        agents.max_time_s - 60,
+    )
     return MissionService(
         RealRaceSearch(),
-        RealBrowserAgents(traces_dir=settings.traces_dir),
+        agents,
         transcriber,
         traces_dir=settings.traces_dir,
         max_concurrency=settings.h_max_concurrency,
         simulated=False,
+        question_timeout_s=question_timeout_s,
     )
 
 

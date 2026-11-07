@@ -106,6 +106,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert answers == [("Quel sas ?", ["moins de 3h30", "plus de 3h30"])]
     assert isinstance(run, RealAgentRun)
     assert run.session_id == "h-session-1"
+    assert run.timeout_s == 90
     assert asyncio.run(run.wait()).status is StepStatus.stopped_before_commitment
 
 
@@ -240,3 +241,28 @@ def test_service_selects_fakes_or_real_adapters_from_environment(monkeypatch):
     fallback = build_service()
     assert fallback.simulated
     assert isinstance(fallback.agents, FakeBrowserAgents)
+
+
+def test_real_agent_limits_default_to_sixty_steps_and_fifteen_minutes(monkeypatch):
+    monkeypatch.delenv("RUNAI_H_MAX_STEPS", raising=False)
+    monkeypatch.delenv("RUNAI_H_MAX_TIME_S", raising=False)
+
+    agents = RealBrowserAgents(runner=SimpleNamespace())
+
+    assert agents.max_steps == 60
+    assert agents.max_time_s == 900
+
+
+def test_real_question_timeout_is_capped_by_h_session_time(monkeypatch):
+    monkeypatch.setenv("HAI_API_KEY", "fake-h-key")
+    monkeypatch.setenv("LINKUP_API_KEY", "fake-linkup-key")
+    monkeypatch.delenv("RUNAI_DEMO", raising=False)
+    monkeypatch.setenv("RUNAI_H_MAX_TIME_S", "200")
+    monkeypatch.setenv("RUNAI_H_MAX_STEPS", "60")
+    monkeypatch.setenv("RUNAI_QUESTION_TIMEOUT_S", "600")
+
+    service = build_service()
+
+    assert isinstance(service.agents, RealBrowserAgents)
+    assert service.agents.max_time_s == 200
+    assert service.question_timeout_s == 140

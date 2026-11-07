@@ -24,7 +24,8 @@ Les sessions H exposent l'outil asynchrone `ask_user(question, options)`.
 L'application conserve les questions dans l'état de mission, les diffuse via
 SSE et attend une réponse du portail ; après réponse, le résultat est renvoyé à
 l'agent. Le délai maximal est configurable avec `RUNAI_QUESTION_TIMEOUT_S`
-(600 secondes par défaut), avec au plus deux questions par étape.
+(600 secondes par défaut). En mode réel, il est plafonné à la durée maximale de
+la session H moins 60 secondes. Il y a au plus deux questions par étape.
 
 Le SDK H attache les définitions avec `AsyncClient.start_session(tools=...)`.
 `HRun` consomme ensuite `AsyncSessionHandle.stream()` ; le flux asynchrone du
@@ -46,5 +47,5 @@ bloquer la boucle d'événements.
   s'arrêtent avant tout paiement, réservation, consentement ou soumission.
   Aucun captcha ni mécanisme anti-bot ne doit être contourné ; en cas de blocage,
   l'étape échoue explicitement avec le marqueur `BLOCAGE CAPTCHA/ANTI-BOT`.
-- Les limites H par défaut sont de 30 étapes et 240 secondes par session ; elles
+- Les limites H par défaut sont de 60 étapes et 900 secondes par session ; elles
   sont réglables avec `RUNAI_H_MAX_STEPS` et `RUNAI_H_MAX_TIME_S`.
