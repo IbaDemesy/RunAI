@@ -34,11 +34,13 @@
     profile: $("profile"),
   };
 
+  const validDuration = (value) => (Number.isFinite(value) && value > 0 ? value : 60);
+
   const state = {
     track: null,
     distance: 0,
     playing: false,
-    durationS: Number(params.get("duration")) || 60,
+    durationS: validDuration(Number(params.get("duration"))),
     bearing: 0,
     lastFrame: null,
     markers: [],
@@ -511,7 +513,7 @@
     pause,
     overview,
     seekKm: (value) => seek(value * 1000, { follow: true }),
-    setDuration: (seconds) => (state.durationS = seconds),
+    setDuration: (seconds) => (state.durationS = validDuration(Number(seconds))),
     get state() {
       return { distanceM: state.distance, totalM: state.track ? state.track.totalM : 0, playing: state.playing };
     },
