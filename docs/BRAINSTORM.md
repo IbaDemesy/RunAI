@@ -119,7 +119,7 @@ Hors périmètre, ou mention « vision » dans le pitch : coach d'entraînement,
 
 ## Projets déjà faits (H Showcase)
 
-Source : le H Showcase (page collée par Mathieu), qui liste 35 agents construits sur l'API H Agents. On y trouve des démos officielles de H et les projets du hackathon de San Francisco.
+Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents construits sur l'API H Agents. On y trouve des démos officielles de H et les projets du hackathon de San Francisco.
 
 ### Les plus proches de notre idée
 
@@ -138,6 +138,16 @@ Source : le H Showcase (page collée par Mathieu), qui liste 35 agents construit
 - **Apprendre des vidéos et rejouer** : Holo Forge, Reel-Learn, AI Runbooks, ImproveMe, Voodoo.
 - **Agents métier ou applis desktop** : ArcFlash Copilot, Claw-DJ (Mixxx), Cloud CUA (console AWS), Holodev (Roblox Studio), CUA Molecular Visualizer, AI Teaching Assistant.
 - **Divers** : HoloMobile (mobile), Halo (panneau Chrome), Privacy Layer, Snowglobe, FollowThrough, Agent Kalshi, Glassbox, HoloBlocks et HoloBricks.
+
+### Ressources utiles pour construire
+
+Tirées de la fiche [Product availability](https://showcase.hcompany.ai/p/product-availability/) :
+
+- **Code des démos officielles** : [hcompai/agents-api-demos](https://github.com/hcompai/agents-api-demos). Par exemple [product_availability](https://github.com/hcompai/agents-api-demos/tree/main/examples/product_availability), une bonne base pour une réponse typée (validée avec zod).
+- **Un agent = un `agent.json`**, envoyé en corps de `POST /api/v2/agents`. Il contient le modèle (`holo4-27b`), l'outil `h/browser`, les skills `h/planning` et `h/answering`, et le schéma de la réponse attendue.
+- **Skill `/hai-agents`** : génère le projet d'un agent à partir d'une seule phrase.
+- **Holo Desktop** : fait tourner un agent sur son propre navigateur plutôt que dans le cloud browser (`curl -fsSL https://install.hcompany.ai/install.sh | bash && holo login`). Pratique pour tester en local.
+- **On peut soumettre RunAI au showcase** après le hackathon : [showcase.hcompany.ai/submit](https://showcase.hcompany.ai/submit/).
 
 ### Ce qu'on en retient
 
