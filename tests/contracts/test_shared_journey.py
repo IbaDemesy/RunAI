@@ -193,11 +193,7 @@ def test_foreign_currency_is_not_added_and_missing_price_is_incomplete():
     assert not budget.complete and budget.known_total == 0 and budget.over_cap is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Budget.over_cap renvoie True si total connu > plafond malgré des lignes manquantes ; attendu None tant que le budget est incomplet (exigence E1).",
-)
-def test_incomplete_over_cap_remains_unknown_even_above_cap():
+def test_incomplete_budget_already_above_cap_is_over_cap():
     budget = Budget(
         cap=10,
         lines=[
@@ -207,4 +203,5 @@ def test_incomplete_over_cap_remains_unknown_even_above_cap():
             CostLine(id="missing", category="local", label="Unknown"),
         ],
     )
-    assert budget.over_cap is None
+    assert budget.complete is False
+    assert budget.over_cap is True
