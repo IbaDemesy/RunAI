@@ -355,3 +355,42 @@ def test_klikego_does_not_follow_redirects():
 def test_network_milan():
     d = fetch_njuko_quote(SLUG, "non comp")
     assert d.palier_actuel.prix_eur > 0 and d.options
+
+
+def test_njuko_fee_inclusion_negation():
+    from runai.quote.njuko import _frais
+
+    assert _frais(["5 euros de frais de service non inclus dans le prix"]) == (
+        5.0,
+        False,
+    )
+    assert _frais(["frais de service inclus (5 euros)"]) == (5.0, True)
+
+
+def test_njuko_hidden_sections_and_free_choices():
+    from runai.quote.njuko import _options
+
+    paid = {
+        "data": {"values": [{"price": 5}]},
+        "validateOptionsFormGroup": {"required": True},
+    }
+    forms = [
+        {
+            "fields": [
+                {
+                    "label": "cache",
+                    "validateOptionsFormGroup": {"visible": False},
+                    "fields": [dict(paid, label="enfant caché")],
+                },
+                dict(paid, label="obligatoire"),
+                {
+                    "label": "dossard",
+                    "validateOptionsFormGroup": {"required": True},
+                    "data": {"values": [{"price": 5}, {"price": 0}]},
+                },
+            ]
+        }
+    ]
+    opts = {o.nom: o for o in _options(forms, "c1")}
+    assert set(opts) == {"obligatoire", "dossard"}
+    assert opts["obligatoire"].obligatoire and not opts["dossard"].obligatoire

@@ -37,6 +37,10 @@ _WINDOWS_TZ = {
     "E. Europe Standard Time": "Europe/Bucharest",
 }
 _INCLUS = re.compile(r"inclus|compris|included", re.IGNORECASE)
+_NON_INCLUS = re.compile(
+    r"\b(?:non|pas)\s+(?:inclus|compris)|not\s+included|en\s+sus|en\s+plus|excluded",
+    re.IGNORECASE,
+)
 
 
 class NjukoError(RuntimeError):
@@ -107,19 +111,19 @@ def _options(forms: list[dict], competition_id: str) -> list[OptionPayante]:
                 continue
             group = f.get("validateOptionsFormGroup") or {}
             if group.get("visible") is False or group.get("organiserOnly"):
-                walk(f, etape)
                 continue
-            vals = [
+            shown = [
                 v
                 for v in (f.get("data") or {}).get("values") or []
                 if isinstance(v, dict)
-                and v.get("price")
                 and v.get("visible", True) is not False
                 and (
                     not v.get("displayOnCompetitions")
                     or competition_id in v["displayOnCompetitions"]
                 )
             ]
+            vals = [v for v in shown if v.get("price")]
+            has_free_choice = len(vals) < len(shown)
             prix = f.get("price") or (min(v["price"] for v in vals) if vals else None)
             if prix:
                 nom = html_to_text(_tr(f.get("label")))[:160]
@@ -129,7 +133,7 @@ def _options(forms: list[dict], competition_id: str) -> list[OptionPayante]:
                         nom=nom,
                         categorie=categorie(nom),
                         prix_eur=float(prix),
-                        obligatoire=bool(group.get("required")),
+                        obligatoire=bool(group.get("required")) and not has_free_choice,
                         etape=etape,
                     )
                 )
@@ -148,9 +152,14 @@ def _frais(texts: list[str]) -> tuple[float | None, bool | None]:
             m = re.search(pat, t, re.IGNORECASE)
             if m:
                 fen = t[max(0, m.start() - 80) : m.end() + 80]
-                return float(m.group(1).replace(",", ".")), (
-                    True if _INCLUS.search(fen) else None
+                inclus = (
+                    False
+                    if _NON_INCLUS.search(fen)
+                    else True
+                    if _INCLUS.search(fen)
+                    else None
                 )
+                return float(m.group(1).replace(",", ".")), inclus
     return None, None
 
 
