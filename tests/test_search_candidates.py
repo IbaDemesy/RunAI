@@ -94,6 +94,16 @@ def test_generic_candidates(city):
     assert client.calls[0][1] != threading.get_ident()
 
 
+def test_city_prompt_allows_a_country_or_region_value():
+    client = FakeClient([row(city="Beijing", country="CN")])
+    result = asyncio.run(LinkupCandidateSearch(client).search(slots(city="Chine")))
+
+    assert [candidate.city for candidate in result.candidates] == ["Beijing"]
+    query = client.calls[0][0]["query"]
+    assert '"city_or_region_or_country": "Chine"' in query
+    assert '"city": "Chine"' not in query
+
+
 def test_only_known_slots_and_no_location():
     unknown = slots(city="Lisbonne")
     unknown[SlotName.race] = Slot(name=SlotName.race, value="invented marathon")
@@ -437,7 +447,9 @@ def test_relaxed_search_runs_once_without_strict_filters_and_marks_close_matches
     relaxed_constraints = client.calls[1][0]["query"].split(
         "constraints: ", 1
     )[1].split(". Return", 1)[0]
-    assert json.loads(relaxed_constraints) == {"city": "Tokyo"}
+    assert json.loads(relaxed_constraints) == {
+        "city_or_region_or_country": "Tokyo"
+    }
     assert "nearby cities (about 50 km)" in client.calls[1][0]["query"]
     assert [candidate.name for candidate in result.candidates] == ["Nearby Race"]
     assert [limitation.code for limitation in result.candidates[0].limitations] == [
