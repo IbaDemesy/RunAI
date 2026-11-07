@@ -6,12 +6,18 @@ import re
 from collections.abc import AsyncIterable, Callable
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
 from hai_agents.tools import Tool, tool
 
 from runai.app.ports import AskUser, EventSink
+from runai.app.providers import (
+    forbidden_reason,
+    host_matches,
+    platform,
+    provenance_data,
+)
 from runai.app.tasks import extract_budget_per_night
+from runai.contracts.common import DataMode, ProvenanceKind
 from runai.h.events import to_trace_event
 from runai.h.runner import HRun, HRunner
 from runai.models import Race, RunnerProfile, StepKind, StepResult, StepStatus
@@ -24,14 +30,13 @@ from runai.voice.live import stream_transcripts
 RaceSearchCall = Callable[..., RaceSheet]
 TranscriptStream = Callable[..., AsyncIterable[Any]]
 _HOTEL_PRICE_TOTAL = re.compile(
-    r"\bPRIX_TOTAL_2_NUITS\s*:\s*(?P<price>\d[\d\s.,]*?)\s*(?:EUR|€)",
+    r"\bPRIX_TOTAL_(?:\d+_NUITS|SEJOUR)\s*:\s*(?P<price>\d[\d\s.,]*?)\s*(?:EUR|€)",
     re.IGNORECASE,
 )
 
 
 def _njuko_url(url: str) -> bool:
-    host = (urlsplit(url).hostname or "").lower()
-    return host == "njuko.com" or host.endswith(".njuko.com")
+    return host_matches(url, platform("njuko").hosts)
 
 
 class RealRaceSearch:
@@ -98,7 +103,7 @@ class RealAgentRun:
                 result.status = StepStatus.failed
                 result.error = (
                     result.error
-                    or "Le prix total exact des deux nuits n'est pas vérifiable."
+                    or "Le prix total exact de l'hébergement n'est pas vérifiable."
                 )
         if result.status is StepStatus.completed:
             result.status = StepStatus.failed
@@ -106,6 +111,15 @@ class RealAgentRun:
                 result.error
                 or "L'agent a terminé sans point d'arrêt avant engagement explicite."
             )
+        result.data = {
+            **result.data,
+            "provenance": provenance_data(
+                DataMode.live,
+                ProvenanceKind.h_agent,
+                f"Agent H réel (session {self.session_id})",
+                url=str(result.url) if result.url else None,
+            ),
+        }
         return result
 
 
@@ -132,8 +146,10 @@ class RealBrowserAgents:
         ask_user: AskUser,
         mission_id: str | None = None,
         query: str = "",
+        start_url: str | None = None,
     ) -> RealAgentRun:
-        start_url = None
+        if start_url and (reason := forbidden_reason(start_url)):
+            raise RuntimeError(f"URL de départ refusée : {reason}.")
         if kind is StepKind.registration:
             if not race.registration_url or not _njuko_url(str(race.registration_url)):
                 raise RuntimeError(
