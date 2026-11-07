@@ -15,8 +15,8 @@ Question : à partir d'un nom de course libre, Linkup trouve-t-il la page offici
 | --- | --- | --- |
 | Précision sur 4 champs × 5 courses | 13/16 = 81 % | 10/11 = 91 % |
 | Champs remplis | 16/20 | 11/20 |
-| Latence `standard` structuré | 4,5 à 9,4 s (n = 11) | idem |
-| Latence 2e appel | `deep` : 108 à 124 s (n = 4) | `fetch` : 7,7 à 10 s (n = 4) |
+| Latence `standard` structuré | 4,5 à 9,4 s (n = 10) ; recherche de courses ouvertes 6,8 et 19,4 s | idem |
+| Latence 2e appel | `deep` : 108 à 124 s (n = 4) | `fetch` : 7,7 à 10 s (n = 4, dont 1 erreur non facturée) |
 | Coût liste par course | 0,006 $ ou 0,061 $ avec deep | 0,006 $ ou 0,012 $ |
 
 - `deep` a été déclenché pour 4 courses sur 5 ; il a comblé les trous pour Royan et Lisbonne, pas pour Paris (1 appel `deep` « no result », non facturé).
