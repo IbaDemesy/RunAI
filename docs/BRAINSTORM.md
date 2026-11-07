@@ -77,9 +77,49 @@ Un seul outil qui accompagne le coureur de l'objectif jusqu'à la ligne d'arriv�
 - **Périmètre** : mieux vaut un parcours principal parfait que 6 fonctionnalités fragiles.
 - **Contrôle utilisateur** : vue live des agents, pause et stop (à la voix ou par bouton), l'agent qui pose des questions, jamais de paiement automatique.
 
+## Orientation retenue : une seule feature forte
+
+Plutôt que plein d'idées annexes, on vise **une feature unique, fiable de bout en bout et spectaculaire en démo**. C'est ce que récompense la grille : le computer use et la fiabilité pèsent 50 % de la note.
+
+### La feature : « Dis-moi ta course, je prépare tout le déplacement »
+
+Le coureur formule **une seule intention** (« je veux courir le semi de Lisbonne en mars »), et plusieurs agents l'exécutent :
+
+1. **Inscription à la course** : l'agent H trouve la page d'inscription et remplit le formulaire (profil, t-shirt, PPS ou certificat).
+2. **Hôtel** proche du départ.
+3. **Vol ou train**.
+
+Tout se fait avec **3 agents H en parallèle et une vue live**. La voix sert à piloter et corriger (« hôtel à moins de 15 min du départ »). L'agent **s'arrête avant chaque paiement** : rien n'est réservé, mais le jury voit les formulaires remplis.
+
+C'est plus fort que l'inscription seule sur deux critères, l'impact et l'utilisation du computer use, tout en restant une seule histoire.
+
+### Principes pour la rendre fiable
+
+- **Linkup cherche, H agit.** On ne fait pas naviguer H sur des comparateurs (Google Flights…) : Linkup trouve les options, et H ne va sur un site que pour remplir la réservation choisie.
+- **Arrêt avant chaque paiement.** Aucune vraie réservation.
+- **Construction par couches, chacune démontrable seule** : d'abord l'inscription à la course (béton), puis l'hôtel, puis le vol. Si une couche ne tient pas dimanche matin, on présente les précédentes, et la suivante reste dans la vision du pitch.
+- **Supervision** : une vue live par agent, pause et stop, l'agent qui pose des questions en cas de doute.
+
+### Risques
+
+- Les sites de voyage sont les plus difficiles pour un agent : anti-bot (Booking, Airbnb), pages lourdes, prix dynamiques. Les compagnies aériennes sont souvent les pires.
+- Les plateformes d'inscription peuvent avoir des captchas ou exiger un compte.
+
+### Test de faisabilité à faire en premier
+
+Vérifier qu'un agent H arrive, **jusqu'à l'étape du paiement sans payer**, à faire trois choses :
+
+1. Remplir 2 ou 3 vraies pages d'inscription à une course.
+2. Réserver un hôtel (Booking ou le site d'une chaîne).
+3. Réserver un vol (site d'une compagnie).
+
+Ce test décide du périmètre. Si tout passe, on fait course + hôtel + vol. Si le vol ne passe pas, on resserre sur course + hôtel.
+
+Hors périmètre, ou mention « vision » dans le pitch : coach d'entraînement, abonnement Stripe, mode club.
+
 ## Questions ouvertes
 
-1. Quel fil rouge : l'assistant complet « objectif course », l'inscription de groupe pour les clubs, ou « publie ma course partout » ?
+1. ~~Quel fil rouge ?~~ Orientation : une feature unique, « déplacement course complet » (voir plus haut). Son périmètre final dépend du test de faisabilité.
 2. Combien sommes-nous, et qui fait quoi ?
 3. Vraies plateformes ou faux site pour la démo ?
 4. Quel test de faisabilité H on lance en premier ?
