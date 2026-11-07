@@ -33,10 +33,10 @@ from runai.quote.verify import total_attendu, verifier_devis, verifier_prix
 
 def fetch_quote(url: str, epreuve: str | None = None, **kw) -> Devis:
     """Aiguille vers Njuko ou Klikego selon l'URL (un slug seul est traité comme Njuko)."""
-    host = urlparse(url).netloc if "://" in url else ""
-    if host.endswith("klikego.com"):
+    host = (urlparse(url).hostname or "").lower() if "://" in url else ""
+    if host == "klikego.com" or host.endswith(".klikego.com"):
         return fetch_klikego_quote(url, epreuve, **kw)
-    if not host or "njuko" in host:
+    if not host or host == "njuko.com" or host.endswith(".njuko.com"):
         return fetch_njuko_quote(url, epreuve, **kw)
     raise ValueError(f"plateforme non prise en charge : {host}")
 

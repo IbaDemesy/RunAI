@@ -8,6 +8,7 @@ import pytest
 
 from runai.quote import (
     Devis,
+    KlikegoError,
     NjukoError,
     OptionPayante,
     Palier,
@@ -326,7 +327,25 @@ def test_klikego_royan():
 def test_fetch_quote_dispatch():
     with pytest.raises(ValueError):
         fetch_quote("https://www.example.com/race")
-    assert fetch_klikego_quote is not None
+    with pytest.raises(ValueError):
+        fetch_quote("https://evilklikego.com/x")
+    with pytest.raises(ValueError):
+        fetch_quote("https://evilnjuko.com/x")
+    with pytest.raises(KlikegoError):
+        fetch_klikego_quote("http://169.254.169.254/latest", client=klikego_client([]))
+
+
+def test_klikego_does_not_follow_redirects():
+    def handler(req):
+        return httpx.Response(302, headers={"Location": "http://127.0.0.1/admin"})
+
+    with pytest.raises(httpx.HTTPStatusError):
+        fetch_klikego_quote(
+            "https://www.klikego.com/inscription/x/y/1-1",
+            client=httpx.Client(
+                transport=httpx.MockTransport(handler), follow_redirects=True
+            ),
+        )
 
 
 @pytest.mark.skipif(

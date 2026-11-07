@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
+from urllib.parse import urlparse
 
 import httpx
 
@@ -17,6 +18,17 @@ from runai.quote.models import Devis, OptionPayante, Palier
 from runai.quote.verify import total_attendu
 
 BASE = "https://www.klikego.com"
+
+
+def is_klikego_url(url: str) -> bool:
+    """Vrai seulement pour une URL https de klikego.com (ou d'un sous-domaine)."""
+    u = urlparse(url)
+    host = (u.hostname or "").lower()
+    return u.scheme == "https" and (
+        host == "klikego.com" or host.endswith(".klikego.com")
+    )
+
+
 EUR = r"(\d+(?:[.,]\d+)?)\s*€"
 _MOTS_OPTIONS = [
     ("assurance_annulation", r"assurance annulation|garantie annulation"),
@@ -132,10 +144,12 @@ def fetch_klikego_quotes(
     now: datetime | None = None,
 ) -> list[Devis]:
     """Devis des épreuves d'un événement Klikego (1 GET + 1 GET par épreuve lue, `limit` pour borner)."""
+    if not is_klikego_url(url):
+        raise KlikegoError(f"URL hors klikego.com : {url!r}")
     own = client is None
     client = client or new_client()
     try:
-        r = client.get(url)
+        r = client.get(url, follow_redirects=False)
         r.raise_for_status()
         ev, course, heats, options = parse_event(r.text)
         out: list[Devis] = []
@@ -147,6 +161,7 @@ def fetch_klikego_quotes(
             f = client.get(
                 f"{BASE}/v8/evenement/epreuve.jsp",
                 params={"embedded": 1, "e": ev, "heat": heat},
+                follow_redirects=False,
             )
             f.raise_for_status()
             d = parse_fiche(
