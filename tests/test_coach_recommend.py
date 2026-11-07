@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, timedelta
 from types import SimpleNamespace
 from typing import ClassVar
 
@@ -240,6 +240,6 @@ def test_auto_mode_ignores_stale_cache_but_replay_uses_it(camille):
             return self.path(result.query)
 
     cache = NoWrite()
-    live = recommend_races(camille, prefs, finder=Live(), cache=cache, today=TODAY)
+    live = recommend_races(camille, prefs, finder=Live(), cache=cache, today=TODAY, max_cache_age=timedelta(0))
     assert not live.from_cache and live.races == []
     assert recommend_races(camille, prefs, mode="replay", cache=cache, today=TODAY).from_cache
