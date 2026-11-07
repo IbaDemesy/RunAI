@@ -7,6 +7,7 @@ hai-agents[cli]==1.4.3
 httpcore==1.0.9
 httpx==0.28.1
 idna==3.20
+linkup-sdk==0.23.1
 pydantic==2.14.3
 pydantic_core==2.50.4
 python-dotenv==1.2.4

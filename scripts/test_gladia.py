@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from gladiaio_sdk import GladiaClient
+from gladiaio_sdk import GladiaClient  # noqa: E402
 
 SAMPLE_AUDIO = "https://media.githubusercontent.com/media/gladiaio/gladia-samples/main/data/anna-and-sasha-16000.wav"
 

@@ -1,0 +1,83 @@
+name: Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_h:
+        description: "Exécuter le smoke test H (consomme des crédits)"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  linkup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      LINKUP_API_KEY: ${{ secrets.LINKUP_API_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+      - name: Skip without LINKUP_API_KEY
+        if: env.LINKUP_API_KEY == ''
+        run: echo "::notice title=Smoke test skipped::Configure the LINKUP_API_KEY repository secret."
+      - name: Install uv
+        if: env.LINKUP_API_KEY != ''
+        run: pip install uv==0.13.7
+      - name: Install dependencies
+        if: env.LINKUP_API_KEY != ''
+        run: uv pip install --system -r requirements.txt
+      - name: Run Linkup smoke test
+        if: env.LINKUP_API_KEY != ''
+        run: python scripts/test_linkup.py
+
+  gladia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GLADIA_API_KEY: ${{ secrets.GLADIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+      - name: Skip without GLADIA_API_KEY
+        if: env.GLADIA_API_KEY == ''
+        run: echo "::notice title=Smoke test skipped::Configure the GLADIA_API_KEY repository secret."
+      - name: Install uv
+        if: env.GLADIA_API_KEY != ''
+        run: pip install uv==0.13.7
+      - name: Install dependencies
+        if: env.GLADIA_API_KEY != ''
+        run: uv pip install --system -r requirements.txt
+      - name: Run Gladia smoke test
+        if: env.GLADIA_API_KEY != ''
+        run: python scripts/test_gladia.py
+
+  h:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_h
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HAI_API_KEY: ${{ secrets.HAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+      - name: Skip without HAI_API_KEY
+        if: env.HAI_API_KEY == ''
+        run: echo "::notice title=Smoke test skipped::Configure the HAI_API_KEY repository secret."
+      - name: Install uv
+        if: env.HAI_API_KEY != ''
+        run: pip install uv==0.13.7
+      - name: Install dependencies
+        if: env.HAI_API_KEY != ''
+        run: uv pip install --system -r requirements.txt
+      - name: Run H smoke test
+        if: env.HAI_API_KEY != ''
+        run: python scripts/test_h.py
