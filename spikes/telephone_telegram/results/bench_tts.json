@@ -1,0 +1,71 @@
+{
+  "cpu_count": 8,
+  "results": [
+    {
+      "engine": "piper",
+      "load_ms": 1202.2,
+      "runs_per_phrase": 3,
+      "rows": [
+        {
+          "phrase_chars": 9,
+          "audio_s": 0.87,
+          "first_audio_ms_median": 22.9,
+          "total_ms_median": 22.9,
+          "rtf": 0.026
+        },
+        {
+          "phrase_chars": 69,
+          "audio_s": 3.91,
+          "first_audio_ms_median": 88.8,
+          "total_ms_median": 88.8,
+          "rtf": 0.023
+        },
+        {
+          "phrase_chars": 90,
+          "audio_s": 5.54,
+          "first_audio_ms_median": 62.9,
+          "total_ms_median": 144.7,
+          "rtf": 0.026
+        }
+      ]
+    },
+    {
+      "engine": "espeak-ng",
+      "load_ms": 0.0,
+      "runs_per_phrase": 3,
+      "rows": [
+        {
+          "phrase_chars": 9,
+          "audio_s": 0.7,
+          "first_audio_ms_median": 13.0,
+          "total_ms_median": 13.0,
+          "rtf": 0.019
+        },
+        {
+          "phrase_chars": 69,
+          "audio_s": 3.45,
+          "first_audio_ms_median": 30.8,
+          "total_ms_median": 30.8,
+          "rtf": 0.009
+        },
+        {
+          "phrase_chars": 90,
+          "audio_s": 5.07,
+          "first_audio_ms_median": 44.2,
+          "total_ms_median": 44.2,
+          "rtf": 0.009
+        }
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "engine": "ElevenLabsTTS",
+      "reason": "ELEVENLABS_API_KEY manquante"
+    },
+    {
+      "engine": "OpenAITTS",
+      "reason": "OPENAI_API_KEY manquante"
+    }
+  ]
+}

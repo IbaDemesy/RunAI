@@ -1,0 +1,216 @@
+{
+  "voice": "piper fr_FR-siwis-medium (synthese)",
+  "frame_ms": 20,
+  "variants": [
+    {
+      "format": "ulaw_8k",
+      "endpointing_s": 0.1,
+      "median_final_after_speech_end_ms": 641,
+      "max_final_after_speech_end_ms": 885,
+      "median_first_partial_ms": 831,
+      "mean_wer": 0.245,
+      "rows": [
+        {
+          "gladia_session_id": "802e9b17-ba8f-4849-b12d-d8f928b8a48c",
+          "init_ms": 1524.2,
+          "reference": "Trouve-moi un semi en avril et prépare tout.",
+          "transcript": "Trouve-moi un semi en avril et prépare tout.",
+          "wer": 0.0,
+          "speech_start_event_ms": 364,
+          "first_partial_ms_after_speech_start": 754,
+          "last_final_ms_after_speech_end": 594,
+          "audio_s": 2.57,
+          "n_partials": 5
+        },
+        {
+          "gladia_session_id": "797ae48a-49dd-411f-a4b5-83decc8ec87a",
+          "init_ms": 1080.4,
+          "reference": "Je veux courir le marathon de Paris, avec un hôtel près du départ.",
+          "transcript": "Je veux courir le marathon de Paris avec un hôtel près du départ.",
+          "wer": 0.0,
+          "speech_start_event_ms": 330,
+          "first_partial_ms_after_speech_start": 802,
+          "last_final_ms_after_speech_end": 581,
+          "audio_s": 3.69,
+          "n_partials": 8
+        },
+        {
+          "gladia_session_id": "16577500-da43-4b22-821b-b6210b9d700b",
+          "init_ms": 1028.1,
+          "reference": "Stop, prends plutôt le dix kilomètres.",
+          "transcript": "Stop, prends plutôt le 10 km. Maître.",
+          "wer": 0.5,
+          "speech_start_event_ms": 445,
+          "first_partial_ms_after_speech_start": 831,
+          "last_final_ms_after_speech_end": 873,
+          "audio_s": 2.32,
+          "n_partials": 6
+        },
+        {
+          "gladia_session_id": "9d8af653-8911-4488-8a41-907231ba8f81",
+          "init_ms": 1035.1,
+          "reference": "Mon adresse c'est camille point martin arobase example point com.",
+          "transcript": "Mon adresse est semi-marathon",
+          "wer": 0.727,
+          "speech_start_event_ms": 495,
+          "first_partial_ms_after_speech_start": 911,
+          "last_final_ms_after_speech_end": 641,
+          "audio_s": 3.68,
+          "n_partials": 7
+        },
+        {
+          "gladia_session_id": "fea5a125-3476-4206-ae1f-2d93a80fef6f",
+          "init_ms": 1029.3,
+          "reference": "Oui, je valide.",
+          "transcript": "Oui, je valide.",
+          "wer": 0.0,
+          "speech_start_event_ms": 412,
+          "first_partial_ms_after_speech_start": 892,
+          "last_final_ms_after_speech_end": 885,
+          "audio_s": 1.4,
+          "n_partials": 3
+        }
+      ]
+    },
+    {
+      "format": "ulaw_8k",
+      "endpointing_s": 0.3,
+      "median_final_after_speech_end_ms": 807,
+      "max_final_after_speech_end_ms": 906,
+      "median_first_partial_ms": 876,
+      "mean_wer": 0.245,
+      "rows": [
+        {
+          "gladia_session_id": "7717adb6-9aed-469a-9575-92ea3b77f7a5",
+          "init_ms": 1051.4,
+          "reference": "Trouve-moi un semi en avril et prépare tout.",
+          "transcript": "Trouve-moi un semi en avril et prépare tout.",
+          "wer": 0.0,
+          "speech_start_event_ms": 390,
+          "first_partial_ms_after_speech_start": 793,
+          "last_final_ms_after_speech_end": 807,
+          "audio_s": 2.57,
+          "n_partials": 6
+        },
+        {
+          "gladia_session_id": "22de72c1-84bf-4fae-a3ce-7351bde762a7",
+          "init_ms": 1032.3,
+          "reference": "Je veux courir le marathon de Paris, avec un hôtel près du départ.",
+          "transcript": "Je veux courir le marathon de Paris avec un hôtel près du départ.",
+          "wer": 0.0,
+          "speech_start_event_ms": 313,
+          "first_partial_ms_after_speech_start": 783,
+          "last_final_ms_after_speech_end": 766,
+          "audio_s": 3.69,
+          "n_partials": 8
+        },
+        {
+          "gladia_session_id": "55595f49-1370-401b-a922-5f7b18c29a13",
+          "init_ms": 1038.0,
+          "reference": "Stop, prends plutôt le dix kilomètres.",
+          "transcript": "Stop, prends plutôt le 10 km. Maître.",
+          "wer": 0.5,
+          "speech_start_event_ms": 435,
+          "first_partial_ms_after_speech_start": 876,
+          "last_final_ms_after_speech_end": 871,
+          "audio_s": 2.32,
+          "n_partials": 6
+        },
+        {
+          "gladia_session_id": "1bae6cac-6244-478f-8cce-070c9d75d17d",
+          "init_ms": 1500.5,
+          "reference": "Mon adresse c'est camille point martin arobase example point com.",
+          "transcript": "Mon adresse est semi-marathon",
+          "wer": 0.727,
+          "speech_start_event_ms": 435,
+          "first_partial_ms_after_speech_start": 920,
+          "last_final_ms_after_speech_end": 725,
+          "audio_s": 3.68,
+          "n_partials": 7
+        },
+        {
+          "gladia_session_id": "5e7bfd90-34d3-49ee-a069-ab0a4555834e",
+          "init_ms": 1075.6,
+          "reference": "Oui, je valide.",
+          "transcript": "Oui, je valide.",
+          "wer": 0.0,
+          "speech_start_event_ms": 439,
+          "first_partial_ms_after_speech_start": 926,
+          "last_final_ms_after_speech_end": 906,
+          "audio_s": 1.4,
+          "n_partials": 3
+        }
+      ]
+    },
+    {
+      "format": "pcm_16k",
+      "endpointing_s": 0.1,
+      "median_final_after_speech_end_ms": 764,
+      "max_final_after_speech_end_ms": 859,
+      "median_first_partial_ms": 841,
+      "mean_wer": 0.191,
+      "rows": [
+        {
+          "gladia_session_id": "5caa8770-420a-4f77-be3d-f8140d5dd576",
+          "init_ms": 1042.2,
+          "reference": "Trouve-moi un semi en avril et prépare tout.",
+          "transcript": "Trouve-moi un semi en avril et prépare tout.",
+          "wer": 0.0,
+          "speech_start_event_ms": 331,
+          "first_partial_ms_after_speech_start": 806,
+          "last_final_ms_after_speech_end": 591,
+          "audio_s": 2.57,
+          "n_partials": 5
+        },
+        {
+          "gladia_session_id": "5dd3eab8-df2f-49bb-9b73-8abeb605a9fa",
+          "init_ms": 1050.3,
+          "reference": "Je veux courir le marathon de Paris, avec un hôtel près du départ.",
+          "transcript": "Je veux courir le marathon de Paris avec un hôtel près du départ.",
+          "wer": 0.0,
+          "speech_start_event_ms": 311,
+          "first_partial_ms_after_speech_start": 811,
+          "last_final_ms_after_speech_end": 656,
+          "audio_s": 3.69,
+          "n_partials": 8
+        },
+        {
+          "gladia_session_id": "d266dd6b-96d7-484a-85e9-87bc9c99e466",
+          "init_ms": 1025.6,
+          "reference": "Stop, prends plutôt le dix kilomètres.",
+          "transcript": "Stop, prends plutôt le 10 km. Maître.",
+          "wer": 0.5,
+          "speech_start_event_ms": 535,
+          "first_partial_ms_after_speech_start": 1012,
+          "last_final_ms_after_speech_end": 764,
+          "audio_s": 2.32,
+          "n_partials": 5
+        },
+        {
+          "gladia_session_id": "ba5c5e70-0809-45e4-9128-f6008ea90584",
+          "init_ms": 1026.8,
+          "reference": "Mon adresse c'est camille point martin arobase example point com.",
+          "transcript": "Mon adresse est camille.martin.exemple. .com",
+          "wer": 0.455,
+          "speech_start_event_ms": 422,
+          "first_partial_ms_after_speech_start": 841,
+          "last_final_ms_after_speech_end": 859,
+          "audio_s": 3.68,
+          "n_partials": 8
+        },
+        {
+          "gladia_session_id": "97bc45c4-70bf-49ae-870f-295e4e19f545",
+          "init_ms": 1030.9,
+          "reference": "Oui, je valide.",
+          "transcript": "Oui, je valide.",
+          "wer": 0.0,
+          "speech_start_event_ms": 371,
+          "first_partial_ms_after_speech_start": 941,
+          "last_final_ms_after_speech_end": 791,
+          "audio_s": 1.4,
+          "n_partials": 3
+        }
+      ]
+    }
+  ]
+}

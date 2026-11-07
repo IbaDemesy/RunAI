@@ -1,0 +1,12 @@
+# Dependances du spike (venv separe du repo : FastAPI n'est pas dans requirements.txt racine)
+fastapi==0.162.1
+uvicorn==0.54.0
+python-multipart==0.0.20
+websockets==17.4
+httpx==0.28.1
+python-telegram-bot==22.8
+fpdf2==2.9.0
+python-dotenv==1.2.4
+piper-tts==1.8.0
+pytest==9.2.0
+pytest-asyncio==1.4.1.post1

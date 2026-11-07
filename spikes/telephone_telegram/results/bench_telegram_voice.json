@@ -1,0 +1,38 @@
+[
+  {
+    "gladia_job_id": "c53ce2fd-c9fb-4d48-8ea5-04bd85099ef6",
+    "reference": "Trouve-moi un semi en avril et prépare tout.",
+    "transcript": "Trouve-moi un semi en avril et prépare tout.",
+    "wer": 0.0,
+    "ogg_bytes": 10968,
+    "upload_ms": 1297,
+    "total_ms": 4160
+  },
+  {
+    "gladia_job_id": "777a25c8-765f-426c-b949-26ecc152b3c9",
+    "reference": "Trouve-moi un semi en avril et prépare tout.",
+    "transcript": "Trouve-moi un semi en avril et prépare tout.",
+    "wer": 0.0,
+    "ogg_bytes": 10968,
+    "upload_ms": 893,
+    "total_ms": 2819
+  },
+  {
+    "gladia_job_id": "a0ca0dd5-89a5-4e64-a268-a35d32c8a2d8",
+    "reference": "Je veux courir le marathon de Paris, avec un hôtel près du départ.",
+    "transcript": "Je veux courir le marathon de Paris avec un hôtel près du départ.",
+    "wer": 0.0,
+    "ogg_bytes": 15640,
+    "upload_ms": 1692,
+    "total_ms": 2976
+  },
+  {
+    "gladia_job_id": "c85fd57d-e741-485e-a5bb-70228f89e1e7",
+    "reference": "Je veux courir le marathon de Paris, avec un hôtel près du départ.",
+    "transcript": "Je veux courir le marathon de Paris avec un hôtel près du départ.",
+    "wer": 0.0,
+    "ogg_bytes": 15640,
+    "upload_ms": 796,
+    "total_ms": 2094
+  }
+]

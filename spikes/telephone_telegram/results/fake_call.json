@@ -1,0 +1,45 @@
+{
+  "turns": [
+    {
+      "speech_end_to_first_runai_audio_ms": 763,
+      "runai_audio_s": 4.62
+    },
+    {
+      "speech_end_to_first_runai_audio_ms": 1077,
+      "runai_audio_s": 10.46
+    }
+  ],
+  "hangup_by_server": true,
+  "server_metrics": [
+    [
+      {
+        "user": "Trouve-moi un semi en avril et prépare tout.",
+        "runai": "Un semi-marathon en avril, c'est bien ça ? Dis oui pour que je lance les trois agents.",
+        "final_to_first_audio_sent_ms": 191.4,
+        "tts_total_ms": 330.5
+      },
+      {
+        "user": "Oui, vas-y Greg.",
+        "runai": "C'est parti. Je m'en occupe : inscription, hôtel et transport. Ça prend une dizaine de minutes, je t'envoie tout par message. Tu valideras et tu paieras toi-même. À tout de suite !",
+        "final_to_first_audio_sent_ms": 91.1,
+        "tts_total_ms": 832.6
+      }
+    ]
+  ],
+  "notified": [
+    [
+      "+33600000000",
+      "m0001"
+    ]
+  ],
+  "gladia_session_ids": [
+    "8e47e660-0a8f-4d7f-8661-9080461e38b2"
+  ],
+  "missions": {
+    "m0001": {
+      "inscription": "queued",
+      "hotel": "queued",
+      "transport": "queued"
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "voice": "piper fr_FR-siwis-medium (synthese)",
+  "frame_ms": 20,
+  "custom_vocabulary": false,
+  "variants": [
+    {
+      "format": "ulaw_8k",
+      "endpointing_s": 0.1,
+      "median_final_after_speech_end_ms": 600,
+      "max_final_after_speech_end_ms": 860,
+      "median_first_partial_ms": 852,
+      "mean_wer": 0.213,
+      "rows": [
+        {
+          "gladia_session_id": "df986658-d1f3-4c47-8445-96f27fc3c2a9",
+          "init_ms": 1085.5,
+          "reference": "Trouve-moi un semi en avril et prépare tout.",
+          "transcript": "Trouve-moi un semis en avril et prépare tout.",
+          "wer": 0.111,
+          "speech_start_event_ms": 312,
+          "first_partial_ms_after_speech_start": 683,
+          "last_final_ms_after_speech_end": 588,
+          "audio_s": 2.55,
+          "n_partials": 6
+        },
+        {
+          "gladia_session_id": "cc0fa309-4f27-4d13-a644-8b84c17fb58c",
+          "init_ms": 1089.4,
+          "reference": "Je veux courir le marathon de Paris, avec un hôtel près du départ.",
+          "transcript": "Je veux courir le marathon de Paris avec un hôtel près du départ.",
+          "wer": 0.0,
+          "speech_start_event_ms": 433,
+          "first_partial_ms_after_speech_start": 885,
+          "last_final_ms_after_speech_end": 600,
+          "audio_s": 3.96,
+          "n_partials": 8
+        },
+        {
+          "gladia_session_id": "65b6ac52-b7a1-4064-9119-124b08616706",
+          "init_ms": 1213.3,
+          "reference": "Stop, prends plutôt le dix kilomètres.",
+          "transcript": "Stop, prends plutôt le 10 km. Maître.",
+          "wer": 0.5,
+          "speech_start_event_ms": 271,
+          "first_partial_ms_after_speech_start": 711,
+          "last_final_ms_after_speech_end": 838,
+          "audio_s": 2.21,
+          "n_partials": 6
+        },
+        {
+          "gladia_session_id": "0bb81959-1165-4081-9edb-c1d91be86df7",
+          "init_ms": 1074.6,
+          "reference": "Mon adresse c'est camille point martin arobase example point com.",
+          "transcript": "Mon adresse est camille.martin.exemple.com",
+          "wer": 0.455,
+          "speech_start_event_ms": 449,
+          "first_partial_ms_after_speech_start": 852,
+          "last_final_ms_after_speech_end": 593,
+          "audio_s": 3.3,
+          "n_partials": 7
+        },
+        {
+          "gladia_session_id": "8c32eb57-bf19-47f7-b3be-635798b3941a",
+          "init_ms": 1381.2,
+          "reference": "Oui, je valide.",
+          "transcript": "Oui, je valide.",
+          "wer": 0.0,
+          "speech_start_event_ms": 418,
+          "first_partial_ms_after_speech_start": 910,
+          "last_final_ms_after_speech_end": 860,
+          "audio_s": 1.47,
+          "n_partials": 3
+        }
+      ]
+    }
+  ]
+}
