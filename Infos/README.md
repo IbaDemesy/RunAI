@@ -33,6 +33,7 @@ Service de recherche web permettant aux agents de récupérer des informations p
 
 - Documents : [crédits du hackathon](linkup_hackathon_credits.pdf), [documentation technique](linkup_technical_docs.pdf).
 - Liens : [documentation et introduction](https://docs.linkup.so/pages/documentation/get-started/introduction), [tableau de bord](https://app.linkup.so/home).
+- Notes d'intégration pour RunAI : [docs/LINKUP.md](../docs/LINKUP.md).
 - Crédits : 20 $ gratuits à l’inscription et 25 $ supplémentaires via l’offre du hackathon. Le document indique 5 $ pour 1 000 requêtes, soit environ 5 000 requêtes pour 25 $.
 
 ## Stripe

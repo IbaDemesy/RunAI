@@ -12,7 +12,7 @@ Le trio prévu est **Devin + H Company + Gladia** ; Linkup pourra être ajouté 
 | Devin | Assistance au développement | Prévu | [Guide du hackathon](Infos/devin_hackathon_guide.pdf) |
 | H Company | Agents de navigation et d’automatisation | Script de test présent ; intégration prévue | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
 | Gladia | Transcription audio et traitement de la parole | SDK installé, script de test présent ; intégration prévue | [Documentation](https://docs.gladia.io) |
-| Linkup | Recherche web pour les agents | Optionnel, quatrième partenaire possible | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction) |
+| Linkup | Recherche web, branchée comme outil des agents H | Prévu (architecture « Linkup cherche, H agit ») | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
 | Stripe | Paiements | Non prévu pour le moment | [Ressource du hackathon](Infos/stripe_credits.pdf) |
 
 Les liens utiles, documents et crédits sont regroupés dans [Infos/README.md](Infos/README.md).

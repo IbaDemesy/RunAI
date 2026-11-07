@@ -67,6 +67,7 @@ Un seul outil qui accompagne le coureur de l'objectif jusqu'à la ligne d'arriv�
 
 - **Linkup, pour savoir** : trouver la course, les dates, le lieu du départ, les hôtels proches, les infos pratiques.
   Linkup sera branché comme outil d'un **agent H**, et non de Devin : c'est l'agent H qui l'appelle pour chercher l'info avant d'agir.
+  Endpoints, coûts et exemple de branchement : [LINKUP.md](LINKUP.md).
 - **H, pour faire** : inscription, vol et hôtel, avec des agents en parallèle, une vue live et un arrêt avant chaque paiement.
 - **Gladia, pour parler** : toute l'interaction à la voix, y compris la correction d'un agent en cours de route. Plus le débrief vocal après une séance d'entraînement.
 - **Stripe, pour payer** : l'abonnement RunAI Premium (coach et réservations).
