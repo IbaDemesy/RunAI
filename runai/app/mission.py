@@ -588,8 +588,8 @@ class MissionService:
                     message=f"Linkup: {len(sweep.hotels)} hotels, {len(sweep.transport_operators)} operators in {sweep.latency_s:.1f} s",
                     data=sweep.model_dump(mode="json"),
                 ))
-                registration = mission.plan.steps[StepKind.registration]
-                if sweep.race_form_url and host_of(sweep.race_form_url) == host_of(registration.start_url):
+                registration = mission.plan.steps.get(StepKind.registration)
+                if registration and sweep.race_form_url and host_of(sweep.race_form_url) == host_of(registration.start_url):
                     registration.start_url = str(sweep.race_form_url)
                 if not sweep.calls:
                     mission.limitations.append(Limitation(

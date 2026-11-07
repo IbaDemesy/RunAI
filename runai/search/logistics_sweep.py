@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import time
 from typing import Any
 from urllib.parse import urlsplit
@@ -13,6 +14,9 @@ from runai.app.providers import FORBIDDEN_HOSTS
 from runai.app.tasks import TripBrief
 from runai.models import Race
 from runai.search.checks import host_of, is_aggregator, on_domain
+
+logger = logging.getLogger(__name__)
+STANDARD_SEARCH_COST_USD = 0.015
 
 
 class Hotel(BaseModel):
@@ -93,33 +97,43 @@ async def sweep_logistics(race: Race, brief: TripBrief, client, timeout_s=15) ->
          f"preferred mode {brief.transport_mode or 'any'}. No aggregators. Omit unknown fields."), TRANSPORT_SCHEMA),
     ]
 
-    async def poll(task):
-        while task.status in {"pending", "processing"}:
-            await asyncio.sleep(1)
-            task = await asyncio.to_thread(client.get_task, task.id)
-        if task.status != "completed":
-            raise RuntimeError("Linkup task failed")
-        return task.output
+    async def fallback(q, schema):
+        nonlocal calls
+        calls += 1
+        return await asyncio.to_thread(
+            client.search, query=q, depth="standard", output_type="structured",
+            structured_output_schema=schema,
+        )
+
+    async def poll(task, q, schema):
+        try:
+            while task.status in {"pending", "processing"}:
+                await asyncio.sleep(1)
+                task = await asyncio.to_thread(client.get_task, task.id)
+            if task.status == "failed" and task.error == "The query did not yield any result":
+                return {}
+            if task.status != "completed":
+                raise RuntimeError(f"Linkup task {task.id}: {task.status}: {task.error}")
+            return task.output
+        except Exception:
+            logger.warning("Linkup task unavailable; falling back to search", exc_info=True)
+            return await fallback(q, schema)
 
     async def search():
         nonlocal calls
         try:
-            calls += len(queries)
             tasks = await asyncio.to_thread(client.create_tasks, [
                 LinkupSearchTaskInput(q=q, depth="standard", output_type="structured",
                                       structured_output_schema=schema)
                 for q, schema in queries
             ])
+            calls += len(tasks)
             if len(tasks) != len(queries):
                 raise RuntimeError("Incomplete Linkup batch")
-            return await asyncio.gather(*(poll(task) for task in tasks))
-        except Exception:  # noqa: BLE001 - SDK task failures use synchronous search as fallback
-            calls += len(queries)
-            return await asyncio.gather(*(
-                asyncio.to_thread(client.search, query=q, depth="standard", output_type="structured",
-                                  structured_output_schema=schema)
-                for q, schema in queries
-            ))
+        except Exception:
+            logger.warning("Linkup batch unavailable; falling back to search", exc_info=True)
+            return await asyncio.gather(*(fallback(q, schema) for q, schema in queries))
+        return await asyncio.gather(*(poll(task, q, schema) for task, (q, schema) in zip(tasks, queries, strict=True)))
 
     try:
         async with asyncio.timeout(timeout_s):
@@ -134,7 +148,7 @@ async def sweep_logistics(race: Race, brief: TripBrief, client, timeout_s=15) ->
             output = json.loads(output)
         data.update(_clean(output or {}))
     result = LogisticsSweep(latency_s=round(time.monotonic() - started, 3), calls=calls,
-                            estimated_cost_usd=round(calls * 0.015, 3))
+                            estimated_cost_usd=round(calls * STANDARD_SEARCH_COST_USD, 3))
     form = data.get("race_form_url")
     if form and _safe_url(form) and urlsplit(form).path.strip("/"):
         try:

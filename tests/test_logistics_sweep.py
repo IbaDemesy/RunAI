@@ -2,6 +2,7 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
+from linkup import LinkupSearchTask, LinkupSearchTaskInput
 
 from runai.app.tasks import TripBrief
 from runai.models import Race
@@ -84,8 +85,32 @@ def test_tasks_error_falls_back():
 
     client = BrokenTasks()
     result = run(client)
-    assert client.search_calls == 2 and result.calls == 4
+    assert client.search_calls == 2 and result.calls == 2
     assert len(result.hotels) == 1
+
+
+@pytest.mark.parametrize("error", ["The query did not yield any result", "Provider unavailable"])
+def test_real_sdk_task_shapes_and_partial_failure(error, caplog):
+    class RealShapeClient(Client):
+        def get_task(self, task_id):
+            return LinkupSearchTask(
+                id=task_id, type="search", created_at="2026-11-07T20:28:33.320Z",
+                updated_at="2026-11-07T20:28:36.407Z",
+                input=LinkupSearchTaskInput(q="query", depth="standard", output_type="structured"),
+                status="failed" if task_id == "0" else "completed",
+                error=error if task_id == "0" else None,
+                output=None if task_id == "0" else self.outputs[1],
+            )
+
+    client = RealShapeClient()
+    result = run(client)
+    assert len(result.transport_operators) == 1
+    if error == "The query did not yield any result":
+        assert not result.hotels and result.calls == 2 and client.search_calls == 0
+    else:
+        assert len(result.hotels) == 1 and result.calls == 3 and client.search_calls == 1
+        assert "falling back to search" in caplog.text
+        assert result.estimated_cost_usd == .045
 
 
 def test_empty_results():

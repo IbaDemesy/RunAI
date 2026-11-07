@@ -57,7 +57,8 @@ def finish(client, mid):
 
 
 @pytest.mark.parametrize("live", [True, False])
-def test_linkup_snapshot_and_stream(tmp_path, live):
+@pytest.mark.parametrize("missing_registration", [True, False])
+def test_linkup_snapshot_and_stream(tmp_path, live, missing_registration):
     from runai.app.candidates import FixtureCandidateSearch
     from runai.app.fakes import DEMO_RACES
     from runai.search.logistics_sweep import LogisticsSweep
@@ -66,6 +67,10 @@ def test_linkup_snapshot_and_stream(tmp_path, live):
         async def sweep(self, race, brief, timeout_s=15):
             from urllib.parse import urlsplit
 
+            if missing_registration:
+                from runai.models import StepKind
+
+                next(iter(service.missions.values())).plan.steps.pop(StepKind.registration)
             host = urlsplit(str(race.registration_url)).netloc
             return LogisticsSweep(calls=2, latency_s=1.25,
                                   race_form_url=f"https://{host}/specific-race-form")
@@ -86,7 +91,9 @@ def test_linkup_snapshot_and_stream(tmp_path, live):
         stream = client.get(f"/api/missions/{mid}/events").text
         if live:
             assert snapshot["linkup"]["calls"] == 2
-            assert service.get(mid).plan.steps[next(iter(service.get(mid).plan.steps))].start_url.endswith("/specific-race-form")
+            if not missing_registration:
+                assert service.get(mid).plan.steps[next(iter(service.get(mid).plan.steps))].start_url.endswith("/specific-race-form")
+            assert "linkup_sweep_unavailable" not in {item["code"] for item in snapshot["limitations"]}
             assert '"type":"linkup_sweep"' in stream
         else:
             assert snapshot["linkup"] is None
