@@ -4,6 +4,7 @@ import re
 import unicodedata
 from calendar import month_name
 
+from runai.app.fakes import _LISBON_WORDS
 from runai.contracts.common import DataMode, Limitation, Provenance
 from runai.contracts.framing import RaceCandidate, Slot, SlotName
 from runai.framing.interpret import MONTHS
@@ -16,7 +17,8 @@ from runai.search.candidates import (
 
 
 def normalized(value: object) -> str:
-    return unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode().casefold().strip()
+    text = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode().casefold().strip()
+    return _LISBON_WORDS[0] if text in _LISBON_WORDS else text
 
 
 class FixtureCandidateSearch:

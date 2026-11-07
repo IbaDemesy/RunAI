@@ -6,6 +6,7 @@ import pytest
 from runai.app.candidates import FixtureCandidateSearch
 from runai.app.fakes import (
     DEMO_RACES,
+    _LISBON_WORDS,
     FakeBrowserAgents,
     FakeRaceSearch,
     FakeTranscriber,
@@ -35,6 +36,16 @@ def slots(**values):
 def idea_chips():
     source = Path("runai/app/static/app.js").read_text()
     return re.findall(r'"([^"]+)"', re.search(r"const IDEAS = \[(.*?)\]", source)[1])
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("alias", _LISBON_WORDS)
+@pytest.mark.parametrize("slot_name", ["city", "race"])
+async def test_lisbon_aliases_match_only_lisbon_without_fallback(alias, slot_name):
+    result = await search().search(slots(**{slot_name: alias, "distance_km": 10}))
+    assert [candidate.city for candidate in result.candidates] == ["Lisbon"]
+    assert not result.limitations
+    assert not result.candidates[0].limitations
 
 
 @pytest.mark.anyio
