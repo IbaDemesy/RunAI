@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import inspect
 import os
+import re
 import time
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
@@ -10,6 +11,7 @@ from typing import Any, Self
 from hai_agents import AsyncClient
 from hai_agents.errors import TooManyRequestsError
 from hai_agents.sessions import SendSessionMessagesRequestBody_UserMessage
+from hai_agents.tools import Tool, ToolInput, as_tools
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 
 from runai.config import get_settings
@@ -24,6 +26,7 @@ SETTLED_STATUSES = TERMINAL_STATUSES | {"idle"}
 EventCallback = Callable[[dict[str, Any]], Awaitable[None] | None]
 
 _HTTP_URL = TypeAdapter(HttpUrl)
+_ANTI_BOT_BLOCK = re.compile(r"\bBLOCAGE CAPTCHA/ANTI-BOT\b", re.IGNORECASE)
 
 
 RESERVED_CREATE_PARAMS = frozenset({"agent", "messages", "queue"})
@@ -104,8 +107,12 @@ def build_step_result(
     text = answer_text(answer)
     stop_point = None
     if h_status in ("completed", "idle"):
-        stop_point = detect_stop_point(text or "")
-        status = StepStatus.stopped_before_commitment if stop_point else StepStatus.completed
+        if _ANTI_BOT_BLOCK.search(text or ""):
+            status = StepStatus.failed
+            error = error or "Blocage captcha/anti-bot signalé par l'agent."
+        else:
+            stop_point = detect_stop_point(text or "")
+            status = StepStatus.stopped_before_commitment if stop_point else StepStatus.completed
     elif h_status in ("failed", "timed_out"):
         status = StepStatus.failed
         error = error or h_status
@@ -152,11 +159,14 @@ class HRun:
         kind: StepKind,
         trace: TraceWriter,
         interactive: bool = False,
+        session_handle: Any | None = None,
     ):
         self._runner = runner
         self.account = account
         # Une session one-shot passe brièvement par `idle` avant `completed` : on attend l'état terminal.
         self._settled = SETTLED_STATUSES if interactive else TERMINAL_STATUSES
+        self._interactive = interactive
+        self._session_handle = session_handle
         self._sessions = account.client.sessions
         self.id: str = session.id
         self.kind = kind
@@ -258,6 +268,23 @@ class HRun:
         self._log("control", "cancel")
 
     async def _follow(self, on_event: EventCallback | None, wait_for_seconds: int) -> None:
+        if self._session_handle is not None:
+            async for raw in self._session_handle.stream(
+                from_index=self._cursor,
+                wait_for_seconds=wait_for_seconds,
+                until="settled" if self._interactive else "terminal",
+            ):
+                event = as_dict(raw)
+                self._absorb(event)
+                self.trace.write(to_trace_event(event, self.id, self.kind.value))
+                if on_event is not None:
+                    outcome = on_event(event)
+                    if inspect.isawaitable(outcome):
+                        await outcome
+                self._cursor += 1
+            await self.refresh_status()
+            return
+
         caught_up = True
         while True:
             changes = await self._sessions.get_session_changes(
@@ -459,7 +486,9 @@ class HRunner:
         self._releases += 1
         self._slot_freed.set()
 
-    async def _create(self, params: dict[str, Any]) -> tuple[HAccount, Any]:
+    async def _create(
+        self, params: dict[str, Any], tools: list[Tool] | None = None
+    ) -> tuple[HAccount, Any]:
         """Réserve un slot local sur la clé la plus libre puis crée la session ; réessaie après un `429`."""
         deadline = None
         while True:
@@ -476,7 +505,14 @@ class HRunner:
             if account is not None:
                 account.active += 1
                 try:
-                    return account, await account.client.sessions.create_session(**params)
+                    if tools:
+                        session_handle = await account.client.start_session(
+                            tools=tools, **params
+                        )
+                        return account, session_handle
+                    return account, await account.client.sessions.create_session(
+                        **params
+                    )
                 except TooManyRequestsError:
                     self._release(account)
                     releases = self._releases  # notre propre libération ne doit pas sauter l'attente
@@ -499,6 +535,7 @@ class HRunner:
         start_url: str | None = None,
         max_steps: int | None = None,
         max_time_s: float | None = None,
+        tools: Iterable[ToolInput] | None = None,
         **create_params: Any,
     ) -> HRun:
         """Crée la session sans file d'attente H (`queue=False`) : un slot local et un slot réel sont garantis."""
@@ -513,10 +550,22 @@ class HRunner:
         if start_url:
             params["overrides"] = {**params.get("overrides", {}), "agent.environments[kind=web].start_url": start_url}
 
-        account, session = await self._create(params)
+        normalized_tools = as_tools(list(tools)) if tools else None
+        account, session = await self._create(params, normalized_tools)
+        session_handle = session if normalized_tools else None
         try:
+            if session_handle is not None:
+                session = await account.client.sessions.get_session(session.id)
             writer = trace or TraceWriter(mission_id or f"h-{session.id}", traces_dir=self.traces_dir)
-            run = HRun(self, account, session, kind, writer, interactive=bool(params.get("idle_timeout_s")))
+            run = HRun(
+                self,
+                account,
+                session,
+                kind,
+                writer,
+                interactive=bool(params.get("idle_timeout_s")),
+                session_handle=session_handle,
+            )
             run._log(
                 "session_created",
                 kind.value,

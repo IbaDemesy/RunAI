@@ -47,6 +47,16 @@ class StepKind(str, Enum):
     transport = "transport"
 
 
+class AgentQuestion(BaseModel):
+    id: str
+    kind: StepKind
+    question: str
+    options: list[str] = Field(default_factory=list)
+    answer: str | None = None
+    asked_at: datetime = Field(default_factory=utcnow)
+    answered_at: datetime | None = None
+
+
 class StopPoint(str, Enum):
     consent = "consent"
     health_declaration = "health_declaration"
@@ -59,6 +69,7 @@ class StepStatus(str, Enum):
     pending = "pending"
     running = "running"
     paused = "paused"
+    waiting_for_user = "waiting_for_user"
     stopped_before_commitment = "stopped_before_commitment"
     completed = "completed"
     failed = "failed"

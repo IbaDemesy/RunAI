@@ -27,9 +27,9 @@ class AudioStream:
     chunks: AsyncIterator[bytes]
 
 
-def load_pcm(source: str | Path) -> tuple[bytes, int]:
+def load_pcm(source: str | Path | bytes) -> tuple[bytes, int]:
     """Lit un WAV PCM 16 bits mono tel quel ; convertit tout autre format avec ffmpeg en 16 kHz."""
-    data = _read_bytes(source)
+    data = source if isinstance(source, bytes) else _read_bytes(source)
     if data[:4] == b"RIFF":
         try:
             with wave.open(io.BytesIO(data)) as wav:

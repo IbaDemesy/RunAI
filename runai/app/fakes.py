@@ -6,7 +6,8 @@ import uuid
 from dataclasses import dataclass
 from datetime import date
 
-from runai.app.ports import EventSink
+from runai.app.ports import AskUser, EventSink
+from runai.app.tasks import extract_budget_per_night
 from runai.models import (
     Race,
     RunnerProfile,
@@ -142,14 +143,43 @@ SCRIPTS: dict[StepKind, _Script] = {
     ),
 }
 
+QUESTIONS: dict[StepKind, list[tuple[str, list[str]]]] = {
+    StepKind.registration: [
+        (
+            "Avez-vous une Runcard ou un certificat médical de compétition (ECG d'effort) ?",
+            ["Oui, j'ai les deux", "Pas encore"],
+        ),
+        (
+            "Quel temps visez-vous ? (pour le sas de départ)",
+            ["moins de 3h30", "3h30–4h", "plus de 4h"],
+        ),
+    ],
+    StepKind.accommodation: [
+        ("Budget max par nuit ?", ["100 €", "150 €", "200 €"]),
+    ],
+    StepKind.transport: [
+        ("Horaire de départ le 3 avril ?", ["matin", "après-midi"]),
+    ],
+}
+
 
 class FakeAgentRun:
-    def __init__(self, kind: StepKind, task: str, on_event: EventSink, delay: float):
+    def __init__(
+        self,
+        kind: StepKind,
+        task: str,
+        on_event: EventSink,
+        ask_user: AskUser,
+        delay: float,
+        query: str = "",
+    ):
         self.kind = kind
         self.task = task
+        self.query = query
         self.session_id = f"fake-{kind.value}-{uuid.uuid4().hex[:8]}"
         self.live_view_url = f"/demo/live?session={self.session_id}"
         self._on_event = on_event
+        self._ask_user = ask_user
         self._delay = delay
         self._resumed = asyncio.Event()
         self._resumed.set()
@@ -187,6 +217,16 @@ class FakeAgentRun:
 
     async def _run(self) -> StepResult:
         script = SCRIPTS[self.kind]
+        questions = QUESTIONS[self.kind]
+        if (
+            self.kind is StepKind.accommodation
+            and extract_budget_per_night(self.query, require_context=True) is not None
+        ):
+            questions = []
+        answers = [
+            await self._ask_user(question, options)
+            for question, options in questions
+        ]
         for message, url in script.actions:
             await asyncio.sleep(self._delay)
             await self._resumed.wait()
@@ -194,6 +234,7 @@ class FakeAgentRun:
         await asyncio.sleep(self._delay)
         await self._resumed.wait()
         summary = script.summary
+        summary += f" Réponses utilisateur : {' ; '.join(answers)}."
         if self._messages:
             summary += f" Consignes appliquées : {' ; '.join(self._messages)}."
         return StepResult(
@@ -219,8 +260,11 @@ class FakeBrowserAgents:
         race: Race,
         profile: RunnerProfile,
         on_event: EventSink,
+        ask_user: AskUser,
+        mission_id: str | None = None,
+        query: str = "",
     ) -> FakeAgentRun:
-        run = FakeAgentRun(kind, task, on_event, self.delay)
+        run = FakeAgentRun(kind, task, on_event, ask_user, self.delay, query=query)
         self.runs.append(run)
         return run
 
