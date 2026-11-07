@@ -168,7 +168,12 @@ def test_past_edition_is_dropped_when_same_event_has_future_edition():
 
 def test_next_edition_lookup_updates_past_only_candidate_when_sourced():
     client = FakeClient(
-        [row("Past Race", race_date="2020-06-01", official_url="https://race.example/")],
+        [row(
+            "Past Race",
+            race_date="2020-06-01",
+            official_url="https://race.example/",
+            registration_url="https://race.example/registration/2020",
+        )],
         next_edition_responses={
             "Past Race": SimpleNamespace(
                 data={
@@ -186,6 +191,8 @@ def test_next_edition_lookup_updates_past_only_candidate_when_sourced():
     )
     candidate = result.candidates[0]
     assert candidate.race_date == date(2030, 6, 1)
+    assert candidate.registration_url is None
+    assert str(candidate.official_url) == "https://race.example/"
     assert "next_edition_unconfirmed" not in {
         limitation.code for limitation in candidate.limitations
     }

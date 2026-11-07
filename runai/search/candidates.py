@@ -312,6 +312,7 @@ class LinkupCandidateSearch:
                 continue
             race_date, sources = result
             candidate.race_date = race_date
+            candidate.registration_url = None
             candidate.sources = _sources([*candidate.sources, *sources])
             candidate.limitations = [
                 limitation
