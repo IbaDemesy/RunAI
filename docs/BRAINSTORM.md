@@ -135,6 +135,8 @@ Source : le [H Showcase](https://showcase.hcompany.ai/), qui liste 35 agents con
 ### Les autres catégories
 
 - **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
+  - [GrannySmith](https://github.com/ducnguyen67201/AngryGrandmy) (Hackathon SF) : des agents qui jouent des utilisateurs prudents parcourent un produit (inscription, checkout). Ils hésitent, reviennent en arrière et réfléchissent à voix haute. Tout est enregistré (captures, actions, trajet du curseur, réactions vocales, heatmaps) en trajectoires rejouables, puis transformé en constats d'utilisabilité et en propositions de correctifs. Stack : sessions H, Gradium pour la voix (un concurrent de Gladia), NVIDIA Nemotron et VSS pour l'analyse visuelle.
+    *À reprendre pour RunAI* : enregistrer chaque run de l'agent (captures et actions horodatées) et le rejouer. C'est une preuve concrète pour les critères « fiabilité » et « contrôle utilisateur ».
 - **Apprendre des vidéos et rejouer** : Holo Forge, Reel-Learn, AI Runbooks, ImproveMe, Voodoo.
 - **Agents métier ou applis desktop** : ArcFlash Copilot, Claw-DJ (Mixxx), Cloud CUA (console AWS), Holodev (Roblox Studio), CUA Molecular Visualizer, AI Teaching Assistant.
 - **Divers** : HoloMobile (mobile), Halo (panneau Chrome), Privacy Layer, Snowglobe, FollowThrough, Agent Kalshi, Glassbox, HoloBlocks et HoloBricks.
