@@ -141,16 +141,19 @@ async def test_pause_resume_and_message(tmp_path):
     assert len(paused_actions) <= 1
 
     await service.send_message(
-        mission.id, StepKind.registration, "Prends plutôt le 10 km"
+        mission.id, StepKind.registration, "Prends plutôt le 10 km\n\nPas le semi"
     )
     await service.resume(mission.id, StepKind.registration)
     mission = await service.wait(mission.id)
     step = mission.steps[StepKind.registration]
     assert step.status is StepStatus.stopped_before_commitment
     assert "10 km" in step.summary
-    assert step.data["messages"] == ["Prends plutôt le 10 km"]
+    assert step.data["messages"] == ["Prends plutôt le 10 km\n\nPas le semi"]
     (run,) = [run for run in agents.runs if run.kind is StepKind.registration]
-    assert run.received == [f"Prends plutôt le 10 km\n\n{STOP_INSTRUCTIONS}"]
+    assert run.received == [
+        f"Prends plutôt le 10 km\n\nPas le semi\n\n{STOP_INSTRUCTIONS}"
+    ]
+    assert "Pas le semi" in step.summary
     assert {event.type for event in mission.events} >= {
         "pause",
         "resume",

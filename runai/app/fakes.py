@@ -17,6 +17,7 @@ from runai.models import (
     StopPoint,
     TraceEvent,
 )
+from runai.safety import STOP_INSTRUCTIONS
 
 DEMO_RACES: dict[str, Race] = {
     "milan": Race(
@@ -164,7 +165,7 @@ class FakeAgentRun:
 
     async def send_message(self, text: str) -> None:
         self.received.append(text)
-        instruction = text.split("\n\n", 1)[0]
+        instruction = text.removesuffix(STOP_INSTRUCTIONS).strip()
         self._messages.append(instruction)
         self._emit("message_ack", f"Consigne reçue : « {instruction} »")
 
