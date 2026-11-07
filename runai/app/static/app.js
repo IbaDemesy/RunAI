@@ -284,6 +284,12 @@
         limitations(card, candidate.limitations); list.append(card);
       }
       body.append(list);
+      const pick = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id));
+      const others = el("div", null, "replies");
+      for (const choice of pick?.choices.filter((c) => !c.candidate_id) || []) {
+        others.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: pick.id, choice_id: choice.id })));
+      }
+      if (others.children.length) body.append(others);
     }
     screen.append(thread);
     const slots = el("details", null, "trace corrections"); slots.append(el("summary", "Modifier quelque chose"));
