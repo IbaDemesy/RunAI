@@ -27,6 +27,25 @@ def engine():
     )
 
 
+@pytest.mark.parametrize("answer", [
+    "Lisboa 2026 Night Run",
+    "https://example.org/races/" + "lisboa-" * 12 + "2026",
+])
+def test_explicit_race_answer_accepts_digits_and_long_text(answer):
+    async def run():
+        framing = engine()
+        session = await framing.create(FramingCreate(
+            text="race in Lisbon, 10 km in juin 2028, from Lyon, 800 euros, 2 nights, train"
+        ))
+        question = next(q for q in session.open_questions if q.slots == [SlotName.race])
+        session = await framing.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text=f" {answer} "
+        ))
+        assert session.slots[SlotName.race].value == answer
+
+    asyncio.run(run())
+
+
 @pytest.mark.parametrize("city", ["Lisbon", "Lisbonne", "Nairobi"])
 def test_bare_city_preserves_origin(city):
     async def run():
