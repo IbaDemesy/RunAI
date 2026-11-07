@@ -14,15 +14,18 @@ valeur libre ; les événements possibles viennent de recherches sourcées (`Rac
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, Literal, Protocol
+from typing import Annotated, Any, Literal, Protocol
 
-from pydantic import BaseModel, Field, HttpUrl, model_serializer
+from pydantic import BaseModel, Field, HttpUrl, StringConstraints, model_serializer
 
 from runai.contracts.common import DataMode, Limitation, Provenance
 from runai.models import Race, Source, utcnow
 from runai.redaction import redact_secrets
 
 SCHEMA_VERSION = "framing.v1"
+USER_ID_PATTERN = r"^[A-Za-z0-9_-]{1,64}$"
+# Client-generated, opaque runner id used to group past requests (no account, no PII).
+UserId = Annotated[str, StringConstraints(pattern=USER_ID_PATTERN)]
 
 
 class FramingStatus(str, Enum):
@@ -158,6 +161,7 @@ class FramingSession(BaseModel):
     schema_version: Literal["framing.v1"] = SCHEMA_VERSION
     id: str
     mode: DataMode
+    user_id: UserId | None = None
     status: FramingStatus = FramingStatus.collecting
     revision: int = 0
     slots: dict[SlotName, Slot] = Field(
@@ -182,6 +186,7 @@ class FramingSession(BaseModel):
 class FramingCreate(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
     channel: Literal["text", "voice"] = "text"
+    user_id: UserId | None = None
 
 
 class FramingReply(BaseModel):

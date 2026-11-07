@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 import anyio
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
@@ -22,6 +22,7 @@ from runai.app.auth import BasicAuthMiddleware
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
 from runai.app.headers import SecurityHeadersMiddleware
+from runai.app.history import DEFAULT_LIMIT, MAX_LIMIT, list_summaries, summarize
 from runai.app.mission import MissionError, MissionNotFound, MissionService
 from runai.app.profile import ProfileStore
 from runai.app.providers import (
@@ -36,7 +37,8 @@ from runai.app.tasks import STEP_LABELS
 from runai.app.telemetry import router as telemetry_router
 from runai.config import get_settings
 from runai.contracts.common import DataMode
-from runai.contracts.mission import HumanAnswer
+from runai.contracts.framing import USER_ID_PATTERN
+from runai.contracts.mission import HumanAnswer, MissionStatusV2
 from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
 from runai.framing.holo import HoloPhraser, Phraser, TemplatePhraser
@@ -245,6 +247,24 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     @app.post("/api/missions", status_code=410)
     async def create_mission(body: MissionRequest) -> dict:
         raise HTTPException(410, "Créez et confirmez un cadrage via /api/framings avant de lancer les agents.")
+
+    @app.get("/api/missions")
+    async def list_missions(
+        user_id: str | None = Query(None, pattern=USER_ID_PATTERN),
+        limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
+        status: MissionStatusV2 | None = None,
+    ) -> list[dict]:
+        summaries = list_summaries(
+            list(get_service().missions.values()), user_id=user_id, status=status, limit=limit
+        )
+        return [summary.model_dump(mode="json") for summary in summaries]
+
+    @app.get("/api/missions/{mission_id}/summary")
+    async def mission_summary(mission_id: str) -> dict:
+        mission = get_service().missions.get(mission_id)
+        if mission is None:
+            raise HTTPException(404, "Unknown mission")
+        return summarize(mission).model_dump(mode="json")
 
     @app.get("/api/missions/{mission_id}")
     async def get_mission(mission_id: str) -> dict:

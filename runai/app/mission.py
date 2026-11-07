@@ -87,6 +87,7 @@ class Mission(BaseModel):
     linkup: LogisticsSweep | None = None
     id: str
     query: str
+    user_id: str | None = None
     status: MissionStatus = MissionStatus.searching
     created_at: datetime = Field(default_factory=utcnow)
     race: Race | None = None
@@ -189,7 +190,8 @@ class MissionService:
                 f"Pas de fixture {plan.mode.value} pour cet événement ; préparation manuelle uniquement, aucun agent lancé."
             )
         mission = await self.create(
-            plan, summary=session.summary, turns=session.turns
+            plan, summary=session.summary, turns=session.turns,
+            user_id=getattr(session, "user_id", None),
         )
         return self.snapshot(mission.id)
 
@@ -199,12 +201,13 @@ class MissionService:
         *,
         summary: FramingSummary | None = None,
         turns: list[FramingTurn] | None = None,
+        user_id: str | None = None,
     ) -> Mission:
         if not isinstance(plan, LaunchPlan):
             raise MissionError("Un cadrage confirmé est obligatoire : /api/framings")
         self._loop = asyncio.get_running_loop()
         mission = Mission(
-            id=uuid.uuid4().hex[:12], query=plan.brief.race_label,
+            id=uuid.uuid4().hex[:12], query=plan.brief.race_label, user_id=user_id,
             race=plan.race, plan=plan, limitations=list(plan.limitations),
             framing_summary=summary.model_copy(deep=True) if summary else None,
             framing_turns=list(turns or []),
