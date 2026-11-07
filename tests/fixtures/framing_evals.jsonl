@@ -1,4 +1,4 @@
-{"id":"jury_spring","text":"Un marathon au printemps, depuis Lyon","expected":{"origin":"Lyon","distance_km":42.195},"tags":["fr","jury","must_not_misfill"]}
+{"id":"jury_spring","text":"Un marathon au printemps, depuis Lyon","expected":{"origin":"Lyon","distance_km":42.195,"date_window":"mars-mai 2027"},"tags":["fr","jury","must_not_misfill"]}
 {"id":"jury_lisbon","text":"Lisbon","expected":{"city":"Lisbon"},"tags":["en","jury","pending_u1"]}
 {"id":"jury_milan_april","text":"Milan marathon in April 2027","expected":{"city":"Milan","distance_km":42.195,"date_window":"avril 2027"},"tags":["en","jury","must_not_misfill","pending_u1"]}
 {"id":"jury_tokyo","text":"Tokyo 10K from London","expected":{"city":"Tokyo","distance_km":10,"origin":"London"},"tags":["en","jury","pending_u1"]}
@@ -8,7 +8,7 @@
 {"id":"empty","text":"","expected":{},"tags":["en","must_not_misfill"]}
 {"id":"filler","text":"euh ben je sais pas encore","expected":{},"tags":["fr","voice","must_not_misfill"]}
 {"id":"spring_en","text":"A marathon in spring","expected":{"distance_km":42.195},"tags":["en","must_not_misfill","pending_u1"]}
-{"id":"spring_fr","text":"Un marathon au printemps","expected":{"distance_km":42.195},"tags":["fr","must_not_misfill"]}
+{"id":"spring_fr","text":"Un marathon au printemps","expected":{"distance_km":42.195,"date_window":"mars-mai 2027"},"tags":["fr","must_not_misfill"]}
 {"id":"neg_marathon","text":"not a marathon","expected":{},"tags":["en","negation","must_not_misfill"]}
 {"id":"neg_train","text":"pas en train","expected":{},"tags":["fr","negation","must_not_misfill","pending_u1"]}
 {"id":"neg_city","text":"Not in Paris, in Berlin","expected":{"city":"Berlin"},"tags":["en","negation","must_not_misfill","pending_u1"]}
