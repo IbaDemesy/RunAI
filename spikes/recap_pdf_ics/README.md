@@ -27,6 +27,7 @@ Temps médians, `bench.py` N=5 (N=3 pour Chrome) :
 | demo-nantes (3 p.) | 0,5 ms | 1,6 ms | 558 ms, 104 Ko | 132 ms | 341 ms, 167 Ko | 544 ms, 55 Ko |
 | lisbonne-h (3 p., 2 captures PNG) | 1,3 ms | 1,6 ms | 655 ms, 227 Ko | 229 ms | 413 ms, 261 Ko | 424 ms, 247 Ko |
 
+- Variabilité : un 2e passage (`bench.py 3`, celui de `out/bench.json`) donne Playwright 571 / 977 ms, chaud 183 / 337 ms, Chrome CLI 465 / 550 ms, WeasyPrint 646 / 438 ms, lancement Chromium 150 ms (VM partagée).
 - Via HTTP (uvicorn, 3 appels) : `/recap/demo-nantes.pdf` 110–205 ms, `/recap/lisbonne-h.pdf` 203–254 ms, `.ics` 3–9 ms, `?engine=weasyprint` 499–955 ms ; id inconnu → 404.
 - Lancement de Chromium par Playwright : 79 ms.
 - .ics : 5 événements (Nantes) / 4 (Lisbonne), 2,5 Ko / 2,1 Ko, CRLF, lignes ≤ 75 octets, UID uniques, décalages vobject = zoneinfo (+02:00 en avril, +01:00 en mars). Les heures de Lisbonne sont converties en heure de Paris, l'heure locale est rappelée dans la description.
