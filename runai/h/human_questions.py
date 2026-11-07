@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import re
 from datetime import datetime, timedelta
 
@@ -15,6 +16,7 @@ class HumanQuestionRegistry:
     def __init__(self):
         self.questions: dict[str, HumanQuestion] = {}
         self._keys: dict[str, str] = {}
+        self._answer_digests: dict[str, str] = {}
         self._events: dict[str, asyncio.Event] = {}
 
     def open(
@@ -59,10 +61,11 @@ class HumanQuestionRegistry:
         question = self.questions[question_id]
         if question.mission_id != mission_id or question.revision != answer.revision:
             raise HumanQuestionError("Mission ou révision incorrecte")
+        digest = hashlib.sha256(answer.answer.encode()).hexdigest()
         if question.status in (QuestionStatus.answered, QuestionStatus.refused):
             if (
                 self._keys.get(question_id) == answer.idempotency_key
-                and question.answer == answer.answer
+                and self._answer_digests.get(question_id) == digest
             ):
                 return self.get(question_id)
             raise HumanQuestionError("Question déjà répondue")
@@ -72,7 +75,6 @@ class HumanQuestionRegistry:
             question.status = QuestionStatus.expired
             self._events[question_id].set()
             raise HumanQuestionError("Question expirée")
-        question.answer = answer.answer
         text = f"{question.text} {' '.join(question.choices)} {question.reason or ''} {answer.answer}"
         stop = detect_stop_point(text)
         forbidden = stop is not None or re.search(
@@ -83,9 +85,11 @@ class HumanQuestionRegistry:
         question.status = (
             QuestionStatus.refused if forbidden else QuestionStatus.answered
         )
+        question.answer = None if forbidden else answer.answer
         if forbidden:
             question.reason = f"Arrêt humain obligatoire : {stop.value if stop else 'engagement interdit'}. Aucune autorisation d'automatisation."
         self._keys[question_id] = answer.idempotency_key
+        self._answer_digests[question_id] = digest
         self._events[question_id].set()
         return self.get(question_id)
 

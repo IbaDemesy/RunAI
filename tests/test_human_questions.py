@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import pytest
 
-from runai.contracts.mission import HumanAnswer, QuestionStatus
+from runai.contracts.mission import HumanAnswer, MissionSnapshot, QuestionStatus
 from runai.h.human_questions import HumanQuestionError, HumanQuestionRegistry
 from runai.models import AgentQuestion, StepKind, utcnow
 
@@ -41,6 +41,24 @@ def test_correlation_and_idempotency():
         )
     assert registry.to_agent_question("q1").answer == "oui"
     assert asyncio.run(registry.wait_answer("q1", 1)) == "oui"
+
+
+def test_refused_health_answer_is_not_retained_or_published_and_retry_is_idempotent():
+    registry = HumanQuestionRegistry()
+    open_question(registry, "Déclaration de santé ?")
+    private = "Je déclare ma santé : diagnostic médical confidentiel"
+    request = answer().model_copy(update={"answer": private})
+    result = registry.answer("q1", "m1", request)
+    assert result.status == QuestionStatus.refused
+    assert result.answer is None
+    assert registry.questions["q1"].answer is None
+    snapshot = MissionSnapshot(mission_id="m1", framing_id="f1", framing_revision=3,
+                              mode="demo", status="awaiting_human", sequence=0,
+                              steps=[], questions=[registry.get("q1")])
+    assert private not in snapshot.model_dump_json()
+    assert registry.answer("q1", "m1", request) == result
+    with pytest.raises(HumanQuestionError):
+        registry.answer("q1", "m1", request.model_copy(update={"answer": "autre réponse"}))
 
 
 @pytest.mark.parametrize(
