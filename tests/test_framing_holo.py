@@ -101,6 +101,10 @@ async def test_clean_extraction_ignores_unhashable_transport():
     assert clean_extraction({"transport_mode": ["train"], "nights": 1}) == {"nights": 1}
 
 
+def test_clean_extraction_keeps_numbered_race_names_but_not_numbered_cities():
+    assert clean_extraction({"race": "UTMB 2027", "city": "75001"}) == {"race": "UTMB 2027"}
+
+
 @pytest.mark.anyio
 async def test_holo_extract_failure_returns_nothing():
     phraser = HoloPhraser("hk-test", transport=transport(lambda request: httpx.Response(503)))

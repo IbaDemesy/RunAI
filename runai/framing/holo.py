@@ -61,7 +61,8 @@ def clean_extraction(raw: object) -> dict[str, object]:
     for name in EXTRACTABLE & raw.keys():
         value = raw[name]
         if name in {"city", "origin", "race", "date_window"}:
-            if isinstance(value, str) and 1 < len(value.strip()) <= 80 and not re.search(r"\d", value if name != "date_window" else "x"):
+            place = name in {"city", "origin"}
+            if isinstance(value, str) and 1 < len(value.strip()) <= 80 and not (place and re.search(r"\d", value)):
                 values[name] = value.strip()
         elif name == "budget":
             if isinstance(value, int | float) and not isinstance(value, bool) and 0 < value < 100_000:
