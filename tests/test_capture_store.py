@@ -82,6 +82,9 @@ def test_cap_and_fetch_errors(tmp_path, caplog):
         await asyncio.gather(*store.tasks)
         assert len(store.index("mission1", KIND.value)) == MAX_FRAMES
         assert len(list(store.directory("mission1", KIND.value).glob("*.png"))) == MAX_FRAMES
+        assert ("mission1", KIND.value, MAX_FRAMES + 1) in store._seen
+        store.schedule("mission1", KIND, {"revision": MAX_FRAMES + 1}, FakeRun())
+        assert not store.tasks
 
         class BrokenRun:
             async def get_screenshot(self):
@@ -105,6 +108,34 @@ def test_capture_without_event_loop_is_safe(tmp_path, caplog):
     store.schedule("mission1", KIND, {"revision": 1}, FakeRun())
     assert not store.tasks
     assert "without a running event loop" in caplog.text
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("Fetch failed"), TimeoutError(), b"invalid PNG", None])
+def test_failed_capture_can_retry_same_revision(tmp_path, failure):
+    async def scenario():
+        class RetryRun(FakeRun):
+            calls = 0
+
+            async def get_screenshot(self):
+                self.calls += 1
+                if self.calls == 1:
+                    if isinstance(failure, Exception):
+                        raise failure
+                    return failure
+                return PNG
+
+        store = CaptureStore(tmp_path)
+        run = RetryRun()
+        observation = {"revision": 1}
+        store.schedule("mission1", KIND, observation, run)
+        await asyncio.gather(*store.tasks)
+        assert store.index("mission1", KIND.value) == []
+        store.schedule("mission1", KIND, observation, run)
+        await asyncio.gather(*store.tasks)
+        assert run.calls == 2
+        assert [entry["revision"] for entry in store.index("mission1", KIND.value)] == [1]
+
+    asyncio.run(scenario())
 
 
 def test_capture_drops_frame_when_revision_changes_during_fetch(tmp_path):

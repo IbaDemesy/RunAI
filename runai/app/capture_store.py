@@ -78,6 +78,7 @@ class CaptureStore:
                 entry["at"] = datetime.now(UTC).isoformat()
                 await asyncio.to_thread(self._write, mission_id, kind, content, entries + [entry])
         except Exception:
+            self._seen.discard((mission_id, kind, observation["revision"]))
             logger.warning("Could not capture screenshot for %s/%s", mission_id, kind, exc_info=True)
 
     def _write(self, mission_id: str, kind: str, content: bytes, entries: list[dict]) -> None:
