@@ -62,6 +62,22 @@ def test_save_reload_and_render_profile(service):
     assert "pps number:" not in task
 
 
+def test_redacted_identifiers_round_trip(service):
+    with TestClient(create_app(service)) as client:
+        response = client.put("/api/profile", json={
+            "license_number": "original-license", "pps_number": "original-pps",
+        })
+        assert response.status_code == 200
+        body = client.get("/api/profile").json()
+        assert body["license_number"] == body["pps_number"] == "[REDACTED]"
+        body["city"] = "London"
+        assert client.put("/api/profile", json=body).status_code == 200
+    assert service.profile.license_number == "original-license"
+    assert service.profile.pps_number == "original-pps"
+    assert ProfileStore(service.traces_dir / "profile.json").load() == service.profile
+    assert service.profile.city == "London"
+
+
 @pytest.mark.parametrize("content", [None, "not json", '{"birth_date":"bad"}', "[]"])
 def test_invalid_or_absent_store(tmp_path, content):
     path = tmp_path / "profile.json"
