@@ -28,7 +28,9 @@ _PATTERNS: dict[StopPoint, re.Pattern[str]] = {
         re.IGNORECASE,
     ),
     StopPoint.submission: re.compile(
-        r"\b(confirm(er)? (l'|my |the )?(inscription|registration|booking|r[ée]servation)|submit|soumettre|valider (l'|mon )?inscription|inscrever agora)\b",
+        r"\b(confirm(er)? (l'|my |the )?(inscription|registration|booking|r[ée]servation)|submit|soumettre|valider (l'|mon |la )?(inscription|r[ée]servation)"
+        r"|r[ée]server|book now|reserve now|inscrever agora|confirmar (inscri[çc][ãa]o|reserva)|reservar"
+        r"|conferma (l'|la )?(iscrizione|prenotazione)|prenota (ora|adesso))\b",
         re.IGNORECASE,
     ),
 }

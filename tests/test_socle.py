@@ -1,3 +1,5 @@
+import pytest
+
 from runai.models import (
     Race,
     RunnerProfile,
@@ -28,6 +30,9 @@ def test_detect_stop_point():
     assert detect_stop_point("Créer un compte pour continuer") is StopPoint.account_creation
     assert detect_stop_point("Joindre votre certificat médical") is StopPoint.health_declaration
     assert detect_stop_point("J'accepte le règlement") is StopPoint.consent
+    assert detect_stop_point("Réserver maintenant") is StopPoint.submission
+    assert detect_stop_point("Conferma iscrizione") is StopPoint.submission
+    assert detect_stop_point("Confirmar inscrição") is StopPoint.submission
     assert detect_stop_point("Choisissez votre distance") is None
 
 
@@ -39,3 +44,8 @@ def test_trace_roundtrip(tmp_path):
 
 def test_step_result_defaults():
     assert StepResult(kind=StepKind.registration).status.value == "pending"
+
+
+def test_trace_rejects_path_traversal(tmp_path):
+    with pytest.raises(ValueError):
+        TraceWriter("../evil", traces_dir=tmp_path)
