@@ -43,8 +43,19 @@ def guard_task(task: str) -> str:
     return f"{task}\n\n{STOP_INSTRUCTIONS}"
 
 
-def detect_stop_point(text: str) -> StopPoint | None:
+_NEGATION = re.compile(
+    r"\b(aucun|aucune|pas d[e']|pas de la|sans|ni|jamais|no|not|without|never|nenhum|nenhuma|sem|nessun|nessuna|senza)"
+    r"(?:\s+[\w'\-]+){0,2}\s*$",
+    re.IGNORECASE,
+)
+
+
+def detect_stop_point(text: str, *, ignore_negated: bool = False) -> StopPoint | None:
+    """`ignore_negated` sert seulement à classer un compte rendu d'agent ; les gardes restent strictes."""
     for stop_point, pattern in _PATTERNS.items():
-        if pattern.search(text):
-            return stop_point
+        for match in pattern.finditer(text):
+            if not ignore_negated or not _NEGATION.search(
+                text[max(0, match.start() - 40) : match.start()]
+            ):
+                return stop_point
     return None

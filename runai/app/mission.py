@@ -664,7 +664,7 @@ class MissionService:
             }
         )
         if merged.stop_point is None and merged.summary:
-            merged.stop_point = detect_stop_point(merged.summary)
+            merged.stop_point = detect_stop_point(merged.summary, ignore_negated=True)
         if merged.stop_point is not None and merged.status in {
             StepStatus.completed,
             StepStatus.running,

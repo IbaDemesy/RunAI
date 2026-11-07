@@ -82,6 +82,12 @@ class Slot(BaseModel):
         return self.status in KNOWN_STATUSES
 
 
+def matching_distance(distances_km: list[float], km: float) -> float | None:
+    """Distance proposée la plus proche de `km`, à l'arrondi près (21.097 ≈ 21.0975)."""
+    close = [d for d in distances_km if abs(d - km) <= max(0.5, km * 0.03)]
+    return min(close, key=lambda d: abs(d - km)) if close else None
+
+
 class RaceCandidate(BaseModel):
     """Événement trouvé par recherche générique (B1), proposé au choix humain."""
 
