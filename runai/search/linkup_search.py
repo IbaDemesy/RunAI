@@ -243,7 +243,10 @@ def parse_response(request: str, response: Any, today: date | None = None) -> Ra
 
 
 def _official_domains(sheet: RaceSheet) -> list[str]:
-    hosts = [host_of(url) for url in (sheet.official_url, sheet.registration_url) if url is not None]
+    urls = [sheet.official_url]
+    if registration_url_issue(sheet) is None:
+        urls.append(sheet.registration_url)
+    hosts = [host_of(url) for url in urls if url is not None]
     return list(dict.fromkeys(host for host in hosts if host))
 
 

@@ -249,3 +249,14 @@ def test_base_domain_keeps_second_level_public_suffixes():
     assert base_domain("events.club.org.au") == "club.org.au"
     assert base_domain("www.sport.gouv.fr") == "sport.gouv.fr"
     assert base_domain("in.njuko.com") == "njuko.com"
+
+
+def test_follow_up_never_searches_a_rejected_registration_domain():
+    first = {
+        key: value
+        for key, value in {**MILAN, "registration_url": "https://www.ahotu.com/event/milano-marathon"}.items()
+        if key != "start_time"
+    }
+    client = FakeLinkup([_response(first), _response({})])
+    search_race("marathon de Milan 2027", client=client, verify_registration=False, today=TODAY)
+    assert client.searches[1]["include_domains"] == ["milanomarathon.it"]
