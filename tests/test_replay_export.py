@@ -113,3 +113,13 @@ def test_urls_with_long_numeric_ids_are_kept():
         StepKind.registration: StepResult(kind=StepKind.registration, data={"url": url}),
     })
     assert export_replay(mission).steps[StepKind.registration].result.data["url"] == url
+
+
+def test_phone_numbers_after_separators_are_redacted():
+    mission = Mission(id="tel", query="Demo", status=MissionStatus.completed, steps={
+        StepKind.registration: StepResult(kind=StepKind.registration, data={
+            "note": "phone=33612345678 tel:33612345678",
+        }),
+    })
+    note = export_replay(mission).steps[StepKind.registration].result.data["note"]
+    assert "33612345678" not in note

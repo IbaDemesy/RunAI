@@ -11,6 +11,8 @@ _PRIVATE_KEYS = {
     "first_name", "last_name", "full_name", "email", "phone", "phone_number",
     "birth_date", "date_of_birth", "address", "passport", "password",
 }
+_URL = re.compile(r"(https?://[^\s\"'<>]+)")
+_PHONE = re.compile(r"(?<![\w-])(?!\d{4}-\d{2}-\d{2})\+?\d[\d ().-]{7,}\d(?![\w-])")
 
 
 def _redact_personal(value: Any) -> Any:
@@ -23,9 +25,10 @@ def _redact_personal(value: Any) -> Any:
         return [_redact_personal(item) for item in value]
     if isinstance(value, str):
         value = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[REDACTED]", value)
-        return re.sub(
-            r"(?<![\w/=?&#:.-])(?!\d{4}-\d{2}-\d{2})\+?\d[\d ().-]{7,}\d(?![\w/-])",
-            "[REDACTED]", value,
+        parts = _URL.split(value)
+        return "".join(
+            part if index % 2 else _PHONE.sub("[REDACTED]", part)
+            for index, part in enumerate(parts)
         )
     return value
 
