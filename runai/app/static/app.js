@@ -378,17 +378,25 @@
   }
   function questionBlock(question) {
     const block = el("article", null, "agent-question");
-    block.append(el("h2", question.text), el("p", label(question.step) + " · " + label(question.status)));
+    block.append(el("h2", question.text), el("p", "From the " + missionLane(question.step) + " agent"));
+    for (const value of [question.asked_at, question.expires_at]) {
+      if (value && Number.isFinite(Date.parse(value))) block.append(el("time", new Date(value).toLocaleString("en-GB")));
+    }
     if (question.reason) block.append(el("p", question.reason));
-    if (question.status !== "open") { if (question.answer) block.append(el("p", question.answer)); return block; }
+    if (question.status !== "open") {
+      if (question.status === "answered") { block.className += " question-answered"; block.append(el("p", "Your answer: " + (question.answer ?? ""))); }
+      return block;
+    }
     const answer = (text) => mutate(async () => {
       mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/questions/" + encodeURIComponent(question.question_id) + "/answer", {
         answer: text, revision: question.revision, idempotency_key: key(question.question_id, question.revision),
       }); drafts.delete(question.question_id);
     }, () => loadMission(mission.mission_id));
     const choices = el("div", null, "question-options");
-    question.choices.forEach((choice) => choices.append(button(choice, () => answer(choice))));
-    block.append(choices); form(block, "Votre réponse · " + question.text, answer, question.question_id);
+    (question.choices || []).forEach((choice) => choices.append(button(choice, () => answer(choice))));
+    block.append(choices); form(block, question.text, answer, question.question_id);
+    const submit = block.querySelector("form").querySelector("button");
+    submit.textContent = "Send"; submit.setAttribute("aria-label", question.text);
     return block;
   }
   function agentContext() {
@@ -475,76 +483,114 @@
       }
     }
   }
+  function missionLane(kind) {
+    return ({ registration: "Registration", accommodation: "Stay", stay: "Stay", transport: "Transport" })[kind] || kind || "Preparation";
+  }
+  let missionControlRequest = null;
   function renderMission() {
     screen.className = "shell-stack";
-    screen.append(el("h1", "Mon séjour"));
+    const stepsData = mission.steps || [];
+    const terminalStatuses = ["completed", "stopped_before_commitment", "failed", "cancelled"];
+    const finished = ["awaiting_human", "completed", "failed", "cancelled"].includes(mission.status) ||
+      (stepsData.length > 0 && stepsData.every(step => terminalStatuses.includes(step.status)));
+    const summaryReady = ["awaiting_human", "completed"].includes(mission.status) ||
+      (stepsData.length > 0 && stepsData.every(step => terminalStatuses.includes(step.status)));
+    if (summaryReady) {
+      const summary = window.tripSummary?.(mission, framing);
+      const section = el("section", null, "trip-summary");
+      section.append(el("h1", "Your trip is prepared"));
+      if (summary) {
+        section.append(el("h2", summary.race.name || "Your race"), el("p", summary.race.date || "Date unknown"));
+        for (const row of summary.rows) {
+          const block = el("article", null, "trip-row");
+          block.append(el("h3", row.title), el("p", row.status.replaceAll("_", " ")), el("p", row.headline || ""), el("p", row.price));
+          if (row.stopPoint) block.append(el("p", row.stopPoint));
+          if (row.ctaUrl) {
+            const cta = el("a", row.ctaLabel, "trip-cta");
+            cta.href = row.ctaUrl; cta.target = "_blank"; cta.rel = "noopener noreferrer"; block.append(cta);
+          }
+          section.append(block);
+        }
+        const known = summary.total.known;
+        const total = known == null ? "Price unknown" : new Intl.NumberFormat("en-GB", {
+          style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 2,
+        }).format(known);
+        section.append(el("p", (summary.total.complete ? "Total: " : "Known total (partial): ") + total + " · " + summary.verdict, "trip-total"));
+      }
+      const exports = el("nav", null, "question-options"); exports.setAttribute("aria-label", "Export");
+      if (mission.journey_revision != null) for (const format of ["html", "pdf", "ics"]) {
+        const item = el("a", format.toUpperCase());
+        item.href = "/api/missions/" + encodeURIComponent(mission.mission_id) + "/recap." + format + "?revision=" + encodeURIComponent(mission.journey_revision);
+        exports.append(item);
+      }
+      section.append(exports); screen.append(section);
+    } else screen.append(el("h1", "Preparing your trip"));
     const questions = mission.questions || [];
-    if (questions.some((q) => q.status === "open")) {
-      const priority = el("section", null, "questions"); priority.append(el("h2", "À vous de répondre"));
-      questions.filter((q) => q.status === "open").forEach((q) => priority.append(questionBlock(q))); screen.append(priority);
-    }
-    const nav = el("nav", null, "question-options"); nav.setAttribute("aria-label", "Écrans du séjour");
-    [["progress", "Préparatifs en cours"], ["stay", "Mon séjour"], ["explore", "Explorer"]].forEach(([id, title]) => {
+    const priority = el("section", null, "questions");
+    questions.forEach(question => priority.append(questionBlock(question)));
+    screen.append(priority);
+    const nav = el("nav", null, "question-options"); nav.setAttribute("aria-label", "Trip views");
+    [["progress", "Preparations"], ["stay", "Your trip"], ["explore", "Explore"]].forEach(([id, title]) => {
       const item = button(title, () => { page = id; render(); });
       if (page === id) item.setAttribute("aria-current", "page");
       nav.append(item);
     });
-    const statusText = mission.status === "awaiting_human" && questions.some(q => q.status === "open") ? label("waiting_for_user") : label(mission.status);
-    screen.append(nav, el("h2", page === "stay" ? "Mon séjour" : page === "explore" ? "Explorer" : "Préparatifs en cours"), el("p", statusText));
+    const times = stepsData.flatMap(step => [...(step.history || []), ...(step.data?.history || [])])
+      .map(entry => Date.parse(entry.at)).filter(Number.isFinite);
+    const start = times.length ? Math.min(...times) : Date.parse(framing?.turns?.[0]?.at);
+    const elapsed = Number.isFinite(start) ? " · Elapsed " + Math.max(0, Math.floor((Date.now() - start) / 1000)) + " seconds" : " · Start time unavailable";
+    screen.append(nav, el("p", mission.status.replaceAll("_", " ") + elapsed, "mission-status"));
     if (mission.error) screen.append(el("p", mission.error));
-    if (page === "explore") { renderExplorer(); return; }
-    if (page === "stay") {
-      screen.append(el("p", "Séjour préparé · aucun engagement automatique."), el("h3", mission.race?.name || "Course en préparation"),
-        el("p", "Date de course : " + (mission.race?.race_date || "inconnue")));
-      if (framing?.summary) screen.append(el("p", framing.summary.date_range.join(" → ")));
-      const budget = core.budgetText(mission.budget);
-      budget.lines.forEach((line, index) => { screen.append(el("p", line)); provenance(screen, mission.budget.lines[index].money); });
-      screen.append(el("p", budget.total, "total"), el("p", budget.cap));
-      if (mission.journey_revision != null) {
-        const exports = el("nav"); exports.setAttribute("aria-label", "Exporter ce séjour");
-        for (const format of ["html", "pdf", "ics"]) link(exports,
-          new URL("/api/missions/" + encodeURIComponent(mission.mission_id) + "/recap." + format + "?revision=" + mission.journey_revision, location.href).href,
-          "Exporter " + format.toUpperCase());
-        screen.append(exports);
+    if (!finished) {
+      const controls = el("div", null, "mission-controls");
+      const active = stepsData.filter(step => ["running", "paused"].includes(step.status));
+      const paused = active.length > 0 && active.every(step => step.status === "paused");
+      if ((missionControlRequest === "pause" && paused) || (missionControlRequest === "resume" && active.some(step => step.status === "running"))) missionControlRequest = null;
+      const message = el("p", missionControlRequest === "pause" ? "Pause requested…" : missionControlRequest === "resume" ? "Resume requested…" : paused ? "All agents paused" : "Agents preparing your trip");
+      for (const [action, title] of [["pause", "Pause all agents"], ["resume", "Resume all agents"]]) {
+        controls.append(button(title, () => {
+          missionControlRequest = action; message.textContent = action === "pause" ? "Pause requested…" : "Resume requested…";
+          mutate(async () => {
+            mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/" + action, {});
+          }, () => loadMission(mission.mission_id));
+        }));
       }
-      for (const id of mission.budget?.missing_line_ids || []) {
-        if (!mission.budget.lines.some((line) => line.id === id)) screen.append(el("p", "Poste manquant : Prix inconnu"));
-      }
+      const cancel = button("Cancel preparations", () => mutate(async () => {
+        mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/cancel", {});
+        if (events) events.close();
+      }, () => loadMission(mission.mission_id)));
+      cancel.className += " destructive";
+      controls.append(cancel, message); screen.append(controls);
     }
+    if (page === "explore") { renderExplorer(); return; }
     const steps = el("div", null, "steps");
-    renderAgentSteps(steps);
-    screen.append(steps); limitations(screen, mission.limitations);
-    questions.filter((q) => q.status !== "open").forEach((q) => screen.append(questionBlock(q)));
-    if (mission.status !== "cancelled") screen.append(button("Annuler les préparatifs", () => mutate(async () => {
-      mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/cancel", {});
-      if (events) events.close();
-    }, () => loadMission(mission.mission_id))));
+    renderAgentSteps(steps); screen.append(steps);
   }
   async function renderExplorer() {
-    const container = el("div", null, "journey-map"); container.setAttribute("aria-label", "Carte du séjour"); container.setAttribute("role", "region");
+    const container = el("div", null, "journey-map"); container.setAttribute("aria-label", "Trip map"); container.setAttribute("role", "region");
     const fallback = el("section", null, "shell-stack");
-    screen.append(container, fallback);
+    screen.append(el("p", "Prepared — nothing booked automatically"), container, fallback);
     try {
       plan = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id) + "/journey");
       await loadJourneyScripts();
       if (page !== "explore" || !container.isConnected) return;
       const errors = window.RunAIJourneyContract?.validateJourneyPlan(plan) || [];
-      if (errors.length) throw new Error("Le parcours reçu est invalide. Réessayez après actualisation.");
+      if (errors.length) throw new Error("The journey received is invalid. Refresh and try again.");
       mode(plan.mode);
       const controls = el("div", null, "question-options"); screen.insertBefore(controls, container);
       view = window.RunAIJourneyView.createJourneyView(container, { reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
         timelineContainer: fallback, errorTarget: screen,
         onEvent: (name, detail) => {
           window.dispatchEvent(new CustomEvent("runai:shell-journey", { detail: { name, ...detail } }));
-          if (name === window.RunAIJourneyContract.MAP_EVENTS.error && detail.fatal !== false) announce("Carte indisponible. Le parcours reste disponible dans la timeline.");
+          if (name === window.RunAIJourneyContract.MAP_EVENTS.error && detail.fatal !== false) announce("Map unavailable. The journey remains available in the timeline.");
         },
       });
       view.setPlan(plan);
       plan.chapters.forEach((chapter) => controls.append(button(chapter.label, () => view?.showChapter(chapter.id))));
-      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) controls.append(button("Lecture", () => view?.play()));
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) controls.append(button("Play", () => view?.play()));
       controls.append(button("Pause", () => view?.pause()));
     } catch (error) {
-      fallback.append(el("p", error.message), button("Réessayer", render));
+      fallback.append(el("p", "Unable to load the trip map. Please try again."), button("Retry", render));
     }
   }
   window.RunAIShell = { api, submitReply };

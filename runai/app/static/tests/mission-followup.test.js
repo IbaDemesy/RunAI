@@ -181,3 +181,70 @@ test("la première capture apparaît aussi quand la fenêtre live est déjà ouv
   assert.equal(screen.querySelector(".agent-live"), panel);
   assert.equal(panel.querySelector("img")?.src, "/api/missions/mission-test/steps/accommodation/screenshot?v=1");
 });
+
+test("summary appears only once preparations are terminal", async () => {
+  const running = await setup("running", [], { status: "running" });
+  assert.equal(running.screen.querySelector(".trip-summary"), null);
+  for (const status of ["awaiting_human", "completed"]) {
+    const { screen } = await setup(status);
+    assert.match(screen.querySelector(".trip-summary").textContent, /Your trip is prepared/);
+    assert.equal(screen.querySelector(".mission-controls"), null);
+  }
+  assert.ok((await setup()).screen.querySelector(".trip-summary"));
+});
+
+test("answered questions retain their question and answer block", async () => {
+  const { screen } = await setup("running", [{ question_id: "answered", step: "accommodation",
+    status: "answered", text: "Which room?", answer: "Standard" }], { status: "running" });
+  const block = screen.querySelector(".question-answered");
+  assert.match(block.textContent, /Which room\?/);
+  assert.match(block.textContent, /Your answer: Standard/);
+  assert.match(block.textContent, /From the Stay agent/);
+});
+
+test("pause request stays pending until a paused snapshot confirms it", async () => {
+  const { screen, requests, sources, update } = await setup("running", [], { status: "running" });
+  screen.querySelectorAll("button").find(node => node.textContent === "Pause all agents").onclick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(screen.querySelector(".mission-controls").textContent, /Pause requested…/);
+  assert.ok(requests.some(request => request.url.endsWith("/pause") && request.options.method === "POST"));
+  update({ steps: [{ kind: "accommodation", status: "paused", data: {} }] });
+  await sources[0].handlers.get("step")();
+  assert.match(screen.querySelector(".mission-controls").textContent, /All agents paused/);
+});
+
+test("open questions use Send with an accessible question label and local time", async () => {
+  const { screen } = await setup("running", [{ question_id: "open", step: "accommodation", status: "open",
+    text: "Which room?", choices: [], asked_at: "2026-11-08T10:20:30Z" }], { status: "running" });
+  const block = screen.querySelector(".agent-question");
+  assert.equal(block.querySelector("form").querySelector("button").textContent, "Send");
+  assert.equal(block.querySelector("form").querySelector("button").attributes["aria-label"], "Which room?");
+  assert.doesNotMatch(block.querySelector("time").textContent, /2026-11-08T/);
+});
+
+test("terminal snapshot renders model rows, safe CTAs and revision-bound exports", async () => {
+  const screen = new Node("section"), feedback = new Node("p"), mode = new Node("span");
+  const snapshot = structuredClone(require("../../../contracts/fixtures/mission_snapshot.json"));
+  snapshot.status = "awaiting_human";
+  snapshot.questions = [];
+  snapshot.steps.forEach((step, index) => {
+    step.status = "completed"; step.url = "https://example.org/finish/" + index;
+    step.data = {};
+  });
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../app.js"), "utf8"), {
+    window: { RunAIShellCore: core, tripSummary: require("../trip-summary.js"), addEventListener() {} },
+    location: { search: "", href: "http://runai.test/" }, URLSearchParams, URL,
+    sessionStorage: { getItem: key => key === "runai:mission" ? snapshot.mission_id : null, setItem() {} },
+    document: { activeElement: null, createElement: tag => new Node(tag), getElementById: id => ({ screen, feedback, mode }[id]) },
+    fetch: async url => ({ ok: true, json: async () => url === "/api/health" ? { mode: "demo" } : snapshot }),
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(screen.querySelectorAll(".trip-row").length, 3);
+  assert.equal(screen.querySelectorAll(".trip-cta").length, 3);
+  for (const cta of screen.querySelectorAll(".trip-cta")) {
+    assert.equal(cta.target, "_blank"); assert.equal(cta.rel, "noopener noreferrer");
+  }
+  const exports = screen.querySelectorAll("nav").find(node => node.attributes["aria-label"] === "Export");
+  assert.deepEqual(exports.querySelectorAll("a").map(node => node.href), ["html", "pdf", "ics"].map(format =>
+    "/api/missions/" + snapshot.mission_id + "/recap." + format + "?revision=" + snapshot.journey_revision));
+});
