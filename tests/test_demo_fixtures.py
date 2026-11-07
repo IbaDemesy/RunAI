@@ -38,6 +38,22 @@ def idea_chips():
 
 
 @pytest.mark.anyio
+async def test_search_refresh_clears_demo_fallback_warning():
+    engine = FramingEngine(search(), DataMode.demo)
+    session = await engine.create(FramingCreate(
+        text="A race in Atlantis, 10 km on 2027-04-11, from Paris, 800 euros, 2 nights, train",
+    ))
+    assert any(limit.code == "demo_closest" for limit in session.limitations)
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision,
+        corrections={SlotName.city: "Milan", SlotName.distance_km: 42.195},
+    ))
+    assert [candidate.city for candidate in session.candidates] == ["Milan"]
+    assert not session.candidates[0].limitations
+    assert not any(limit.code == "demo_closest" for limit in session.limitations)
+
+
+@pytest.mark.anyio
 @pytest.mark.parametrize("city", ["Valencia", "Milan", "Chamonix"])
 async def test_idea_chip_reaches_confirmation(city):
     ideas = idea_chips()
