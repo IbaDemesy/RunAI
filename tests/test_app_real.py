@@ -133,8 +133,14 @@ def test_real_agent_run_extracts_exact_two_night_hotel_total():
     assert result.status is StepStatus.stopped_before_commitment
 
 
-def test_real_browser_rejects_non_njuko_registration_link():
-    agents = RealBrowserAgents(runner=SimpleNamespace(), max_steps=1, max_time_s=1)
+def test_real_browser_starts_registration_on_any_official_link():
+    seen = {}
+
+    async def start(kind, task, **kwargs):
+        seen.update(kwargs)
+        raise LookupError("stop")
+
+    agents = RealBrowserAgents(runner=SimpleNamespace(start=start), max_steps=1, max_time_s=1)
     race = Race(
         name="Wizz Air Milano Marathon",
         city="Milan",
@@ -142,7 +148,7 @@ def test_real_browser_rejects_non_njuko_registration_link():
         registration_url="https://www.klikego.com/milano",
     )
 
-    with pytest.raises(RuntimeError, match="Njuko"):
+    with pytest.raises(LookupError):
         asyncio.run(
             agents.start(
                 StepKind.registration,
@@ -153,6 +159,7 @@ def test_real_browser_rejects_non_njuko_registration_link():
                 lambda question, options: asyncio.sleep(0),
             )
         )
+    assert seen["start_url"] == "https://www.klikego.com/milano"
 
 
 def test_real_agent_run_fails_without_a_detected_stop_point():
