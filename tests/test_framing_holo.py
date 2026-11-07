@@ -117,7 +117,7 @@ class Extractor(Recorder):
         super().__init__()
         self.values = values
 
-    async def extract(self, text, known):
+    async def extract(self, text, known, turns=()):
         return self.values
 
 
