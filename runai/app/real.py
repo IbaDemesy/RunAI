@@ -124,6 +124,10 @@ class RealAgentRun:
             if answer.stop_screen == "blocked":
                 result.status = StepStatus.failed
                 result.error = "Blocked by the site"
+                if answer.blocker:
+                    result.error += f": {answer.blocker}"
+                    if re.search(r"captcha|anti[- ]?bot", answer.blocker, re.IGNORECASE):
+                        result.error += " (captcha/anti-bot)"
             elif answer.stop_screen == "none":
                 result.status = StepStatus.completed
             else:

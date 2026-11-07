@@ -22,6 +22,7 @@ from runai.app.real import (
 )
 from runai.app.server import build_service, create_app
 from runai.h.answers import RegistrationAnswer
+from runai.h.lifecycle import HAntiBotBlocked, HJob, HLifecycle, JobState
 from runai.models import Race, RunnerProfile, Source, StepKind, StepResult, StepStatus
 from runai.search.models import RaceSheet
 
@@ -232,6 +233,28 @@ def test_registration_price_includes_displayed_fees(currency, fees):
 
     result = asyncio.run(RealAgentRun(Run(), StepKind.registration, lambda e: None, 10).wait())
     assert result.price_eur == (50 + (fees or 0) if currency == "EUR" else None)
+
+
+@pytest.mark.parametrize("blocker", ["CAPTCHA challenge", "Anti-bot protection"])
+def test_blocker_detail_preserves_lifecycle_anti_bot_classification(blocker):
+    class Run:
+        id = "blocked-session"
+        status = "completed"
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.transport, status=StepStatus.completed,
+                data={"answer": {"stop_screen": "blocked", "blocker": blocker}},
+            )
+
+    run = Run()
+    result = asyncio.run(RealAgentRun(run, StepKind.transport, lambda e: None, 10).wait())
+    assert result.error.startswith(f"Blocked by the site: {blocker}")
+    lifecycle = HLifecycle(SimpleNamespace())
+    job = HJob(job_id="blocked-job", kind=StepKind.transport, mission_id=None)
+    lifecycle._conclude(job, run, result)
+    assert job.state is JobState.failed
+    assert isinstance(job.error, HAntiBotBlocked)
 
 
 @pytest.mark.parametrize("currency", ["USD", None, "EUR"])
