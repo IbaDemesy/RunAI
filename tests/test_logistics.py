@@ -11,6 +11,7 @@ from runai.logistics import (
     HotelStay,
     LicenseKind,
     Light,
+    PickupWindow,
     RaceRules,
     RecentResult,
     RequirementKind,
@@ -51,6 +52,7 @@ LINKUP_HALF = {
     "time_gates": [{"km": 10, "max_elapsed": "1:15"}],
     "time_limit_source_url": "https://semi-test.example.org/reglement.pdf",
     "license_accepted": True,
+    "foreign_license_accepted": True,
     "medical_certificate_required": True,
     "medical_certificate_details": "PPS ou certificat médical de moins d'un an",
     "documents_source_url": "https://semi-test.example.org/reglement.pdf",
@@ -222,6 +224,27 @@ def test_unknown_rules_are_orange_never_green():
     assert verdict.human_todo[0].kind is RequirementKind.other
 
 
+def test_foreign_licence_needs_explicit_acceptance():
+    data = {key: value for key, value in LINKUP_HALF.items() if key != "foreign_license_accepted"}
+    rules = parse_rules_response("Semi de Test", SimpleNamespace(data=data))
+    assert rules.entry_paths[0].licenses == [LicenseKind.host_federation]
+
+
+def test_incomplete_rules_without_goal_are_not_green(half):
+    rules = half.model_copy(update={"time_limit": None, "missing_fields": ["time_limit"]})
+    verdict = eligibility(rules, RunnerProfile(), RunnerSituation(license=LicenseKind.host_federation), today=TODAY)
+    assert verdict.light is Light.orange
+    assert "rules_incomplete" in {r.code for r in verdict.reasons}
+
+
+def test_gate_checked_without_time_limit(half):
+    rules = half.model_copy(update={"time_limit": None})
+    situation = RunnerSituation(license=LicenseKind.host_federation)
+    verdict = eligibility(rules, RunnerProfile(), situation, RunnerGoal.parse("2h45", HALF), today=TODAY)
+    assert verdict.light is Light.red
+    assert {"time_limit_unknown", "goal_gate_10"} <= {r.code for r in verdict.reasons}
+
+
 def _train(day, depart, arrive, origin="Paris Gare de Lyon", destination="Milano Centrale"):
     return TransportLeg(
         origin=origin,
@@ -277,6 +300,16 @@ def test_tight_arrival_moves_pickup_and_hotel_alerts(milan):
         "late_checkout": AlertLevel.warning,
         "return_too_early": AlertLevel.blocking,
     }
+
+
+def test_race_day_pickup_must_end_before_corrals_close(half):
+    race_day = date(2027, 3, 14)
+    window = PickupWindow(day=race_day, opens=time(7, 0), closes=time(12, 0))
+    rules = half.model_copy(update={"bib_pickup_race_day": True, "bib_pickup_windows": [window]})
+    late = build_timeline(None, rules, arrival=_train(race_day, time(6, 0), time(8, 30), destination="Test"))
+    assert "bib_pickup_missed" in {a.code for a in late.alerts} and not late.ok
+    early = build_timeline(None, rules, arrival=_train(race_day, time(5, 0), time(7, 0), destination="Test"))
+    assert "bib_pickup_missed" not in {a.code for a in early.alerts}
 
 
 def test_timeline_without_logistics_flags_assumptions(half):
