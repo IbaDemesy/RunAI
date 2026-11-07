@@ -140,10 +140,11 @@ class FramingEngine:
             if not values and choice is None and session.turns:
                 raise FramingError("Précisez une réponse ou une correction explicite")
             self._validate(values)
-            turn_text = reply.text or reply.choice_id or str(reply.corrections)
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
                 values[SlotName.origin] = None if public == "Origine non précisée" else public
+            turn_text = reply.text or reply.choice_id or str(values)
+            if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
             session.revision += 1
             session.summary = None

@@ -24,6 +24,7 @@ class Search:
 
 @pytest.mark.parametrize("origin,public", [
     ("12 rue des Lilas, 75011 Paris", "Paris"),
+    ("12 rue d'\"Austerlitz\", 75011 Paris", "Paris"),
     ("12 rue des Lilas", None),
     ("Paris 11e", "Paris 11e"),
 ])
@@ -34,7 +35,7 @@ def test_origin_is_public_before_storage_exposure_and_agent_task(origin, public)
         session = await engine.reply(session.id, FramingReply(revision=session.revision, choice_id="race"))
         session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={"origin": origin}))
         assert session.slots[SlotName.origin].value == public
-        assert "12 rue des Lilas" not in engine.get(session.id).model_dump_json()
+        assert "12 rue" not in engine.get(session.id).model_dump_json()
         if public is None:
             assert session.summary is None
             assert any(SlotName.origin in q.slots for q in session.open_questions)
