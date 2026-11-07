@@ -192,7 +192,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         service = get_service()
         for field in ("license_number", "pps_number"):
             if getattr(profile, field) == "[REDACTED]":
-                setattr(profile, field, getattr(service.profile, field))
+                setattr(profile, field, None if public_without_auth else getattr(service.profile, field))
         path = service.traces_dir if service.traces_dir is not None else get_settings().traces_dir
         ProfileStore(path / "profile.json").save(profile)
         service.profile = profile

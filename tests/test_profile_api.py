@@ -108,6 +108,26 @@ def test_public_unauthenticated_demo_allows_fictional_profiles(service, monkeypa
         assert client.get("/api/profile").json()["first_name"] == "Fictional"
 
 
+def test_public_demo_does_not_copy_hidden_identifiers(service, monkeypatch):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    service.profile = RunnerProfile(
+        email="private@real.org", fictional=False,
+        license_number="hidden-license", pps_number="hidden-pps",
+    )
+    with TestClient(create_app(service)) as client:
+        assert client.get("/api/profile").json()["license_number"] is None
+        response = client.put("/api/profile", json={
+            "license_number": "[REDACTED]", "pps_number": "[REDACTED]",
+        })
+        assert response.status_code == 200
+        assert response.json()["license_number"] is None
+        assert response.json()["pps_number"] is None
+    assert service.profile.license_number is None
+    assert service.profile.pps_number is None
+    assert ProfileStore(service.traces_dir / "profile.json").load() == service.profile
+
+
 @pytest.mark.parametrize("content", [None, "not json", '{"birth_date":"bad"}', "[]"])
 def test_invalid_or_absent_store(tmp_path, content):
     path = tmp_path / "profile.json"
