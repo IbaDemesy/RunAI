@@ -40,7 +40,7 @@ jobs:
 
           expected_version="${HEAD_SHA:0:7}"
           if [[ "$EVENT_NAME" == workflow_run ]]; then
-            main_sha=$(gh api "repos/$GH_REPO/commits/main" --jq .sha)
+            main_sha=$(gh api "repos/$GH_REPO/commits/main" --jq .sha) || main_sha="$HEAD_SHA"
             if [[ "$main_sha" != "$HEAD_SHA" ]]; then
               echo "::notice title=Stale CI run::$HEAD_SHA is no longer main HEAD ($main_sha); checking health only."
               EVENT_NAME=stale_workflow_run
