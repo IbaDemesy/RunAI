@@ -1,4 +1,7 @@
+import os
 from datetime import timedelta
+from pathlib import Path
+from stat import S_IMODE
 from types import SimpleNamespace
 
 import pytest
@@ -84,6 +87,24 @@ def test_invalid_or_absent_store(tmp_path, content):
     if content is not None:
         path.write_text(content)
     assert ProfileStore(path).load() == RunnerProfile()
+
+
+def test_profile_file_is_private_before_replacement(tmp_path, monkeypatch):
+    replace = os.replace
+    path = tmp_path / "profile.json"
+    path.write_text("old content")
+    observed = []
+
+    def inspect_replace(source, destination):
+        observed.append(S_IMODE(Path(source).stat().st_mode))
+        assert ProfileStore(Path(source)).load().phone == "private-phone"
+        replace(source, destination)
+
+    monkeypatch.setattr("runai.app.profile.os.replace", inspect_replace)
+    ProfileStore(path).save(RunnerProfile(phone="private-phone"))
+    assert observed == [0o600]
+    assert S_IMODE(path.stat().st_mode) == 0o600
+    assert list(tmp_path.iterdir()) == [path]
 
 
 def test_prefill_latest_and_user_filter(service):

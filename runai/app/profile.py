@@ -1,5 +1,7 @@
 """Local persistence for the runner profile shared with H agents."""
 
+import os
+import tempfile
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -20,5 +22,10 @@ class ProfileStore:
 
     def save(self, profile: RunnerProfile) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(profile.model_dump_json(indent=2), encoding="utf-8")
-        self.path.chmod(0o600)
+        descriptor, temporary = tempfile.mkstemp(dir=self.path.parent, prefix=".profile-")
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                stream.write(profile.model_dump_json(indent=2))
+            os.replace(temporary, self.path)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
