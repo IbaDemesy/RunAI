@@ -73,7 +73,7 @@ Un seul outil qui accompagne le coureur de l'objectif jusqu'à la ligne d'arriv�
 
 ### Points de vigilance
 
-- **Fiabilité** : il faut tester tôt un agent H sur 2 ou 3 vraies pages d'inscription et sur un site d'hôtel (captchas, comptes, formulaires). Garder un faux site d'inscription comme filet de sécurité.
+- **Fiabilité** : le test H sur de vraies pages d'inscription, d'hôtel et de vol est fait (résultats ci-dessous). Garder un faux site d'inscription comme filet de sécurité.
 - **Périmètre** : mieux vaut un parcours principal parfait que 6 fonctionnalités fragiles.
 - **Contrôle utilisateur** : vue live des agents, pause et stop (à la voix ou par bouton), l'agent qui pose des questions, jamais de paiement automatique.
 
@@ -105,21 +105,42 @@ C'est plus fort que l'inscription seule sur deux critères, l'impact et l'utilis
 - Les sites de voyage sont les plus difficiles pour un agent : anti-bot (Booking, Airbnb), pages lourdes, prix dynamiques. Les compagnies aériennes sont souvent les pires.
 - Les plateformes d'inscription peuvent avoir des captchas ou exiger un compte.
 
-### Test de faisabilité à faire en premier
+### Test de faisabilité réalisé
 
-Vérifier qu'un agent H arrive, **jusqu'à l'étape du paiement sans payer**, à faire trois choses :
+Le test visait à vérifier qu'un agent H arrive, **jusqu'à l'étape du paiement sans payer**, à faire trois choses :
 
 1. Remplir 2 ou 3 vraies pages d'inscription à une course.
 2. Réserver un hôtel (Booking ou le site d'une chaîne).
 3. Réserver un vol (site d'une compagnie).
 
-Ce test décide du périmètre. Si tout passe, on fait course + hôtel + vol. Si le vol ne passe pas, on resserre sur course + hôtel.
+Ce test a confirmé le périmètre **course + hôtel + vol** (résultats ci-dessous).
 
 Hors périmètre, ou mention « vision » dans le pitch : coach d'entraînement, abonnement Stripe, mode club.
 
+## Résultats du test de faisabilité H (7 nov.)
+
+Test avec l'agent **`h/web-surfer-pro`**, un **faux profil** et **5 sessions en parallèle**. Toutes les sessions ont été arrêtées avant paiement.
+
+| Site | Résultat | Détails |
+| --- | --- | --- |
+| Njuko | ✅ Panier/paiement atteint | 10 km de Hyères, 22 €, sans compte |
+| Klikego | ✅ Page de paiement atteinte | 10 km du Maine Libre, 8 €, mode invité ; le parcours invité crée un profil coureur avec mot de passe |
+| Site organisateur (Time To / ASO) | ❌ Compte obligatoire | 10K Montmartre |
+| Booking.com | ✅ Étape finale avant paiement atteinte | Ibis Lisbonne, 173 € pour 2 nuits, sans compte |
+| TAP, Paris → Lisbonne | ✅ Page « Payer » atteinte | 171,47 €, mode invité |
+
+**Aucun captcha ni anti-bot rencontré.**
+
+### Conclusions et décisions de l'équipe
+
+- **Course + hôtel + vol est faisable : le périmètre est confirmé.**
+- **PPS obligatoire pour les non-licenciés** sur Njuko et Klikego. Le PPS touche à la santé, donc l'agent ne le fait jamais à la place de l'utilisateur : il l'avertit et le guide (quoi faire sur pps.athle.fr), puis l'utilisateur fournit lui-même son numéro PPS, qui est ensuite réutilisé dans son profil coureur.
+- **Si un site exige un compte, l'utilisateur crée son compte lui-même**, puis l'agent reprend (décision de l'équipe).
+- **Point à surveiller : le temps.** 40 à 64 étapes par session, environ 10 à 15 min chacune. Pistes : agents en parallèle, consignes ciblées, sessions préchauffées / démo préparée.
+
 ## Questions ouvertes
 
-1. ~~Quel fil rouge ?~~ Orientation : une feature unique, « déplacement course complet » (voir plus haut). Son périmètre final dépend du test de faisabilité.
+1. ~~Quel fil rouge ?~~ Orientation : une feature unique, « déplacement course complet » (voir plus haut). Périmètre course + hôtel + vol confirmé par le test de faisabilité.
 2. Combien sommes-nous, et qui fait quoi ?
 3. Vraies plateformes ou faux site pour la démo ?
-4. Quel test de faisabilité H on lance en premier ?
+4. ~~Quel test de faisabilité H on lance en premier ?~~ Test réalisé, résultats ci-dessus.
