@@ -14,7 +14,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: render-deploy-health
+  group: render-deploy-health-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
