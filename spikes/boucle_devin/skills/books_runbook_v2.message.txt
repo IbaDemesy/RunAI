@@ -1,0 +1,1 @@
+v2 (correctif boucle Devin, run f492f820): ajoute la fiche produit à la liste blanche et la procédure UPC/stock; status sans accent

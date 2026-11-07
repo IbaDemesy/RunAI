@@ -1,0 +1,16 @@
+[
+  {
+    "number": 2,
+    "created_at": "2026-11-07T15:09:39.370654Z",
+    "created_by": "be2b7da5-b58b-4e93-9bff-6975160eea8c",
+    "message": "v2 (correctif boucle Devin, run f492f820): ajoute la fiche produit à la liste blanche et la procédure UPC/stock; status sans accent",
+    "restored_from": null
+  },
+  {
+    "number": 1,
+    "created_at": "2026-11-07T15:07:55.172295Z",
+    "created_by": "be2b7da5-b58b-4e93-9bff-6975160eea8c",
+    "message": "v1: runbook initial (liste blanche incomplète)",
+    "restored_from": null
+  }
+]

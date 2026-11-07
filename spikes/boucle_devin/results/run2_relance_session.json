@@ -1,0 +1,81 @@
+{
+  "label": "run2_relance",
+  "session_id": "12157957-c6b5-4b70-9e9d-7ffe70303d1d",
+  "status": {
+    "status": "completed",
+    "error": null,
+    "error_code": null,
+    "outcome": null,
+    "steps": 4,
+    "usage_per_model": [
+      {
+        "name": "holo4-27b",
+        "input_tokens": 44020,
+        "cached_tokens": 27200,
+        "output_tokens": 604,
+        "reasoning_tokens": 241
+      }
+    ],
+    "subagent_session_ids": [],
+    "pending_tool_calls": [],
+    "pending_approvals": []
+  },
+  "duration_s": 28.6,
+  "agent_revision": 1,
+  "dependency_revisions": {
+    "skills": [
+      {
+        "catalog_id": "79e17788-16ac-46ee-906b-4d43b67bee52",
+        "name": "h/answering",
+        "revision": 1
+      },
+      {
+        "catalog_id": "ea028f8f-e6e6-4fee-8b8c-62307f559b06",
+        "name": "h/planning",
+        "revision": 1
+      },
+      {
+        "catalog_id": "d304cc8c-a8f0-465f-a1a5-ab0567b662df",
+        "name": "runai-books-runbook",
+        "revision": 2
+      }
+    ],
+    "environments": [
+      {
+        "catalog_id": "e5666f62-3a2a-46aa-8fb1-412a87bc43ff",
+        "name": "h/browser",
+        "revision": 1
+      }
+    ]
+  },
+  "agent_view_url": "https://platform.hcompany.ai/agents/sessions/12157957-c6b5-4b70-9e9d-7ffe70303d1d",
+  "created_at": "2026-11-07T15:09:40.737984Z",
+  "finished_at": "2026-11-07T15:10:05.605666Z",
+  "validation": {
+    "success": true,
+    "checks": {
+      "status_ok": true,
+      "upc_ok": true,
+      "stock_ok": true
+    },
+    "ground_truth": {
+      "upc": "a897fe39b1053632",
+      "stock": 22
+    },
+    "answer": {
+      "upc": "a897fe39b1053632",
+      "prix": "£51.77",
+      "stock": 22,
+      "titre": "A Light in the Attic",
+      "raison": "Tous les champs lus avec succès sur la fiche produit conformément au runbook.",
+      "status": "ok"
+    }
+  },
+  "quota_before": {
+    "scope": "org",
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "waited_s": 0.5
+  }
+}

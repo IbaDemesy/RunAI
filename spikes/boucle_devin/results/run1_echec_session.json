@@ -1,0 +1,81 @@
+{
+  "label": "run1_echec",
+  "session_id": "f492f820-5161-4509-a3d1-c49d83e94a72",
+  "status": {
+    "status": "completed",
+    "error": null,
+    "error_code": null,
+    "outcome": null,
+    "steps": 4,
+    "usage_per_model": [
+      {
+        "name": "holo4-27b",
+        "input_tokens": 44342,
+        "cached_tokens": 28800,
+        "output_tokens": 2853,
+        "reasoning_tokens": 2258
+      }
+    ],
+    "subagent_session_ids": [],
+    "pending_tool_calls": [],
+    "pending_approvals": []
+  },
+  "duration_s": 39.4,
+  "agent_revision": 1,
+  "dependency_revisions": {
+    "skills": [
+      {
+        "catalog_id": "79e17788-16ac-46ee-906b-4d43b67bee52",
+        "name": "h/answering",
+        "revision": 1
+      },
+      {
+        "catalog_id": "ea028f8f-e6e6-4fee-8b8c-62307f559b06",
+        "name": "h/planning",
+        "revision": 1
+      },
+      {
+        "catalog_id": "d304cc8c-a8f0-465f-a1a5-ab0567b662df",
+        "name": "runai-books-runbook",
+        "revision": 1
+      }
+    ],
+    "environments": [
+      {
+        "catalog_id": "e5666f62-3a2a-46aa-8fb1-412a87bc43ff",
+        "name": "h/browser",
+        "revision": 1
+      }
+    ]
+  },
+  "agent_view_url": "https://platform.hcompany.ai/agents/sessions/f492f820-5161-4509-a3d1-c49d83e94a72",
+  "created_at": "2026-11-07T15:08:03.889377Z",
+  "finished_at": "2026-11-07T15:08:37.434026Z",
+  "validation": {
+    "success": false,
+    "checks": {
+      "status_ok": false,
+      "upc_ok": false,
+      "stock_ok": false
+    },
+    "ground_truth": {
+      "upc": "a897fe39b1053632",
+      "stock": 22
+    },
+    "answer": {
+      "upc": null,
+      "prix": "£51.77",
+      "stock": null,
+      "titre": "A Light in the Attic",
+      "raison": "Le titre et le prix sont lisibles sur la carte du catalogue (page autorisée). L'UPC et le nombre exact d'exemplaires en stock (entier) ne sont pas affichés sur les pages autorisées (accueil et pages du catalogue) : ils se trouvent uniquement sur la page de détail du produit, qui n'est pas dans la liste blanche RunAI. La carte indique seulement « In stock » sans chiffre.",
+      "status": "bloque"
+    }
+  },
+  "quota_before": {
+    "scope": "org",
+    "limit": 3,
+    "active": 1,
+    "available": 2,
+    "waited_s": 0.5
+  }
+}

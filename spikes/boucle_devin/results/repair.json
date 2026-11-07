@@ -1,0 +1,6 @@
+{
+  "mode": "simule",
+  "skill_body": "# Runbook RunAI : books.toscrape.com\n\nPages autorisées (liste blanche RunAI, sécurité) :\n- https://books.toscrape.com/ (accueil du catalogue)\n- https://books.toscrape.com/catalogue/page-N.html (pages suivantes du catalogue)\n- https://books.toscrape.com/catalogue/<slug>_<id>/index.html (fiche produit d'un livre, ouverte en cliquant sur son titre dans le catalogue)\n\nN'ouvre aucune autre URL. Toute page hors de cette liste est interdite, même sur le même domaine.\n\nProcédure :\n1. Sur le catalogue, repère la carte du livre (titre complet dans l'attribut title du lien) et lis le prix.\n2. Clique sur le titre pour ouvrir sa fiche produit.\n3. Dans le tableau « Product Information » de la fiche : UPC = ligne « UPC » ; stock = l'entier N de la ligne « Availability » (« In stock (N available) »).\n\nLecture seule : pas de panier, pas de formulaire.\n\nChamps à rendre : titre, prix, upc, stock (entier).\nstatus vaut exactement \"ok\" ou \"bloque\" (sans accent). Si un champ manque après l'étape 3, mets null, status \"bloque\" et explique pourquoi dans raison.\n",
+  "change_message": "v2 (correctif boucle Devin, run f492f820): ajoute la fiche produit à la liste blanche et la procédure UPC/stock; status sans accent",
+  "note": "DEVIN_API_KEY/DEVIN_ORG_ID absents : correctif écrit à la main à partir du prompt"
+}

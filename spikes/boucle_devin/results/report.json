@@ -1,0 +1,120 @@
+{
+  "run_echec": "f492f820-5161-4509-a3d1-c49d83e94a72",
+  "run_succes": "12157957-c6b5-4b70-9e9d-7ffe70303d1d",
+  "boucle_totale_s": 126,
+  "somme_etapes_automatiques_s": 75,
+  "etapes": [
+    {
+      "step": "setup",
+      "t_start": "2026-11-07T15:07:54+00:00",
+      "t_end": "2026-11-07T15:07:55+00:00",
+      "skill_revision": 1,
+      "agent_revision": 1
+    },
+    {
+      "step": "run",
+      "label": "run1_echec",
+      "t_start": "2026-11-07T15:08:03+00:00",
+      "t_end": "2026-11-07T15:08:43+00:00",
+      "session_id": "f492f820-5161-4509-a3d1-c49d83e94a72",
+      "status": "completed",
+      "success": false,
+      "dependency_revisions": {
+        "skills": [
+          {
+            "catalog_id": "79e17788-16ac-46ee-906b-4d43b67bee52",
+            "name": "h/answering",
+            "revision": 1
+          },
+          {
+            "catalog_id": "ea028f8f-e6e6-4fee-8b8c-62307f559b06",
+            "name": "h/planning",
+            "revision": 1
+          },
+          {
+            "catalog_id": "d304cc8c-a8f0-465f-a1a5-ab0567b662df",
+            "name": "runai-books-runbook",
+            "revision": 1
+          }
+        ],
+        "environments": [
+          {
+            "catalog_id": "e5666f62-3a2a-46aa-8fb1-412a87bc43ff",
+            "name": "h/browser",
+            "revision": 1
+          }
+        ]
+      }
+    },
+    {
+      "step": "trace",
+      "label": "run1_echec",
+      "t_start": "2026-11-07T15:09:21+00:00",
+      "t_end": "2026-11-07T15:09:23+00:00",
+      "n_events": 21,
+      "n_steps": 4,
+      "captures": [
+        "run1_echec_capture_1.png"
+      ]
+    },
+    {
+      "step": "repair",
+      "t_start": "2026-11-07T15:09:38+00:00",
+      "t_end": "2026-11-07T15:09:38+00:00",
+      "mode": "simule",
+      "devin_session": null
+    },
+    {
+      "step": "update",
+      "t_start": "2026-11-07T15:09:38+00:00",
+      "t_end": "2026-11-07T15:09:39+00:00",
+      "skill_revision": 2
+    },
+    {
+      "step": "run",
+      "label": "run2_relance",
+      "t_start": "2026-11-07T15:09:39+00:00",
+      "t_end": "2026-11-07T15:10:09+00:00",
+      "session_id": "12157957-c6b5-4b70-9e9d-7ffe70303d1d",
+      "status": "completed",
+      "success": true,
+      "dependency_revisions": {
+        "skills": [
+          {
+            "catalog_id": "79e17788-16ac-46ee-906b-4d43b67bee52",
+            "name": "h/answering",
+            "revision": 1
+          },
+          {
+            "catalog_id": "ea028f8f-e6e6-4fee-8b8c-62307f559b06",
+            "name": "h/planning",
+            "revision": 1
+          },
+          {
+            "catalog_id": "d304cc8c-a8f0-465f-a1a5-ab0567b662df",
+            "name": "runai-books-runbook",
+            "revision": 2
+          }
+        ],
+        "environments": [
+          {
+            "catalog_id": "e5666f62-3a2a-46aa-8fb1-412a87bc43ff",
+            "name": "h/browser",
+            "revision": 1
+          }
+        ]
+      }
+    },
+    {
+      "step": "trace",
+      "label": "run2_relance",
+      "t_start": "2026-11-07T15:10:18+00:00",
+      "t_end": "2026-11-07T15:10:20+00:00",
+      "n_events": 22,
+      "n_steps": 4,
+      "captures": [
+        "run2_relance_capture_1.png"
+      ]
+    }
+  ]
+}
