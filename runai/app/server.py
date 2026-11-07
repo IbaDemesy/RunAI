@@ -139,7 +139,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         if lifecycle:
             await lifecycle.aclose()
 
-    if os.getenv("RUNAI_PUBLIC") == "1" and not os.getenv("RUNAI_BASIC_AUTH") and not selected.simulated:
+    public_without_auth = os.getenv("RUNAI_PUBLIC") == "1" and not os.getenv("RUNAI_BASIC_AUTH")
+    if public_without_auth and not selected.simulated:
         raise RuntimeError(
             "RUNAI_PUBLIC=1 en mode réel : définissez RUNAI_BASIC_AUTH, sinon n'importe qui consomme vos crédits"
         )
@@ -173,10 +174,17 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.get("/api/profile")
     async def get_profile() -> dict:
-        return profile_response(get_service().profile)
+        profile = get_service().profile
+        if public_without_auth and not profile.fictional:
+            profile = RunnerProfile()
+        return profile_response(profile)
 
     @app.put("/api/profile")
     async def put_profile(body: ProfileRequest) -> dict:
+        if public_without_auth and (
+            body.confirm_real_data or body.email.rsplit("@", 1)[-1].lower() != "example.com"
+        ):
+            raise HTTPException(403, "Real profiles require authentication on a public app")
         if body.email.rsplit("@", 1)[-1].lower() != "example.com" and not body.confirm_real_data:
             raise HTTPException(422, "Confirm real data before sharing it with H agents")
         profile = RunnerProfile.model_validate(body.model_dump(exclude={"confirm_real_data", "fictional"}))

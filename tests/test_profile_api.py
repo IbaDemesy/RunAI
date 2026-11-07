@@ -81,6 +81,33 @@ def test_redacted_identifiers_round_trip(service):
     assert service.profile.city == "London"
 
 
+@pytest.mark.parametrize("body", [
+    {"confirm_real_data": True},
+    {"email": "runner@real.org"},
+    {"email": "runner@real.org", "confirm_real_data": True},
+])
+def test_public_unauthenticated_demo_refuses_real_profiles(service, monkeypatch, body):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    service.profile = RunnerProfile(email="private@real.org", fictional=False)
+    store = ProfileStore(service.traces_dir / "profile.json")
+    store.save(service.profile)
+    with TestClient(create_app(service)) as client:
+        assert client.get("/api/profile").json() == RunnerProfile().model_dump(mode="json")
+        assert client.put("/api/profile", json=body).status_code == 403
+    assert store.load() == service.profile
+
+
+def test_public_unauthenticated_demo_allows_fictional_profiles(service, monkeypatch):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    with TestClient(create_app(service)) as client:
+        response = client.put("/api/profile", json={"first_name": "Fictional"})
+        assert response.status_code == 200
+        assert response.json()["fictional"] is True
+        assert client.get("/api/profile").json()["first_name"] == "Fictional"
+
+
 @pytest.mark.parametrize("content", [None, "not json", '{"birth_date":"bad"}', "[]"])
 def test_invalid_or_absent_store(tmp_path, content):
     path = tmp_path / "profile.json"
