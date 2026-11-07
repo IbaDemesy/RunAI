@@ -27,6 +27,17 @@ def engine():
     )
 
 
+def test_long_valid_initial_request_succeeds():
+    framing = engine()
+    text = "race in Lisbon, 10 km in juin 2028, from Lyon, 800 euros, 2 nights, train. "
+    text += "I would like a scenic course. " * 25
+    assert 500 < len(text) < 1000
+    session = asyncio.run(framing.create(FramingCreate(text=text)))
+    assert session.revision == 1
+    assert session.slots[SlotName.city].value == "Lisbon"
+    assert framing.get(session.id) == session
+
+
 @pytest.mark.parametrize("answer", [
     "Marathon 2026 de Lisboa",
     "Lisboa 2026 Night Run",

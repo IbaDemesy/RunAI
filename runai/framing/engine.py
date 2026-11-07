@@ -124,7 +124,10 @@ class FramingEngine:
                 reply.text is not None
                 and not reply.choice_id
                 and not reply.corrections
-                and (len(answer) > 500 or not any(c.isalnum() for c in answer))
+                and (
+                    (bool(session.turns) and len(answer) > 500)
+                    or not any(c.isalnum() for c in answer)
+                )
             ):
                 raise FramingError(guidance)
             choice = None
