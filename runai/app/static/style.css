@@ -58,7 +58,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .course li { position: relative; display: grid; justify-items: center; gap: 8px; text-align: center; font-size: 0.85rem; color: var(--ink-3); }
 .course .cp { width: 30px; height: 30px; border-radius: 50%; background: var(--paper); border: 3px solid var(--line); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 0.8rem; color: var(--ink-3); z-index: 1; }
 .course li[data-state="active"] { color: var(--ink); font-weight: 600; }
-.course li[data-state="active"] .cp { background: var(--accent); border-color: var(--ink); color: var(--ink); }
+.course li[data-state="active"] .cp { background: var(--accent); border-color: var(--ink); color: var(--ink); animation: pulse-ink 1.6s ease-in-out infinite; }
+@keyframes pulse-ink { 50% { box-shadow: 0 0 0 7px rgba(255, 216, 77, 0.45); } }
 .course li[data-state="waiting"] { color: var(--ink); font-weight: 600; }
 .course li[data-state="waiting"] .cp { background: var(--gold-soft); border-color: var(--gold); color: var(--ink); animation: pulse 1.6s ease-in-out infinite; }
 .course li[data-state="done"] { color: var(--ink); }
@@ -66,6 +67,20 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .course li[data-state="failed"] .cp { background: var(--card); border-color: var(--bad); color: var(--bad); }
 .course .cp-note { font-size: 0.75rem; color: var(--ink-3); font-weight: 400; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(224, 174, 14, 0.18); } }
+
+/* Indicateur d'activité */
+.activity { position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; font-weight: 600; }
+.activity .elapsed { margin-left: auto; font-family: var(--mono); font-size: 0.8rem; font-weight: 400; color: var(--ink-3); }
+.activity-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--paper-2); }
+.activity-bar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 35%; background: var(--ink); animation: slide 1.4s ease-in-out infinite; }
+.activity[data-state="waiting"] { border-color: var(--gold); background: var(--gold-soft); }
+.activity[data-state="waiting"] .activity-bar::after { background: var(--gold); }
+.activity[data-state="done"] .spinner, .activity[data-state="failed"] .spinner, .activity[data-state="done"] .activity-bar, .activity[data-state="failed"] .activity-bar { display: none; }
+.activity[data-state="failed"] { color: var(--bad); }
+.spinner { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: spin 0.8s linear infinite; }
+.activity[data-state="waiting"] .spinner { border-top-color: var(--gold); animation-duration: 1.6s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slide { from { left: -35%; } to { left: 100%; } }
 
 /* Dossard */
 .bib { display: grid; grid-template-columns: 1fr auto; gap: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 28px; position: relative; overflow: hidden; }
@@ -96,6 +111,9 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .current-url { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); overflow-wrap: anywhere; background: var(--paper-2); padding: 6px 8px; border-radius: 6px; }
 .status { font-size: 0.78rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--paper-2); color: var(--ink-3); white-space: nowrap; }
 .status-running { background: var(--accent); color: var(--ink); }
+.status-running::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; border-radius: 50%; border: 2px solid rgba(11, 11, 12, 0.25); border-top-color: var(--ink); animation: spin 0.8s linear infinite; }
+.step[data-status="running"] .last-action::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.2s steps(4, end) infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
 .status-paused { background: var(--paper-2); color: var(--ink); border: 1px dashed var(--ink-3); }
 .status-waiting_for_user { background: var(--gold-soft); color: var(--ink); }
 .status-stopped_before_commitment { background: var(--ink); color: #fff; }

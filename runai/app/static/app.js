@@ -27,6 +27,7 @@ const $ = (selector, root = document) => root.querySelector(selector);
 let mission = null;
 let source = null;
 let simulated = false;
+let ticker = null;
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -150,7 +151,7 @@ function renderStep(step) {
   const status = $(".status", card);
   status.textContent = STATUS_LABELS[step.status] || step.status;
   status.className = `status status-${step.status}`;
-  $(".last-action", card).textContent = step.data.last_action || (step.status === "pending" ? "Agent pas encore lancé" : "");
+  $(".last-action", card).textContent = step.data.last_action || STEP_IDLE_TEXT[step.status] || "";
   $(".current-url", card).textContent = step.data.current_url || "";
   const liveUrl = step.live_view_url || step.data.live_view_path;
   const frame = $(".live-frame", card);
@@ -168,6 +169,49 @@ function renderStep(step) {
   $(".pause", card).disabled = !started || step.status !== "running";
   $(".resume", card).disabled = !started || step.status !== "paused";
   $(".message", card).classList.toggle("hidden", !active);
+}
+
+const STEP_IDLE_TEXT = {
+  pending: "Agent pas encore lancé",
+  running: "L'agent navigue sur le site…",
+  paused: "Agent en pause",
+};
+
+function formatElapsed(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = String(total % 60).padStart(2, "0");
+  return minutes ? `${minutes} min ${seconds} s` : `${total} s`;
+}
+
+function activityText(data) {
+  if (data.status === "searching") return ["busy", "Recherche de la course sur le web…"];
+  if (data.status === "failed") return ["failed", "La mission a échoué"];
+  if (TERMINAL.has(data.status)) return ["done", "Les agents ont fini : à vous de signer"];
+  const waiting = data.steps.filter((step) => step.status === "waiting_for_user").length;
+  if (waiting) return ["waiting", waiting > 1 ? `${waiting} agents attendent votre réponse` : "Un agent attend votre réponse"];
+  const running = data.steps.filter((step) => step.status === "running").length;
+  if (running) return ["busy", running > 1 ? `${running} agents naviguent pour vous…` : "Un agent navigue pour vous…"];
+  return ["busy", "Les agents se mettent en route…"];
+}
+
+function renderActivity(data) {
+  const [state, text] = activityText(data);
+  const box = $("#activity");
+  box.dataset.state = state;
+  $("#activity-text").textContent = text;
+  const started = Date.parse(data.created_at);
+  const tick = () => ($("#activity-elapsed").textContent = Number.isNaN(started) ? "" : formatElapsed(Date.now() - started));
+  clearInterval(ticker);
+  ticker = null;
+  if (TERMINAL.has(data.status)) {
+    const last = data.events.at(-1);
+    const ended = last ? Date.parse(last.at) : NaN;
+    $("#activity-elapsed").textContent = Number.isNaN(started) || Number.isNaN(ended) ? "" : `en ${formatElapsed(ended - started)}`;
+    return;
+  }
+  tick();
+  ticker = setInterval(tick, 1000);
 }
 
 function renderPortal(steps) {
@@ -277,6 +321,7 @@ function render(data, withEvents = false) {
   renderPortal(data.steps);
   renderCourse(data);
   renderDistance(data.race);
+  renderActivity(data);
   const anyRunning = data.steps.some((step) => step.status === "running");
   const anyPaused = data.steps.some((step) => step.status === "paused");
   $("#pause-all").disabled = !anyRunning;
