@@ -414,6 +414,7 @@ class FramingEngine:
                                 session.slots
                             )
                     except CandidateSearchError as exc:
+                        self._search_keys.pop(session.id, None)
                         session.candidates = []
                         session.limitations.append(
                             Limitation(

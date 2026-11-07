@@ -17,6 +17,7 @@ from runai.contracts.mission import MissionSnapshot
 from runai.framing.engine import FramingEngine
 from runai.framing.interpret import extract_slots
 from runai.models import Source
+from runai.search.candidates import CandidateSearchError
 
 
 class Search:
@@ -260,6 +261,56 @@ def test_flexible_date_window_is_marked_not_needed_and_flow_continues(answer):
         assert session.slots[SlotName.date_window].value is None
         assert session.slots[SlotName.date_window].status.value == "not_needed"
         assert session.open_questions[0].slots == [SlotName.origin]
+
+    asyncio.run(run())
+
+
+def test_candidate_search_retries_after_provider_error_on_later_reply():
+    class FailOnceSearch:
+        def __init__(self):
+            self.calls = 0
+
+        async def find_candidates(self, slots, request_text: str | None = None):
+            self.calls += 1
+            if self.calls == 1:
+                raise CandidateSearchError("provider unavailable")
+            return [
+                RaceCandidate(
+                    id="retry-candidate",
+                    name="Tokyo City Run",
+                    city=slots[SlotName.city].value,
+                    country="JP",
+                    race_date=date(2028, 6, 12),
+                    distances_km=[10],
+                    sources=[Source(url="https://example.org/race")],
+                    provenance=Provenance(kind="fixture"),
+                )
+            ]
+
+    async def run():
+        search = FailOnceSearch()
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(
+            FramingCreate(
+                text=(
+                    "une course à Tokyo, 10 km en juin 2028, depuis Lyon, "
+                    "800 euros, 2 nuits, avion"
+                )
+            )
+        )
+        assert search.calls == 1
+        session = await engine.reply(
+            session.id,
+            FramingReply(
+                revision=session.revision,
+                corrections={SlotName.budget: 900},
+            ),
+        )
+        assert search.calls == 2
+        assert session.status == FramingStatus.choosing_candidate
+        assert [candidate.id for candidate in session.candidates] == [
+            "retry-candidate"
+        ]
 
     asyncio.run(run())
 
