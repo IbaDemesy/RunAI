@@ -7,12 +7,15 @@ choisis explicitement et étiquettent chaque `StepResult.data["provenance"]`.
 
 import importlib.util
 import os
+import re
+import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any
-from urllib.parse import urlsplit
+from typing import TYPE_CHECKING, Any, Literal
+from urllib.parse import quote, urlencode, urlsplit
 
 from pydantic import BaseModel
 
@@ -32,6 +35,9 @@ from runai.contracts.common import (
     ProvenanceKind,
 )
 from runai.models import Race, RunnerProfile, StepKind, StepResult
+
+if TYPE_CHECKING:
+    from runai.app.tasks import TripBrief
 
 
 class ProviderStatus(str, Enum):
@@ -360,7 +366,7 @@ PLATFORMS: tuple[Platform, ...] = (
         "trenitalia.com",
         StepKind.transport,
         ("trenitalia.com",),
-        "https://www.trenitalia.com",
+        "https://www.trenitalia.com/en.html",
         transport_modes=frozenset({"train"}),
         countries=frozenset({"IT"}),
     ),
@@ -375,6 +381,28 @@ FORBIDDEN_HOSTS: dict[str, str] = {
 }
 FORBIDDEN_ACCOMMODATION_SITES = ("Booking.com", "Expedia", "Hotels.com", "Airbnb")
 _COUNTRY_ALIASES = {"ITALY": "IT", "ITALIE": "IT", "ITALIA": "IT", "ITA": "IT"}
+_COUNTRY_NAMES_EN = {
+    "AT": "austria",
+    "BE": "belgium",
+    "BR": "brazil",
+    "CA": "canada",
+    "CH": "switzerland",
+    "DE": "germany",
+    "DK": "denmark",
+    "ES": "spain",
+    "FR": "france",
+    "GB": "united-kingdom",
+    "GR": "greece",
+    "IE": "ireland",
+    "IT": "italy",
+    "JP": "japan",
+    "MA": "morocco",
+    "NL": "netherlands",
+    "PL": "poland",
+    "PT": "portugal",
+    "US": "united-states",
+}
+_ACCOR_SEARCH = "https://all.accor.com/booking/en/accor/hotels/"
 _TRANSPORT_ALIASES = {
     "train": "train",
     "rail": "train",
@@ -426,6 +454,62 @@ def normalize_transport_mode(mode: str | None) -> str | None:
     return _TRANSPORT_ALIASES.get((mode or "").strip().lower()) if mode else None
 
 
+StartUrlKind = Literal["deep_link", "home"]
+
+
+def _slug(value: str) -> str:
+    ascii_value = (
+        unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    )
+    return re.sub(r"[^a-z0-9]+", "-", ascii_value.lower()).strip("-")
+
+
+def _country_slug(country: str | None) -> str:
+    code = country_code(country)
+    if code and code in _COUNTRY_NAMES_EN:
+        return _COUNTRY_NAMES_EN[code]
+    if country and len(country.strip()) > 2:
+        return _slug(country)
+    return ""
+
+
+def accor_search_url(
+    city: str | None,
+    country: str | None,
+    arrival: date | None,
+    departure: date | None,
+    adults: int = 1,
+) -> str | None:
+    """English Accor results page, verified in a browser:
+    `https://all.accor.com/booking/en/accor/hotels/<city>-<country>?dateIn=YYYY-MM-DD&nights=N&compositions=<adults>`
+    (the legacy `/ssr/app/accor/hotels/<slug>/index.en.shtml` form 301-redirects there).
+    The slug is the English city and country names, lowercase ASCII joined by dashes."""
+    city_slug = _slug(city or "")
+    country_slug = _country_slug(country)
+    if not (city_slug and country_slug and arrival and departure):
+        return None
+    nights = (departure - arrival).days
+    if nights < 1 or adults < 1:
+        return None
+    query = urlencode(
+        {"dateIn": arrival.isoformat(), "nights": nights, "compositions": adults}
+    )
+    return f"{_ACCOR_SEARCH}{quote(f'{city_slug}-{country_slug}')}?{query}"
+
+
+def trenitalia_search_url(
+    origin: str | None,
+    destination: str | None,
+    outbound: date | None,
+    inbound: date | None = None,
+    adults: int = 1,
+) -> str | None:
+    """Always None: trenitalia.com runs its search as a single-page app (form state only,
+    results under lefrecce.it after a POST) with no stable shareable deep link, so the
+    agent starts on the English home page `https://www.trenitalia.com/en.html`."""
+    return None
+
+
 @dataclass
 class StepCoverage:
     kind: StepKind
@@ -433,6 +517,11 @@ class StepCoverage:
     platform: Platform | None = None
     start_url: str | None = None
     limitations: list[Limitation] = field(default_factory=list)
+    start_url_kind: StartUrlKind | None = None
+
+    def __post_init__(self) -> None:
+        if self.start_url and self.start_url_kind is None:
+            self.start_url_kind = "home"
 
 
 def registration_coverage(race: Race, official_url: str | None = None) -> StepCoverage:
@@ -484,8 +573,33 @@ def registration_coverage(race: Race, official_url: str | None = None) -> StepCo
     )
 
 
-def accommodation_coverage() -> StepCoverage:
+def _departure(brief: "TripBrief") -> date | None:
+    if brief.departure:
+        return brief.departure
+    if brief.arrival and brief.nights:
+        return brief.arrival + timedelta(days=brief.nights)
+    return None
+
+
+def accommodation_coverage(brief: "TripBrief | None" = None) -> StepCoverage:
     accor = platform("accor")
+    deep_link = (
+        accor_search_url(brief.city, brief.country, brief.arrival, _departure(brief))
+        if brief
+        else None
+    )
+    if (
+        deep_link
+        and host_matches(deep_link, accor.hosts)
+        and not forbidden_reason(deep_link)
+    ):
+        return StepCoverage(
+            StepKind.accommodation,
+            Automation.automated,
+            accor,
+            deep_link,
+            start_url_kind="deep_link",
+        )
     return StepCoverage(
         StepKind.accommodation, Automation.automated, accor, accor.start_url
     )
@@ -495,6 +609,7 @@ def transport_coverage(
     transport_mode: str | None,
     destination_country: str | None,
     origin_country: str | None = None,
+    brief: "TripBrief | None" = None,
 ) -> StepCoverage:
     mode = normalize_transport_mode(transport_mode)
     countries = {
@@ -508,6 +623,21 @@ def transport_coverage(
             and mode in candidate.transport_modes
             and countries & candidate.countries
         ):
+            deep_link = (
+                trenitalia_search_url(
+                    brief.origin, brief.city, brief.arrival, brief.departure
+                )
+                if brief and candidate.id == "trenitalia"
+                else None
+            )
+            if deep_link and host_matches(deep_link, candidate.hosts):
+                return StepCoverage(
+                    StepKind.transport,
+                    Automation.automated,
+                    candidate,
+                    deep_link,
+                    start_url_kind="deep_link",
+                )
             return StepCoverage(
                 StepKind.transport, Automation.automated, candidate, candidate.start_url
             )

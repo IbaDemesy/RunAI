@@ -244,3 +244,18 @@ def test_zero_nights_skips_accommodation_instead_of_failing():
     assert plan.steps[StepKind.accommodation].automation is Automation.not_covered
     assert plan.steps[StepKind.accommodation].task is None
     assert any(lim.code == "no_accommodation_requested" for lim in plan.limitations)
+
+
+def test_confirmed_plan_starts_accommodation_on_accor_results_page():
+    plan = plan_launch(milan_train())
+
+    accommodation = plan.steps[StepKind.accommodation]
+    assert accommodation.start_url == (
+        "https://all.accor.com/booking/en/accor/hotels/milan-italy"
+        "?dateIn=2027-10-02&nights=2&compositions=1"
+    )
+    assert accommodation.start_url_kind == "deep_link"
+    assert plan.brief.accommodation_url == accommodation.start_url
+    transport = plan.steps[StepKind.transport]
+    assert transport.start_url == "https://www.trenitalia.com/en.html"
+    assert transport.start_url_kind == "home"
