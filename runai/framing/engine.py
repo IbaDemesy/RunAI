@@ -285,7 +285,7 @@ class FramingEngine:
             return {}
         known = {name.value: str(slot.value) for name, slot in session.slots.items() if slot.is_known}
         filled: dict[SlotName, object] = {}
-        for raw, value in (await extract(text, known)).items():
+        for raw, value in (await extract(text, known, session.turns)).items():
             try:
                 name = SlotName(raw)
             except ValueError:
