@@ -182,23 +182,28 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
     predicted = riegel(goal.recent_result.distance_km, goal.recent_result.time, distance) if goal.recent_result else None
     if target is None and predicted is None:
         return []
+    reasons: list[Reason] = []
     if rules.time_limit is None:
-        return [
+        reasons.append(
             Reason(
                 level=Light.orange,
                 code="time_limit_unknown",
-                message="Barrière horaire non trouvée dans le règlement : réalisme à confirmer.",
+                message="Temps limite non trouvé dans le règlement : réalisme à confirmer.",
                 source_url=str(rules.regulation_url) if rules.regulation_url else None,
             )
-        ]
-    reasons: list[Reason] = []
+        )
+        if not rules.time_gates:
+            return reasons
     limit_source = rules.source_url("time_limit")
     gates_source = rules.source_url("time_gates") or limit_source
     for label, expected in (("Objectif", target), ("Temps prédit (Riegel)", predicted)):
         if expected is None:
             continue
         code = "goal" if label == "Objectif" else "prediction"
-        reasons.append(_compare(f"{label} {format_duration(expected)}", expected, rules.time_limit, code, limit_source))
+        if rules.time_limit is not None:
+            reasons.append(
+                _compare(f"{label} {format_duration(expected)}", expected, rules.time_limit, code, limit_source)
+            )
         for gate in rules.time_gates:
             at_gate = expected * (gate.km / distance)
             reasons.append(
