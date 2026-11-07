@@ -1,5 +1,15 @@
 # Exécution H (`runai/h/`)
 
+## Publishing a trace
+
+Before committing a replay fixture or sending a trace to Devin, run
+`python -m scripts.scrub_trace traces/input.jsonl traces/publishable.jsonl`.
+The scrubber masks provider credentials and personal contact details, removes
+private H view and trajectory URLs, and preserves public `share_url` links.
+It prints the number of events kept and fields scrubbed. Publish only the
+scrubbed output; `find_violations` in `scripts.scrub_trace` checks the same
+invariants enforced by the repository fixture tests.
+
 Module qui lance et pilote les sessions `h/web-surfer-pro` (SDK `hai-agents`, client async).
 
 ## Utilisation

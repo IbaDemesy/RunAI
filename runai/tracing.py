@@ -3,6 +3,7 @@ from pathlib import Path
 
 from runai.config import get_settings
 from runai.models import TraceEvent
+from runai.redaction import redact_secrets
 
 _MISSION_ID = re.compile(r"[A-Za-z0-9_-]+")
 
@@ -18,6 +19,7 @@ class TraceWriter:
         self.path = directory / f"{mission_id}.jsonl"
 
     def write(self, event: TraceEvent) -> None:
+        event = TraceEvent.model_validate(redact_secrets(event.model_dump(mode="json")))
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(event.model_dump_json() + "\n")
 

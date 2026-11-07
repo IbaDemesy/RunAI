@@ -31,7 +31,6 @@
       "stop_point": null,
       "url": null,
       "price_eur": null,
-      "live_view_url": null,
       "h_session_id": null,
       "data": {
         "provenance": "fixture"
@@ -45,7 +44,6 @@
       "stop_point": "payment",
       "url": null,
       "price_eur": 640.0,
-      "live_view_url": null,
       "h_session_id": null,
       "data": {
         "provenance": "fixture"
@@ -59,7 +57,6 @@
       "stop_point": null,
       "url": null,
       "price_eur": null,
-      "live_view_url": null,
       "h_session_id": null,
       "data": {
         "automation": "not_covered",
