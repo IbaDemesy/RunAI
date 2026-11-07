@@ -62,3 +62,28 @@ def test_dated_candidate_button_label_is_not_a_date_correction():
         assert session.summary.race.race_date == date(2028, 6, 12)
         assert session.status == FramingStatus.ready_to_confirm
     asyncio.run(run())
+
+
+@pytest.mark.parametrize("city", ["", "   "])
+def test_candidate_without_city_keeps_city_unknown_and_requests_it(city):
+    class MissingCitySearch(Search):
+        async def find_candidates(self, slots):
+            candidates = await super().find_candidates(slots)
+            candidates[0].city = city
+            return candidates
+
+    async def run():
+        engine = FramingEngine(MissingCitySearch(), DataMode.demo)
+        session = await engine.create(FramingCreate(text="une course depuis Lyon, 800 euros, 2 nuits, en train"))
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={"race": "Épreuve officielle"}))
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, choice_id="race"))
+        assert not session.slots[SlotName.city].is_known
+        assert session.summary is None
+        question = next(q for q in session.open_questions if SlotName.city in q.slots)
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, question_id=question.id, text="Rome"))
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, choice_id="race"))
+        assert session.summary.race.city == "Rome"
+        session.status = FramingStatus.confirmed
+        session.confirmed_revision = session.revision
+        assert plan_launch(session).brief.city == "Rome"
+    asyncio.run(run())

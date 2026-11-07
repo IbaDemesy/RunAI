@@ -202,7 +202,7 @@ class FramingEngine:
                 ):
                     sourced[SlotName.distance_km] = candidate.distances_km[0]
                 for name, value in sourced.items():
-                    if value is not None:
+                    if value is not None and (not isinstance(value, str) or value.strip()):
                         session.slots[name] = Slot(
                             name=name,
                             value=value,
@@ -319,6 +319,7 @@ class FramingEngine:
                 distance_km=float(value(SlotName.distance_km)),
             )
         )
+        race.city = value(SlotName.city)
         race.race_date = date.fromisoformat(str(value(SlotName.race_date)))
         if not candidate and not any(
             l.code == "manual_event" for l in session.limitations
