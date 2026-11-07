@@ -74,6 +74,9 @@ _DIST_WORDS = {"semi-marathon": 21.0975, "semi": 21.0975, "marathon": 42.195}
 _CHRONO_HINT = r"(?:chrono|course|couru|fait|termin\w*|boucl\w*)"
 
 
+_ET_COMPOUNDS = {(20, 1), (30, 1), (40, 1), (50, 1), (60, 1), (60, 11)}
+
+
 def _normalize(text: str) -> str:
     t = text.lower().replace("’", "'")
     t = re.sub(r"(\d) (\d{3})\b", r"\1\2", t)
@@ -81,7 +84,7 @@ def _normalize(text: str) -> str:
         t = re.sub(rf"\b{word}\b", str(value), t)
     t = re.sub(
         r"\b(\d+) et (\d+)\b",
-        lambda m: str(int(m[1]) + int(m[2])) if int(m[1]) % 10 == 0 and int(m[2]) in (1, 11) else m[0],
+        lambda m: str(int(m[1]) + int(m[2])) if (int(m[1]), int(m[2])) in _ET_COMPOUNDS else m[0],
         t,
     )  # « vingt et un », « soixante et onze »
     t = re.sub(r"\bentre (\d+) et (\d+)\b", lambda m: f"{(int(m[1]) + int(m[2])) / 2:g}", t)
