@@ -266,3 +266,38 @@ def test_real_question_timeout_is_capped_by_h_session_time(monkeypatch):
     assert isinstance(service.agents, RealBrowserAgents)
     assert service.agents.max_time_s == 200
     assert service.question_timeout_s == 140
+
+
+def test_real_agent_run_labels_live_provenance_and_reads_n_night_total():
+    class HotelHRun:
+        id = "hotel-4"
+        agent_view_url = None
+        live_view_url = None
+
+        async def wait(self, **kwargs):
+            return StepResult(
+                kind=StepKind.accommodation,
+                status=StepStatus.stopped_before_commitment,
+                summary="PRIX_TOTAL_4_NUITS: 812,40 EUR",
+            )
+
+    result = asyncio.run(
+        RealAgentRun(HotelHRun(), StepKind.accommodation, lambda event: None, timeout_s=10).wait()
+    )
+    assert result.price_eur == 812.4
+    assert result.data["provenance"]["mode"] == "live"
+    assert result.data["provenance"]["kind"] == "h_agent"
+    assert "hotel-4" in result.data["provenance"]["label"]
+
+
+def test_real_browser_refuses_forbidden_start_url_before_any_h_session():
+    agents = RealBrowserAgents(runner=SimpleNamespace(), max_steps=1, max_time_s=1)
+    race = Race(name="Course", city="Tokyo", country="JP")
+    for url, name in (("https://www.booking.com/x", "Booking"), ("https://www.flytap.com", "TAP")):
+        with pytest.raises(RuntimeError, match=name):
+            asyncio.run(
+                agents.start(
+                    StepKind.accommodation, "t", race, RunnerProfile(),
+                    lambda event: None, lambda q, o: asyncio.sleep(0), start_url=url,
+                )
+            )
