@@ -185,6 +185,14 @@ class FramingEngine:
                             extract_slots(reply.text).get(slot) or answer
                         )
                 elif (
+                    slot == SlotName.budget
+                    and slot not in values
+                    and reply.text.strip().casefold() in (
+                        "no cap", "no limit", "unlimited", "sans plafond", "pas de limite",
+                    )
+                ):
+                    values[slot] = None
+                elif (
                     slot in (SlotName.city, SlotName.origin, SlotName.race)
                     and slot not in values
                     and (reply.question_id or not values)

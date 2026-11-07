@@ -872,6 +872,28 @@ def test_specific_period_correction_invalidates_selected_flexible_race():
     asyncio.run(run())
 
 
+@pytest.mark.parametrize("answer", ["no cap", "NO LIMIT", "Unlimited", "sans plafond", "Pas de limite"])
+def test_budget_question_accepts_unlimited_answers(answer):
+    async def run():
+        engine = FramingEngine(Search(1))
+        session = await engine.create(FramingCreate(
+            text="course à Tokyo, 10 km en juin 2028, depuis Lyon, 2 nuits, train"
+        ))
+        question = next(q for q in session.open_questions if q.slots == [SlotName.budget])
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text=answer
+        ))
+        assert session.slots[SlotName.budget].value is None
+        assert session.slots[SlotName.budget].status.value == "not_needed"
+        assert not any(SlotName.budget in q.slots for q in session.open_questions)
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0"
+        ))
+        assert session.summary.lines[-1] == "Budget: no cap"
+
+    asyncio.run(run())
+
+
 def test_french_conjunction_car_is_not_a_transport_mode():
     assert SlotName.transport_mode not in extract_slots(
         "je viens car je veux courir à Tokyo"
