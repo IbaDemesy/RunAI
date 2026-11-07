@@ -9,7 +9,7 @@ from typing import Any
 from runai.models import RunnerProfile
 from runai.redaction import redact_secrets
 
-_H_KEY = re.compile(r"hk-[A-Za-z0-9_-]+", re.IGNORECASE)
+_H_KEY = re.compile(r"\bhk-[A-Za-z0-9_-]+", re.IGNORECASE)
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 _PRIVATE_KEYS = {"agent_view_url", "live_view_url"}
 _RESOURCE = re.compile(r"/api/v1/trajectories/", re.IGNORECASE)
@@ -51,7 +51,7 @@ def find_violations(obj: Any) -> list[str]:
     def walk(value: Any, path: str) -> None:
         if isinstance(value, dict):
             for key, item in value.items():
-                if key.lower() in _PRIVATE_KEYS:
+                if key.lower() in _PRIVATE_KEYS and item is not None:
                     violations.append(f"{path}: private field {key}")
                 walk(key, path)
                 walk(item, f"{path}.{key}")
