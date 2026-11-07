@@ -405,6 +405,7 @@ class HRunner:
         if not self.accounts:
             raise ValueError("Au moins une clé H est nécessaire")
         self._slot_freed = asyncio.Event()
+        self._releases = 0
 
     @property
     def client(self) -> Any:
@@ -443,7 +444,10 @@ class HRunner:
                 best, best_score = account, score
         return best, seen
 
-    async def _wait_freed(self, timeout_s: float | None) -> None:
+    async def _wait_freed(self, timeout_s: float | None, seen_releases: int) -> None:
+        """Attend une libération de slot ; ne dort pas si un slot a été libéré depuis `seen_releases`."""
+        if self._releases != seen_releases:
+            return
         self._slot_freed.clear()
         try:
             await asyncio.wait_for(self._slot_freed.wait(), timeout_s)
@@ -452,15 +456,17 @@ class HRunner:
 
     def _release(self, account: HAccount) -> None:
         account.active -= 1
+        self._releases += 1
         self._slot_freed.set()
 
     async def _create(self, params: dict[str, Any]) -> tuple[HAccount, Any]:
         """Réserve un slot local sur la clé la plus libre puis crée la session ; réessaie après un `429`."""
         deadline = None
         while True:
+            releases = self._releases
             local = [account for account in self.accounts if account.has_local_slot]
             if not local:
-                await self._wait_freed(None)
+                await self._wait_freed(None, releases)
                 continue
             if deadline is None:
                 deadline = time.monotonic() + self.quota_timeout_s
@@ -480,7 +486,7 @@ class HRunner:
             if time.monotonic() >= deadline:
                 detail = ", ".join(f"{name} {state}" for name, state in seen.items())
                 raise HQuotaTimeout(f"Aucun slot H libre après {self.quota_timeout_s}s ({detail})")
-            await self._wait_freed(self.quota_poll_s)
+            await self._wait_freed(self.quota_poll_s, releases)
 
     async def start(
         self,
