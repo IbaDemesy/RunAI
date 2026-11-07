@@ -106,7 +106,7 @@ a { color: #4f46e5; }
       {% if m.h_session_id %}<tr><td>Session H</td><td>{% if m.live_view_url %}<a href="{{ m.live_view_url }}">{{ m.h_session_id }}</a>{% else %}{{ m.h_session_id }}{% endif %}</td></tr>{% endif %}
     </table>
     {% if m.stop_point and not m.capture_data_uri %}<span class="stopline">AGENT ARRÊTÉ ICI</span>{% endif %}
-    {% if m.finalize_url %}<a class="btn" href="{{ m.finalize_url }}">Reprendre et finaliser →</a>{% endif %}
+    {% if m.finalize_url %}<a class="btn" href="{{ m.finalize_url }}">Ouvrir la page où l'agent s'est arrêté →</a>{% endif %}
   </div>
   {% if m.capture_data_uri %}<div class="right">
     <div class="browser"><div class="bar">● ● ● &nbsp; {{ m.finalize_url or "" }}</div>
