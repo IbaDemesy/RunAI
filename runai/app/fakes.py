@@ -294,7 +294,7 @@ class FakeBrowserAgents:
 
 
 class FakeTranscriber:
-    TEXT = "I want to run the Milan marathon, leaving from Paris."
+    TEXT = "I want to run the marathon in Milan, leaving from Paris."
 
     def __init__(self, delay: float = 0.5):
         self.delay = delay

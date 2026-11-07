@@ -2,15 +2,17 @@ import re
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from runai.app.candidates import FixtureCandidateSearch
 from runai.app.fakes import (
-    DEMO_RACES,
     _LISBON_WORDS,
+    DEMO_RACES,
     FakeBrowserAgents,
     FakeRaceSearch,
     FakeTranscriber,
 )
+from runai.app.server import build_demo_service, create_app
 from runai.contracts.common import DataMode
 from runai.contracts.framing import (
     FramingCreate,
@@ -21,6 +23,7 @@ from runai.contracts.framing import (
     SlotStatus,
 )
 from runai.framing.engine import FramingEngine
+from runai.framing.interpret import extract_slots
 from runai.models import RunnerProfile, StepKind
 
 
@@ -36,6 +39,25 @@ def slots(**values):
 def idea_chips():
     source = Path("runai/app/static/app.js").read_text()
     return re.findall(r'"([^"]+)"', re.search(r"const IDEAS = \[(.*?)\]", source)[1])
+
+
+def test_demo_voice_transcription_supplies_city_and_origin_to_framing(tmp_path):
+    service = build_demo_service(delay=0)
+    service.traces_dir = tmp_path
+    with TestClient(create_app(service)) as client:
+        response = client.post("/api/transcribe", content=b"demo audio",
+                               headers={"Content-Type": "audio/webm"})
+        assert response.status_code == 200
+        transcript = response.json()["text"]
+        response = client.post("/api/framings", json={"text": transcript, "channel": "voice"})
+        assert response.status_code == 201
+        session = response.json()
+        assert session["slots"]["city"]["value"] == "Milan"
+        assert session["slots"]["origin"]["value"] == "Paris"
+        assert not any(question["slots"] == ["city"] for question in session["open_questions"])
+        extracted = extract_slots(transcript)
+        assert extracted[SlotName.city] == "Milan"
+        assert extracted[SlotName.origin] == "Paris"
 
 
 @pytest.mark.anyio
@@ -160,4 +182,4 @@ async def test_fake_actions_have_english_summaries_and_step_urls(kind):
         assert str(result.url) == str(race.registration_url) + "/rules"
         assert [e.data["url"] for e in events] == [
             str(race.registration_url) + suffix for suffix in ("", "/distance", "/runner", "/runner", "/rules")]
-    assert FakeTranscriber.TEXT == "I want to run the Milan marathon, leaving from Paris."
+    assert FakeTranscriber.TEXT == "I want to run the marathon in Milan, leaving from Paris."
