@@ -1,0 +1,153 @@
+diff --git a/runai/app/static/app.js b/runai/app/static/app.js
+--- a/runai/app/static/app.js
++++ b/runai/app/static/app.js
+@@ -17,7 +17,7 @@
+   };
+   let framing, mission, events, view, plan, busy = false, page = "progress";
+   const drafts = new Map();
+-  let journeyScripts;
++  let journeyScripts, pendingFocus;
+   function loadJourneyScripts() {
+     if (!journeyScripts) journeyScripts = (window.RUNAI_JOURNEY_SCRIPTS || []).reduce((previous, src) => previous.then(() => new Promise((resolve) => {
+       const script = document.createElement("script");
+@@ -50,7 +50,7 @@
+   function button(text, action, primary = false) {
+     const node = el("button", text, primary ? "primary" : "secondary");
+     node.type = "button"; node.disabled = busy;
+-    node.onclick = () => action(); return node;
++    node.onclick = () => { pendingFocus = node.dataset.focusKey; action(); }; return node;
+   }
+   function link(parent, url, text) {
+     if (!url) return;
+@@ -58,6 +58,7 @@
+       const parsed = new URL(url);
+       if (!["https:", "http:"].includes(parsed.protocol)) return;
+       const node = el("a", text || url); node.href = parsed.href;
++      node.setAttribute("aria-label", (text || url) + " (nouvel onglet)");
+       node.target = "_blank"; node.rel = "noopener noreferrer"; parent.append(node);
+     } catch (_) { /* Une source invalide ne devient pas un lien. */ }
+   }
+@@ -77,7 +78,7 @@
+     input.value = drafts.get(draftKey) || value;
+     input.oninput = () => drafts.set(draftKey, input.value);
+     fieldLabel.append(input);
+-    const submit = button("Envoyer", () => {}, true); submit.type = "submit";
++    const submit = button("Envoyer · " + title, () => {}, true); submit.type = "submit";
+     node.append(fieldLabel, submit);
+     node.onsubmit = (event) => { event.preventDefault(); if (!busy && input.value.trim()) onSubmit(input.value.trim()); };
+     parent.append(node);
+@@ -95,16 +96,26 @@
+   function destroyView() { if (view) { view.destroy(); view = null; } }
+   function render() {
+     const active = document.activeElement;
+-    const focusKey = active?.dataset.focusKey;
++    const focusKey = pendingFocus || active?.dataset.focusKey;
++    const hadFocus = pendingFocus != null || screen.contains(active);
++    pendingFocus = null;
+     const selection = active?.selectionStart;
+     destroyView(); screen.replaceChildren();
+     if (mission) { mode(mission.mode); renderMission(); }
+     else if (framing) { mode(framing.mode); renderFraming(); }
+     else renderStart();
+-    screen.querySelectorAll("input").forEach((input, index) => { input.dataset.focusKey = String(index); });
+-    if (focusKey != null) {
+-      const input = screen.querySelector('[data-focus-key="' + focusKey + '"]');
+-      if (input) { input.focus(); if (selection != null) input.setSelectionRange(selection, selection); }
++    screen.querySelectorAll("input, textarea, button").forEach((node, index) => {
++      node.dataset.focusKey = node.tagName === "BUTTON" ? "button:" + node.textContent : "field:" + index;
++    });
++    if (hadFocus) {
++      const replacement = Array.from(screen.querySelectorAll("[data-focus-key]")).find((node) => node.dataset.focusKey === focusKey && !node.disabled);
++      if (replacement) {
++        replacement.focus();
++        if (selection != null && replacement.setSelectionRange) replacement.setSelectionRange(selection, selection);
++      } else {
++        const heading = screen.querySelector("h1");
++        if (heading) { heading.tabIndex = -1; heading.focus(); }
++      }
+     }
+   }
+   async function mutate(action, reload) {
+@@ -156,7 +167,7 @@
+       const choices = el("div", null, "question-options");
+       for (const choice of question.choices) choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
+       block.append(choices);
+-      if (question.allow_free_text) form(block, "Votre réponse", (text) => submitReply(text, { question_id: question.id }), question.id);
++      if (question.allow_free_text) form(block, "Votre réponse · " + question.text, (text) => submitReply(text, { question_id: question.id }), question.id);
+       screen.append(block);
+     }
+     for (const candidate of framing.candidates) {
+@@ -164,7 +175,7 @@
+       block.append(el("h2", candidate.name), el("p", [candidate.city, candidate.country, candidate.race_date || "Date inconnue", candidate.distances_km.join(" / ") + " km"].join(" · ")));
+       const question = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id === candidate.id));
+       const choice = question?.choices.find((c) => c.candidate_id === candidate.id);
+-      if (choice) block.append(button("Choisir cette course", () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
++      if (choice) block.append(button("Choisir cette course · " + candidate.name, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
+       link(block, candidate.official_url || candidate.sources[0]?.url, "Source officielle");
+       limitations(block, candidate.limitations); screen.append(block);
+     }
+@@ -207,7 +218,9 @@
+     events = new EventSource("/api/missions/" + encodeURIComponent(mission.mission_id) + "/events");
+     const refresh = async () => {
+       try {
++        const previousStatus = mission.status;
+         mission = await api.request("/api/missions/" + encodeURIComponent(mission.mission_id));
++        if (previousStatus !== mission.status) announce("Statut de la mission : " + label(mission.status));
+         if (!busy && !screen.querySelector("input:focus, textarea:focus")) render();
+       }
+       catch (_) { announce("Suivi interrompu. La reconnexion ne relance pas les agents."); }
+@@ -217,7 +230,7 @@
+   }
+   function questionBlock(question) {
+     const block = el("article", null, "agent-question");
+-    block.append(el("h3", question.text), el("p", label(question.step) + " · " + label(question.status)));
++    block.append(el("h2", question.text), el("p", label(question.step) + " · " + label(question.status)));
+     if (question.reason) block.append(el("p", question.reason));
+     if (question.status !== "open") { if (question.answer) block.append(el("p", question.answer)); return block; }
+     const answer = (text) => mutate(async () => {
+@@ -227,18 +240,23 @@
+     }, () => loadMission(mission.mission_id));
+     const choices = el("div", null, "question-options");
+     question.choices.forEach((choice) => choices.append(button(choice, () => answer(choice))));
+-    block.append(choices); form(block, "Votre réponse", answer, question.question_id);
++    block.append(choices); form(block, "Votre réponse · " + question.text, answer, question.question_id);
+     return block;
+   }
+   function renderMission() {
+     screen.className = "shell-stack";
++    screen.append(el("h1", "Mon séjour"));
+     const questions = mission.questions || [];
+     if (questions.some((q) => q.status === "open")) {
+-      const priority = el("section", null, "questions"); priority.append(el("h1", "À vous de répondre"));
++      const priority = el("section", null, "questions"); priority.append(el("h2", "À vous de répondre"));
+       questions.filter((q) => q.status === "open").forEach((q) => priority.append(questionBlock(q))); screen.append(priority);
+     }
+     const nav = el("nav", null, "question-options"); nav.setAttribute("aria-label", "Écrans du séjour");
+-    [["progress", "Préparatifs en cours"], ["stay", "Mon séjour"], ["explore", "Explorer"]].forEach(([id, title]) => nav.append(button(title, () => { page = id; render(); })));
++    [["progress", "Préparatifs en cours"], ["stay", "Mon séjour"], ["explore", "Explorer"]].forEach(([id, title]) => {
++      const item = button(title, () => { page = id; render(); });
++      if (page === id) item.setAttribute("aria-current", "page");
++      nav.append(item);
++    });
+     screen.append(nav, el("h2", page === "stay" ? "Mon séjour" : page === "explore" ? "Explorer" : "Préparatifs en cours"), el("p", label(mission.status)));
+     if (mission.error) screen.append(el("p", mission.error));
+     if (page === "explore") { renderExplorer(); return; }
+@@ -271,7 +289,7 @@
+     }, () => loadMission(mission.mission_id))));
+   }
+   async function renderExplorer() {
+-    const container = el("div", null, "journey-map"); container.setAttribute("aria-label", "Carte du séjour");
++    const container = el("div", null, "journey-map"); container.setAttribute("aria-label", "Carte du séjour"); container.setAttribute("role", "region");
+     const fallback = el("section", null, "shell-stack");
+     screen.append(container, fallback);
+     try {
+@@ -298,7 +316,8 @@
+           view = window.createJourneyView(container, { reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches });
+           view.setPlan(plan);
+           plan.chapters.forEach((chapter) => controls.append(button(chapter.label, () => view?.showChapter(chapter.id))));
+-          controls.append(button("Lecture", () => view?.play()), button("Pause", () => view?.pause()));
++          if (!matchMedia("(prefers-reduced-motion: reduce)").matches) controls.append(button("Lecture", () => view?.play()));
++          controls.append(button("Pause", () => view?.pause()));
+         } catch (_) { mapError(); }
+       } else container.hidden = true;
+     } catch (error) {
