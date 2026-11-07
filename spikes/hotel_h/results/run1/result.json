@@ -1,0 +1,121 @@
+{
+  "run": "run1",
+  "session_id": "102989c2-cf2c-44fa-9cae-aad53df884bd",
+  "agent": "h/web-surfer-pro",
+  "quota_avant": {
+    "limit": 3,
+    "active": 2,
+    "available": 1,
+    "waited_s": 1
+  },
+  "status_final_stream": "idle",
+  "status_api": {
+    "status": "idle",
+    "steps": 61,
+    "usage_per_model": [
+      {
+        "name": "holo4-27b",
+        "input_tokens": 1648552,
+        "cached_tokens": 1201600,
+        "output_tokens": 20302,
+        "reasoning_tokens": 13053
+      }
+    ],
+    "subagent_session_ids": [],
+    "pending_tool_calls": [],
+    "pending_approvals": [],
+    "error": null,
+    "error_code": null,
+    "outcome": null
+  },
+  "outcome": null,
+  "error": null,
+  "duree_s": 349.6,
+  "nb_evenements": 244,
+  "nb_etapes_policy": 61,
+  "nb_captures": 56,
+  "correction_envoyee_a_s": 103.9,
+  "evenements_mentionnant_correction": [
+    "2026-11-07T14:32:08.199937Z",
+    "2026-11-07T14:33:44.933130Z",
+    "2026-11-07T14:33:49.035016Z",
+    "2026-11-07T14:34:07.595305Z",
+    "2026-11-07T14:34:19.138877Z",
+    "2026-11-07T14:37:41.368228Z",
+    "2026-11-07T14:37:48.581836Z",
+    "2026-11-07T14:37:48.654670Z",
+    "2026-11-07T14:37:48.705038Z"
+  ],
+  "live_view_url": null,
+  "urls_vues": [
+    "https://all.accor.com",
+    "https://all.accor.com/a/select-country.html",
+    "https://all.accor.com/a/fr.html",
+    "https://all.accor.com/booking/fr/accor/hotels/arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france?token=aPfro8ugT77x-kOeYs6NCU270JCKOlMURlDSzmpMYNIDaMN67W4j-gEJl1Rt-V37w0wSV7KGszERAg25BOFUFkMUv6Up-nYN1EMNFq4SaPR-sXfQPOF5Oap4_BcGMEDGMmrI892YhKW9RGwOuJbQyfymreNh9oSUmVL91-_faSbF3eAFDEqt0-zO3-BLAOqeVcp_J279vPsgs54ATqQtlE3OQVrtEh6dvkI_lkY2CsKpNbiUi6m4R5_5YyFsEMgoCbfTluhp4yQStFlVxFa4Q1ujy9Z8M7dlX-aCcxQ0wfZ7uGtAuMd2nOqzqLxk7Irfjhp3DehjRvWUi1se06Zd_rfRnLAHdIaI4x3_K2XnNdgWz5htBrAxzWjAcxmbqOn8lCtbo9ZtJt1GZXm5tic7mAyPJbLXJaRc1K1Kz1ZbgQI1XK1tVF_QiZSs8WK382fjl17AMui8KlV1clg-5XUJvdFyOjW-K7XJcRQl8TWOcYxeSNyqlnlZb95rJu2uBISMEDdCUpi1oS_xo1_zXHHeIHzpmddRqyH1yG5PqzifLAjmSxXsYYSaskwJhfY7cPps-7QEt5T6ObugsopC6bjsx6KU1yjVTolVlK6JGNcd4n1XVPLVyS5OLhVCoJ8qXQVgaHub1YguDdvHyxV_1vzE4Qpu1JHPwy-_Hv8YIZB8oFihFudwKquD18fVNuh4KnOWkHAaTg5i7Sbrf1kh8ASSX2KHY9GgBSK2vRI0fmM2dNYwy95mSuPp_gAD2G8d_cfC-gnoI-V5EIEDZI9BjhKzEf0yqXjZ8Rx6YjTN7i672zwjzWTt5Cz38bG_0LPnSeDOdlXO359o7M8b8jJ-T4k1awh2OXOa6ft5TK-4tNHrnYxpLlFe25SOsHJsVDTk9hl6hG-2AyZTnIObK7cQnYFR-T__R5MYwOwMbeRMNbLEACKQi96e5YPiV42T5avtJdCa9oM2VNbb08UdijejHnufko5F0mpyGyADwLFE_s41-P_1ujwujz3YH1chDgfdZK7zxI7BkIoODEWQdymaKTBZHPr7DQZYH4Ub7xoH2C__dvsWfgAAFP0kMKI6H2r-QnfmWzh9dBc1s_DRuCHPBHL4La4sAFpy7EfKMn3I7ERfcqLf73lMdYavVJ7D66E8putajKMVL0F95bgoES8o0iarylsZuhIUaTROda8wV8y_DRCyKXtWh2GqA6pLSIK4UDZsylRjctAVAJQaA7LsFSTtYo7FYkaLEcWQQ3O0LyI2FoAmxI5E&dateIn=2027-04-03&nights=1&compositions=1&stayplus=false&snu=false&hideWDR=false&productCode=null&accessibleRooms=false&hideHotelDetails=false&filters=",
+    "https://all.accor.com/booking/fr/accor/hotels/arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france?dateIn=2027-04-03&nights=1&compositions=1&stayplus=false&snu=false&hideWDR=false&productCode=null&accessibleRooms=false&hideHotelDetails=false&filters=",
+    "https://all.accor.com/booking/fr/accor/hotel/1296?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false",
+    "https://all.accor.com/booking/fr/accor/hotel/1296?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false#section-rooms",
+    "https://all.accor.com/booking/fr/accor/hotel/1296?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&basketId=5cb38557-9470-40a7-9cfb-efa9a3001979",
+    "https://all.accor.com/booking/fr/accor/options?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=5cb38557-9470-40a7-9cfb-efa9a3001979",
+    "https://all.accor.com/booking/fr/accor/summary?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=5cb38557-9470-40a7-9cfb-efa9a3001979",
+    "https://all.accor.com/booking/fr/accor/summary?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=5cb38557-9470-40a7-9cfb-efa9a3001979&hasChosenEnrollment=true",
+    "https://all.accor.com/booking/fr/accor/payment?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=5cb38557-9470-40a7-9cfb-efa9a3001979&hasChosenEnrollment=true&orderId=b94f4bf2-0c90-4706-97de-6c52584efa0f&triptychId=iF1SaIXaQXoxmhn5jYOhhuPaFOmNkLrJz7mevdIQJQMLepp9ZENG8jMQeEP7fjsQ9z_NA24TK9qrLWtIiKRzUnkpq7s"
+  ],
+  "derniere_capture": "results/run1/last_screenshot.png",
+  "metrics": {
+    "steps": 61,
+    "cost_per_model": [
+      {
+        "name": "holo4-27b",
+        "input_tokens": 1648552,
+        "cached_tokens": 1201600,
+        "output_tokens": 20302,
+        "reasoning_tokens": 13053,
+        "input_cost": 0.2268448,
+        "output_cost": 0.021747000000000002,
+        "reasoning_cost": 0.039159,
+        "total_cost": 0.28775080000000003
+      }
+    ],
+    "input_cost": 0.2268448,
+    "output_cost": 0.021747000000000002,
+    "reasoning_cost": 0.039159,
+    "total_cost": 0.28775080000000003
+  },
+  "answer": {
+    "prix": "660,70 €",
+    "hotel": "Sofitel Paris Arc de Triomphe",
+    "adresse": "1 Avenue du Général de Gaulle, 75008 Paris",
+    "capture": "Page \"Confirmez votre réservation\" : Total à payer 660,70 € (frais et taxes inclus). Bannière verte : \"Vous pouvez annuler gratuitement jusqu'au 2 avril 2027 18:00\". Section \"Garantir votre réservation\" : \"Votre carte bancaire ne sera pas débitée. Vous paierez à l'hôtel.\" Formulaire carte bancaire visible (Nom du porteur pré-rempli \"Martin\") — AUCUNE donnée de carte saisie, bouton de paiement final NON cliqué.",
+    "blocages": [],
+    "url_finale": "https://all.accor.com/booking/fr/accor/payment?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=5cb38557-9470-40a7-9cfb-efa9a3001979&hasChosenEnrollment=true&orderId=b94f4bf2-0c90-4706-97de-6c52584efa0f&triptychId=iF1SaIXaQXoxmhn5jYOhhuPaFOmNkLrJz7mevdIQJQMLepp9ZENG8jMQeEP7fjsQ9z_NA24TK9qrLWtIiKRzUnkpq7s",
+    "etape_atteinte": "Page de paiement affichée (\"Confirmez votre réservation\") — étape finale atteinte, aucune donnée de carte saisie, bouton de paiement final non cliqué",
+    "correction_recue": true,
+    "options_comparees": [
+      {
+        "prix": "1206 €",
+        "hotel": "Le Royal Monceau - Raffles Paris",
+        "distance_estimee_depart": "0.44 km, ~6 min à pied"
+      },
+      {
+        "prix": "660,70 €",
+        "hotel": "Sofitel Paris Arc de Triomphe",
+        "distance_estimee_depart": "0.47 km, ~6 min à pied"
+      },
+      {
+        "prix": "357 €",
+        "hotel": "Hotel Maison Hamelin Paris",
+        "distance_estimee_depart": "0.87 km, ~11 min à pied"
+      },
+      {
+        "prix": "460 €",
+        "hotel": "Sofitel Paris Baltimore Tour Eiffel",
+        "distance_estimee_depart": "0.92 km, ~12 min à pied"
+      }
+    ],
+    "correction_appliquee": "Correction du coureur : hotel à moins de 10 min à pied (~800m max). Le Sofitel Paris Arc de Triomphe (0.47 km) est bien dans la limite. Les options Maison Hamelin (0.87 km) et Baltimore Tour Eiffel (0.92 km) sont légèrement au-dessus de 800m et n'ont pas été retenues.",
+    "conditions_annulation": "Annulation gratuite jusqu'au 2 avril 2027 18:00. Tarif FLEXIBLE : aucun prépaiement nécessaire, paiement à l'hôtel.",
+    "distance_estimee_depart": "0.47 km, ~6 min à pied"
+  },
+  "finished_at": "2026-11-07T14:37:51.131996+00:00"
+}

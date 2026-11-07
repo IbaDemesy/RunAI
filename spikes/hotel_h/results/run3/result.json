@@ -1,0 +1,131 @@
+{
+  "run": "run3",
+  "session_id": "ef4d6527-14dd-43f3-9d54-9f4a21332f77",
+  "agent": "h/web-surfer-pro",
+  "quota_avant": {
+    "limit": 3,
+    "active": 0,
+    "available": 3,
+    "waited_s": 0
+  },
+  "status_final_stream": "idle",
+  "status_api": {
+    "status": "idle",
+    "steps": 62,
+    "usage_per_model": [
+      {
+        "name": "holo4-27b",
+        "input_tokens": 1704265,
+        "cached_tokens": 1252000,
+        "output_tokens": 20579,
+        "reasoning_tokens": 12461
+      }
+    ],
+    "subagent_session_ids": [],
+    "pending_tool_calls": [],
+    "pending_approvals": [],
+    "error": null,
+    "error_code": null,
+    "outcome": null
+  },
+  "outcome": null,
+  "error": null,
+  "duree_s": 335.0,
+  "nb_evenements": 251,
+  "nb_etapes_policy": 61,
+  "nb_captures": 59,
+  "critere": "moins_cher",
+  "declencheur_correction": "/booking/fr/accor/hotel/",
+  "correction_texte": "STOP, NOUVELLE CONTRAINTE PRIORITAIRE du coureur : l'hotel doit etre a moins de 10 min a pied du depart (800 m maximum, distance affichee par Accor). Verifie l'hotel que tu as choisi : s'il est a plus de 800 m, abandonne-le, reviens a la liste des resultats et prends le moins cher des hotels a 800 m ou moins. Annonce dans ta prochaine reflexion quel hotel tu gardes et pourquoi.",
+  "pause_latence_s": 4.2,
+  "correction_envoyee_a_s": 134.8,
+  "evenements_mentionnant_correction": [
+    "2026-11-07T14:45:10.952608Z",
+    "2026-11-07T14:47:13.984422Z",
+    "2026-11-07T14:47:19.086128Z",
+    "2026-11-07T14:47:57.203634Z",
+    "2026-11-07T14:50:23.855447Z",
+    "2026-11-07T14:50:31.498589Z",
+    "2026-11-07T14:50:31.535912Z",
+    "2026-11-07T14:50:38.977446Z",
+    "2026-11-07T14:50:39.031696Z",
+    "2026-11-07T14:50:39.101799Z"
+  ],
+  "live_view_url": null,
+  "urls_vues": [
+    "https://all.accor.com",
+    "https://all.accor.com/a/select-country.html",
+    "https://all.accor.com/a/fr.html",
+    "https://all.accor.com/booking/fr/accor/hotels/champs-elysees-paris-france?dateIn=2027-04-03&nights=1&compositions=1&stayplus=false&snu=false&hideWDR=false&productCode=null&accessibleRooms=false&hideHotelDetails=false&filters=",
+    "https://all.accor.com/booking/fr/accor/hotel/C2L2?destination=champs-elysees-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false",
+    "https://all.accor.com/booking/fr/accor/hotels/arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france?dateIn=2027-04-03&compositions=1&stayplus=false&snu=false&hideWDR=false&productCode=null&accessibleRooms=false&hideHotelDetails=false&dateOut=2027-04-04",
+    "https://all.accor.com/booking/fr/accor/hotel/1296?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false",
+    "https://all.accor.com/booking/fr/accor/hotel/1296?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false#section-rooms",
+    "https://all.accor.com/booking/fr/accor/hotel/1296?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&basketId=c866acbf-96ca-4ad8-ae71-e53d350971de",
+    "https://all.accor.com/booking/fr/accor/options?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=c866acbf-96ca-4ad8-ae71-e53d350971de",
+    "https://all.accor.com/booking/fr/accor/summary?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=c866acbf-96ca-4ad8-ae71-e53d350971de",
+    "https://all.accor.com/booking/fr/accor/summary?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=c866acbf-96ca-4ad8-ae71-e53d350971de&hasChosenEnrollment=true",
+    "https://all.accor.com/booking/fr/accor/payment?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=c866acbf-96ca-4ad8-ae71-e53d350971de&hasChosenEnrollment=true&orderId=af92a1c7-b9f5-4d28-8aec-1fbfd6918ac1&triptychId=idryQFX90L11KHoTuHESLW7cfBDaA7qrdnM_seJ2fewOtsbGETVlRuE10_gI5vRcb0TXpskb8AnVmGA9xPQgJImpH9Y"
+  ],
+  "derniere_capture": "results/run3/last_screenshot.png",
+  "metrics": {
+    "steps": 62,
+    "cost_per_model": [
+      {
+        "name": "holo4-27b",
+        "input_tokens": 1704265,
+        "cached_tokens": 1252000,
+        "output_tokens": 20579,
+        "reasoning_tokens": 12461,
+        "input_cost": 0.230986,
+        "output_cost": 0.024354,
+        "reasoning_cost": 0.037383,
+        "total_cost": 0.292723
+      }
+    ],
+    "input_cost": 0.230986,
+    "output_cost": 0.024354,
+    "reasoning_cost": 0.037383,
+    "total_cost": 0.292723
+  },
+  "answer": {
+    "prix": "660,70 € (tarif public, taxes et frais inclus, paiement à l'hôtel)",
+    "hotel": "Sofitel Paris Arc de Triomphe",
+    "adresse": "14 rue Beaujon, 75008 Paris, France",
+    "capture": "Page \"Confirmez votre réservation\" : bannière \"Vous pouvez annuler gratuitement jusqu'au 2 avril 2027 18:00\", Total à payer 660,70 € (à l'hôtel), section \"Garantir votre réservation\" indiquant \"Votre carte bancaire ne sera pas débitée. Vous paierez à l'hôtel.\", formulaire carte bancaire (Nom du porteur: Martin pré-rempli, numéro de carte et date d'expiration vides), mention \"En cliquant sur 'Réserver', j'accepte les Conditions Générales de Vente et les conditions de vente et d'annulation du tarif.\", bouton \"Réserver\" visible mais NON cliqué. Résumé à droite: Sofitel Paris Arc de Triomphe, 03→04 avril 2027, 1 nuit, 1 adulte, CHAMBRE SUPERIEURE 660,70 €, Total 660,70 €.",
+    "blocages": [
+      "Aucun blocage technique (pas de captcha, pas de login requis, pas de popup bloquant)",
+      "Note : l'acceptation des Conditions Générales de Vente est intégrée au clic sur le bouton 'Réserver' (pas de case à cocher séparée) — à signaler au coureur avant la réservation finale",
+      "Seulement 2 hôtels Accor disponibles sous 800 m pour ces dates (les 2 Mercure Arc de Triomphe à 0.25 et 0.51 km sont indisponibles)"
+    ],
+    "url_finale": "https://all.accor.com/booking/fr/accor/payment?destination=arc-de-triomphe-pl-charles-de-gaulle-75008-paris-france&compositions=1&dateIn=2027-04-03&dateOut=2027-04-04&nights=1&hideWDR=false&accessibleRoom=false&rid=1296&basketId=c866acbf-96ca-4ad8-ae71-e53d350971de&hasChosenEnrollment=true&orderId=af92a1c7-b9f5-4d28-8aec-1fbfd6918ac1&triptychId=idryQFX90L11KHoTuHESLW7cfBDaA7qrdnM_seJ2fewOtsbGETVlRuE10_gI5vRcb0TXpskb8AnVmGA9xPQgJImpH9Y",
+    "etape_atteinte": "Page de paiement \"Confirmez votre réservation\" — formulaire carte bancaire affiché (Nom pré-rempli \"Martin\"), bouton \"Réserver\" visible mais NON cliqué. Aucune donnée bancaire saisie.",
+    "correction_recue": true,
+    "options_comparees": [
+      {
+        "prix": "1206 € (tarif membre) / ~1268 € (tarif public)",
+        "hotel": "Le Royal Monceau - Raffles Paris",
+        "distance_estimee_depart": "0.44 km (Affror)"
+      },
+      {
+        "prix": "596 € (tarif membre) / 660,70 € (tarif public) — CHOISI",
+        "hotel": "Sofitel Paris Arc de Triomphe",
+        "distance_estimee_depart": "0.47 km (Affror)"
+      },
+      {
+        "prix": "Indisponible aux dates sélectionnées",
+        "hotel": "Hôtel Mercure Paris Arc de Triomphe (indisponible)",
+        "distance_estimee_depart": "0.25 km (Affror)"
+      },
+      {
+        "prix": "Indisponible aux dates sélectionnées",
+        "hotel": "Hôtel Mercure Paris Arc de Triomphe 2 (indisponible)",
+        "distance_estimee_depart": "0.51 km (Affror)"
+      }
+    ],
+    "correction_appliquee": "Le coureur a imposé une distance maximale de 800 m (10 min à pied) selon la distance affichée par Accor. L'hôtel initialement choisi (Hotel Maison Hamelin Paris, 0.87 km depuis l'Arc de Triomphe) a été abandonné. Nouvelle recherche avec \"Arc de Triomphe, Place Charles de Gaulle\" comme destination, ce qui a révélé que seuls 2 hôtels Accor sont disponibles sous 800 m pour ces dates : Le Royal Monceau (0.44 km, 1206 €) et Sofitel Paris Arc de Triomphe (0.47 km, 660,70 €). Le Sofitel a été choisi comme le moins cher.",
+    "conditions_annulation": "Annulation gratuites jusqu'au 2 avril 2027 à 18:00. Aucun prépaiement nécessaire. Paiement à l'hôtel. (Tarif FLEXIBLE)",
+    "distance_estimee_depart": "0.47 km (distance affichée par Accor, ~5-6 min à pied)"
+  },
+  "finished_at": "2026-11-07T14:50:41.480592+00:00"
+}
