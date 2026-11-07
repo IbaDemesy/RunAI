@@ -346,6 +346,8 @@ Tirées de la fiche [Product availability](https://showcase.hcompany.ai/p/produc
 
 ### Ce qu'on en retient
 
+L'évaluation complète des recherches des 16 agents (on fait, en option, coupé) est dans [RECHERCHES_AGENTS.md](RECHERCHES_AGENTS.md).
+
 - **Aucun projet ne porte sur la course à pied, l'inscription à une course ou le déplacement sportif.** La verticale reste libre.
 - La voix et la validation avant une action irréversible existent déjà (Life-Admin Operator). L'originalité doit venir d'ailleurs : **une seule intention qui déclenche plusieurs agents coordonnés** (course, hôtel, transport), le profil coureur (PPS, certificat, t-shirt) et la chaîne Linkup → H.
 - Le jury a déjà vu beaucoup d'agents « QA » et « rejouer une vidéo ». Mieux vaut éviter ces angles.
