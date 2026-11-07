@@ -329,6 +329,18 @@ Tirées de la fiche [Product availability](https://showcase.hcompany.ai/p/produc
 - La voix et la validation avant une action irréversible existent déjà (Life-Admin Operator). L'originalité doit venir d'ailleurs : **une seule intention qui déclenche plusieurs agents coordonnés** (course, hôtel, transport), le profil coureur (PPS, certificat, t-shirt) et la chaîne Linkup → H.
 - Le jury a déjà vu beaucoup d'agents « QA » et « rejouer une vidéo ». Mieux vaut éviter ces angles.
 
+## Valorisation des partenaires
+
+| Partenaire | Rôle actuel | Valorisation | À ajouter |
+| --- | --- | --- | --- |
+| H | 3 agents en parallèle, outils, correction en cours, vue live | Forte (cœur) | Sous-agents H (coordinateur voyage qui délègue), agent vérificateur du récap avant paiement, Models API Holo (ex. vérifier une capture du récap) — non utilisé pour l'instant |
+| Gladia | Commande vocale, correction et stop | Moyenne (STT seulement) | Voir [GLADIA.md](GLADIA.md) |
+| Linkup | Prépare course, départ, URL | Bonne (gain ~2× mesuré, essai unique avec cible différente) | Vérification des faits avant réservation (date, règlement, PPS), comparaison hôtels/vols avant H, recherche `deep` pour le règlement, sources affichées dans le récap |
+| Devin | Construction + auto-réparation | Forte si l'idée 1 est livrée | Voir [DEVIN.md](DEVIN.md) (PR #13) |
+| Stripe | Hors périmètre | Nulle | Stripe Checkout en mode test pour une « commission RunAI » quand le coureur valide : l'humain paie, l'agent jamais ; ~1 h, P1 tardif si le parcours tient à 19 h |
+
+Chaque partenaire doit avoir son moment visible dans la démo : voix (Gladia), sources (Linkup), agents live (H), PR de réparation (Devin), paiement validé par l'humain (Stripe).
+
 ## Questions ouvertes
 
 1. ~~Quel fil rouge ?~~ Orientation : une feature unique, « déplacement course complet » (voir plus haut). Périmètre course + hôtel + vol confirmé par le test de faisabilité.
