@@ -636,6 +636,7 @@ class MissionService:
                 step.error = redact_secrets(str(error))
                 user_error = friendly_error(step.error)
                 step.data["error_user"] = user_error
+                step.data["headline"] = user_error
                 code = "h_key_missing" if isinstance(self.agents, UnavailableBrowserAgents) else getattr(error, "code", "agent_error")
                 limitation = Limitation(code=code, message=user_error, step=kind.value)
                 mission.limitations.append(limitation)

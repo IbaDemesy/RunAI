@@ -796,6 +796,7 @@ async def test_step_failure_keeps_raw_error_and_publishes_friendly_copy(tmp_path
 
     assert step.error == raw_error
     assert step.data["error_user"] == user_error
+    assert step.data["headline"] == user_error
     limitation = next(item for item in mission.limitations if item.step == "accommodation")
     assert limitation.message == user_error
     failure = next(
