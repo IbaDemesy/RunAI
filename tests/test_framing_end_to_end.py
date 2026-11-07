@@ -1,4 +1,4 @@
-"""Revue A : chaîne cadrage (A2) → confirmation → plan de lancement (A1), plusieurs villes."""
+"""Review A: framing (A2) → confirmation → launch plan (A1), across cities."""
 
 import asyncio
 from datetime import date
@@ -30,7 +30,7 @@ class OneCandidate:
 def candidate(city, country, day, url, km=42.195):
     return RaceCandidate(
         id=city.lower(),
-        name=f"Course de {city}",
+        name=f"{city} Race",
         city=city,
         country=country,
         race_date=day,
@@ -42,7 +42,7 @@ def candidate(city, country, day, url, km=42.195):
 
 ANSWERS = {
     "distance_km": "42.195 km",
-    "date_window": "mai 2027",
+    "date_window": "May 2027",
     "origin": "Dakar",
     "budget": "900",
     "nights": "2",

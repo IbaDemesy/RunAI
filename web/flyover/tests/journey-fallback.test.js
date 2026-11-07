@@ -92,7 +92,7 @@ for (const [name, total] of [["train", "503"], ["flight", "540"], ["incomplete",
     for (const warning of plan.warnings) assert.ok(container.textContent.includes(warning));
     assert.match(container.textContent, /Démonstration/);
     assert.ok(container.textContent.includes(total));
-    assert.match(container.textContent, /fictif|Fixture/);
+    assert.match(container.textContent, /Fictional|fixture/);
     assert.match(container.textContent, /Illustratif/);
     assert.match(container.textContent, /Vérifié/);
     assert.equal(events.filter((e) => e.type === J.MAP_EVENTS.ready).at(-1).detail.planRevision, plan.revision);
@@ -109,7 +109,7 @@ test("unknown coordinates, dates and money remain unknown; manual links and non-
   assert.match(container.textContent, /Total partiel/);
   assert.match(container.textContent, /Prix inconnu/);
   assert.match(container.textContent, /Plafond non vérifiable/);
-  assert.match(container.textContent, /Transport hors Europe non automatisé/);
+  assert.match(container.textContent, /Transport outside Europe not automated/);
   assert.ok(byTag(container, "a").some((a) => a.getAttribute("href") === "https://example.org/airline-search"));
   assert.doesNotMatch(container.textContent, /réservé avec succès|budget respecté/i);
 });

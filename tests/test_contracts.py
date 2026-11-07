@@ -126,7 +126,7 @@ def test_stale_or_cancelled_replies_are_rejected():
         check_reply_revision(session, FramingReply(revision=1, text="la B"))
     session.status = FramingStatus.cancelled
     with pytest.raises(FramingError):
-        check_reply_revision(session, FramingReply(revision=2, text="la B"))
+        check_reply_revision(session, FramingReply(revision=2, text="B"))
     with pytest.raises(FramingError):
         assert_launchable(session, FramingConfirm(revision=2, idempotency_key=KEY))
 
@@ -141,7 +141,7 @@ def test_mission_snapshot_and_events_fixtures():
 
 
 def test_human_question_wraps_v1_agent_question():
-    question = AgentQuestion(id="q1", kind=StepKind.accommodation, question="Budget ?", options=["100 €"])
+    question = AgentQuestion(id="q1", kind=StepKind.accommodation, question="Budget?", options=["100 €"])
     wrapped = HumanQuestion.from_agent_question(question, mission_id="m1", revision=3, session_id="s1")
     assert (wrapped.question_id, wrapped.step, wrapped.status.value) == ("q1", StepKind.accommodation, "open")
 

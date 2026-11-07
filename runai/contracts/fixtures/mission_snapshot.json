@@ -7,7 +7,7 @@
   "status": "running",
   "sequence": 7,
   "race": {
-    "name": "Course fictive B de Tokyo",
+    "name": "Fictional Tokyo Race B",
     "city": "Tokyo",
     "country": "JP",
     "race_date": "2027-04-18",
@@ -27,7 +27,7 @@
     {
       "kind": "registration",
       "status": "waiting_for_user",
-      "summary": "Question en attente",
+      "summary": "Awaiting an answer",
       "stop_point": null,
       "url": null,
       "price_eur": null,
@@ -41,7 +41,7 @@
     {
       "kind": "accommodation",
       "status": "stopped_before_commitment",
-      "summary": "Récapitulatif atteint, non réservé",
+      "summary": "Summary reached, not booked",
       "stop_point": "payment",
       "url": null,
       "price_eur": 640.0,
@@ -55,7 +55,7 @@
     {
       "kind": "transport",
       "status": "completed",
-      "summary": "Non automatisé : lien officiel manuel",
+      "summary": "Not automated: manual official link",
       "stop_point": null,
       "url": null,
       "price_eur": null,
@@ -75,11 +75,11 @@
       "step": "registration",
       "session_id": "fx-h-session",
       "revision": 5,
-      "reason": "Option payante",
-      "text": "Ajouter le t-shirt finisher (15 €) ?",
+      "reason": "Paid option",
+      "text": "Add the finisher T-shirt (15 €)?",
       "choices": [
-        "Oui",
-        "Non"
+        "Yes",
+        "No"
       ],
       "status": "open",
       "answer": null,
@@ -95,7 +95,7 @@
       {
         "id": "c-reg",
         "category": "registration",
-        "label": "Inscription",
+        "label": "Registration",
         "money": {
           "amount": 250.0,
           "currency": "EUR",
@@ -104,7 +104,7 @@
           "provenance": {
             "kind": "fixture",
             "url": null,
-            "label": "Tarif fictif",
+            "label": "Fictional fare",
             "collected_at": "2026-11-07T12:00:00Z"
           }
         },
@@ -113,16 +113,16 @@
       {
         "id": "c-hotel",
         "category": "accommodation",
-        "label": "Hôtel 4 nuits",
+        "label": "Hotel, 4 nights",
         "money": null,
-        "note": "Prix inconnu"
+        "note": "Price unknown"
       },
       {
         "id": "c-flight",
         "category": "transport",
-        "label": "Vols",
+        "label": "Flights",
         "money": null,
-        "note": "Non couvert"
+        "note": "Not covered"
       }
     ],
     "known_total": 250.0,

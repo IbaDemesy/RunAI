@@ -8,11 +8,11 @@
     "city": {
       "name": "city",
       "status": "answered",
-      "value": "Lisbonne",
+      "value": "Lisbon",
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -98,7 +98,7 @@
         "distance_km",
         "date_window"
       ],
-      "text": "Quelle course ou distance, et à quelle période ?",
+      "text": "Which race or distance, and when?",
       "choices": [],
       "allow_free_text": true,
       "revision": 1
@@ -108,7 +108,7 @@
     {
       "role": "user",
       "channel": "text",
-      "text": "Je veux faire une course à Lisbonne",
+      "text": "I want to run a race in Lisbon",
       "revision": 1,
       "at": "2026-11-07T12:00:00Z"
     }

@@ -15,7 +15,7 @@
     {
       "id": "home",
       "kind": "home",
-      "label": "Lyon (ville)",
+      "label": "Lyon (city)",
       "coords": {
         "lat": 45.764,
         "lon": 4.8357
@@ -28,7 +28,7 @@
     {
       "id": "ap-out",
       "kind": "airport",
-      "label": "Aéroport de départ à choisir",
+      "label": "Departure airport to choose",
       "coords": null,
       "local_time": null,
       "timezone": "Europe/Paris",
@@ -38,7 +38,7 @@
     {
       "id": "ap-in",
       "kind": "airport",
-      "label": "Aéroport d'arrivée à choisir",
+      "label": "Arrival airport to choose",
       "coords": null,
       "local_time": null,
       "timezone": "America/Chicago",
@@ -48,7 +48,7 @@
     {
       "id": "hotel",
       "kind": "hotel",
-      "label": "Hôtel non choisi",
+      "label": "Hotel not selected",
       "coords": null,
       "local_time": null,
       "timezone": "America/Chicago",
@@ -58,7 +58,7 @@
     {
       "id": "start",
       "kind": "race_start",
-      "label": "Départ (fixture)",
+      "label": "Race start (fixture)",
       "coords": {
         "lat": 41.8756,
         "lon": -87.62
@@ -87,7 +87,7 @@
       "provenance": null,
       "limitation": {
         "code": "transport_not_covered",
-        "message": "Vol long-courrier non automatisé : comparer et réserver soi-même via le lien officiel.",
+        "message": "Long-haul flight not automated: compare and book manually using the official link.",
         "step": "transport",
         "manual_url": "https://example.org/airline-search"
       }
@@ -113,7 +113,7 @@
   "chapters": [
     {
       "id": "home",
-      "label": "Chez moi",
+      "label": "Home",
       "stop_ids": [
         "home"
       ],
@@ -122,7 +122,7 @@
     },
     {
       "id": "departure_hub",
-      "label": "Aéroport",
+      "label": "Airport",
       "stop_ids": [
         "ap-out"
       ],
@@ -131,7 +131,7 @@
     },
     {
       "id": "main_transport",
-      "label": "Vol",
+      "label": "Flight",
       "stop_ids": [],
       "segment_ids": [
         "s-flight-out"
@@ -140,7 +140,7 @@
     },
     {
       "id": "arrival_hotel",
-      "label": "Arrivée et hôtel",
+      "label": "Arrival and hotel",
       "stop_ids": [
         "hotel"
       ],
@@ -149,14 +149,14 @@
     },
     {
       "id": "bib_pickup",
-      "label": "Dossard",
+      "label": "Bib pickup",
       "stop_ids": [],
       "segment_ids": [],
       "status": "unavailable"
     },
     {
       "id": "race",
-      "label": "Départ et course",
+      "label": "Start and race",
       "stop_ids": [
         "start"
       ],
@@ -165,7 +165,7 @@
     },
     {
       "id": "return_trip",
-      "label": "Retour",
+      "label": "Return",
       "stop_ids": [],
       "segment_ids": [
         "s-flight-back"
@@ -180,7 +180,7 @@
       {
         "id": "c-reg",
         "category": "registration",
-        "label": "Inscription",
+        "label": "Registration",
         "money": {
           "amount": 250.0,
           "currency": "EUR",
@@ -189,7 +189,7 @@
           "provenance": {
             "kind": "fixture",
             "url": null,
-            "label": "Tarif fictif",
+            "label": "Fictional fare",
             "collected_at": "2026-11-07T12:00:00Z"
           }
         },
@@ -198,16 +198,16 @@
       {
         "id": "c-hotel",
         "category": "accommodation",
-        "label": "Hôtel 4 nuits",
+        "label": "Hotel, 4 nights",
         "money": null,
-        "note": "Prix inconnu"
+        "note": "Price unknown"
       },
       {
         "id": "c-flight",
         "category": "transport",
-        "label": "Vols",
+        "label": "Flights",
         "money": null,
-        "note": "Non couvert"
+        "note": "Not covered"
       }
     ],
     "known_total": 250.0,
@@ -219,13 +219,13 @@
     "over_cap": null
   },
   "warnings": [
-    "Budget partiel : hôtel et vols non chiffrés.",
-    "Retrait des dossards inconnu."
+    "Partial budget: hotel and flights not priced.",
+    "Bib pickup unknown."
   ],
   "limitations": [
     {
       "code": "transport_not_covered",
-      "message": "Transport hors Europe non automatisé.",
+      "message": "Transport outside Europe not automated.",
       "step": "transport",
       "manual_url": "https://example.org/airline-search"
     }
@@ -234,7 +234,7 @@
     {
       "kind": "fixture",
       "url": null,
-      "label": "Fixture contractuelle G1",
+      "label": "G1 contract fixture",
       "collected_at": "2026-11-07T12:00:00Z"
     }
   ]

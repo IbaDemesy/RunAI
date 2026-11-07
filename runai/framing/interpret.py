@@ -38,7 +38,9 @@ MONTH_NUMBERS = {
     for names in (MONTHS, ENGLISH_MONTHS)
     for number, name in enumerate(names, 1)
 }
-MONTH_PATTERN = "|".join(MONTH_NUMBERS)
+MONTH_NUMBERS.update({month[:3]: i for i, month in enumerate(ENGLISH_MONTHS, 1)})
+MONTH_NUMBERS["sept"] = 9
+MONTH_PATTERN = "|".join(sorted(MONTH_NUMBERS, key=len, reverse=True))
 SEASONS = {
     "spring": (3, 5, ENGLISH_MONTHS),
     "summer": (6, 8, ENGLISH_MONTHS),
@@ -64,6 +66,13 @@ HINT_BOUNDARY = (
     r"(?=\s*(?:[,;.!?]|$)|\s+(?:from|depuis|en|in|à|au|on|for|pour|"
     r"avec|with|édition|edition|by|budget)\b)"
 )
+
+
+def normalize_date_window(value: str) -> str:
+    match = re.fullmatch(rf"({MONTH_PATTERN})\.?\s+(\d{{4}})", value.strip(), re.IGNORECASE)
+    if not match:
+        return value
+    return f"{ENGLISH_MONTHS[MONTH_NUMBERS[match[1].lower()] - 1].title()} {match[2]}"
 
 
 def _is_temporal(value: str) -> bool:
@@ -137,7 +146,7 @@ def _extract_dates(text: str, current: date) -> dict[SlotName, object]:
                         or (bool(month[1]) and number == current.month)
                     )
                 )
-                result[SlotName.date_window] = f"{name} {year}"
+                result[SlotName.date_window] = normalize_date_window(f"{name} {year}")
             # Let the engine preserve this standalone legacy reply as free text.
             elif not re.fullmatch(r"\s*au printemps\s*[.!?]?\s*", text, re.IGNORECASE):
                 season = re.search(
@@ -316,4 +325,6 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
     ):
         if re.search(r"\b(?:" + pattern + r")\b", text, re.IGNORECASE):
             result[SlotName.transport_mode] = mode
+    if text.strip().lower() == "car":
+        result[SlotName.transport_mode] = "car"
     return result

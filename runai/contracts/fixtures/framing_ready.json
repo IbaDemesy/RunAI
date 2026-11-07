@@ -12,7 +12,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -20,11 +20,11 @@
     "race": {
       "name": "race",
       "status": "sourced",
-      "value": "Course fictive B de Tokyo",
+      "value": "Fictional Tokyo Race B",
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -36,7 +36,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -48,7 +48,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -60,7 +60,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -72,7 +72,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -84,7 +84,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -96,7 +96,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -108,7 +108,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -120,7 +120,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -132,7 +132,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -141,7 +141,7 @@
   "candidates": [
     {
       "id": "cand-a",
-      "name": "Course fictive A de Tokyo",
+      "name": "Fictional Tokyo Race A",
       "city": "Tokyo",
       "country": "JP",
       "race_date": "2027-03-07",
@@ -159,13 +159,13 @@
       "provenance": {
         "kind": "fixture",
         "url": "https://example.org/tokyo-a",
-        "label": "Candidat fictif",
+        "label": "Fictional candidate",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "limitations": [
         {
           "code": "registration_lottery",
-          "message": "Inscription par tirage au sort : préparation manuelle.",
+          "message": "Lottery registration: manual preparation.",
           "step": "registration",
           "manual_url": null
         }
@@ -173,7 +173,7 @@
     },
     {
       "id": "cand-b",
-      "name": "Course fictive B de Tokyo",
+      "name": "Fictional Tokyo Race B",
       "city": "Tokyo",
       "country": "JP",
       "race_date": "2027-04-18",
@@ -192,7 +192,7 @@
       "provenance": {
         "kind": "fixture",
         "url": "https://example.org/tokyo-b",
-        "label": "Candidat fictif",
+        "label": "Fictional candidate",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "limitations": []
@@ -204,28 +204,28 @@
     {
       "role": "user",
       "channel": "text",
-      "text": "Une course à Tokyo au printemps 2027",
+      "text": "A race in Tokyo in spring 2027",
       "revision": 1,
       "at": "2026-11-07T12:00:00Z"
     },
     {
       "role": "user",
       "channel": "buttons",
-      "text": "Course fictive B de Tokyo",
+      "text": "Fictional Tokyo Race B",
       "revision": 3,
       "at": "2026-11-07T12:00:00Z"
     },
     {
       "role": "user",
       "channel": "text",
-      "text": "Semi, départ de Lyon, 1500 € max, 4 nuits, en avion",
+      "text": "Half marathon, from Lyon, 1500 € maximum, 4 nights, by plane",
       "revision": 4,
       "at": "2026-11-07T12:00:00Z"
     },
     {
       "role": "user",
       "channel": "text",
-      "text": "Correction : budget 1800 €",
+      "text": "Correction: budget 1800 €",
       "revision": 5,
       "at": "2026-11-07T12:00:00Z"
     }
@@ -233,7 +233,7 @@
   "summary": {
     "revision": 5,
     "race": {
-      "name": "Course fictive B de Tokyo",
+      "name": "Fictional Tokyo Race B",
       "city": "Tokyo",
       "country": "JP",
       "race_date": "2027-04-18",
@@ -259,14 +259,14 @@
     "budget_eur": 1800.0,
     "transport_mode": "flight",
     "lines": [
-      "Course fictive B de Tokyo, semi (21,1 km), 18 avril 2027",
-      "Départ de Lyon en avion, 4 nuits du 16 au 20 avril",
-      "Budget total maximal 1800 €"
+      "Fictional Tokyo Race B, half marathon (21.1 km), 18 April 2027",
+      "From Lyon by plane, 4 nights from 16 to 20 April",
+      "Maximum total budget 1800 €"
     ],
     "limitations": [
       {
         "code": "transport_not_covered",
-        "message": "Vol long-courrier non automatisé : lien officiel manuel.",
+        "message": "Long-haul flight not automated: manual official link.",
         "step": "transport",
         "manual_url": null
       }
