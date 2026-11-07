@@ -1,0 +1,280 @@
+{
+  "schema_version": "framing.v1",
+  "id": "fx-framing-ready",
+  "mode": "demo",
+  "status": "ready_to_confirm",
+  "revision": 5,
+  "slots": {
+    "city": {
+      "name": "city",
+      "status": "answered",
+      "value": "Tokyo",
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "race": {
+      "name": "race",
+      "status": "sourced",
+      "value": "Course fictive B de Tokyo",
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "edition": {
+      "name": "edition",
+      "status": "not_needed",
+      "value": null,
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "race_date": {
+      "name": "race_date",
+      "status": "sourced",
+      "value": "2027-04-18",
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "date_window": {
+      "name": "date_window",
+      "status": "not_needed",
+      "value": null,
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "distance_km": {
+      "name": "distance_km",
+      "status": "answered",
+      "value": 21.0975,
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "origin": {
+      "name": "origin",
+      "status": "answered",
+      "value": "Lyon",
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "budget": {
+      "name": "budget",
+      "status": "answered",
+      "value": 1800,
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "nights": {
+      "name": "nights",
+      "status": "answered",
+      "value": 4,
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "transport_mode": {
+      "name": "transport_mode",
+      "status": "answered",
+      "value": "flight",
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    },
+    "preferences": {
+      "name": "preferences",
+      "status": "not_needed",
+      "value": null,
+      "provenance": {
+        "kind": "human",
+        "url": null,
+        "label": "Réponse utilisateur",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "revision": 1
+    }
+  },
+  "candidates": [
+    {
+      "id": "cand-a",
+      "name": "Course fictive A de Tokyo",
+      "city": "Tokyo",
+      "country": "JP",
+      "race_date": "2027-03-07",
+      "distances_km": [
+        42.195
+      ],
+      "official_url": "https://example.org/tokyo-a",
+      "registration_url": null,
+      "sources": [
+        {
+          "url": "https://example.org/tokyo-a",
+          "title": "Fixture"
+        }
+      ],
+      "provenance": {
+        "kind": "fixture",
+        "url": "https://example.org/tokyo-a",
+        "label": "Candidat fictif",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "limitations": [
+        {
+          "code": "registration_lottery",
+          "message": "Inscription par tirage au sort : préparation manuelle.",
+          "step": "registration",
+          "manual_url": null
+        }
+      ]
+    },
+    {
+      "id": "cand-b",
+      "name": "Course fictive B de Tokyo",
+      "city": "Tokyo",
+      "country": "JP",
+      "race_date": "2027-04-18",
+      "distances_km": [
+        10.0,
+        21.0975
+      ],
+      "official_url": "https://example.org/tokyo-b",
+      "registration_url": null,
+      "sources": [
+        {
+          "url": "https://example.org/tokyo-b",
+          "title": "Fixture"
+        }
+      ],
+      "provenance": {
+        "kind": "fixture",
+        "url": "https://example.org/tokyo-b",
+        "label": "Candidat fictif",
+        "collected_at": "2026-11-07T12:00:00Z"
+      },
+      "limitations": []
+    }
+  ],
+  "selected_candidate_id": "cand-b",
+  "open_questions": [],
+  "turns": [
+    {
+      "role": "user",
+      "channel": "text",
+      "text": "Une course à Tokyo au printemps 2027",
+      "revision": 1,
+      "at": "2026-11-07T12:00:00Z"
+    },
+    {
+      "role": "user",
+      "channel": "buttons",
+      "text": "Course fictive B de Tokyo",
+      "revision": 3,
+      "at": "2026-11-07T12:00:00Z"
+    },
+    {
+      "role": "user",
+      "channel": "text",
+      "text": "Semi, départ de Lyon, 1500 € max, 4 nuits, en avion",
+      "revision": 4,
+      "at": "2026-11-07T12:00:00Z"
+    },
+    {
+      "role": "user",
+      "channel": "text",
+      "text": "Correction : budget 1800 €",
+      "revision": 5,
+      "at": "2026-11-07T12:00:00Z"
+    }
+  ],
+  "summary": {
+    "revision": 5,
+    "race": {
+      "name": "Course fictive B de Tokyo",
+      "city": "Tokyo",
+      "country": "JP",
+      "race_date": "2027-04-18",
+      "start_time": null,
+      "distance_km": 21.0975,
+      "registration_url": null,
+      "bib_pickup": null,
+      "start_location": null,
+      "sources": [
+        {
+          "url": "https://example.org/tokyo-b",
+          "title": "Fixture"
+        }
+      ]
+    },
+    "candidate_id": "cand-b",
+    "origin_public": "Lyon",
+    "date_range": [
+      "2027-04-16",
+      "2027-04-20"
+    ],
+    "nights": 4,
+    "budget_eur": 1800.0,
+    "transport_mode": "flight",
+    "lines": [
+      "Course fictive B de Tokyo, semi (21,1 km), 18 avril 2027",
+      "Départ de Lyon en avion, 4 nuits du 16 au 20 avril",
+      "Budget total maximal 1800 €"
+    ],
+    "limitations": [
+      {
+        "code": "transport_not_covered",
+        "message": "Vol long-courrier non automatisé : lien officiel manuel.",
+        "step": "transport",
+        "manual_url": null
+      }
+    ]
+  },
+  "limitations": [],
+  "confirmed_revision": null,
+  "confirm_key": null,
+  "mission_id": null,
+  "created_at": "2026-11-07T16:55:06.442966Z"
+}

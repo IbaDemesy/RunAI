@@ -1,0 +1,125 @@
+"""Questions humaines corrélées, enveloppe SSE v1 et instantané de mission v2.
+
+Compatibles avec `AgentQuestion`/`StepResult` de la V1 : ce sont des vues additives.
+"""
+
+from datetime import datetime
+from enum import Enum
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field
+
+from runai.contracts.common import DataMode, Limitation
+from runai.contracts.journey import Budget
+from runai.models import AgentQuestion, Race, StepKind, StepResult, utcnow
+
+EVENTS_SCHEMA_VERSION = "events.v1"
+MISSION_SCHEMA_VERSION = "mission.v2"
+
+
+class QuestionStatus(str, Enum):
+    open = "open"
+    answered = "answered"
+    expired = "expired"
+    refused = "refused"
+    cancelled = "cancelled"
+
+
+class HumanQuestion(BaseModel):
+    question_id: str
+    mission_id: str
+    step: StepKind
+    session_id: str | None = None
+    revision: int
+    reason: str | None = None
+    text: str
+    choices: list[str] = Field(default_factory=list)
+    status: QuestionStatus = QuestionStatus.open
+    answer: str | None = None
+    asked_at: datetime = Field(default_factory=utcnow)
+    expires_at: datetime | None = None
+
+    @classmethod
+    def from_agent_question(
+        cls,
+        question: AgentQuestion,
+        mission_id: str,
+        revision: int,
+        session_id: str | None = None,
+        expires_at: datetime | None = None,
+    ) -> "HumanQuestion":
+        return cls(
+            question_id=question.id,
+            mission_id=mission_id,
+            step=question.kind,
+            session_id=session_id,
+            revision=revision,
+            text=question.question,
+            choices=question.options,
+            status=QuestionStatus.answered if question.answer is not None else QuestionStatus.open,
+            answer=question.answer,
+            asked_at=question.asked_at,
+            expires_at=expires_at,
+        )
+
+
+class HumanAnswer(BaseModel):
+    """Un « oui » n'autorise jamais paiement, compte, santé, consentement ou envoi."""
+
+    answer: str = Field(min_length=1, max_length=500)
+    revision: int
+    idempotency_key: str = Field(min_length=8, max_length=100)
+
+
+EventType = Literal[
+    "snapshot",
+    "mission_status",
+    "step",
+    "question_opened",
+    "question_resolved",
+    "journey_revised",
+    "budget_updated",
+    "trace",
+    "error",
+]
+
+
+class EventEnvelope(BaseModel):
+    """`event_id` = f"{mission_id}:{sequence}" ; sert de `id:` SSE et de Last-Event-ID."""
+
+    schema_version: Literal["events.v1"] = EVENTS_SCHEMA_VERSION
+    event_id: str
+    sequence: int = Field(ge=0)
+    mission_id: str
+    emitted_at: datetime = Field(default_factory=utcnow)
+    type: EventType
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+    @classmethod
+    def build(cls, mission_id: str, sequence: int, type: EventType, payload: dict[str, Any]) -> "EventEnvelope":
+        return cls(event_id=f"{mission_id}:{sequence}", sequence=sequence, mission_id=mission_id, type=type, payload=payload)
+
+    def to_sse(self) -> str:
+        return f"id: {self.event_id}\nevent: {self.type}\ndata: {self.model_dump_json()}\n\n"
+
+
+MissionStatusV2 = Literal[
+    "searching", "running", "awaiting_human", "completed", "failed", "cancelled"
+]
+
+
+class MissionSnapshot(BaseModel):
+    schema_version: Literal["mission.v2"] = MISSION_SCHEMA_VERSION
+    mission_id: str
+    framing_id: str
+    framing_revision: int
+    mode: DataMode
+    status: MissionStatusV2
+    sequence: int = Field(ge=0)
+    race: Race | None = None
+    steps: list[StepResult]
+    questions: list[HumanQuestion] = Field(default_factory=list)
+    journey_revision: int | None = None
+    budget: Budget | None = None
+    limitations: list[Limitation] = Field(default_factory=list)
+    error: str | None = None
