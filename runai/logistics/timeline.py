@@ -82,7 +82,8 @@ def build_timeline(
                 )
             )
 
-    _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts)
+    latest_pickup = start - (rules.corrals_close_before_wave or DEFAULT_CORRAL_CLOSE)
+    _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest_pickup)
 
     to_start = timedelta(minutes=hotel.minutes_to_start) if hotel else DEFAULT_TO_START
     if hotel:
@@ -221,13 +222,14 @@ def _expected_time(goal: RunnerGoal | None, distance: float) -> tuple[timedelta,
     return DEFAULT_PACE_PER_KM * distance, True
 
 
-def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts) -> None:
+def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest) -> None:
     source = rules.source_url("bib_pickup_windows")
     location = rules.bib_pickup_location
     windows = [
         window
         for window in rules.bib_pickup_windows
-        if window.day < race_day or (window.day == race_day and rules.bib_pickup_race_day)
+        if window.day < race_day
+        or (window.day == race_day and rules.bib_pickup_race_day and at(window.day, window.opens) + MIN_PICKUP_SLOT <= latest)
     ]
     detail = "Pièce d'identité + e-mail de confirmation ; documents d'inscription téléversés avant le retrait."
     if not windows:
@@ -256,6 +258,8 @@ def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts) -> None:
     ready = arrive + (timedelta(minutes=hotel.minutes_to_bib_pickup) if hotel else STATION_TO_PICKUP)
     for window in windows:
         opens, closes = at(window.day, window.opens), at(window.day, window.closes)
+        if window.day == race_day:
+            closes = min(closes, latest)
         begin = max(opens, ready)
         if begin + MIN_PICKUP_SLOT <= closes:
             add(begin, min(begin + PICKUP_DURATION, closes), title="Retrait du dossard", kind="bib_pickup",
