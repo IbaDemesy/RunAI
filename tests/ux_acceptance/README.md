@@ -31,12 +31,13 @@ Contrôles de régression : langue française, viewport, feedback status/polite,
 champs enveloppés dans label, focus-visible >=2px, neutralisation animation et
 transition en mouvement réduit, option reducedMotion, boutons >=44px, noopener.
 Les contrastes sont calculés selon WCAG à partir des hex et alias :root : les
-deux échecs réels ink-3/paper (4.398) et ink-3/paper-2 (4.325) restent en xfail
-strict ; les autres combinaisons demandées passent. Le patch assombrit ink-3.
+deux échecs relevés sur D1 ink-3/paper (4.398) et ink-3/paper-2 (4.325) sont
+corrigés par le patch qui assombrit ink-3 ; les autres combinaisons passent.
 
 Les patches sont groupés pour app.js afin d'éviter les chevauchements, appliqués
 par `git apply` sur une copie de la base 97265c6, puis les mêmes checks et
-`node --check` sont exécutés. Aucun fichier produit n'est modifié.
+`node --check` sont exécutés. Revue D : les trois patches sont appliqués au
+shell intégré ; UX-01..10 sont désormais des tests normaux (plus de xfail).
 
 C3 : fournir `RUNAI_UX_C3_DIR` contenant journey-fallback.js et journey.css ;
 sinon utilisation de web/flyover si intégré, sinon skip explicite (câblage E3).
