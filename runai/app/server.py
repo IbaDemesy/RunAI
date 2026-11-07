@@ -5,6 +5,7 @@ import os
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
+import anyio
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -14,6 +15,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from runai.app.auth import BasicAuthMiddleware
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
 from runai.app.mission import MissionError, MissionService
@@ -62,7 +64,9 @@ def build_service(mode: DataMode | None = None, delay: float | None = None) -> M
         timeout = min(timeout, max(1, agents.max_time_s - 60))
     service = MissionService(
         providers.search, agents, providers.transcriber,
-        traces_dir=settings.traces_dir, max_concurrency=settings.h_max_concurrency,
+        traces_dir=settings.traces_dir,
+        # Agents simulés : aucun slot H à partager, les missions ne s'attendent pas.
+        max_concurrency=None if providers.simulated else settings.h_max_concurrency,
         simulated=providers.simulated, question_timeout_s=timeout,
     )
     service.providers = providers
@@ -99,7 +103,13 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         if lifecycle:
             await lifecycle.aclose()
 
+    if os.getenv("RUNAI_PUBLIC") == "1" and not os.getenv("RUNAI_BASIC_AUTH") and not selected.simulated:
+        raise RuntimeError(
+            "RUNAI_PUBLIC=1 en mode réel : définissez RUNAI_BASIC_AUTH, sinon n'importe qui consomme vos crédits"
+        )
     app = FastAPI(title="RunAI", lifespan=lifespan)
+    if credentials := os.getenv("RUNAI_BASIC_AUTH"):
+        app.add_middleware(BasicAuthMiddleware, credentials=credentials)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, error):
@@ -181,9 +191,10 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                     pending = asyncio.ensure_future(anext(messages))
             finally:
                 pending.cancel()
-                with suppress(asyncio.CancelledError, StopAsyncIteration):
-                    await pending
-                await messages.aclose()
+                with anyio.CancelScope(shield=True):
+                    with suppress(asyncio.CancelledError, StopAsyncIteration):
+                        await pending
+                    await messages.aclose()
 
         return StreamingResponse(
             stream(),

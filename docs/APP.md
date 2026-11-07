@@ -9,9 +9,19 @@ python -m runai.app                 # http://127.0.0.1:8000
 RUNAI_DEMO_DELAY=0.5 python -m runai.app   # agents simulés plus rapides
 ```
 
-Variables propres à l'application : `RUNAI_APP_HOST`, `RUNAI_APP_PORT` (défaut `127.0.0.1:8000`) et `RUNAI_DEMO_DELAY` (secondes entre deux actions simulées, défaut 1,5). Les traces vont dans `RUNAI_TRACES_DIR` (socle).
+Variables propres à l'application : `RUNAI_APP_HOST`, `RUNAI_APP_PORT` (défaut `127.0.0.1:8000`) `RUNAI_DEMO_DELAY` (secondes entre deux actions simulées, défaut 1,5) et `RUNAI_BASIC_AUTH` (`utilisateur:motdepasse`, met un mot de passe devant toute l'app sauf `/api/health`). Les traces vont dans `RUNAI_TRACES_DIR` (socle).
 
 Parcours : on tape la course ou on clique sur **Dire la course** (micro → `/api/transcribe`). Une mission est créée : recherche de la course, puis trois agents en parallèle (inscription, hébergement, transport), chacun dans une carte avec son statut (`StepStatus`), sa dernière action, sa vue live, et des boutons pause / reprise / message. Le **portail** liste, pour chaque agent arrêté, le point d'arrêt (`StopPoint`), la page atteinte, le prix et ce que l'humain doit faire lui-même. Tout est journalisé dans la trace (`TraceWriter`) et poussé en direct par SSE.
+
+## Héberger le POC (Render)
+
+`render.yaml` décrit un service web Render : une seule instance (les missions vivent en mémoire), `RUNAI_MODE=live`, démarrage `uvicorn runai.app.server:create_app --factory`, sonde `/api/health`.
+
+1. Render → **New → Blueprint**, choisir ce dépôt et la branche `main`.
+2. Renseigner `RUNAI_BASIC_AUTH` (obligatoire : `render.yaml` fixe `RUNAI_PUBLIC=1` et l'app refuse alors de démarrer en mode live sans mot de passe), `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY` (facultative, voix).
+3. Garde-fous crédits : `RUNAI_H_MAX_STEPS=40`, `RUNAI_H_MAX_TIME_S=600`. Les slots H sont partagés entre toutes les missions live ; en démo, les missions ne s'attendent pas.
+
+Couper le service après le hackathon.
 
 ## Fichiers
 
@@ -22,6 +32,7 @@ Parcours : on tape la course ou on clique sur **Dire la course** (micro → `/ap
 | `tasks.py` | Consignes envoyées aux agents (toujours via `guard_task()`, profil fictif) et action humaine par `StopPoint` |
 | `fakes.py` | Implémentations factices : course de démo (Milan ou Lisbonne, données factices), agents scriptés, transcription fixe |
 | `server.py` | Backend FastAPI et `create_app(service)` |
+| `auth.py` | Mot de passe HTTP Basic optionnel (`RUNAI_BASIC_AUTH`) |
 | `static/` | Page web (HTML/CSS/JS sans build) et vue live simulée |
 
 ## API
