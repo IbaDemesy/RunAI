@@ -272,3 +272,8 @@ def test_stream_transcripts_raises_on_abnormal_end():
 
     with pytest.raises(VoiceError):
         asyncio.run(collect())
+
+
+def test_decimal_distance_keeps_integer_part():
+    assert extract_race("Une course de 21,1 km à Paris").distance_km == 21.1
+    assert extract_race("10.5 km à Porto").distance_km == 10.5

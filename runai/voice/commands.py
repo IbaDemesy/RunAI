@@ -18,10 +18,12 @@ from runai.voice.vocabulary import CITIES, HALF_MARATHON_KM, MARATHON_KM, RACES
 def normalize(text: str) -> str:
     """Minuscules, sans accents ni ponctuation ; même longueur que `text` pour garder les positions."""
     chars = []
-    for char in text:
+    for i, char in enumerate(text):
         base = unicodedata.normalize("NFD", char)[0].lower()
         if base in "’`":
             base = "'"
+        elif base in ".," and 0 < i < len(text) - 1 and text[i - 1].isdigit() and text[i + 1].isdigit():
+            pass
         elif not (base.isalnum() or base in "'-€"):
             base = " "
         chars.append(base if len(base) == 1 else " ")
