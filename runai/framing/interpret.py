@@ -47,7 +47,8 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
         result[SlotName.race] = named_race[0].strip(" ,;.!?")
     else:
         named_race = re.search(
-            r"\bMarathon\s+de\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*" + boundary,
+            r"\bMarathon\s+de\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*"
+            + boundary,
             text,
         )
         if not named_race:

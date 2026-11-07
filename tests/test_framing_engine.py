@@ -143,6 +143,8 @@ def test_named_race_capture_and_numeric_location_boundary():
         "Marathon de Paris depuis Lyon en train, 2 nuits, 300 euros"
     )
     assert named_marathon[SlotName.race] == "Marathon de Paris"
+    named_new_york = extract_slots("Marathon de New York depuis Paris")
+    assert named_new_york[SlotName.race] == "Marathon de New York"
 
 
 def test_candidate_search_waits_for_date_and_logistics_answers():
