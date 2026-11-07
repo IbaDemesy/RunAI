@@ -92,6 +92,22 @@ def total_active(lifecycle):
     return sum(slot["active"] for slot in lifecycle.slots().values())
 
 
+def test_lifecycle_retains_host_boundary_until_result(tmp_path):
+    async def scenario():
+        lc, (fake,) = make(tmp_path)
+        job = lc.submit(StepKind.registration, "Prepare registration", allowed_hosts=("njuko.com",))
+        await until(lambda: job.state is JobState.running)
+        job.run._absorb({"type": "AgentEvent", "data": {"kind": "observation_event", "metadata": {"url": "https://evil.example/"}}})
+        fake.answers["s1"] = "Stopped before payment"
+        fake.status["s1"] = "completed"
+        result = await job.wait()
+        assert result.status is StepStatus.failed
+        assert result.data["off_platform_hosts"] == ["evil.example"]
+        assert "allowed_hosts" not in fake.created[0]
+
+    asyncio.run(scenario())
+
+
 def test_bounded_queue_saturation_then_drain(tmp_path):
     async def scenario():
         lc, (fake,) = make(tmp_path, max_queue=1)

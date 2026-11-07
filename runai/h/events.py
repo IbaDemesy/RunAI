@@ -1,10 +1,18 @@
 import json
+import unicodedata
 from typing import Any
 
 from runai.models import TraceEvent
 
 MAX_TEXT = 500
 _DROPPED_KEYS = {"image", "images", "page_html"}
+
+
+def safe_text(value: str | None) -> str | None:
+    """Bound untrusted agent text and remove invisible control/format characters."""
+    if value is None:
+        return None
+    return "".join(char for char in value if unicodedata.category(char) not in {"Cc", "Cf", "Cs"})[:2000]
 
 
 def as_dict(event: Any) -> dict[str, Any]:
@@ -21,8 +29,10 @@ def compact(value: Any, max_text: int = MAX_TEXT) -> Any:
         return {k: compact(v, max_text) for k, v in value.items() if k not in _DROPPED_KEYS}
     if isinstance(value, list):
         return [compact(v, max_text) for v in value]
-    if isinstance(value, str) and len(value) > max_text:
-        return value[:max_text] + "…"
+    if isinstance(value, str):
+        value = safe_text(value)
+        if len(value) > max_text:
+            return value[:max_text] + "…"
     return value
 
 
@@ -30,8 +40,8 @@ def answer_text(answer: Any) -> str | None:
     if answer is None:
         return None
     if isinstance(answer, str):
-        return answer
-    return json.dumps(answer, ensure_ascii=False, default=str)
+        return safe_text(answer)
+    return safe_text(json.dumps(answer, ensure_ascii=False, default=str))
 
 
 def event_label(event: dict[str, Any]) -> str:
@@ -50,11 +60,11 @@ def event_summary(event: dict[str, Any]) -> str | None:
     if event_type == "LiveViewUrlEvent":
         return "vue live disponible"
     if event_type == "AgentRunStatusChangeEvent":
-        return data.get("status")
+        return safe_text(data.get("status"))
     if event_type == "AgentErrorEvent":
-        return data.get("error")
+        return safe_text(data.get("error"))
     if event_type == "AgentCompletionEvent":
-        return data.get("reason")
+        return safe_text(data.get("reason"))
     if event_type != "AgentEvent":
         return None
     kind = data.get("kind")
@@ -73,7 +83,8 @@ def event_summary(event: dict[str, Any]) -> str | None:
         text = " ".join(str(part) for part in data.get("content") or [])
     else:
         text = None
-    if isinstance(text, str) and len(text) > 200:
+    text = safe_text(text)
+    if text is not None and len(text) > 200:
         return text[:200] + "…"
     return text
 

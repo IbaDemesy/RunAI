@@ -15,8 +15,9 @@ from hai_agents.sessions import SendSessionMessagesRequestBody_UserMessage
 from hai_agents.tools import Tool, ToolInput, as_tools
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 
+from runai.app.providers import FORBIDDEN_HOSTS, host_matches
 from runai.config import get_settings
-from runai.h.events import answer_text, as_dict, to_trace_event
+from runai.h.events import answer_text, as_dict, safe_text, to_trace_event
 from runai.models import StepKind, StepResult, StepStatus, TraceEvent
 from runai.safety import detect_stop_point, guard_task
 from runai.tracing import TraceWriter
@@ -28,6 +29,11 @@ EventCallback = Callable[[dict[str, Any]], Awaitable[None] | None]
 
 _HTTP_URL = TypeAdapter(HttpUrl)
 _ANTI_BOT_BLOCK = re.compile(r"\bBLOCAGE CAPTCHA/ANTI-BOT\b", re.IGNORECASE)
+_PAYMENT_PROCESSOR_HOSTS = (
+    "stripe.com", "adyen.com", "paypal.com", "checkout.com",
+    "ingenico.com", "ingenico.fr", "worldline.com", "worldline-solutions.com",
+    "mollie.com",
+)
 
 
 RESERVED_CREATE_PARAMS = frozenset({"agent", "messages", "queue"})
@@ -88,8 +94,14 @@ def _http_url(value: Any) -> HttpUrl | None:
     if not value:
         return None
     try:
-        return _HTTP_URL.validate_python(value)
-    except ValidationError:
+        original = urlsplit(str(value))
+        if original.username is not None or original.password is not None:
+            return None
+        url = _HTTP_URL.validate_python(value)
+        if url.username is not None or url.password is not None:
+            return None
+        return url
+    except (ValidationError, ValueError):
         return None
 
 
@@ -104,6 +116,9 @@ def build_step_result(
     live_view_url: str | None = None,
     agent_view_url: str | None = None,
     last_url: str | None = None,
+    off_platform: bool = False,
+    payment_processor: bool = False,
+    off_platform_hosts: Iterable[str] = (),
     data: dict[str, Any] | None = None,
 ) -> StepResult:
     text = answer_text(answer)
@@ -127,6 +142,18 @@ def build_step_result(
         status = StepStatus.pending
     else:
         status = StepStatus.running
+    untrusted_hosts = list(off_platform_hosts)
+    if off_platform or payment_processor:
+        status = StepStatus.failed
+        stop_point = None
+        host = ", ".join(untrusted_hosts) or "unknown host"
+        error = (
+            "Payment provider page reached — automation stopped" if payment_processor
+            else f"The agent left the official site ({host}); result not trusted"
+        )
+    result_data = {"h_status": h_status, "answer": answer, "outcome": outcome, **(data or {})}
+    if off_platform or payment_processor:
+        result_data.update(off_platform_hosts=untrusted_hosts, off_platform=off_platform, payment_processor=payment_processor)
     return StepResult(
         kind=kind,
         status=status,
@@ -136,7 +163,7 @@ def build_step_result(
         live_view_url=_http_url(live_view_url),
         agent_view_url=_http_url(agent_view_url),
         h_session_id=session_id,
-        data={"h_status": h_status, "answer": answer, "outcome": outcome, **(data or {})},
+        data=result_data,
         error=error,
     )
 
@@ -149,6 +176,7 @@ class HStep:
     max_steps: int | None = None
     max_time_s: float | None = None
     options: dict[str, Any] = field(default_factory=dict)
+    allowed_hosts: tuple[str, ...] | None = None
 
 
 class HRun:
@@ -163,6 +191,7 @@ class HRun:
         trace: TraceWriter,
         interactive: bool = False,
         session_handle: Any | None = None,
+        allowed_hosts: tuple[str, ...] | None = None,
     ):
         self._runner = runner
         self.account = account
@@ -184,6 +213,10 @@ class HRun:
         self.error: str | None = None
         self.last_url: str | None = None
         self.last_title: str | None = None
+        self.allowed_hosts = allowed_hosts
+        self.off_platform = False
+        self.payment_processor = False
+        self.off_platform_hosts: list[str] = []
         self.metrics: dict[str, Any] = {}
         self.event_count = 0
         self.result: StepResult | None = None
@@ -225,13 +258,29 @@ class HRun:
             if kind == "observation_event":
                 metadata = data.get("metadata") or {}
                 self.last_url = metadata.get("url") or self.last_url
-                self.last_title = metadata.get("title") or self.last_title
+                self.last_title = safe_text(metadata.get("title")) or self.last_title
+                if url := metadata.get("url"):
+                    self._check_host(url)
                 image = data.get("image")
                 if isinstance(image, dict) and image.get("type") == "url" and image.get("media_type") == "image/png":
                     self._capture_reference(image.get("source"), metadata)
             elif kind == "answer_event":
                 self.answer = data.get("answer")
                 self.outcome = data.get("outcome") or self.outcome
+
+    def _check_host(self, url: str) -> None:
+        parsed = _http_url(url)
+        host = parsed.host if parsed is not None else "invalid URL"
+        forbidden = parsed is not None and host_matches(str(parsed), tuple(FORBIDDEN_HOSTS))
+        payment = parsed is not None and host_matches(str(parsed), _PAYMENT_PROCESSOR_HOSTS)
+        allowed = self.allowed_hosts is None or (parsed is not None and host_matches(str(parsed), self.allowed_hosts))
+        if forbidden or payment or not allowed:
+            self.off_platform = True
+            self.payment_processor = self.payment_processor or payment
+            if host not in self.off_platform_hosts:
+                self.off_platform_hosts.append(host)
+            allowed_label = ", ".join(self.allowed_hosts or ()) or "the official site"
+            self._log("host_drift", f"Agent left {allowed_label} for {host}", url=url, allowed=list(self.allowed_hosts or ()), payment_processor=payment)
 
     def _capture_reference(self, source: str | None, metadata: dict[str, Any]) -> None:
         if not isinstance(source, str):
@@ -370,6 +419,9 @@ class HRun:
             live_view_url=self.live_view_url,
             agent_view_url=self.agent_view_url,
             last_url=self.last_url,
+            off_platform=self.off_platform,
+            payment_processor=self.payment_processor,
+            off_platform_hosts=self.off_platform_hosts,
             data={
                 "agent_view_url": self.agent_view_url,
                 "title": self.last_title,
@@ -572,6 +624,7 @@ class HRunner:
         trace: TraceWriter | None = None,
         mission_id: str | None = None,
         start_url: str | None = None,
+        allowed_hosts: tuple[str, ...] | None = None,
         max_steps: int | None = None,
         max_time_s: float | None = None,
         tools: Iterable[ToolInput] | None = None,
@@ -604,6 +657,7 @@ class HRunner:
                 writer,
                 interactive=bool(params.get("idle_timeout_s")),
                 session_handle=session_handle,
+                allowed_hosts=allowed_hosts,
             )
             run._log(
                 "session_created",
@@ -645,7 +699,7 @@ class HRunner:
         trace = TraceWriter(mission_id, traces_dir=self.traces_dir) if mission_id else None
 
         async def one(step: HStep) -> StepResult:
-            own = {"start_url": step.start_url, "max_steps": step.max_steps, "max_time_s": step.max_time_s}
+            own = {"start_url": step.start_url, "max_steps": step.max_steps, "max_time_s": step.max_time_s, "allowed_hosts": step.allowed_hosts}
             params = {**run_params, **step.options, **{k: v for k, v in own.items() if v is not None}}
             params.setdefault("trace", trace)
             try:

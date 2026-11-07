@@ -222,6 +222,97 @@ def test_answer_reaching_payment_is_stop_point(tmp_path):
     assert result.stop_point is StopPoint.payment
 
 
+@pytest.mark.parametrize(
+    "url,allowed_hosts,expected_status,payment_processor",
+    [
+        ("https://in.njuko.com/race", ("njuko.com",), StepStatus.stopped_before_commitment, False),
+        ("https://evil.example/checkout", ("njuko.com",), StepStatus.failed, False),
+        ("https://checkout.stripe.com/pay", ("njuko.com",), StepStatus.failed, True),
+        ("https://www.booking.com/", ("booking.com",), StepStatus.failed, False),
+        ("https://njuko.com.evil.example/", ("njuko.com",), StepStatus.failed, False),
+    ],
+)
+def test_observed_hosts_bound_result_trust(tmp_path, url, allowed_hosts, expected_status, payment_processor):
+    events = scripted_events("Stopped before payment; card number required")
+    events[1]["data"]["metadata"]["url"] = url
+    sessions = FakeSessions(events=events)
+    runner = make_runner(tmp_path, sessions)
+
+    async def scenario():
+        run = await runner.start(StepKind.registration, "Prepare registration", allowed_hosts=allowed_hosts, mission_id="trust")
+        result = await run.wait()
+        return run, result
+
+    run, result = asyncio.run(scenario())
+    assert result.status is expected_status
+    assert run.payment_processor is payment_processor
+    assert "allowed_hosts" not in sessions.created[0]
+    drift = [event for event in TraceWriter("trust", traces_dir=tmp_path).read() if event.type == "host_drift"]
+    if expected_status is StepStatus.failed:
+        host = url.split("/")[2]
+        assert run.off_platform
+        assert result.stop_point is None
+        assert result.data["off_platform_hosts"] == [host]
+        assert drift[0].data["url"] == url
+        assert drift[0].data["allowed"] == list(allowed_hosts)
+        assert drift[0].message == f"Agent left {', '.join(allowed_hosts)} for {host}"
+        assert result.error == (
+            "Payment provider page reached — automation stopped" if payment_processor
+            else f"The agent left the official site ({host}); result not trusted"
+        )
+    else:
+        assert not run.off_platform
+        assert drift == []
+
+
+def test_host_drift_remains_untrusted_after_return_to_official_site(tmp_path):
+    events = scripted_events("Stopped before payment")
+    events.insert(1, {"type": "AgentEvent", "data": {"kind": "observation_event", "metadata": {"url": "https://evil.example/"}}})
+    result = asyncio.run(make_runner(tmp_path, FakeSessions(events=events)).run(
+        StepKind.registration, "Prepare registration", allowed_hosts=("example.com",),
+    ))
+    assert result.status is StepStatus.failed
+    assert result.data["off_platform_hosts"] == ["evil.example"]
+    assert "evil.example" in result.error
+
+
+@pytest.mark.parametrize("url", ["https://user@evil.tld/", "https://user:password@evil.tld/", "https://@evil.tld/", "javascript:alert(1)", "file:///etc/passwd", "data:text/html,test"])
+def test_untrusted_urls_are_not_exposed(url):
+    result = build_step_result(StepKind.registration, "completed", last_url=url, live_view_url=url, agent_view_url=url)
+    assert result.url is result.live_view_url is result.agent_view_url is None
+
+
+def test_agent_text_is_sanitized_and_bounded():
+    from runai.h.events import answer_text, safe_text
+
+    text = "Ready\x00\x1b\x7f\u200b\u200c\u200d\u2060\ufeff\u202e" + "x" * 2500
+    expected = "Ready" + "x" * 1995
+    assert safe_text(text) == expected
+    assert answer_text(text) == expected
+    assert build_step_result(StepKind.registration, "completed", answer=text).summary == expected
+    event = {"type": "AgentEvent", "data": {"kind": "policy_event", "content": text}}
+    assert event_summary(event) == expected[:200] + "…"
+
+
+@pytest.mark.parametrize("host", ["stripe.com", "adyen.com", "paypal.com", "checkout.com", "ingenico.com", "worldline.com", "mollie.com"])
+def test_payment_provider_is_rejected_even_if_allowlisted(tmp_path, host):
+    events = scripted_events("Stopped before payment")
+    events[1]["data"]["metadata"]["url"] = f"https://{host}/checkout"
+    result = asyncio.run(make_runner(tmp_path, FakeSessions(events=events)).run(
+        StepKind.registration, "Prepare registration", allowed_hosts=(host,),
+    ))
+    assert result.status is StepStatus.failed
+    assert result.data["payment_processor"] is True
+    assert result.data["off_platform_hosts"] == [host]
+
+
+def test_run_many_forwards_step_allowed_hosts(tmp_path):
+    step = HStep(StepKind.registration, "Prepare registration", allowed_hosts=("njuko.com",))
+    result, = asyncio.run(make_runner(tmp_path, FakeSessions()).run_many([step]))
+    assert result.status is StepStatus.failed
+    assert result.data["off_platform_hosts"] == ["example.com"]
+
+
 def test_reported_captcha_block_is_a_failed_step():
     result = build_step_result(
         StepKind.registration,

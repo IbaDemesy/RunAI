@@ -182,6 +182,7 @@ class HLifecycle:
         *,
         mission_id: str | None = None,
         timeout_s: float | None = None,
+        allowed_hosts: tuple[str, ...] | None = None,
         **start_params: Any,
     ) -> HJob:
         """Met l'étape en file et la lance dès qu'un slot H est libre (à appeler dans une boucle asyncio).
@@ -196,6 +197,8 @@ class HLifecycle:
         job = HJob(job_id=f"hjob-{next(self._ids)}", kind=kind, mission_id=mission_id)
         job._resume.set()
         self.jobs[job.job_id] = job
+        if allowed_hosts is not None:
+            start_params["allowed_hosts"] = allowed_hosts
         job._task = asyncio.create_task(self._drive(job, task, timeout_s, start_params))
         return job
 
