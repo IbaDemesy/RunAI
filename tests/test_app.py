@@ -729,3 +729,34 @@ def test_api_transcribe_uses_voice_port(tmp_path):
         assert client.post("/api/transcribe", content=b"").status_code == 400
         oversized = b"0" * (MAX_AUDIO_BYTES + 1)
         assert client.post("/api/transcribe", content=oversized).status_code == 413
+
+
+def test_basic_auth_protects_everything_but_health(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "equipe:secret")
+    with TestClient(create_app(make_service(tmp_path, delay=0))) as client:
+        assert client.get("/api/health").status_code == 200
+        denied = client.get("/")
+        assert denied.status_code == 401
+        assert denied.headers["www-authenticate"].startswith("Basic")
+        assert client.post("/api/framings", json={"text": "une course à Milan"}).status_code == 401
+        assert client.get("/", auth=("equipe", "faux")).status_code == 401
+        assert client.get("/", auth=("equipe", "secret")).status_code == 200
+        assert client.get("/static/app.js", auth=("equipe", "secret")).status_code == 200
+
+
+def test_basic_auth_rejects_malformed_setting(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "sans-deux-points")
+    with pytest.raises(ValueError), TestClient(create_app(make_service(tmp_path))) as client:
+        client.get("/")
+
+
+def test_public_live_mode_requires_a_password(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    live = make_service(tmp_path)
+    live.simulated = False
+    with pytest.raises(RuntimeError):
+        create_app(live)
+    create_app(make_service(tmp_path))
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "equipe:secret")
+    create_app(live)
