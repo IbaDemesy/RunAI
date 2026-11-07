@@ -58,6 +58,10 @@ _NEW_MISSION = _words(
     "sign me up", "register me", "i want to run", "i'd like to run",
     "inscreve-me", "inscreve me", "quero (?:correr|fazer)",
 )
+_NEGATION_BEFORE = re.compile(
+    r"(?:(?<![\w-])n'|(?<![\w-])ne (?:pas |plus )?(?:\w+' ?)?|(?<![\w-])(?:don't|do not|never|nao) )$"
+)
+_NEGATION_AFTER = re.compile(r"^ +(?:pas|plus|jamais)(?![\w-])")
 _MAX_COMMAND_WORDS = 25
 _PAUSE_WINDOW_WORDS = 4
 _LEADING_NO = re.compile(r"^\s*(?:non|no|nao)(?![\w-])")
@@ -125,9 +129,18 @@ def extract_race(text: str) -> RaceQuery | None:
     return query if query.model_dump(exclude_none=True) else None
 
 
+def _affirmed(pattern: re.Pattern[str], norm: str) -> re.Match[str] | None:
+    """Premier mot-clé non nié : « n'annule pas », « ne t'arrête pas », « don't stop » sont ignorés."""
+    for match in pattern.finditer(norm):
+        before, after = norm[:match.start()], norm[match.end():]
+        if not (_NEGATION_BEFORE.search(before) or _NEGATION_AFTER.search(after)):
+            return match
+    return None
+
+
 def _is_pause(norm: str) -> bool:
     """Mot d'arrêt en tête d'énoncé (« stop, … », « non attends ») : évite « I don't stop » en pleine phrase."""
-    return bool(_PAUSE.search(" ".join(norm.split()[:_PAUSE_WINDOW_WORDS])))
+    return bool(_affirmed(_PAUSE, " ".join(norm.split()[:_PAUSE_WINDOW_WORDS])))
 
 
 def _target(norm: str) -> CorrectionTarget | None:
@@ -142,10 +155,10 @@ def parse_command(text: str) -> VoiceCommand | None:
     target = _target(norm)
     race = extract_race(text)
 
-    if _CANCEL.search(norm):
+    if _affirmed(_CANCEL, norm):
         return VoiceCommand(kind=CommandKind.cancel, target=target, detail=text.strip())
 
-    correction = _CORRECTION.search(norm)
+    correction = _affirmed(_CORRECTION, norm)
     leading_no = _LEADING_NO.search(norm) if target or race else None
     if correction or leading_no:
         return VoiceCommand(
@@ -155,11 +168,11 @@ def parse_command(text: str) -> VoiceCommand | None:
             detail=text.strip(),
         )
 
-    mission = _NEW_MISSION.search(norm)
+    mission = _affirmed(_NEW_MISSION, norm)
     if mission or (race and race.city and (race.distance_km or race.name)):
         return VoiceCommand(kind=CommandKind.new_mission, race=race, detail=text.strip())
 
-    if _RESUME.search(norm):
+    if _affirmed(_RESUME, norm):
         return VoiceCommand(kind=CommandKind.resume)
     if _is_pause(norm):
         return VoiceCommand(kind=CommandKind.pause)

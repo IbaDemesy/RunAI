@@ -277,3 +277,9 @@ def test_stream_transcripts_raises_on_abnormal_end():
 def test_decimal_distance_keeps_integer_part():
     assert extract_race("Une course de 21,1 km à Paris").distance_km == 21.1
     assert extract_race("10.5 km à Porto").distance_km == 10.5
+
+
+@pytest.mark.parametrize("text", ["N'annule pas l'hôtel", "Ne t'arrête pas", "Don't stop", "Ne change pas la date"])
+def test_negated_keyword_is_not_a_command(text):
+    assert parse_command(text) is None
+    assert CommandDetector().feed(_transcript(text, is_final=False)) == []
