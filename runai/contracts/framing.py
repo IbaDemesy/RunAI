@@ -172,6 +172,28 @@ class FramingSummary(BaseModel):
     limitations: list[Limitation] = Field(default_factory=list)
 
 
+class LinkupCall(BaseModel):
+    endpoint: Literal["search", "fetch"]
+    depth: str | None = None
+    output_type: str | None = None
+    query: str = Field(max_length=200)
+    latency_ms: float = Field(ge=0)
+    source_count: int = Field(ge=0)
+    domains: list[str] = Field(default_factory=list)
+    estimated_cost_usd: float = Field(ge=0)
+
+
+class SearchStats(BaseModel):
+    """Per-search estimates; source counts sum unique citations within each call."""
+
+    provider: Literal["linkup"] = "linkup"
+    calls: list[LinkupCall] = Field(default_factory=list)
+    total_latency_ms: float = Field(default=0, ge=0)
+    estimated_cost_usd: float = Field(default=0, ge=0)
+    source_count: int = Field(default=0, ge=0)
+    domains: list[str] = Field(default_factory=list)
+
+
 class FramingSession(BaseModel):
     schema_version: Literal["framing.v1"] = SCHEMA_VERSION
     id: str
@@ -183,6 +205,7 @@ class FramingSession(BaseModel):
         default_factory=lambda: {name: Slot(name=name) for name in SlotName}
     )
     candidates: list[RaceCandidate] = Field(default_factory=list)
+    search_stats: SearchStats | None = None
     selected_candidate_id: str | None = None
     open_questions: list[FramingQuestion] = Field(default_factory=list)
     turns: list[FramingTurn] = Field(default_factory=list)

@@ -11,9 +11,16 @@ from pydantic import BaseModel, Field, HttpUrl, ValidationError
 
 from runai.coach.finder import AGGREGATORS, EXCLUDED_DOMAINS, norm_name, parse_date
 from runai.contracts.common import Limitation, Provenance, ProvenanceKind
-from runai.contracts.framing import RaceCandidate, Slot, SlotName, matching_distance
+from runai.contracts.framing import (
+    RaceCandidate,
+    SearchStats,
+    Slot,
+    SlotName,
+    matching_distance,
+)
 from runai.models import Source
 from runai.search.checks import host_of, is_aggregator, on_domain
+from runai.search.instrumented import InstrumentedSearchClient
 from runai.search.linkup_search import SearchClient, default_client
 from runai.telemetry import timed
 
@@ -21,10 +28,15 @@ from runai.telemetry import timed
 class CandidateSearchError(RuntimeError):
     """The provider could not complete the search."""
 
+    def __init__(self, message: str, search_stats: SearchStats | None = None):
+        super().__init__(message)
+        self.search_stats = search_stats
+
 
 class CandidateSearchResult(BaseModel):
     candidates: list[RaceCandidate] = Field(default_factory=list)
     limitations: list[Limitation] = Field(default_factory=list)
+    search_stats: SearchStats | None = None
 
 
 class _Candidate(BaseModel):
@@ -162,28 +174,34 @@ class LinkupCandidateSearch:
                    for name in (SlotName.city, SlotName.race)) and not place:
             return self._result([])
         today = self.today or date.today()
+        client = None
         try:
+            client = InstrumentedSearchClient(
+                self._client if self._client is not None else await asyncio.to_thread(default_client)
+            )
             response = await asyncio.to_thread(
                 self._search,
+                client,
                 build_candidate_prompt(
                     slots, today=today, location_constraint=place
                 ),
             )
             candidates = self._parse_candidates(response, slots, today=today)
         except Exception as exc:
-            raise CandidateSearchError("Linkup search failed") from exc
+            raise CandidateSearchError("Linkup search failed", client.stats if client else None) from exc
         if candidates:
             candidates = await self._lookup_next_editions(
-                self._rank_candidates(candidates), today
+                self._rank_candidates(candidates), today, client
             )
-            return self._result(self._rank_candidates(candidates))
+            return self._result(self._rank_candidates(candidates), client.stats)
 
         fallback_slots = self._relaxed_slots(slots)
         if fallback_slots is None:
-            return self._result([])
+            return self._result([], client.stats)
         try:
             response = await asyncio.to_thread(
                 self._search,
+                client,
                 build_candidate_prompt(
                     fallback_slots,
                     today=today,
@@ -195,11 +213,11 @@ class LinkupCandidateSearch:
                 response, fallback_slots, today=today, close_match=True
             )
         except Exception as exc:
-            raise CandidateSearchError("Linkup search failed") from exc
+            raise CandidateSearchError("Linkup search failed", client.stats) from exc
         candidates = await self._lookup_next_editions(
-            self._rank_candidates(candidates), today
+            self._rank_candidates(candidates), today, client
         )
-        return self._result(self._rank_candidates(candidates))
+        return self._result(self._rank_candidates(candidates), client.stats)
 
     @staticmethod
     def _relaxed_slots(
@@ -362,7 +380,7 @@ class LinkupCandidateSearch:
         return ranked[:5]
 
     async def _lookup_next_editions(
-        self, candidates: list[RaceCandidate], today: date
+        self, candidates: list[RaceCandidate], today: date, client: SearchClient
     ) -> list[RaceCandidate]:
         past_only = [
             candidate
@@ -383,7 +401,7 @@ class LinkupCandidateSearch:
         pending = [*past_only, *unknown_date][:3]
         results = await asyncio.gather(
             *(
-                asyncio.to_thread(self._search_next_edition, candidate, today)
+                asyncio.to_thread(self._search_next_edition, candidate, today, client)
                 for candidate in pending
             )
         )
@@ -403,7 +421,7 @@ class LinkupCandidateSearch:
         return candidates
 
     def _search_next_edition(
-        self, candidate: RaceCandidate, today: date
+        self, candidate: RaceCandidate, today: date, client: SearchClient
     ) -> tuple[date, list[Source]] | None:
         query = (
             f'Find the date of the next edition, on or after {today}, of the running race '
@@ -416,11 +434,9 @@ class LinkupCandidateSearch:
             "otherwise leave it empty."
         )
         try:
-            if self._client is None:
-                self._client = default_client()
             with timed("linkup", "search.next_edition", depth="standard",
                        output_type="structured", domains=EXCLUDED_DOMAINS) as call:
-                response = self._client.search(
+                response = client.search(
                     query=query,
                     depth="standard",
                     output_type="structured",
@@ -457,12 +473,10 @@ class LinkupCandidateSearch:
         except Exception:  # noqa: BLE001
             return None
 
-    def _search(self, prompt: str) -> Any:
-        if self._client is None:
-            self._client = default_client()
+    def _search(self, client: SearchClient, prompt: str) -> Any:
         with timed("linkup", "search.structured", depth="standard",
                    output_type="structured", domains=EXCLUDED_DOMAINS) as call:
-            response = self._client.search(query=prompt, depth="standard", output_type="structured",
+            response = client.search(query=prompt, depth="standard", output_type="structured",
                                        structured_output_schema=_Candidates, include_sources=True,
                                        exclude_domains=EXCLUDED_DOMAINS)
             sources = response.get("sources", []) if isinstance(response, dict) else getattr(response, "sources", [])
@@ -470,7 +484,17 @@ class LinkupCandidateSearch:
         return response
 
     @staticmethod
-    def _result(candidates: list[RaceCandidate]) -> CandidateSearchResult:
-        return CandidateSearchResult(candidates=candidates, limitations=[] if candidates else [
+    def _result(
+        candidates: list[RaceCandidate], search_stats: SearchStats | None = None
+    ) -> CandidateSearchResult:
+        if search_stats is not None:
+            for candidate in candidates:
+                count = len(candidate.sources)
+                candidate.provenance.url = candidate.sources[0].url
+                candidate.provenance.label = (
+                    f"Found by Linkup · {search_stats.total_latency_ms / 1000:.1f} s · "
+                    f"{count} {'source' if count == 1 else 'sources'}"
+                )
+        return CandidateSearchResult(candidates=candidates, search_stats=search_stats, limitations=[] if candidates else [
             Limitation(code="no_candidate_found", message="No sourced race candidate found.")
         ])

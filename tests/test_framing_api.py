@@ -5,6 +5,7 @@ from test_framing_engine import Search, mission
 from runai.contracts.common import DataMode
 from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
+from runai.search.candidates import LinkupCandidateSearch
 
 
 def test_routes_revision_and_launch_gate():
@@ -34,6 +35,7 @@ def test_routes_revision_and_launch_gate():
         )
         assert response.status_code == 201
         session = response.json()
+        assert session["search_stats"] is None
         url = f"/api/framings/{session['id']}"
         assert client.get(url).json() == session
         key = {"revision": 1, "idempotency_key": "confirm-key"}
@@ -70,3 +72,27 @@ def test_routes_revision_and_launch_gate():
         assert client.post(url + "/cancel").json()["status"] == "cancelled"
         assert client.post(url + "/confirm", json=key).status_code == 409
         assert len(calls) == 1
+
+
+def test_get_framing_exposes_linkup_search_stats():
+    from test_search_candidates import FakeClient, row
+
+    app = FastAPI()
+    engine = FramingEngine(LinkupCandidateSearch(FakeClient([row()])))
+    app.include_router(build_framing_router(engine, mission))
+    with TestClient(app) as client:
+        session = client.post("/api/framings", json={
+            "text": "race in Tokyo, 10 km on 2030-06-01, from Lyon, budget 800 euros, 2 nights, train",
+        }).json()
+        response = client.get(f"/api/framings/{session['id']}")
+    assert response.status_code == 200
+    stats = response.json()["search_stats"]
+    assert stats["provider"] == "linkup"
+    assert len(stats["calls"]) == 1
+    assert stats["calls"][0]["endpoint"] == "search"
+    assert stats["calls"][0]["depth"] == "standard"
+    assert stats["total_latency_ms"] > 0
+    assert stats["estimated_cost_usd"] == 0.006
+    assert stats["source_count"] == 2
+    assert stats["domains"] == ["race.example", "unrelated.example"]
+    assert response.json()["candidates"][0]["provenance"]["label"].startswith("Found by Linkup")
