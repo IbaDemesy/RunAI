@@ -1,6 +1,7 @@
 """Backend FastAPI : API des missions, flux SSE et page web du portail."""
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -21,7 +22,7 @@ from runai.app.auth import BasicAuthMiddleware
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
 from runai.app.headers import SecurityHeadersMiddleware
-from runai.app.mission import MissionError, MissionService
+from runai.app.mission import MissionError, MissionNotFound, MissionService
 from runai.app.profile import ProfileStore
 from runai.app.providers import (
     ProviderSet,
@@ -167,7 +168,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, error):
-        return JSONResponse(redact_secrets(jsonable_encoder({"detail": error.errors()})), status_code=422)
+        detail = json.dumps(redact_secrets(jsonable_encoder(error.errors())), ensure_ascii=False)
+        return JSONResponse({"detail": detail}, status_code=422)
     app.state.service = selected
     engine = FramingEngine(
         search=candidate_search(selected.providers), mode=selected.providers.mode,
@@ -225,7 +227,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     def handle(error: MissionError) -> HTTPException:
         return HTTPException(
-            status_code=404 if "inconnue" in str(error) else 409, detail=redact_secrets(str(error))
+            status_code=404 if isinstance(error, MissionNotFound) else 409, detail=redact_secrets(str(error))
         )
 
     @app.get("/", include_in_schema=False)
@@ -271,8 +273,10 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             cursor = request.headers.get("last-event-id")
             if cursor:
                 prefix, _, raw = cursor.rpartition(":")
-                if prefix != mission_id or not raw.isdigit() or not 0 <= int(raw) <= len(mission.envelopes):
-                    raise MissionError("Last-Event-ID invalide")
+                if not prefix or not raw.isascii() or not raw.isdigit() or len(raw) > 20:
+                    raise HTTPException(400, "Invalid Last-Event-ID")
+                if prefix != mission_id or not 0 <= int(raw) <= len(mission.envelopes):
+                    raise MissionError("Invalid Last-Event-ID")
         except MissionError as error:
             raise handle(error) from None
 
@@ -422,7 +426,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     async def live_session(session_id: str) -> dict:
         found = get_service().find_session(session_id)
         if found is None:
-            raise HTTPException(status_code=404, detail="Session inconnue")
+            raise handle(MissionNotFound("Unknown session"))
         mission, step = found
         history = [
             event.model_dump(mode="json")

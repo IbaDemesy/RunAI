@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from threading import Lock
 from typing import Any
 
 from pydantic import BaseModel, Field, HttpUrl
@@ -128,6 +129,10 @@ class MissionError(Exception):
     pass
 
 
+class MissionNotFound(MissionError):
+    pass
+
+
 class MissionService:
     def __init__(
         self,
@@ -167,6 +172,7 @@ class MissionService:
         ] = {}
         self._tasks: set[asyncio.Task[None]] = set()
         self.questions = HumanQuestionRegistry()
+        self._answer_lock = Lock()
         self._event_subscribers: dict[str, set[asyncio.Queue]] = {}
         self.providers = None
         self._mission_tasks: dict[str, asyncio.Task] = {}
@@ -409,7 +415,7 @@ class MissionService:
         try:
             return self.missions[mission_id]
         except KeyError:
-            raise MissionError(f"Mission inconnue : {mission_id}") from None
+            raise MissionNotFound(f"Unknown mission: {mission_id}") from None
 
     async def wait(self, mission_id: str) -> Mission:
         while not self.get(mission_id).is_terminal:
@@ -499,8 +505,15 @@ class MissionService:
 
     def answer_question(self, mission_id: str, question_id: str, answer: HumanAnswer):
         mission = self._writable(mission_id)
-        result = self.questions.answer(question_id, mission_id, answer)
-        if (result.reason or "").startswith("eligibility:") or question_id.startswith("eligibility-"):
+        with self._answer_lock:
+            self._ensure_not_cancelled(mission)
+            question = self.questions.get(question_id)
+            if question.choices and answer.answer not in question.choices:
+                raise MissionError("Answer must be one of the available options")
+            result = self.questions.answer(question_id, mission_id, answer)
+        if question.status is QuestionStatus.open and (
+            (result.reason or "").startswith("eligibility:") or question_id.startswith("eligibility-")
+        ):
             self._emit(mission, "question_resolved", result.model_dump(mode="json"))
         self._save_mission(mission)
         return result
@@ -555,15 +568,22 @@ class MissionService:
 
     async def pause_all(self, mission_id: str) -> None:
         self._writable(mission_id)
+        self._ensure_not_cancelled(self.get(mission_id))
         for kind in AGENT_STEPS:
             if self.get(mission_id).steps[kind].status is StepStatus.running:
                 await self.pause(mission_id, kind)
 
     async def resume_all(self, mission_id: str) -> None:
         self._writable(mission_id)
+        self._ensure_not_cancelled(self.get(mission_id))
         for kind in AGENT_STEPS:
             if self.get(mission_id).steps[kind].status is StepStatus.paused:
                 await self.resume(mission_id, kind)
+
+    @staticmethod
+    def _ensure_not_cancelled(mission: Mission) -> None:
+        if mission.status is MissionStatus.cancelled:
+            raise MissionError("Mission is cancelled")
 
     def find_session(self, session_id: str) -> tuple[Mission, StepResult] | None:
         for mission in self.missions.values():
@@ -599,7 +619,8 @@ class MissionService:
         mission = self._writable(mission_id)
         step = mission.steps.get(kind)
         run = self._runs.get((mission_id, kind))
-        if step is None or run is None or step.status not in ACTIVE_STATUSES:
+        self._ensure_not_cancelled(mission)
+        if step is None or run is None or step.status not in ACTIVE_STATUSES | {StepStatus.waiting_for_user}:
             raise MissionError(f"Aucun agent actif pour l'étape {kind.value}")
         return mission, step, run
 

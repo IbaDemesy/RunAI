@@ -117,8 +117,10 @@ def test_confirmed_journey_revisions_and_shared_exports(tmp_path, monkeypatch, n
         response = client.post(f"{route}/questions/{manual['question_id']}/answer", json={
             "answer": "Oui, santé et consentement autorisés", "revision": manual["revision"], "idempotency_key": "manual-test-answer",
         })
-        assert response.status_code == 200
-        assert next(q for q in response.json()["questions"] if q["question_id"] == manual["question_id"])["status"] == "refused"
+        assert response.status_code == 409
+        assert response.json()["detail"]
+        current = client.get(route).json()
+        assert next(q for q in current["questions"] if q["question_id"] == manual["question_id"])["status"] == "open"
         expected = recap_adapter.recap_from_journey(plan)
         html = client.get(f"{route}/recap.html?revision={revision}")
         ics = client.get(f"{route}/recap.ics?revision={revision}")
