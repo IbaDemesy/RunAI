@@ -167,6 +167,16 @@ def test_english_empty_and_ambiguous_answers():
     assert p.longest_recent_run is None and p.recent_race is None
 
 
+@pytest.mark.parametrize("distance,time,time_s", [
+    ("5K", "24:30", 1470), ("half marathon", "1:48", 6480),
+    ("half marathon", "1:48:30", 6510),
+])
+def test_colon_race_times_remain_plausible(distance, time, time_s):
+    result = extract_profile(f"I ran a {distance} in {time}.")
+    assert result.profile.recent_race.time_s == time_s
+    assert result.issues == []
+
+
 def test_custom_vocabulary_keeps_both_languages():
     assert {"half marathon", "elevation gain", "PR", "pace", "10K", "VO2max",
             "semi", "dénivelé", "chrono", "VMA"} <= set(CUSTOM_VOCABULARY)

@@ -108,6 +108,8 @@ def _num(s: str) -> float:
 def _duration_s(text: str) -> float | None:
     m = re.search(r"\b(\d+):([0-5]\d)(?::([0-5]\d))?\b", text)
     if m:
+        if m[3] is None and int(m[1]) >= 10:
+            return int(m[1]) * 60 + int(m[2])
         return int(m[1]) * 3600 + int(m[2]) * 60 + (int(m[3]) if m[3] else 0)
     m = re.search(rf"{_NUM}\s*h(?:eures?)?\s*(?:(\d{{1,2}})(?:\s*(?:min\w*|'))?)?", text)
     if m:
