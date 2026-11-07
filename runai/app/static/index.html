@@ -3,84 +3,90 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RunAI · portail de mission</title>
+  <title>RunAI · préparer le déplacement de course</title>
   <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <header class="top">
-    <div>
-      <h1>RunAI</h1>
-      <p class="tagline">Dis-moi ta course, je prépare tout le déplacement. L'agent prépare, vous signez et payez.</p>
-    </div>
+    <a class="brand" href="/" aria-label="RunAI, accueil">
+      <span class="brand-mark" aria-hidden="true"></span>RunAI
+    </a>
     <span id="mode" class="badge hidden"></span>
   </header>
 
   <main>
-    <form id="mission-form" class="panel ask">
-      <label for="query">Quelle course voulez-vous courir ?</label>
-      <div class="row">
+    <form id="mission-form" class="hero">
+      <h1><label for="query">Dis-moi ta course, je prépare tout le déplacement.</label></h1>
+      <p class="hero-sub">Inscription, hôtel et train : trois agents naviguent pour vous et s'arrêtent avant de payer ou de signer.</p>
+      <div class="ask">
         <input id="query" name="query" required minlength="3" autocomplete="off"
-               placeholder="Ex. : le marathon de Milan, je pars de Paris">
-        <button type="button" id="mic" class="secondary" title="Dire la course">Dire la course</button>
-        <button type="submit" id="start">Préparer</button>
+               placeholder="Le marathon de Milan, je pars de Paris">
+        <button type="button" id="mic" class="ghost" title="Dire la course">Dire la course</button>
+        <button type="submit" id="start" class="primary">Préparer</button>
       </div>
-      <p id="mic-status" class="muted"></p>
+      <p id="mic-status" class="hint"></p>
     </form>
 
-    <section id="mission" class="hidden">
-      <div class="panel race">
-        <div class="race-head">
-          <div>
-            <p class="muted">Mission <code id="mission-id"></code> · <span id="mission-status"></span></p>
-            <h2 id="race-name">Recherche de la course…</h2>
-          </div>
-          <div class="row">
-            <button id="pause-all" class="secondary">Tout mettre en pause</button>
-            <button id="resume-all" class="secondary">Tout reprendre</button>
+    <section id="mission" class="hidden" aria-live="polite">
+      <ol id="course" class="course" aria-label="Avancement de la mission"></ol>
+
+      <div class="bib">
+        <div class="bib-main">
+          <p class="bib-meta">Mission <code id="mission-id"></code> · <span id="mission-status"></span></p>
+          <h2 id="race-name">Recherche de la course…</h2>
+          <dl id="race-facts" class="facts"></dl>
+          <ul id="race-sources" class="sources"></ul>
+        </div>
+        <div class="bib-side">
+          <p id="race-distance" class="bib-number">…</p>
+          <div class="bib-actions">
+            <button id="pause-all" class="ghost">Tout mettre en pause</button>
+            <button id="resume-all" class="ghost">Tout reprendre</button>
           </div>
         </div>
-        <dl id="race-facts" class="facts"></dl>
-        <ul id="race-sources" class="sources"></ul>
       </div>
 
       <div id="steps" class="steps"></div>
 
-      <div class="panel portal">
-        <h2>Portail : à vous de jouer</h2>
-        <p class="muted">Chaque agent s'arrête avant tout engagement. Voici où il s'est arrêté et ce que vous devez faire vous-même.</p>
-        <div id="portal-items"><p class="muted">Les agents travaillent encore…</p></div>
+      <section class="finish">
+        <h2>Ligne d'arrivée : à vous de signer</h2>
+        <p class="finish-sub">Chaque agent s'arrête avant tout engagement. Voici où il s'est arrêté et ce qu'il vous reste à faire.</p>
+        <div id="portal-items"><p class="hint">Les agents travaillent encore…</p></div>
         <p id="portal-total" class="total"></p>
-      </div>
+      </section>
 
-      <div class="panel trace">
-        <h2>Trace de la mission</h2>
+      <details class="trace">
+        <summary>Journal de la mission</summary>
         <ol id="events"></ol>
-      </div>
+      </details>
     </section>
   </main>
 
   <template id="step-template">
-    <article class="panel step">
+    <article class="step">
       <header>
         <h3 class="step-label"></h3>
         <span class="status"></span>
       </header>
-      <p class="last-action muted"></p>
+      <p class="last-action"></p>
       <p class="current-url"></p>
       <div class="live">
         <iframe class="live-frame" title="Vue live de l'agent" loading="lazy"></iframe>
-        <a class="live-link" target="_blank" rel="noopener">Ouvrir la vue live ↗</a>
+        <a class="live-link" target="_blank" rel="noopener">Ouvrir la vue live</a>
       </div>
       <p class="summary"></p>
       <div class="questions hidden"></div>
-      <div class="row controls">
-        <button class="pause secondary">Pause</button>
-        <button class="resume secondary">Reprise</button>
+      <div class="controls">
+        <button class="pause ghost">Pause</button>
+        <button class="resume ghost">Reprendre</button>
       </div>
-      <form class="row message">
-        <input name="text" placeholder="Message à l'agent (ex. : prends plutôt le 10 km)" autocomplete="off">
-        <button type="submit" class="secondary">Envoyer</button>
+      <form class="message">
+        <input name="text" aria-label="Message à l'agent" placeholder="Une consigne ? Ex. : prends plutôt le 10 km" autocomplete="off">
+        <button type="submit" class="ghost">Envoyer</button>
       </form>
     </article>
   </template>

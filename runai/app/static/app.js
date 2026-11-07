@@ -62,7 +62,9 @@ function renderRace(race) {
   ];
   for (const [label, value] of rows) {
     if (!value) continue;
-    facts.append(element("dt", label), element("dd", value));
+    const fact = element("div");
+    fact.append(element("dt", label), element("dd", value));
+    facts.append(fact);
   }
   for (const item of race.sources) {
     const li = element("li");
@@ -114,7 +116,7 @@ function renderQuestions(step, questions) {
     }
     const options = element("div", null, "question-options");
     for (const option of question.options || []) {
-      const button = element("button", option, "secondary");
+      const button = element("button", option);
       button.type = "button";
       button.addEventListener("click", () => submitAnswer(question.id, option, item));
       options.append(button);
@@ -205,6 +207,66 @@ function appendEvent(event) {
   $("#events").prepend(item);
 }
 
+const COURSE = [
+  ["search", "Recherche"],
+  ["registration", "Inscription"],
+  ["accommodation", "Hébergement"],
+  ["transport", "Transport"],
+  ["finish", "À vous de signer"],
+];
+const STEP_STATE = {
+  pending: "todo",
+  running: "active",
+  paused: "active",
+  waiting_for_user: "waiting",
+  stopped_before_commitment: "done",
+  completed: "done",
+  failed: "failed",
+};
+const STEP_NOTE = {
+  running: "en cours",
+  paused: "en pause",
+  waiting_for_user: "question pour vous",
+  stopped_before_commitment: "prêt à signer",
+  completed: "terminé",
+  failed: "échec",
+};
+
+function renderCourse(data) {
+  const course = $("#course");
+  course.replaceChildren();
+  const byKind = Object.fromEntries(data.steps.map((step) => [step.kind, step]));
+  const settled = data.steps.length > 0 && data.steps.every((step) => STEP_STATE[step.status] === "done" || step.status === "failed");
+  COURSE.forEach(([kind, label], index) => {
+    let state = "todo";
+    let note = "";
+    if (kind === "search") {
+      state = data.race ? "done" : data.status === "failed" ? "failed" : "active";
+      note = data.race ? "course trouvée" : "Linkup cherche";
+    } else if (kind === "finish") {
+      state = settled ? "active" : "todo";
+      note = settled ? "à vous" : "";
+    } else if (byKind[kind]) {
+      state = STEP_STATE[byKind[kind].status] || "todo";
+      note = STEP_NOTE[byKind[kind].status] || "";
+    }
+    const item = element("li");
+    item.dataset.state = state;
+    item.append(element("span", state === "done" ? "✓" : String(index + 1), "cp"), element("span", label), element("span", note, "cp-note"));
+    course.append(item);
+  });
+}
+
+function renderDistance(race) {
+  const node = $("#race-distance");
+  node.replaceChildren();
+  if (!race || !race.distance_km) {
+    node.textContent = "…";
+    return;
+  }
+  node.append(String(race.distance_km).replace(".", ","), element("small", "km"));
+}
+
 function render(data, withEvents = false) {
   mission = data;
   $("#mission").classList.remove("hidden");
@@ -213,6 +275,8 @@ function render(data, withEvents = false) {
   renderRace(data.race);
   data.steps.forEach(renderStep);
   renderPortal(data.steps);
+  renderCourse(data);
+  renderDistance(data.race);
   const anyRunning = data.steps.some((step) => step.status === "running");
   const anyPaused = data.steps.some((step) => step.status === "paused");
   $("#pause-all").disabled = !anyRunning;
