@@ -113,7 +113,7 @@ def build_step_result(
             status = StepStatus.failed
             error = error or "Blocage captcha/anti-bot signalé par l'agent."
         else:
-            stop_point = detect_stop_point(text or "")
+            stop_point = detect_stop_point(text or "", ignore_negated=True)
             status = StepStatus.stopped_before_commitment if stop_point else StepStatus.completed
     elif h_status in ("failed", "timed_out"):
         status = StepStatus.failed

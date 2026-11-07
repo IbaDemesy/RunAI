@@ -10,9 +10,12 @@ from runai.contracts.framing import (
     SlotName,
     matching_distance,
 )
+from runai.contracts.mission import HumanAnswer, QuestionStatus
 from runai.framing.engine import FramingEngine
 from runai.framing.interpret import extract_slots
-from runai.models import Source, StopPoint
+from runai.h.human_questions import HumanQuestionRegistry
+from runai.h.runner import build_step_result
+from runai.models import AgentQuestion, Source, StepKind, StopPoint
 from runai.safety import detect_stop_point
 
 
@@ -75,8 +78,24 @@ def test_edition_and_year_extraction():
     assert SlotName.edition not in extract_slots("un 10 km à Tokyo en juin 2028")
 
 
-def test_negated_commitment_is_not_a_stop_point():
-    assert detect_stop_point("Aucun paiement effectué, récapitulatif atteint") is None
-    assert detect_stop_point("No payment was made") is None
-    assert detect_stop_point("Page de paiement atteinte, aucun paiement effectué") is StopPoint.payment
-    assert detect_stop_point("Proceed to payment") is StopPoint.payment
+def test_negated_commitment_is_not_a_reported_stop_point():
+    def report(text):
+        return detect_stop_point(text, ignore_negated=True)
+
+    assert report("Aucun paiement effectué, récapitulatif atteint") is None
+    assert report("No payment was made") is None
+    assert report("Page de paiement atteinte, aucun paiement effectué") is StopPoint.payment
+    assert report("Proceed to payment") is StopPoint.payment
+    assert build_step_result(StepKind.registration, "completed", answer="Aucun paiement effectué").stop_point is None
+
+
+def test_guards_stay_strict_on_negations():
+    assert detect_stop_point("No payment yes pay") is StopPoint.payment
+    registry = HumanQuestionRegistry()
+    registry.open(
+        AgentQuestion(id="q1", kind=StepKind.registration, question="No payment", options=[]),
+        "m1",
+        1,
+    )
+    answered = registry.answer("q1", "m1", HumanAnswer(answer="pay", revision=1, idempotency_key="key-0001"))
+    assert answered.status == QuestionStatus.refused and answered.answer is None

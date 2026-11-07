@@ -50,9 +50,12 @@ _NEGATION = re.compile(
 )
 
 
-def detect_stop_point(text: str) -> StopPoint | None:
+def detect_stop_point(text: str, *, ignore_negated: bool = False) -> StopPoint | None:
+    """`ignore_negated` sert seulement à classer un compte rendu d'agent ; les gardes restent strictes."""
     for stop_point, pattern in _PATTERNS.items():
         for match in pattern.finditer(text):
-            if not _NEGATION.search(text[max(0, match.start() - 40) : match.start()]):
+            if not ignore_negated or not _NEGATION.search(
+                text[max(0, match.start() - 40) : match.start()]
+            ):
                 return stop_point
     return None
