@@ -290,3 +290,7 @@ def test_negated_keyword_is_not_a_command(text):
 def test_decimal_distance_correction_targets_race():
     command = parse_command("Plutôt 21,1 km")
     assert (command.kind, command.target) == (CommandKind.correction, CorrectionTarget.race)
+
+
+def test_race_mission_survives_unrelated_keyword():
+    assert parse_command("Le semi de Paris avec une pause à Porto").kind is CommandKind.new_mission
