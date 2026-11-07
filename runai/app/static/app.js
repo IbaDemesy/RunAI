@@ -17,7 +17,7 @@
   };
   let framing, mission, events, view, plan, busy = false, page = "progress";
   const drafts = new Map();
-  let journeyScripts, pendingFocus, voiceFraming, voiceMission, voiceAborted = false;
+  let journeyScripts, pendingFocus, voiceFraming, voiceMission, voiceAborted = false, voiceState = "idle";
   function loadJourneyScripts() {
     if (!journeyScripts) journeyScripts = (window.RUNAI_JOURNEY_SCRIPTS || []).reduce((previous, src) => previous.then(() => new Promise((resolve) => {
       const script = document.createElement("script");
@@ -62,7 +62,7 @@
       node.target = "_blank"; node.rel = "noopener noreferrer"; parent.append(node);
     } catch (_) { /* Une source invalide ne devient pas un lien. */ }
   }
-  function announce(text) { feedback.textContent = text; }
+  function announce(text) { feedback.textContent = text; feedback.className = ""; }
   function mode(value) {
     document.getElementById("mode").className = "badge" + (value === "live" ? " real" : "");
     document.getElementById("mode").textContent = ({ live: "Réel · live", demo: "Démonstration · demo", replay: "Relecture · replay" })[value] || "Mode non vérifié";
@@ -139,7 +139,7 @@
       if (error.status === 409 && reload) {
         try { await reload(); announce("Conversation mise à jour."); }
         catch (_) { announce("Actualisation impossible. Rechargez la page pour reprendre sans relancer."); }
-      } else announce(error.message || "Connexion indisponible. Réessayez.");
+      } else { announce(error.message || "Connexion indisponible. Réessayez."); feedback.className = "error"; }
     } finally { busy = false; render(); }
     return accepted;
   }
@@ -174,17 +174,22 @@
     node.onsubmit = (event) => {
       event.preventDefault();
       if (busy || !input.value.trim()) return;
-      node.className += " sending"; showPending(input.value.trim()); onSubmit(input.value.trim());
+      const text = input.value.trim(); input.value = ""; drafts.delete(draftKey);
+      node.className += " sending"; showPending(text); onSubmit(text);
     };
     parent.append(node);
     return node;
   }
-  function showPending(text) {
-    const thread = screen.querySelector(".thread");
-    if (!thread) { screen.className += " sending"; return; }
-    thread.append(el("li", text, "me pending"));
-    const typing = el("p", null, "typing"); typing.setAttribute("aria-label", "RunAI réfléchit");
-    typing.append(el("span"), el("span"), el("span")); aiMessage(thread).append(typing);
+  function showPending() {
+    screen.className += " thinking";
+    const runner = el("div", null, "runner");
+    runner.setAttribute("role", "img"); runner.setAttribute("aria-label", "RunAI réfléchit");
+    const streaks = el("div", null, "runner-streaks");
+    for (let i = 0; i < 4; i++) streaks.append(el("i"));
+    runner.append(streaks, el("div", null, "runner-photo"), el("div", null, "runner-sheen"), el("div", null, "runner-floor"));
+    const wrap = el("div", null, "thinking-box"); wrap.append(runner, el("p", "RunAI cherche pour vous…", "think"));
+    const anchor = screen.querySelector(".ask");
+    if (anchor?.parentNode && anchor.parentNode.insertBefore) anchor.parentNode.insertBefore(wrap, anchor); else screen.append(wrap);
   }
   function startFraming(text) {
     return mutate(async () => { framing = await api.request("/api/framings", { text, channel: "text" }); drafts.clear(); });
@@ -194,7 +199,7 @@
     screen.append(el("h1", "Où voulez-vous courir ?"), el("p", "Dites-moi votre prochain objectif. Je trouve la course, le dossard, l’hôtel et le trajet, et je m’arrête avant de payer.", "hero-sub"));
     chatField(screen, "Votre objectif de course", "Un marathon au printemps, une ville, une envie…", startFraming, "start");
     const ideas = el("div", null, "ideas");
-    for (const idea of IDEAS) ideas.append(button(idea, () => { showPending(idea); startFraming(idea); }));
+    for (const idea of IDEAS) ideas.append(button(idea, () => { showPending(); startFraming(idea); }));
     screen.append(ideas);
   }
   const voice = window.RunAIVoiceInput?.createVoiceInput({
@@ -222,14 +227,17 @@
       if (!view) throw new Error("Ouvrez Explorer pour commander la caméra.");
       return view[method](...args);
     }])),
-    onStateChange: state => announce(state.message || ({ listening: "Microphone actif.", transcribing: "Transcription en cours…", idle: "Microphone arrêté." }[state.state] || state.state)),
+    onStateChange: state => { voiceState = state.state; if (!busy) render(); announce(state.message || ({ listening: "Microphone actif.", transcribing: "Transcription en cours…", idle: "Microphone arrêté." }[state.state] || state.state)); },
   });
   function voiceControls() {
     if (!voice) return;
     const controls = el("div", null, "question-options voice-controls");
-    controls.append(button("Parler", () => {
+    if (mission || voiceState !== "listening") controls.append(button("Parler", () => {
       voiceFraming = framing?.id; voiceMission = mission?.mission_id; voice.start();
-    }), button("Terminer l’enregistrement", () => voice.stop()));
+    }));
+    if (mission || voiceState === "listening") {
+      const stop = button("Terminer l’enregistrement", () => voice.stop()); stop.className += " rec"; controls.append(stop);
+    }
     (screen.querySelector(".ask") || screen).append(controls);
   }
   function slotText(name, slot) {
@@ -251,59 +259,60 @@
     }
     if (list.children.length) parent.append(list);
   }
-  function aiMessage(parent, text) {
-    const node = el("li", null, "ai"); node.append(el("span", null, "ai-dot"));
-    const body = el("div", null, "ai-body"); if (text) body.append(el("p", text));
-    node.append(body); parent.append(node); return body;
+  function typewrite(node, text) {
+    node.textContent = text;
+    const motion = typeof matchMedia === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!motion || typeof setTimeout !== "function" || typewrite.done === text) return;
+    typewrite.done = text;
+    node.setAttribute("aria-label", text); node.textContent = "";
+    let index = 0;
+    const step = () => {
+      if (!node.isConnected) return;
+      index += 1; node.textContent = text.slice(0, index);
+      if (index < text.length) setTimeout(step, 22);
+    };
+    step();
   }
   function renderFraming() {
     screen.className = "chat";
     screen.append(el("h1", "Votre course, en discutant", "sr-only"));
     const state = core.framingState(framing);
     if (state === "cancelled") {
-      screen.append(el("p", "Demande annulée. Aucun agent lancé.", "chat-note"));
+      screen.append(el("p", "Demande annulée. Aucun agent lancé.", "say"));
       screen.append(button("Nouvelle demande", () => { framing = null; storage.removeItem("runai:framing"); render(); }, true));
       return;
     }
     understood(screen);
-    const thread = el("ol", null, "thread");
-    let lastAi = null;
-    for (const turn of framing.turns) {
-      if (turn.role === "user") { thread.append(el("li", turn.text, "me")); lastAi = null; }
-      else lastAi = aiMessage(thread, turn.text);
-    }
-    const phrased = lastAi && framing.turns[framing.turns.length - 1].revision === framing.revision;
-    for (const question of framing.open_questions.filter((q) => !q.choices.some((c) => c.candidate_id)).slice(0, 1)) {
-      const body = phrased ? lastAi : aiMessage(thread);
-      body.append(el("h2", question.text, phrased ? "ai-question sr-only" : "ai-question"));
+    const pick = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id));
+    const question = framing.open_questions.find((q) => !q.choices.some((c) => c.candidate_id));
+    const last = framing.turns[framing.turns.length - 1];
+    const phrased = last?.role === "assistant" && last.revision === framing.revision ? last.text : null;
+    const sayText = phrased || question?.text || pick?.text
+      || (state === "ready_to_confirm" ? "Tout est prêt. Vérifiez le récapitulatif avant de lancer la recherche." : "Dites-m’en un peu plus sur votre projet.");
+    const say = el("p", null, "say"); say.setAttribute("aria-live", "polite"); screen.append(say); typewrite(say, sayText);
+    if (question) {
       const choices = el("div", null, "replies");
-      for (const choice of question.choices) {
-        if (choice.candidate_id) continue;
-        choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
-      }
-      if (choices.children.length) body.append(choices);
-    }
-    if (framing.candidates.length) {
-      const body = phrased && !framing.open_questions.some((q) => !q.choices.some((c) => c.candidate_id)) ? lastAi : aiMessage(thread);
+      for (const choice of question.choices) choices.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id })));
+      if (choices.children.length) screen.append(choices);
+    } else if (pick && framing.candidates.length) {
       const list = el("div", null, "candidates");
       for (const candidate of framing.candidates) {
         const card = el("article", null, "candidate");
         card.append(el("h2", candidate.name), el("p", [candidate.city, candidate.country, candidate.race_date || "Date inconnue", candidate.distances_km.join(" / ") + " km"].join(" · "), "candidate-meta"));
-        const question = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id === candidate.id));
-        const choice = question?.choices.find((c) => c.candidate_id === candidate.id);
-        if (choice) card.append(button("Choisir cette course · " + candidate.name, () => submitReply(choice.label, { channel: "buttons", question_id: question.id, choice_id: choice.id }), true));
+        const choice = pick.choices.find((c) => c.candidate_id === candidate.id);
+        if (choice) card.append(button("Choisir cette course · " + candidate.name, () => {
+          card.className += " picked";
+          list.children.forEach?.((other) => { if (other !== card) other.className += " dim"; });
+          submitReply(choice.label, { channel: "buttons", question_id: pick.id, choice_id: choice.id });
+        }, true));
         link(card, candidate.official_url || candidate.sources[0]?.url, "Source officielle");
         limitations(card, candidate.limitations); list.append(card);
       }
-      body.append(list);
-      const pick = framing.open_questions.find((q) => q.choices.some((c) => c.candidate_id));
+      screen.append(list);
       const others = el("div", null, "replies");
-      for (const choice of pick?.choices.filter((c) => !c.candidate_id) || []) {
-        others.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: pick.id, choice_id: choice.id })));
-      }
-      if (others.children.length) body.append(others);
+      for (const choice of pick.choices.filter((c) => !c.candidate_id)) others.append(button(choice.label, () => submitReply(choice.label, { channel: "buttons", question_id: pick.id, choice_id: choice.id })));
+      if (others.children.length) screen.append(others);
     }
-    screen.append(thread);
     const slots = el("details", null, "trace corrections"); slots.append(el("summary", "Modifier quelque chose"));
     for (const [name, slot] of Object.entries(framing.slots)) {
       const known = ["answered", "sourced", "not_needed"].includes(slot.status);
@@ -331,13 +340,14 @@
       }, reloadFraming), true));
       summary.append(el("p", "Trois agents vont naviguer pour vous. Ils s’arrêtent avant tout paiement ou envoi définitif.", "hint"), slots);
       screen.append(summary);
-    } else screen.append(slots);
+    }
     limitations(screen, framing.limitations);
-    const question = framing.open_questions.find((q) => q.allow_free_text && !q.choices.some((c) => c.candidate_id)) || framing.open_questions.find((q) => q.allow_free_text);
+    const free = question?.allow_free_text ? question : pick?.allow_free_text ? pick : null;
     const dock = el("div", null, "dock");
-    if (question) chatField(dock, "Votre réponse · " + question.text, "Répondez ou parlez…", (text) => submitReply(text, { question_id: question.id }), question.id);
+    if (free) chatField(dock, "Votre réponse · " + free.text, "Répondez ou parlez…", (text) => submitReply(text, { question_id: free.id }), free.id);
     else chatField(dock, "Compléter ou corriger votre demande", state === "ready_to_confirm" ? "Une précision ? Écrivez-la ici…" : "Répondez ou parlez…", submitReply, "reply");
     screen.append(dock);
+    if (state !== "ready_to_confirm") screen.append(slots);
     screen.append(button("Annuler la demande", () => mutate(async () => {
       framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/cancel", {});
     }, reloadFraming), false));
