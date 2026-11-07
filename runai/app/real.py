@@ -15,6 +15,7 @@ from runai.h.events import to_trace_event
 from runai.h.runner import HRun, HRunner
 from runai.models import Race, RunnerProfile, StepKind, StepResult, StepStatus
 from runai.safety import guard_task
+from runai.search.checks import registration_url_issue
 from runai.search.linkup_search import search_race
 from runai.search.models import RaceSheet
 from runai.voice.audio import load_pcm, pcm_chunks
@@ -35,7 +36,10 @@ class RealRaceSearch:
 
     async def find_race(self, query: str) -> Race:
         sheet = await asyncio.to_thread(self.search, query)
-        return sheet.to_race()
+        race = sheet.to_race()
+        if registration_url_issue(sheet):
+            race = race.model_copy(update={"registration_url": None})
+        return race
 
 
 def ask_user_tool(ask_user: AskUser) -> Tool:

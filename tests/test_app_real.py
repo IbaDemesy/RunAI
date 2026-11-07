@@ -41,6 +41,20 @@ def test_real_race_search_adapts_linkup_sheet():
     assert race.sources[0].title == "Official"
 
 
+def test_real_race_search_drops_an_unverified_registration_link():
+    sheet = RaceSheet(
+        query="Marathon de Milan 2027",
+        name="Wizz Air Milano Marathon",
+        city="Milan",
+        country="Italy",
+        country_code="IT",
+        official_url="https://www.milanomarathon.it",
+        registration_url="https://dossards-revente.example/milano",
+    )
+    race = asyncio.run(RealRaceSearch(search=lambda query: sheet).find_race("Milan"))
+    assert race.registration_url is None
+
+
 def test_real_browser_agent_passes_registration_url_and_ask_tool():
     class FakeHRun:
         id = "h-session-1"
