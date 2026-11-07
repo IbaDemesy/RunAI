@@ -142,3 +142,53 @@ def test_cancel_mission_does_not_cancel_other_queued_mission():
         await lifecycle.cancel_all("m2")
 
     asyncio.run(scenario())
+
+
+def test_cancel_running_mission_leaves_other_running_mission_untouched():
+    async def scenario():
+        started = {mission: asyncio.Event() for mission in ("m1", "m2")}
+        finish = {mission: asyncio.Event() for mission in started}
+        runs = {}
+        for mission, event in started.items():
+            async def wait(*, timeout_s=None, mission=mission, event=event):
+                event.set()
+                await finish[mission].wait()
+                return StepResult(kind=StepKind.transport, status=StepStatus.completed)
+
+            runs[mission] = SimpleNamespace(
+                status="running",
+                wait=wait,
+                close=AsyncMock(),
+                pause=AsyncMock(),
+                resume=AsyncMock(),
+            )
+
+        async def start(kind, task, *, mission_id):
+            return runs[mission_id]
+
+        runner = SimpleNamespace(start=AsyncMock(side_effect=start), accounts=[])
+        lifecycle = HLifecycle(runner)
+        a = lifecycle.submit(StepKind.transport, "t", mission_id="m1")
+        b = lifecycle.submit(StepKind.transport, "t", mission_id="m2")
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*(event.wait() for event in started.values())), 1
+            )
+            assert a.state is b.state is JobState.running
+            await lifecycle.cancel_all("m1")
+            await lifecycle.cancel_all("m1")
+            with pytest.raises(HJobCancelled):
+                await a.wait()
+            assert b.state is JobState.running and not b.done
+            runs["m1"].close.assert_awaited_once()
+            for action in ("close", "pause", "resume"):
+                getattr(runs["m2"], action).assert_not_called()
+            finish["m2"].set()
+            assert (await asyncio.wait_for(b.wait(), 1)).status is StepStatus.completed
+            assert b.state is JobState.completed
+            runs["m2"].close.assert_awaited_once()
+            assert runner.start.await_count == 2
+        finally:
+            await lifecycle.cancel_all()
+
+    asyncio.run(scenario())

@@ -45,7 +45,10 @@ def test_live_without_key_is_error_never_fake(provider):
 
 
 def test_environment_keys_are_not_implicitly_serialized(monkeypatch, tmp_path):
-    for name in ("HAI_API_KEY", "HAI_API_KEY_2", "LINKUP_API_KEY", "GLADIA_API_KEY"):
+    for name in (
+        "HAI_API_KEY", "HAI_API_KEY_2", "LINKUP_API_KEY", "LINKUP_API_KEY_2",
+        "GLADIA_API_KEY", "GLADIA_API_KEY_2",
+    ):
         monkeypatch.setenv(name, SENTINEL)
     health = build_providers(DataMode.demo).health_payload()
     mission = snapshot()
@@ -71,6 +74,7 @@ def test_environment_keys_are_not_implicitly_serialized(monkeypatch, tmp_path):
 @pytest.mark.parametrize("surface", ["snapshot", "sse", "replay"])
 @pytest.mark.xfail(
     strict=True,
+    raises=AssertionError,
     reason="E3: les sorties libres ne filtrent pas les clés reflétées par un fournisseur",
 )
 def test_provider_echoed_key_is_redacted(surface, monkeypatch, tmp_path):
@@ -94,6 +98,7 @@ def test_provider_echoed_key_is_redacted(surface, monkeypatch, tmp_path):
 
 @pytest.mark.xfail(
     strict=True,
+    raises=AssertionError,
     reason="E3: HLifecycle recopie str(exc) sans masquer les clés fournisseur",
 )
 def test_lifecycle_exception_does_not_echo_key(monkeypatch):

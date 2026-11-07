@@ -138,6 +138,86 @@ def test_empty_discovery_asks_date_distance_and_origin():
     asyncio.run(run())
 
 
+@pytest.mark.parametrize("channel", ["text", "voice"])
+def test_city_correction_invalidates_old_summary_and_candidate_question(channel):
+    async def run():
+        search = Discovery()
+        engine = FramingEngine(search, DataMode.demo)
+        initial = await engine.create(
+            FramingCreate(
+                text="une course à Tokyo depuis Lyon, 800 euros, 2 nuits, en avion",
+                channel=channel,
+            )
+        )
+        old_question = next(q for q in initial.open_questions if q.choices)
+        ready = await engine.reply(
+            initial.id,
+            FramingReply(revision=initial.revision, choice_id="event-0", channel=channel),
+        )
+        assert ready.status is FramingStatus.ready_to_confirm
+        corrected = await engine.reply(
+            ready.id,
+            FramingReply(
+                revision=ready.revision,
+                text="finalement une course à Nairobi",
+                channel=channel,
+            ),
+        )
+        assert search.cities == ["Tokyo", "Nairobi"]
+        assert corrected.status is FramingStatus.choosing_candidate
+        assert corrected.summary is None and corrected.selected_candidate_id is None
+        assert all(c.city == "Nairobi" for c in corrected.candidates)
+        for name in (SlotName.origin, SlotName.budget, SlotName.nights, SlotName.transport_mode):
+            assert corrected.slots[name] == ready.slots[name]
+        for name in (SlotName.race, SlotName.race_date, SlotName.distance_km):
+            assert not corrected.slots[name].is_known
+        with pytest.raises(FramingError, match="Question périmée"):
+            await engine.reply(
+                ready.id,
+                FramingReply(
+                    revision=corrected.revision,
+                    question_id=old_question.id,
+                    choice_id="event-0",
+                    channel=channel,
+                ),
+            )
+        launches = []
+
+        async def launch(session):
+            launches.append(session)
+            return snapshot(session)
+
+        for revision in (ready.revision, corrected.revision):
+            with pytest.raises(FramingError):
+                await engine.confirm(
+                    ready.id,
+                    FramingConfirm(revision=revision, idempotency_key="correct-city"),
+                    launch,
+                )
+        assert not launches
+        current = await engine.reply(
+            ready.id,
+            FramingReply(
+                revision=corrected.revision, choice_id="event-1", channel=channel
+            ),
+        )
+        assert current.summary.race.city == "Nairobi"
+        assert current.summary.origin_public == "Lyon"
+        assert current.summary.budget_eur == 800 and current.summary.nights == 2
+        assert not launches
+        await engine.confirm(
+            current.id,
+            FramingConfirm(revision=current.revision, idempotency_key="correct-city"),
+            launch,
+        )
+        assert len(launches) == 1
+        assert launches[0].status is FramingStatus.confirmed
+        assert launches[0].confirmed_revision == current.revision
+        assert launches[0].summary == current.summary
+
+    asyncio.run(run())
+
+
 def test_revision_concurrent_confirmation_cancellation_and_channel_parity():
     async def run():
         states = []
