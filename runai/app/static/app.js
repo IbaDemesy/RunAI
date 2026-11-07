@@ -28,6 +28,7 @@ let mission = null;
 let source = null;
 let simulated = false;
 let ticker = null;
+let lastEventAt = NaN;
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -205,8 +206,7 @@ function renderActivity(data) {
   clearInterval(ticker);
   ticker = null;
   if (TERMINAL.has(data.status)) {
-    const last = data.events.at(-1);
-    const ended = last ? Date.parse(last.at) : NaN;
+    const ended = Number.isNaN(lastEventAt) ? Date.now() : lastEventAt;
     $("#activity-elapsed").textContent = Number.isNaN(started) || Number.isNaN(ended) ? "" : `en ${formatElapsed(ended - started)}`;
     return;
   }
@@ -246,6 +246,8 @@ function renderPortal(steps) {
 
 function appendEvent(event) {
   const item = element("li");
+  const at = Date.parse(event.at);
+  if (!(at <= lastEventAt)) lastEventAt = at;
   const time = new Date(event.at).toLocaleTimeString("fr-FR");
   item.append(element("time", time), element("span", event.source, `source source-${event.source.split(":")[0]}`), element("span", event.message || event.type));
   $("#events").prepend(item);
