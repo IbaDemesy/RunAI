@@ -1,0 +1,180 @@
+{
+  "query": "Schneider Electric Marathon de Paris 2027",
+  "race": {
+    "name": "ASICS Marathon de Paris 2027",
+    "edition_year": 2027,
+    "date": "2027-04-04",
+    "distance_km": 42.195,
+    "start_time": null,
+    "start_location": "Avenue des Champs-Élysées, Paris",
+    "city": "Paris",
+    "country": "France",
+    "bib_pickup": {
+      "location": null,
+      "days": [],
+      "hours": null,
+      "same_day_possible": false
+    },
+    "start_access": null,
+    "required_documents": {
+      "pps": true,
+      "medical_certificate": false,
+      "license_accepted": true,
+      "notes": "Il faut fournir soit un PPS FFA valide le jour de la course, délivré moins d’un an avant, soit une licence FFA « Athlé Compétition », « Athlé Entreprise » ou « Athlé running » valide pour la saison 2026/2027. Les licences FFA « Santé » et « Encadrement », ainsi que les licences étrangères, ne sont pas acceptées. Le justificatif doit être renseigné au plus tard le 2027-03-28 à 23h59. Un certificat médical supplémentaire est exigé pour la personne transportée en joëlette."
+    },
+    "aid_stations": "Des postes de ravitaillement et, si nécessaire, de rafraîchissement sont prévus ; leurs emplacements seront précisés ultérieurement.",
+    "time_limit": "6h00",
+    "registration_platform": "Inscription via un lien personnalisé adressé aux personnes sélectionnées au tirage au sort ; la plateforme technique n’est pas précisée par les sources officielles fournies.",
+    "registration_url": null,
+    "price_eur": null,
+    "registration_status": "inconnu",
+    "official_url": "https://www.asicsmarathondeparis.com/",
+    "regulation_url": "https://www.asicsmarathondeparis.com/fr/reglement",
+    "sources": [
+      {
+        "url": "https://www.asicsmarathondeparis.com/fr/reglement",
+        "title": "Règlement du ASICS Marathon de Paris — édition 2027"
+      },
+      {
+        "url": "https://www.asicsmarathondeparis.com/fr/preparer-mon-marathon/le-parcours",
+        "title": "Le parcours — ASICS Marathon de Paris 2027"
+      },
+      {
+        "url": "https://fatmarathoner.com/paris-marathon/",
+        "title": "ASICS Marathon de Paris 2027: Complete Guide for Runners"
+      },
+      {
+        "url": "https://www.asicsmarathondeparis.com/fr/faq",
+        "title": "FAQ - ASICS Marathon de Paris 2027"
+      },
+      {
+        "url": "https://www.sortiraparis.com/loisirs/sport/articles/50290-marathon-de-paris-2027-la-date-de-la-plus-grande-course-parisienne-et-les-modalites-d-inscription",
+        "title": "Marathon de Paris 2027 : La date de la plus grande course parisienne et les modalités d'inscription - Sortiraparis.com"
+      },
+      {
+        "url": "https://rundida.com/zh/marathon/paris/",
+        "title": "巴黎马拉松2027：香榭丽舍起跑·报名攻略 | 跑滴答"
+      },
+      {
+        "url": "https://in.reg.asicsmarathondeparis.com/marathon-2027?currentPage=select-competition",
+        "title": "Asicsmarathondeparis"
+      },
+      {
+        "url": "https://www.asicsmarathondeparis.com/fr/inscription",
+        "title": "ASICS Marathon de Paris 2027"
+      },
+      {
+        "url": "https://running.life/fr/evenement/marathon-de-paris",
+        "title": "Marathon de Paris, 4 avr 2027"
+      },
+      {
+        "url": "https://www.sortiraparis.com/en/what-to-do-in-paris/sport-wellness/articles/50290-paris-marathon-2027-the-50th-edition-on-april-4-and-registration-details",
+        "title": "Paris Marathon 2027: the 50th edition on April 4 and how to register - Sortiraparis.com"
+      },
+      {
+        "url": "https://www.sortiraparis.com/de/was-zu-tun-in-paris/sport-wohlbefinden/articles/50290-paris-marathon-2027-die-50-ausgabe-am-4-april-anmeldung-geoffnet",
+        "title": "Paris-Marathon 2027: Die 50. Auflage am 4. April – Anmeldungen geöffnet - Sortiraparis.com"
+      },
+      {
+        "url": "https://www.asicsmarathondeparis.com/fr/reglement-tirage-au-sort",
+        "title": "Règlement Tirage au sort - ASICS Marathon de Paris 2027"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 5.32,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.018,
+      "missing_critical": [
+        "start_time",
+        "registration_url"
+      ]
+    },
+    {
+      "depth": "deep",
+      "latency_s": 108.07,
+      "list_price_usd": 0.055,
+      "balance_delta_usd": 0.433,
+      "missing_critical": [
+        "start_time",
+        "registration_url"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-04-03T09:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-03T12:00",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-04-03T13:00",
+      "label": "Retrait du dossard",
+      "detail": "lieu à confirmer (horaires à confirmer) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-03T15:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T06:30",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T07:45",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "accès au départ à confirmer",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T08:15",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "Avenue des Champs-Élysées, Paris",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T09:00",
+      "label": "Départ ASICS Marathon de Paris 2027",
+      "detail": "Avenue des Champs-Élysées, Paris",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T13:13",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite 6h00",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T14:43",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T15:43",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T18:43",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

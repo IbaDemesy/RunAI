@@ -1,0 +1,365 @@
+{
+  "query": "EDP Meia Maratona de Lisboa 2027",
+  "race": {
+    "name": "EDP Meia Maratona de Lisboa 2027",
+    "edition_year": 2027,
+    "date": "2027-03-07",
+    "distance_km": 21.097,
+    "start_time": "09:20",
+    "start_location": "Ponte 25 de Abril (départ sur le pont ; accès par la gare de Pragal)",
+    "city": "Lisbonne",
+    "country": "Portugal",
+    "bib_pickup": {
+      "location": "Sport Expo, Centro de Congressos de Lisboa, zone de Junqueira, Lisbonne",
+      "days": [
+        "2027-03-05",
+        "2027-03-06"
+      ],
+      "hours": "10:00–20:00",
+      "same_day_possible": false
+    },
+    "start_access": "Accès obligatoire en train Fertagus jusqu’à la gare de Pragal, seule voie d’accès indiquée par l’organisateur. Le train Fertagus est gratuit sur présentation du dossard ; les transports publics permettant de rejoindre les gares Fertagus (métro, bus et trains) sont également gratuits pour les participants. Aucun parking n’est indiqué dans les informations disponibles.",
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": null,
+      "license_accepted": null,
+      "notes": "Les sources disponibles ne précisent pas les documents médicaux ou la licence exigés pour cette épreuve."
+    },
+    "aid_stations": "Plusieurs zones officielles d'approvisionnement, espacées de 5 km",
+    "time_limit": "3h00",
+    "registration_platform": "Site de l’organisateur, Maratona Clube de Portugal ; l’attribution des places de la demi-marathon passe par un tirage au sort.",
+    "registration_url": null,
+    "price_eur": null,
+    "registration_status": "inconnu",
+    "official_url": "https://maratonaclubedeportugal.com/corrida-marco/edp-meia-maratona-de-lisboa/",
+    "regulation_url": "https://maratonaclubedeportugal.com/wp-content/uploads/REGULAMENTO_EDP_MEIA-_MARATONA_DE-LISBOA_2027_PT-.docx.pdf",
+    "sources": [
+      {
+        "url": "https://maratonaclubedeportugal.com/corrida-marco/edp-meia-maratona-de-lisboa/",
+        "title": "EDP Meia Maratona de Lisboa 2027 – site de l’organisateur"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/wp-content/uploads/REGULAMENTO_EDP_MEIA-_MARATONA_DE-LISBOA_2027_PT-.docx.pdf",
+        "title": "Règlement EDP Meia Maratona de Lisboa 2027"
+      },
+      {
+        "url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847",
+        "title": "Règlement du tirage au sort des inscriptions 2027"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/en/",
+        "title": "Informations organisateur sur le retrait des dossards"
+      },
+      {
+        "url": "https://www.portugalrunning.com/eventos/edp-meia-maratona-lisboa/",
+        "title": "EDP Meia Maratona Lisboa 2027 (7 Mar) – Guia e Inscrições"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/en/home.html",
+        "title": "36ª EDP Meia Maratona de Lisboa 2027 - EDP Lisbon Half Marathon 2027"
+      },
+      {
+        "url": "https://www.instagram.com/edpmeiamaratonadelisboa/",
+        "title": "EDP Meia Maratona de Lisboa (@edpmeiamaratonadelisboa) • Fotos y vídeos de Instagram"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/en/faqs-edp-lisbon-marathon/",
+        "title": "EDP Lisbon Marathon FAQs: entries, course and race packs"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/es/inscripciones.html",
+        "title": "Inscripciones oficiales EDP Media Maratón de Lisboa 2026"
+      },
+      {
+        "url": "https://www.facebook.com/EDPMeiaMaratonaLisboa/posts/-o-sorteio-para-a-edp-meia-maratona-de-lisboa-2027-est%C3%A1-oficialmente-aberto-esta/1393717382795573/",
+        "title": "🚨 O sorteio para a EDP Meia Maratona de Lisboa 2027 ..."
+      },
+      {
+        "url": "https://maratonalisboa.com/home.html",
+        "title": "EDP meia maratona de Lisboa - Portugal"
+      },
+      {
+        "url": "https://www.finishers.com/en/event/lisbon-half-marathon",
+        "title": "🏃 Lisbon Half Marathon 2027 - All the information about the race and registration process | Finishers"
+      },
+      {
+        "url": "https://thelisbonconcierge.com/pt/guide/tips/lisbon-half-marathon",
+        "title": "Meia Maratona de Lisboa 2027: Guia Prático — Guia de Lisboa | The Lisbon Concierge"
+      },
+      {
+        "url": "https://www.intervalcoach.app/en/events/edp-meia-maratona-de-lisboa-race_MQ8TM7Q8VGGZ",
+        "title": "EDP Meia Maratona de Lisboa · Mar 7, 2027 | IntervalCoach"
+      },
+      {
+        "url": "https://www.portugalrunning.com/eventos/edp-meia-maratona-lisboa/",
+        "title": "EDP Meia Maratona Lisboa 2027 (7 Mar) – Guia e Inscrições"
+      },
+      {
+        "url": "https://www.intervalcoach.app/pt/events/edp-meia-maratona-de-lisboa-race_MQ8TM7Q8VGGZ",
+        "title": "EDP Meia Maratona de Lisboa · 7 de mar. de 2027"
+      },
+      {
+        "url": "https://www.travelmarathon.com.br/corridas/meia-maratona-lisboa/",
+        "title": "Meia Maratona Lisboa 2027 | SuperHalfs - Travelmarathon.com.br"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/fr/home.html",
+        "title": "EDP Meia Maratona de Lisboa 2027 - EDP Semi-marathon de Lisbonne 2027"
+      },
+      {
+        "url": "https://www.sub4.com.br/produtodetalhe/223/meia-maratona-de-lisboa",
+        "title": "Meia Maratona de Lisboa 2027 - Sub4 Turismo"
+      },
+      {
+        "url": "https://running-portugal.com/lisbon/lisbonhalf/en/home",
+        "title": "36ª EDP Meia Maratona de Lisboa 2027 - EDP Lisbon Half Marathon 2027"
+      },
+      {
+        "url": "https://werun.world/course/semi-marathon-de-lisbonne/",
+        "title": "Semi-marathon de Lisbonne 2027 – Lisbonne"
+      },
+      {
+        "url": "https://portal.fpatletismo.pt/home/eventos/209",
+        "title": "EDP Maratona de Lisboa - Portal FPA"
+      },
+      {
+        "url": "https://www.portugalrunning.com/eventos/edp-meia-maratona-lisboa/",
+        "title": "EDP Meia Maratona Lisboa 2027 (7 Mar) – Guia e Inscrições"
+      },
+      {
+        "url": "https://www.travelmarathon.com.br/corridas/meia-maratona-lisboa/",
+        "title": "Meia Maratona Lisboa 2027 | SuperHalfs - Travelmarathon.com.br"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/en/home.html",
+        "title": "36ª EDP Meia Maratona de Lisboa 2027 - EDP Lisbon Half Marathon 2027"
+      },
+      {
+        "url": "https://kamelturismo.com.br/event-package/meia-maratona-de-lisboa/",
+        "title": "Meia Maratona de Lisboa 2027 - Kamel Turismo"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/marathon/en/rules.html",
+        "title": "Race Rules 2027 | Lisbon Marathon | Running Portugal"
+      },
+      {
+        "url": "https://znaki.fm/pt/events/edp-maratona-de-lisboa/",
+        "title": "EDP Maratona de Lisboa - uma maratona desportiva brilhante e prestigiada"
+      },
+      {
+        "url": "https://www.hdsports.at/laufen/lissabon-halbmarathon",
+        "title": "Lissabon Halbmarathon / Meia Maratona de Lisboa 2027: Ergebnisse &amp; Anmeldung"
+      },
+      {
+        "url": "https://www.portugalrunning.com/eventos/edp-meia-maratona-lisboa/",
+        "title": "EDP Meia Maratona Lisboa 2027 (7 Mar) – Guia e Inscrições"
+      },
+      {
+        "url": "https://revistaatletismo.com/sorteio-para-a-edicao-de-2027-da-edp-meia-maratona-de-lisboa-aberto-ate-dia-19/",
+        "title": "Sorteio para a edição de 2027 da EDP Meia Maratona de Lisboa aberto até dia 19 – Revista Atletismo"
+      },
+      {
+        "url": "https://sapo.pt/artigo/sorteio-para-a-edp-meia-maratona-de-lisboa-de-2027-aberto-ate-dia-19-e-com-recorde-de-procura-a-vista-69fc926ec09daa3aa6c64bb7",
+        "title": "Sorteio para a EDP Meia Maratona de Lisboa de 2027 aberto até dia 19 e com recorde de procura à vista"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/es/home.html",
+        "title": "36ª EDP Meia Maratona de Lisboa 2027 - Media Maratón de Lisboa 2027"
+      },
+      {
+        "url": "https://running-portugal.com/lisbon/lisbonhalf/en/home",
+        "title": "36ª EDP Meia Maratona de Lisboa 2027 - EDP Lisbon Half Marathon 2027"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/es/inscripciones.html",
+        "title": "Inscripciones oficiales EDP Media Maratón de Lisboa 2026"
+      },
+      {
+        "url": "https://anoticia.pt/2026/03/06/edp-meia-maratona-de-lisboa-celebra-35-anos-com-30-mil-atletas-e-elite-mundial-na-ponte-25-de-abril/",
+        "title": "EDP Meia Maratona de Lisboa celebra 35 anos com 30 mil atletas e elite mundial na Ponte 25 de Abril - Anotícia"
+      },
+      {
+        "url": "https://correrporprazer.com/2024/01/temos-20-inscricoes-para-oferecer-para-a-edp-meia-maratona-de-lisboa/",
+        "title": "Temos 20 inscrições para oferecer para a EDP Meia Maratona de Lisboa | Correr por Prazer"
+      },
+      {
+        "url": "https://www.facebook.com/EDPMeiaMaratonaLisboa/",
+        "title": "EDP Meia Maratona de Lisboa | Lisbon | Facebook"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/en/corrida-marco/edp-lisbon-half-marathon/",
+        "title": "EDP Lisbon Half Marathon 2027: registrations open"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/en/corrida-marco/vodafone-10k-2025/",
+        "title": "Vodafone 10k 2027 - Official Site - Registrations are open!"
+      },
+      {
+        "url": "https://aims-worldrunning.org/races/680.html",
+        "title": "EDP Lisbon Half Marathon – AIMS race information"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/en/corrida-marco/new-generation/",
+        "title": "EDP New Generation 2027 - Lisbon 1/2 Marathon Offical Site"
+      },
+      {
+        "url": "https://www.finishers.com/en/event/lisbon-marathon",
+        "title": "🏃 Lisbon Marathon 2027 - All the information about the race and registration process | Finishers"
+      },
+      {
+        "url": "https://www.ahotu.com/event/edp-meia-maratona-de-lisboa",
+        "title": "EDP Lisbon Half Marathon, 07 Mar, 2027 (Sun) | Ahotu"
+      },
+      {
+        "url": "https://www.superhalfs.com/en/events/lisbon/",
+        "title": "edp lisbon half marathon"
+      },
+      {
+        "url": "https://www.running-portugal.com/lisbon/lisbonhalf/fr/inscriptions.html",
+        "title": "Inscriptions EDP Semi-Marathon de Lisbonne 2027 | Inscriptions officielles pour le EDP semi marathon de Lisbonne"
+      },
+      {
+        "url": "https://calendario.soymaratonista.com/edp-lisbon-half-marathon/",
+        "title": "EDP Lisbon Half Marathon | Soymaratonista Calendario Carreras y Maratones"
+      },
+      {
+        "url": "http://www.record.pt/modalidades/atletismo/detalhe/hyundai-meia-maratona-ponte-vasco-da-gama-com-inscricoes-esgotadas?ref=Record+Running_BucketDestaquesPrincipais",
+        "title": "Hyundai Meia Maratona Ponte Vasco da Gama com inscri&#231;&#245;es esgotadas - Atletismo - Jornal Record"
+      },
+      {
+        "url": "https://racefinder.pt/events/corrida/page/23/",
+        "title": "Corrida - RaceFinder"
+      },
+      {
+        "url": "https://www.record.pt/modalidades/atletismo/detalhe/hyundai-meia-maratona-ponte-vasco-da-gama-com-inscricoes-esgotadas?ref=Record+Running_BucketDestaquesPrincipais",
+        "title": "Hyundai Meia Maratona Ponte Vasco da Gama com inscri&#231;&#245;es esgotadas - Atletismo - Jornal Record"
+      },
+      {
+        "url": "https://racefinder.pt/resultados-do-sorteio-da-edp-meia-maratona-de-lisboa-2027-nao-conseguiste-vaga-estas-meias-maratonas-tambem-merecem-estar-no-teu-radar/",
+        "title": "Resultados do Sorteio da EDP Meia Maratona de Lisboa 2027: Não Conseguiste Vaga? Estas Meias Maratonas Também Merecem Estar no Teu Radar - RaceFinder"
+      },
+      {
+        "url": "https://kamelturismo.com.br/event-package/meia-maratona-de-lisboa/",
+        "title": "Meia Maratona de Lisboa 2027 - Kamel Turismo"
+      },
+      {
+        "url": "https://portal.fpatletismo.pt/home/eventos/209",
+        "title": "EDP Maratona de Lisboa - Portal FPA"
+      },
+      {
+        "url": "https://www.allurevillas.com/blog/edp-meia-maratona-lisbon/",
+        "title": "EDP Meia Maratona de Lisboa Guide for International Runners - Allure Villas | Blog"
+      },
+      {
+        "url": "https://aims-worldrunning.org/pt/races/680.html",
+        "title": "Meia Maratona EDP Lisboa – AIMS informações sobre a corrida"
+      },
+      {
+        "url": "https://pt.linkedin.com/company/maratona-clube-de-portugal",
+        "title": "Maratona Clube de Portugal"
+      },
+      {
+        "url": "https://znaki.fm/pt/events/edp-maratona-de-lisboa/",
+        "title": "EDP Maratona de Lisboa - uma maratona desportiva brilhante e prestigiada"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/wp-content/uploads/REGULAMENTO_EDP_MEIA-_MARATONA_DE-LISBOA_2027_PT-.docx.pdf",
+        "title": "fetch"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 9.36,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.008,
+      "missing_critical": [
+        "registration_url"
+      ]
+    },
+    {
+      "depth": "fetch",
+      "latency_s": 9.98,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.036,
+      "missing_critical": [
+        "registration_url"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-03-06T09:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-06T12:00",
+      "label": "Arrivée à Lisbonne",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-06T13:00",
+      "label": "Retrait du dossard",
+      "detail": "Sport Expo, Centro de Congressos de Lisboa, zone de Junqueira, Lisbonne (10:00–20:00) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-06T15:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T06:50",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-07T08:05",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "Accès obligatoire en train Fertagus jusqu’à la gare de Pragal, seule voie d’accès indiquée par l’organisateur. Le train Fertagus est gratuit sur présentation du dossard ; les transports publics permettant de rejoindre les gares Fertagus (métro, bus et trains) sont également gratuits pour les participants. Aucun parking n’est indiqué dans les informations disponibles.",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T08:35",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "Ponte 25 de Abril (départ sur le pont ; accès par la gare de Pragal)",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-07T09:20",
+      "label": "Départ EDP Meia Maratona de Lisboa 2027",
+      "detail": "Ponte 25 de Abril (départ sur le pont ; accès par la gare de Pragal)",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-07T11:26",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite 3h00",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T12:56",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T13:56",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T16:56",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

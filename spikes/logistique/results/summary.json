@@ -1,0 +1,410 @@
+[
+  {
+    "query": "Wizz Air Milano Marathon 2027",
+    "race": null,
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 6.42,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.006,
+        "missing_critical": [
+          "start_time",
+          "start_location",
+          "registration_url"
+        ]
+      },
+      {
+        "depth": "deep",
+        "latency_s": 124.32,
+        "list_price_usd": 0.055,
+        "balance_delta_usd": 0.158,
+        "missing_critical": [
+          "start_time"
+        ]
+      }
+    ],
+    "timeline": [
+      {
+        "when": "2027-04-03T13:00",
+        "label": "Départ de Paris",
+        "detail": "trajet estimé 3 h",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-03T16:00",
+        "label": "Arrivée à Milan",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-04-03T17:00",
+        "label": "Retrait du dossard",
+        "detail": "Milano Running Festival — adresse du site non précisée dans les informations officielles fournies (Jeudi 1er avril : 16h00–20h00 ; vendredi 2 avril : 10h00–20h00 ; samedi 3 avril : 09h00–19h00) ; apporter pièce d'identité + PPS/certificat/licence",
+        "assumption": false
+      },
+      {
+        "when": "2027-04-03T18:00",
+        "label": "Check-in hôtel",
+        "detail": "hôtel choisi selon l'accès au départ",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T06:30",
+        "label": "Réveil, petit-déjeuner",
+        "detail": "",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T07:45",
+        "label": "Départ de l'hôtel vers la ligne",
+        "detail": "accès au départ à confirmer",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T08:15",
+        "label": "Arrivée en zone de départ / consigne",
+        "detail": "Corso Sempione, Milan",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T09:00",
+        "label": "Départ Wizz Air Milano Marathon 2027 (25e édition)",
+        "detail": "Corso Sempione, Milan",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T13:13",
+        "label": "Arrivée estimée",
+        "detail": "allure 6 min/km ; temps limite inconnu",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T14:43",
+        "label": "Check-out hôtel",
+        "detail": "demander un late check-out si après 12h",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T15:43",
+        "label": "Retour vers Paris",
+        "detail": "",
+        "assumption": true
+      },
+      {
+        "when": "2027-04-04T18:43",
+        "label": "Arrivée à Paris",
+        "detail": "",
+        "assumption": true
+      }
+    ]
+  },
+  {
+    "query": "Semi-marathon de La Rochelle 2027",
+    "race": null,
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 5.82,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.012,
+        "missing_critical": []
+      }
+    ],
+    "timeline": [
+      {
+        "when": "2027-03-13T09:00",
+        "label": "Départ de Paris",
+        "detail": "trajet estimé 3 h",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-13T12:00",
+        "label": "Arrivée à La Rochelle",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-13T13:00",
+        "label": "Retrait du dossard",
+        "detail": "lieu à confirmer (horaires à confirmer) ; apporter pièce d'identité + PPS/certificat/licence",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-13T15:00",
+        "label": "Check-in hôtel",
+        "detail": "hôtel choisi selon l'accès au départ",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-14T06:00",
+        "label": "Réveil, petit-déjeuner",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-14T07:15",
+        "label": "Départ de l'hôtel vers la ligne",
+        "detail": "accès au départ à confirmer",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-14T07:45",
+        "label": "Arrivée en zone de départ / consigne",
+        "detail": "Avenue Edmond Grasset, 17000 La Rochelle",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-14T08:30",
+        "label": "Départ 46e édition du Semi-Marathon de La Rochelle",
+        "detail": "Avenue Edmond Grasset, 17000 La Rochelle",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-14T10:36",
+        "label": "Arrivée estimée",
+        "detail": "allure 6 min/km ; temps limite Barrières horaires annoncées : bas du Mail (km 15) à 10:45, Grosse Horloge (km 16) à 10:55, rue Réaumur (km 17) à 11:15 ; arrivée à regagner avant 11:45.",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-14T12:06",
+        "label": "Check-out hôtel",
+        "detail": "demander un late check-out si après 12h",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-14T13:06",
+        "label": "Retour vers Paris",
+        "detail": "",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-14T16:06",
+        "label": "Arrivée à Paris",
+        "detail": "",
+        "assumption": true
+      }
+    ]
+  },
+  {
+    "query": "Marathon Royan U Côte de Beauté 2027",
+    "race": null,
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 5.88,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.006,
+        "missing_critical": [
+          "start_time",
+          "start_location"
+        ]
+      },
+      {
+        "depth": "deep",
+        "latency_s": 121.49,
+        "list_price_usd": 0.055,
+        "balance_delta_usd": 0.105,
+        "missing_critical": []
+      }
+    ],
+    "timeline": [
+      {
+        "when": "2027-05-22T11:00",
+        "label": "Départ de Paris",
+        "detail": "trajet estimé 3 h",
+        "assumption": true
+      },
+      {
+        "when": "2027-05-22T14:00",
+        "label": "Arrivée à Royan",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-05-22T15:00",
+        "label": "Retrait du dossard",
+        "detail": "Village Marathon, esplanade Kérimel de Kerveno, Royan (Vendredi 14h00-19h00 ; samedi 9h30-19h00) ; apporter pièce d'identité + PPS/certificat/licence",
+        "assumption": false
+      },
+      {
+        "when": "2027-05-22T16:00",
+        "label": "Check-in hôtel",
+        "detail": "hôtel choisi selon l'accès au départ",
+        "assumption": true
+      },
+      {
+        "when": "2027-05-23T04:45",
+        "label": "Réveil, petit-déjeuner",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-05-23T06:00",
+        "label": "Départ de l'hôtel vers la ligne",
+        "detail": "Les informations disponibles ne précisent pas les transports, parkings ni navettes dédiés à l’accès au départ.",
+        "assumption": true
+      },
+      {
+        "when": "2027-05-23T06:30",
+        "label": "Arrivée en zone de départ / consigne",
+        "detail": "Place Charles-de-Gaulle, Royan",
+        "assumption": false
+      },
+      {
+        "when": "2027-05-23T07:15",
+        "label": "Départ 11ème Marathon Royan U Côte de Beauté 2027",
+        "detail": "Place Charles-de-Gaulle, Royan",
+        "assumption": false
+      },
+      {
+        "when": "2027-05-23T11:28",
+        "label": "Arrivée estimée",
+        "detail": "allure 6 min/km ; temps limite inconnu",
+        "assumption": true
+      },
+      {
+        "when": "2027-05-23T12:58",
+        "label": "Check-out hôtel",
+        "detail": "demander un late check-out si après 12h",
+        "assumption": true
+      },
+      {
+        "when": "2027-05-23T13:58",
+        "label": "Retour vers Paris",
+        "detail": "",
+        "assumption": true
+      },
+      {
+        "when": "2027-05-23T16:58",
+        "label": "Arrivée à Paris",
+        "detail": "",
+        "assumption": true
+      }
+    ]
+  },
+  {
+    "query": "EDP Meia Maratona de Lisboa 2027",
+    "race": null,
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 6.46,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.006,
+        "missing_critical": [
+          "start_time",
+          "registration_url"
+        ]
+      },
+      {
+        "depth": "deep",
+        "latency_s": 124.31,
+        "list_price_usd": 0.055,
+        "balance_delta_usd": 0.373,
+        "missing_critical": []
+      }
+    ],
+    "timeline": [
+      {
+        "when": "2027-03-06T09:00",
+        "label": "Départ de Paris",
+        "detail": "trajet estimé 3 h",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-06T12:00",
+        "label": "Arrivée à Lisbonne",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-06T13:00",
+        "label": "Retrait du dossard",
+        "detail": "Centro de Congressos de Lisboa, zone de Junqueira, Lisbonne (10h00-20h00) ; apporter pièce d'identité + PPS/certificat/licence",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-06T15:00",
+        "label": "Check-in hôtel",
+        "detail": "hôtel choisi selon l'accès au départ",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-07T06:50",
+        "label": "Réveil, petit-déjeuner",
+        "detail": "",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-07T08:05",
+        "label": "Départ de l'hôtel vers la ligne",
+        "detail": "Accès obligatoire par les trains Fertagus, descendre à la gare de Pragal. L’organisation indique que c’est l’unique accès au départ. Fertagus est gratuit pour les participants munis de leur dossard ; les transports publics pour rejoindre les gares Fertagus sont également gratuits. Aucun parking n’est précisé dans les informations officielles fournies.",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-07T08:35",
+        "label": "Arrivée en zone de départ / consigne",
+        "detail": "Ponte 25 de Abril, Lisbonne (le départ est situé sur le pont ; le règlement fourni ne précise pas de point de départ plus exact)",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-07T09:20",
+        "label": "Départ EDP Meia Maratona de Lisboa 2027",
+        "detail": "Ponte 25 de Abril, Lisbonne (le départ est situé sur le pont ; le règlement fourni ne précise pas de point de départ plus exact)",
+        "assumption": false
+      },
+      {
+        "when": "2027-03-07T11:26",
+        "label": "Arrivée estimée",
+        "detail": "allure 6 min/km ; temps limite 3h00",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-07T12:56",
+        "label": "Check-out hôtel",
+        "detail": "demander un late check-out si après 12h",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-07T13:56",
+        "label": "Retour vers Paris",
+        "detail": "",
+        "assumption": true
+      },
+      {
+        "when": "2027-03-07T16:56",
+        "label": "Arrivée à Paris",
+        "detail": "",
+        "assumption": true
+      }
+    ]
+  },
+  {
+    "query": "Schneider Electric Marathon de Paris 2027",
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 5.32,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.018,
+        "missing_critical": [
+          "start_time",
+          "registration_url"
+        ]
+      },
+      {
+        "depth": "deep",
+        "latency_s": 108.07,
+        "list_price_usd": 0.055,
+        "balance_delta_usd": 0.433,
+        "missing_critical": [
+          "start_time",
+          "registration_url"
+        ]
+      }
+    ],
+    "status": "inconnu",
+    "platform": "Inscription via un lien personnalisé adressé aux personnes sélectionnées au tirage au sort ; la plateforme technique n’est pas précisée par les sources officielles fournies."
+  }
+]

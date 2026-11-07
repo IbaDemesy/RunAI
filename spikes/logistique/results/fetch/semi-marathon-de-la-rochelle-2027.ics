@@ -1,0 +1,100 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RunAI//spike logistique//FR
+BEGIN:VEVENT
+UID:runai-0-20270313T090000@runai
+DTSTAMP:20261107T144449
+DTSTART:20270313T090000
+DTEND:20270313T093000
+SUMMARY:Départ de Paris (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - trajet estimé 3 h
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-1-20270313T120000@runai
+DTSTAMP:20261107T144449
+DTSTART:20270313T120000
+DTEND:20270313T123000
+SUMMARY:Arrivée à La Rochelle
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - 
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-2-20270313T130000@runai
+DTSTAMP:20261107T144449
+DTSTART:20270313T130000
+DTEND:20270313T133000
+SUMMARY:Retrait du dossard (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - lieu à confirmer (horaires à confirmer) ; apporter pièce d'identité + PPS/certificat/licence
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-3-20270313T150000@runai
+DTSTAMP:20261107T144449
+DTSTART:20270313T150000
+DTEND:20270313T153000
+SUMMARY:Check-in hôtel (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - hôtel choisi selon l'accès au départ
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-4-20270314T060000@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T060000
+DTEND:20270314T063000
+SUMMARY:Réveil, petit-déjeuner
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - 
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-5-20270314T071500@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T071500
+DTEND:20270314T074500
+SUMMARY:Départ de l'hôtel vers la ligne (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - accès au départ à confirmer
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-6-20270314T074500@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T074500
+DTEND:20270314T081500
+SUMMARY:Arrivée en zone de départ / consigne
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - Avenue Edmond Grasset, 17000 La Rochelle
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-7-20270314T083000@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T083000
+DTEND:20270314T090000
+SUMMARY:Départ 46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - Avenue Edmond Grasset, 17000 La Rochelle
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-8-20270314T103636@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T103636
+DTEND:20270314T110636
+SUMMARY:Arrivée estimée (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - allure 6 min/km ; temps limite Barrières horaires annoncées : bas du Mail (km 15) à 10:45, Grosse Horloge (km 16) à 10:55, rue Réaumur (km 17) à 11:15 ; l’arrivée doit être regagnée avant 11:45.
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-9-20270314T120636@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T120636
+DTEND:20270314T123636
+SUMMARY:Check-out hôtel (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - demander un late check-out si après 12h
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-10-20270314T130636@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T130636
+DTEND:20270314T133636
+SUMMARY:Retour vers Paris (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - 
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-11-20270314T160636@runai
+DTSTAMP:20261107T144449
+DTSTART:20270314T160636
+DTEND:20270314T163636
+SUMMARY:Arrivée à Paris (estimé)
+DESCRIPTION:46e édition du Semi-Marathon de La Rochelle avec Hyundai-La Rochelle - 
+END:VEVENT
+END:VCALENDAR

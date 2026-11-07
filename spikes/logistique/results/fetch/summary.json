@@ -1,0 +1,124 @@
+[
+  {
+    "query": "Wizz Air Milano Marathon 2027",
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 5.17,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.012,
+        "missing_critical": [
+          "start_time",
+          "start_location",
+          "registration_url"
+        ]
+      },
+      {
+        "depth": "fetch",
+        "latency_s": 7.72,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.008,
+        "missing_critical": [
+          "start_time",
+          "start_location"
+        ]
+      }
+    ],
+    "status": "ouvert",
+    "platform": null
+  },
+  {
+    "query": "Semi-marathon de La Rochelle 2027",
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 6.0,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.006,
+        "missing_critical": []
+      }
+    ],
+    "status": "inconnu",
+    "platform": "Klikego"
+  },
+  {
+    "query": "Marathon Royan U Côte de Beauté 2027",
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 4.53,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.006,
+        "missing_critical": [
+          "start_time",
+          "start_location"
+        ]
+      },
+      {
+        "depth": "fetch",
+        "latency_s": 8.36,
+        "list_price_usd": 0.0,
+        "balance_delta_usd": null,
+        "missing_critical": [
+          "erreur LinkupFetchTargetUnreachableError"
+        ]
+      }
+    ],
+    "status": "ouvert",
+    "platform": "Klikego"
+  },
+  {
+    "query": "EDP Meia Maratona de Lisboa 2027",
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 9.36,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.008,
+        "missing_critical": [
+          "registration_url"
+        ]
+      },
+      {
+        "depth": "fetch",
+        "latency_s": 9.98,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.036,
+        "missing_critical": [
+          "registration_url"
+        ]
+      }
+    ],
+    "status": "inconnu",
+    "platform": "Site de l’organisateur, Maratona Clube de Portugal ; l’attribution des places de la demi-marathon passe par un tirage au sort."
+  },
+  {
+    "query": "Schneider Electric Marathon de Paris 2027",
+    "calls": [
+      {
+        "depth": "standard",
+        "latency_s": 6.1,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.006,
+        "missing_critical": [
+          "start_time",
+          "start_location",
+          "registration_url"
+        ]
+      },
+      {
+        "depth": "fetch",
+        "latency_s": 8.09,
+        "list_price_usd": 0.006,
+        "balance_delta_usd": 0.018,
+        "missing_critical": [
+          "start_time",
+          "start_location",
+          "registration_url"
+        ]
+      }
+    ],
+    "status": "inconnu",
+    "platform": null
+  }
+]

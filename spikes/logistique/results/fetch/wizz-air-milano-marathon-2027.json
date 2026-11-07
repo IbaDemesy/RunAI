@@ -1,0 +1,201 @@
+{
+  "query": "Wizz Air Milano Marathon 2027",
+  "race": {
+    "name": "Wizz Air Milano Marathon 2027 — 25e édition",
+    "edition_year": 2027,
+    "date": "2027-04-04",
+    "distance_km": 42.195,
+    "start_time": null,
+    "start_location": null,
+    "city": "Milan",
+    "country": "Italie",
+    "bib_pickup": {
+      "location": "Milano Running Festival — adresse exacte non précisée dans les informations officielles disponibles",
+      "days": [
+        "2027-04-01",
+        "2027-04-02",
+        "2027-04-03"
+      ],
+      "hours": "1er avril : 16h00–20h00 ; 2 avril : 10h00–20h00 ; 3 avril : 09h00–19h00",
+      "same_day_possible": false
+    },
+    "start_access": null,
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": true,
+      "license_accepted": true,
+      "notes": "Les informations officielles indiquent qu’un numéro de licence d’une fédération d’athlétisme valide le 4 avril 2027 peut être téléversé. À défaut, elles mentionnent un numéro de RUNCARD et un certificat médical valide ce jour-là. Le PPS n’est pas mentionné."
+    },
+    "aid_stations": null,
+    "time_limit": null,
+    "registration_platform": null,
+    "registration_url": "https://www.milanomarathon.it/en/register/",
+    "price_eur": null,
+    "registration_status": "ouvert",
+    "official_url": "https://www.milanomarathon.it/en/",
+    "regulation_url": null,
+    "sources": [
+      {
+        "url": "https://www.milanomarathon.it/en/",
+        "title": "Wizz Air Milano Marathon — site officiel"
+      },
+      {
+        "url": "https://www.milanomarathon.it/en/marathon/",
+        "title": "Wizz Air Milano Marathon 2027 — page officielle"
+      },
+      {
+        "url": "https://www.milanomarathon.it/fr/informations-pratiques/",
+        "title": "Informations pratiques — site officiel"
+      },
+      {
+        "url": "https://getbpmoov.com/browse-events/wizz-air-marathon-de-milan-2027",
+        "title": "Wizz Air Marathon de Milan 2027 — 4 avr., 42 km | BPMoov"
+      },
+      {
+        "url": "https://worldsmarathons.com/marathon/milano-marathon",
+        "title": "Wizz Air Milano Marathon, 04 Apr 2027 | World's Marathons"
+      },
+      {
+        "url": "https://fatmarathoner.com/wizz-air-milano-marathon/",
+        "title": "Wizz Air Milano Marathon 2027: Course, Registration & Guide"
+      },
+      {
+        "url": "https://courseproche.fr/evenement/marathon-de-milan",
+        "title": "Wizz' Air Marathon de Milan 2027 : date, parcours, inscription | CourseProche"
+      },
+      {
+        "url": "https://hotway.life/fr/la-course-a-pied/italie/marathon-wizz-air-de-milan-2026",
+        "title": "Wizz Air Milano Marathon, 4 avr. 2027 | HotWay.life"
+      },
+      {
+        "url": "https://www.runna.com/races/race/wizz-air-milano-marathon",
+        "title": "Wizz Air Milano Marathon 2027 | Races by Runna"
+      },
+      {
+        "url": "https://lauf-atlas.de/events/wizz-air-milano-marathon-2027",
+        "title": "Wizz Air Milano Marathon 2027 — Info, Registration, Course, Results"
+      },
+      {
+        "url": "https://www.finishers.com/course/marathon-de-milan",
+        "title": "🏃 Wizz' Air Marathon de Milan 2027 - Parcours, inscriptions & résultats | Finishers"
+      },
+      {
+        "url": "https://bcnrunhub.com/fr/marathons-europeens/maraton-de-milan/",
+        "title": "Wizz Air Milano Marathon 2027 - BCN Run Hub"
+      },
+      {
+        "url": "https://www.ahotu.com/event/wizz-air-maratona-di-milano",
+        "title": "Wizz Air Milan Marathon, 04 Apr, 2027 (Sun) | Ahotu"
+      },
+      {
+        "url": "https://www.endu.net/events/wizz-air-milano-marathon",
+        "title": "Wizz Air Milano Marathon | ENDU"
+      },
+      {
+        "url": "https://www.milanomarathon.it/fr/relay-marathon-fr/",
+        "title": "Relay Marathon - Wizz Air Milano Marathon 2027"
+      },
+      {
+        "url": "https://www.milanomarathon.it/en/",
+        "title": "fetch"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 5.17,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.012,
+      "missing_critical": [
+        "start_time",
+        "start_location",
+        "registration_url"
+      ]
+    },
+    {
+      "depth": "fetch",
+      "latency_s": 7.72,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.008,
+      "missing_critical": [
+        "start_time",
+        "start_location"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-04-03T13:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-03T16:00",
+      "label": "Arrivée à Milan",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-04-03T17:00",
+      "label": "Retrait du dossard",
+      "detail": "Milano Running Festival — adresse exacte non précisée dans les informations officielles disponibles (1er avril : 16h00–20h00 ; 2 avril : 10h00–20h00 ; 3 avril : 09h00–19h00) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": false
+    },
+    {
+      "when": "2027-04-03T18:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T06:30",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T07:45",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "accès au départ à confirmer",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T08:15",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T09:00",
+      "label": "Départ Wizz Air Milano Marathon 2027 — 25e édition",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T13:13",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite inconnu",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T14:43",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T15:43",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T18:43",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

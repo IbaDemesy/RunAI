@@ -1,0 +1,211 @@
+{
+  "query": "Marathon Royan U Côte de Beauté 2027",
+  "race": {
+    "name": "Marathon Royan U Côte de Beauté — 11e édition 2027",
+    "edition_year": 2027,
+    "date": "2027-05-23",
+    "distance_km": 42.195,
+    "start_time": null,
+    "start_location": null,
+    "city": "Royan",
+    "country": "France",
+    "bib_pickup": {
+      "location": null,
+      "days": [],
+      "hours": null,
+      "same_day_possible": null
+    },
+    "start_access": null,
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": null,
+      "license_accepted": null,
+      "notes": null
+    },
+    "aid_stations": null,
+    "time_limit": null,
+    "registration_platform": "Klikego",
+    "registration_url": "https://www.klikego.com/inscription/10eme-edition-du-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+    "price_eur": null,
+    "registration_status": "ouvert",
+    "official_url": "https://marathonroyancotedebeaute.fr/",
+    "regulation_url": "https://marathonroyancotedebeaute.fr/PDFs/Reglement-Marathon-2027.pdf",
+    "sources": [
+      {
+        "url": "https://marathonroyancotedebeaute.fr/marathon.html",
+        "title": "Marathon Royan U Côte de Beauté — site officiel, page marathon 2027"
+      },
+      {
+        "url": "https://www.marathons.fr/Marathon-Royan-Cote-de-Beaute",
+        "title": "Marathon Royan-Côte de Beauté"
+      },
+      {
+        "url": "https://courseproche.fr/evenement/marathon-royan",
+        "title": "Marathon Royan Côte de Beauté 2027 : date, parcours, inscription | CourseProche"
+      },
+      {
+        "url": "https://marathonroyancotedebeaute.fr/10km.html",
+        "title": "le 10km du Marathon Royan U Côte de Beauté Nouvelle Aquitaine"
+      },
+      {
+        "url": "https://www.marathons.fr/spip.php?id_rubrique=14&page=courses-filtre&region=Nouvelle-Aquitaine&ville=Royan",
+        "title": "Agenda — Courses filtrées - MARATHONS.FR"
+      },
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/",
+        "title": "Marathon Royan U Côte de Beauté Nouvelle Aquitaine - 23 mai 2027"
+      },
+      {
+        "url": "https://www.sudouest.fr/charente-maritime/royan/deja-plus-de-4-000-inscrits-pour-les-courses-du-prochain-marathon-de-royan-en-mai-2027-en-une-semaine-seulement-30938936.php",
+        "title": "Déjà plus de 4 000 inscrits pour les courses du prochain Marathon de Royan en mai 2027, en une semaine seulement"
+      },
+      {
+        "url": "https://www.courir17.fr/%C3%A9v%C3%A9nements-%C3%A0-venir",
+        "title": "ÉVÉNEMENTS À VENIR | Courir17"
+      },
+      {
+        "url": "https://runrun.fr/runs/marathon",
+        "title": "Marathons en France 2026-2027 : calendrier et dates | RunRun"
+      },
+      {
+        "url": "https://www.royanatlantique.fr/temps-fort/jumping-international-de-royan/",
+        "title": "CSI à Royan - Jumping International de Royan - Royan Atlantique"
+      },
+      {
+        "url": "https://marathonroyancotedebeaute.fr/repas-apres-course.html",
+        "title": "Soirée festive d’après course Marathon Royan Côte de Beauté Charente Maritime"
+      },
+      {
+        "url": "https://www.vaux-sur-mer.fr/agenda/marathon-royan-u-cote-de-beaute/",
+        "title": "Marathon Royan U Côte de Beauté"
+      },
+      {
+        "url": "https://www.sudouest.fr/charente-maritime/royan/marathon-de-royan-remi-montero-brille-sur-le-tapis-bleu-a-l-issue-d-un-cavalier-seul-15340629.php",
+        "title": "Marathon de Royan : Rémi Montero brille sur le tapis bleu à l’issue d’un cavalier seul"
+      },
+      {
+        "url": "https://www.sudouest.fr/charente-maritime/royan/nouveau-marathon-en-charente-maritime-de-royan-a-la-palmyre-par-la-cote-7850582.php",
+        "title": "Nouveau marathon en Charente-Maritime : de Royan à la Palmyre, par la côte"
+      },
+      {
+        "url": "https://www.royanatlantique.fr/agenda/9eme-edition-du-marathon-royan-u-cote-de-beaute-royan/",
+        "title": "10ème Marathon Royan U Côte de Beauté à Royan - Royan Atlantique"
+      },
+      {
+        "url": "https://www.sudouest.fr/charente-maritime/saint-georges-de-didonne/acc-lsixpoints-ww-royan-17-marathon-la-carte-du-10-kilometres-3033129.php",
+        "title": "[ACC_LSIXPOINTS_WW]Royan (17) Marathon : la carte du 10 kilomètres"
+      },
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/resultats-marathon-royan.html",
+        "title": "Résultats Marathon semi-marathon 10km Nouvelle Aquitaine"
+      },
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/course-running-enfants-marathon-royan-17.html",
+        "title": "run courses enfants Royan Côte de Beauté Nouvelle Aquitaine"
+      },
+      {
+        "url": "https://www.royanatlantique.fr/temps-fort/marathon-royan-u-cote-de-beaute/",
+        "title": "Marathon à Royan - Marathon Royan U Côte de Beauté - Royan Atlantique"
+      },
+      {
+        "url": "https://www.sudouest.fr/charente-maritime/royan/marathon-de-royan-2026-en-dix-ans-le-petit-marathon-de-royan-est-devenu-grand-28867665.php",
+        "title": "Marathon de Royan 2026 : en dix ans, le petit marathon de Royan est devenu grand"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 4.53,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.006,
+      "missing_critical": [
+        "start_time",
+        "start_location"
+      ]
+    },
+    {
+      "depth": "fetch",
+      "latency_s": 8.36,
+      "list_price_usd": 0.0,
+      "balance_delta_usd": null,
+      "missing_critical": [
+        "erreur LinkupFetchTargetUnreachableError"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-05-22T09:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-22T12:00",
+      "label": "Arrivée à Royan",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-05-22T13:00",
+      "label": "Retrait du dossard",
+      "detail": "lieu à confirmer (horaires à confirmer) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-22T15:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T06:30",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T07:45",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "accès au départ à confirmer",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T08:15",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T09:00",
+      "label": "Départ Marathon Royan U Côte de Beauté — 11e édition 2027",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T13:13",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite inconnu",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T14:43",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T15:43",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T18:43",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

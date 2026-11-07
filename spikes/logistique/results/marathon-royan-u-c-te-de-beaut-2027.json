@@ -1,0 +1,176 @@
+{
+  "query": "Marathon Royan U Côte de Beauté 2027",
+  "race": {
+    "name": "11ème Marathon Royan U Côte de Beauté 2027",
+    "edition_year": 2027,
+    "date": "2027-05-23",
+    "distance_km": 42.195,
+    "start_time": "07:15",
+    "start_location": "Place Charles-de-Gaulle, Royan",
+    "city": "Royan",
+    "country": "France",
+    "bib_pickup": {
+      "location": "Village Marathon, esplanade Kérimel de Kerveno, Royan",
+      "days": [
+        "2027-05-21",
+        "2027-05-22"
+      ],
+      "hours": "Vendredi 14h00-19h00 ; samedi 9h30-19h00",
+      "same_day_possible": false
+    },
+    "start_access": "Les informations disponibles ne précisent pas les transports, parkings ni navettes dédiés à l’accès au départ.",
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": null,
+      "license_accepted": null,
+      "notes": "Les pages officielles fournies ne précisent pas les documents exigés pour l’édition 2027."
+    },
+    "aid_stations": "Ravitaillements annoncés, mais leur nombre et leurs kilomètres ne sont pas précisés.",
+    "time_limit": null,
+    "registration_platform": "Klikego",
+    "registration_url": "https://www.klikego.com/inscription/10eme-edition-du-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+    "price_eur": 65.0,
+    "registration_status": "ouvert",
+    "official_url": "https://www.marathonroyancotedebeaute.fr/",
+    "regulation_url": "https://www.marathonroyancotedebeaute.fr/PDFs/Reglement-Marathon-2027.pdf",
+    "sources": [
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/marathon.html",
+        "title": "Marathon Royan U Côte de Beauté — page officielle de l’épreuve"
+      },
+      {
+        "url": "https://www.klikego.com/inscription/10eme-edition-du-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+        "title": "Inscription 11ème Marathon Royan U Côte de Beauté 2027 — Klikego"
+      },
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/foire-aux-questions-marathon-royan-cote-de-beaute.php",
+        "title": "FAQ officielle"
+      },
+      {
+        "url": "https://marathonroyancotedebeaute.fr/marathon.html",
+        "title": "Marathon Royan U Côte de Beauté Nouvelle Aquitaine"
+      },
+      {
+        "url": "https://www.sudouest.fr/charente-maritime/royan/deja-plus-de-4-000-inscrits-pour-les-courses-du-prochain-marathon-de-royan-en-mai-2027-en-une-semaine-seulement-30938936.php",
+        "title": "Déjà plus de 4 000 inscrits pour les courses du prochain Marathon de Royan en mai 2027, en une semaine seulement"
+      },
+      {
+        "url": "https://marathonroyancotedebeaute.fr/foire-aux-questions-marathon-royan-cote-de-beaute.php",
+        "title": "FAQ Marathon Royan U Côte de Beauté Charente Maritime"
+      },
+      {
+        "url": "https://jogging-plus.com/presentation-courses-trails/marathon-royan-cote-de-beaute-17/",
+        "title": "Marathon Royan U Côte de Beauté 2027 | Jogging-Plus.com"
+      },
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/10km.html",
+        "title": "le 10km du Marathon Royan U Côte de Beauté Nouvelle Aquitaine"
+      },
+      {
+        "url": "https://marathonroyancotedebeaute.fr/10km.html",
+        "title": "le 10km du Marathon Royan U Côte de Beauté Nouvelle Aquitaine"
+      },
+      {
+        "url": "https://running.life/fr/evenement/marathon-royan-u-cote-de-beaute",
+        "title": "Marathon Royan U Côte de Beauté, 23 mai 2027"
+      },
+      {
+        "url": "https://www.marathonroyancotedebeaute.fr/",
+        "title": "Marathon Royan U Côte de Beauté Nouvelle Aquitaine - 23 mai 2027"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 5.88,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.006,
+      "missing_critical": [
+        "start_time",
+        "start_location"
+      ]
+    },
+    {
+      "depth": "deep",
+      "latency_s": 121.49,
+      "list_price_usd": 0.055,
+      "balance_delta_usd": 0.105,
+      "missing_critical": []
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-05-22T11:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-22T14:00",
+      "label": "Arrivée à Royan",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-05-22T15:00",
+      "label": "Retrait du dossard",
+      "detail": "Village Marathon, esplanade Kérimel de Kerveno, Royan (Vendredi 14h00-19h00 ; samedi 9h30-19h00) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": false
+    },
+    {
+      "when": "2027-05-22T16:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T04:45",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-05-23T06:00",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "Les informations disponibles ne précisent pas les transports, parkings ni navettes dédiés à l’accès au départ.",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T06:30",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "Place Charles-de-Gaulle, Royan",
+      "assumption": false
+    },
+    {
+      "when": "2027-05-23T07:15",
+      "label": "Départ 11ème Marathon Royan U Côte de Beauté 2027",
+      "detail": "Place Charles-de-Gaulle, Royan",
+      "assumption": false
+    },
+    {
+      "when": "2027-05-23T11:28",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite inconnu",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T12:58",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T13:58",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-05-23T16:58",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

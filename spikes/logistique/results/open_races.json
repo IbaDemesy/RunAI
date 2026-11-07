@@ -1,0 +1,209 @@
+{
+  "races": [
+    {
+      "name": "Marathon de Chinon",
+      "date": "2027-04-04",
+      "city": "Chinon",
+      "distance_km": 42.195,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/marathon-de-chinon-2027/running-course-a-pied/1660098263645-6",
+      "price_eur": null
+    },
+    {
+      "name": "Marathon de Chinon",
+      "date": "2027-04-04",
+      "city": "Chinon",
+      "distance_km": 21.1,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/marathon-de-chinon-2027/running-course-a-pied/1660098263645-6",
+      "price_eur": null
+    },
+    {
+      "name": "Marathon de Chinon",
+      "date": "2027-04-04",
+      "city": "Chinon",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/marathon-de-chinon-2027/running-course-a-pied/1660098263645-6",
+      "price_eur": null
+    },
+    {
+      "name": "Marathon des Sables d’Olonne",
+      "date": "2027-04-04",
+      "city": "Les Sables-d’Olonne",
+      "distance_km": 42.195,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/marathon-des-sables-dolonne-2027/running-course-a-pied/1780429129786-1",
+      "price_eur": null
+    },
+    {
+      "name": "Marathon des Sables d’Olonne — 10 km de la Chaume",
+      "date": "2027-04-04",
+      "city": "Les Sables-d’Olonne",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/marathon-des-sables-dolonne-2027/running-course-a-pied/1780429129786-1",
+      "price_eur": null
+    },
+    {
+      "name": "11ème Marathon Royan U Côte de Beauté — semi-marathon",
+      "date": "2027-05-22",
+      "city": "Royan",
+      "distance_km": 21.1,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10eme-edition-du-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+      "price_eur": null
+    },
+    {
+      "name": "11ème Marathon Royan U Côte de Beauté — 10 km",
+      "date": "2027-05-23",
+      "city": "Royan",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10eme-edition-du-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+      "price_eur": null
+    },
+    {
+      "name": "11ème Marathon Royan U Côte de Beauté — marathon",
+      "date": "2027-05-23",
+      "city": "Royan",
+      "distance_km": 42.195,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10eme-edition-du-marathon-royan-u-cote-de-beaute-2027/running-course-a-pied/1446588740963-17",
+      "price_eur": null
+    },
+    {
+      "name": "10 KM ET SEMI MARATHON RRUNNING PAYS DE LORIENT — 10 km",
+      "date": "2027-02-14",
+      "city": "Calan",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10-km-et-semi-marathon-rrunning-pays-de-lorient-2027/running-course-a-pied/1776796331243-3",
+      "price_eur": null
+    },
+    {
+      "name": "10 KM ET SEMI MARATHON RRUNNING PAYS DE LORIENT — semi-marathon",
+      "date": "2027-02-14",
+      "city": "Calan",
+      "distance_km": 21.1,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10-km-et-semi-marathon-rrunning-pays-de-lorient-2027/running-course-a-pied/1776796331243-3",
+      "price_eur": null
+    },
+    {
+      "name": "Semi-marathon de La Rochelle",
+      "date": "2027-03-14",
+      "city": "La Rochelle",
+      "distance_km": 21.1,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/semi-marathon-de-la-rochelle-2027/running-course-a-pied/1419371741424-32",
+      "price_eur": null
+    },
+    {
+      "name": "Semi-marathon Locronan-Plogonnec-Quimper",
+      "date": null,
+      "city": "Quimper",
+      "distance_km": 21.1,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/semi-marathon-locronan-plogonnec-quimper-2026/running-course-a-pied/1475657277689-16",
+      "price_eur": 30.0
+    },
+    {
+      "name": "Semi-marathon Locronan-Plogonnec-Quimper — 10 km",
+      "date": null,
+      "city": "Quimper",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/semi-marathon-locronan-plogonnec-quimper-2026/running-course-a-pied/1475657277689-16",
+      "price_eur": 20.0
+    },
+    {
+      "name": "Semi Marathon Boucle de Seine",
+      "date": "2027-03-21",
+      "city": "Chatou",
+      "distance_km": 21.097,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/semi-marathon-boucle-de-seine-2027/course-a-pied-running/1790283994662-1",
+      "price_eur": null
+    },
+    {
+      "name": "Marathon de la Vézère",
+      "date": null,
+      "city": "Saint-Pantaléon-de-Larche",
+      "distance_km": 42.195,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/marathon-de-la-vezere-2027/course-a-pied-running/1792010996366-1",
+      "price_eur": null
+    },
+    {
+      "name": "100km N°07, Marathon, Semi-Marathon de Crevin et La Crevinoise — semi-marathon",
+      "date": null,
+      "city": "Crevin",
+      "distance_km": 21.1,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/100km-n07-marathon-semi-marathon-de-crevin-et-la-crevinoise-2027/running-course-a-pied/1516494105802-20",
+      "price_eur": null
+    },
+    {
+      "name": "100km N°07, Marathon, Semi-Marathon de Crevin et La Crevinoise — La Crevinoise",
+      "date": null,
+      "city": "Crevin",
+      "distance_km": 10.8,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/100km-n07-marathon-semi-marathon-de-crevin-et-la-crevinoise-2027/running-course-a-pied/1516494105802-20",
+      "price_eur": null
+    },
+    {
+      "name": "100km N°07, Marathon, Semi-Marathon de Crevin et La Crevinoise — marathon",
+      "date": null,
+      "city": "Crevin",
+      "distance_km": 42.195,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/100km-n07-marathon-semi-marathon-de-crevin-et-la-crevinoise-2027/running-course-a-pied/1516494105802-20",
+      "price_eur": null
+    },
+    {
+      "name": "10km des Champs-Elysées Fulfil",
+      "date": "2027-02-07",
+      "city": "Paris",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10km-des-champs-elysees-fulfil-2027/course-a-pied-running/1665608501151-7",
+      "price_eur": null
+    },
+    {
+      "name": "10KMPER",
+      "date": "2027-02-14",
+      "city": "Quimper",
+      "distance_km": 10.0,
+      "platform": "Klikego",
+      "registration_url": "https://www.klikego.com/inscription/10kmper-2027/running-course-a-pied/jceb_1377094791298-14",
+      "price_eur": null
+    },
+    {
+      "name": "Connemara International Marathon",
+      "date": null,
+      "city": null,
+      "distance_km": 42.195,
+      "platform": "Njuko",
+      "registration_url": "https://in.njuko.com/connemara-2027",
+      "price_eur": null
+    },
+    {
+      "name": "Forest Marathon",
+      "date": null,
+      "city": null,
+      "distance_km": 42.195,
+      "platform": "Njuko",
+      "registration_url": "https://in.njuko.com/forest-marathon-2027",
+      "price_eur": null
+    }
+  ],
+  "call": {
+    "depth": "standard",
+    "latency_s": 19.38,
+    "list_price_usd": 0.006,
+    "balance_delta_usd": 0.08,
+    "missing_critical": []
+  }
+}

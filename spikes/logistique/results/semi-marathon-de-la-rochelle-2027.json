@@ -1,0 +1,199 @@
+{
+  "query": "Semi-marathon de La Rochelle 2027",
+  "race": {
+    "name": "46e édition du Semi-Marathon de La Rochelle",
+    "edition_year": 2027,
+    "date": "2027-03-14",
+    "distance_km": 21.1,
+    "start_time": "08:30",
+    "start_location": "Avenue Edmond Grasset, 17000 La Rochelle",
+    "city": "La Rochelle",
+    "country": "France",
+    "bib_pickup": {
+      "location": null,
+      "days": [],
+      "hours": null,
+      "same_day_possible": null
+    },
+    "start_access": null,
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": null,
+      "license_accepted": true,
+      "notes": "La page Klikego indique que la licence FFA doit être à jour pour la saison 2026/2027 pour les licenciés. Les informations fournies ne précisent pas les documents exigés pour les non-licenciés."
+    },
+    "aid_stations": null,
+    "time_limit": "Barrières horaires annoncées : bas du Mail (km 15) à 10:45, Grosse Horloge (km 16) à 10:55, rue Réaumur (km 17) à 11:15 ; arrivée à regagner avant 11:45.",
+    "registration_platform": "Klikego",
+    "registration_url": "https://www.klikego.com/inscription/semi-marathon-de-la-rochelle-2027/running-course-a-pied/1419371741424-32",
+    "price_eur": null,
+    "registration_status": "inconnu",
+    "official_url": "https://semimarathonlarochelle.fr",
+    "regulation_url": null,
+    "sources": [
+      {
+        "url": "https://www.klikego.com/inscription/semi-marathon-de-la-rochelle-2027/running-course-a-pied/1419371741424-32",
+        "title": "Semi-marathon de La Rochelle 2027 – Klikego"
+      },
+      {
+        "url": "https://reference-trail.fr/semi-marathon-de-la-rochelle-2027-inscription-et-quand-y-aller/",
+        "title": "Semi Marathon de la Rochelle 2027 : Inscription et quand y aller ?"
+      },
+      {
+        "url": "https://oleno.fr/courses/semi-marathon-de-la-rochelle",
+        "title": "Semi-Marathon De La Rochelle 2027 - La Rochelle, Charente-Maritime | Oleno"
+      },
+      {
+        "url": "https://fr.milesrepublic.com/event/semi-marathon-de-la-rochelle-4496",
+        "title": "Semi-marathon de la Rochelle 2027 | Miles Republic"
+      },
+      {
+        "url": "https://courseproche.fr/evenement/semi-marathon-de-la-rochelle",
+        "title": "Semi-Marathon de La Rochelle 2027 : date, parcours, inscription | CourseProche"
+      },
+      {
+        "url": "https://les-brisants.fr/lifestyle/marathon-la-rochelle/",
+        "title": "Marathon de La Rochelle - Inscription, courses, classement, prix…"
+      },
+      {
+        "url": "https://werun.world/course/semi-marathon-de-la-rochelle/",
+        "title": "Semi-marathon de La Rochelle 2027 – La Rochelle"
+      },
+      {
+        "url": "https://planmapace.com/courses/semi-marathon-de-la-rochelle",
+        "title": "Semi-marathon de La Rochelle 2027 (14 mars) : plan offert"
+      },
+      {
+        "url": "https://www.le-sportif.com/calendrier/232101/semi-marathon-de-la-rochelle-2027/course-a-pied-sur-route",
+        "title": "Semi Marathon de la Rochelle 2027 à La Rochelle"
+      },
+      {
+        "url": "https://www.klikego.com/inscrits/semi-marathon-de-la-rochelle-2027/1419371741424-32",
+        "title": "Semi-marathon de La Rochelle 2027 - 17000 - La rochelle - Inscrits | Klikego"
+      },
+      {
+        "url": "https://www.ahotu.com/fr/calendrier/course/france/la-rochelle-17-fra",
+        "title": "Courses à pied 2026 - 2027 en France - La Rochelle | Ahotu"
+      },
+      {
+        "url": "https://semimarathonlarochelle.fr/",
+        "title": "Semi Marathon La Rochelle Officiel"
+      },
+      {
+        "url": "https://courseproche.fr/evenement/urban-trail-de-la-rochelle",
+        "title": "Urban trail de la Rochelle 2027 : date, parcours, inscription | CourseProche"
+      },
+      {
+        "url": "https://www.finishers.com/course/semi-marathon-de-la-rochelle",
+        "title": "🏃 Semi-Marathon de La Rochelle 2027 - Parcours, inscriptions & résultats | Finishers"
+      },
+      {
+        "url": "https://semimarathonlarochelle.fr/partenaires.php",
+        "title": "Semi Marathon La Rochelle Officiel"
+      },
+      {
+        "url": "https://followmysport.com/courses/semi-marathon-de-la-rochelle/",
+        "title": "Semi-marathon de La Rochelle 2027 Inscription Résultats"
+      },
+      {
+        "url": "https://www.marathons.com/fr/events/semi-marathon-de-la-rochelle_VLauR",
+        "title": "Semi-Marathon de La Rochelle — Marathons.com"
+      },
+      {
+        "url": "https://www.sportmag.fr/cap-sur-la-42e-edition-du-semi-marathon-de-la-rochelle/",
+        "title": "Cap sur la 42e édition du semi-marathon de La Rochelle"
+      },
+      {
+        "url": "https://www.linkedin.com/in/larissa-michalowski-57654379",
+        "title": "Larissa Michalowski"
+      },
+      {
+        "url": "https://semimarathonlarochelle.fr/assets/informations/Reglement%20-%202026.pdf",
+        "title": "REGLEMENT DU SEMI-MARATHON DE LA ROCHELLE – 29 MARS 2026"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 5.82,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.012,
+      "missing_critical": []
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-03-13T09:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-13T12:00",
+      "label": "Arrivée à La Rochelle",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-13T13:00",
+      "label": "Retrait du dossard",
+      "detail": "lieu à confirmer (horaires à confirmer) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-13T15:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-14T06:00",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-14T07:15",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "accès au départ à confirmer",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-14T07:45",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "Avenue Edmond Grasset, 17000 La Rochelle",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-14T08:30",
+      "label": "Départ 46e édition du Semi-Marathon de La Rochelle",
+      "detail": "Avenue Edmond Grasset, 17000 La Rochelle",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-14T10:36",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite Barrières horaires annoncées : bas du Mail (km 15) à 10:45, Grosse Horloge (km 16) à 10:55, rue Réaumur (km 17) à 11:15 ; arrivée à regagner avant 11:45.",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-14T12:06",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-14T13:06",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-14T16:06",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

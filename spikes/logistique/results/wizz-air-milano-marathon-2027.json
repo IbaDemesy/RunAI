@@ -1,0 +1,204 @@
+{
+  "query": "Wizz Air Milano Marathon 2027",
+  "race": {
+    "name": "Wizz Air Milano Marathon 2027 (25e édition)",
+    "edition_year": 2027,
+    "date": "2027-04-04",
+    "distance_km": 42.195,
+    "start_time": null,
+    "start_location": "Corso Sempione, Milan",
+    "city": "Milan",
+    "country": "Italie",
+    "bib_pickup": {
+      "location": "Milano Running Festival — adresse du site non précisée dans les informations officielles fournies",
+      "days": [
+        "2027-04-01",
+        "2027-04-02",
+        "2027-04-03"
+      ],
+      "hours": "Jeudi 1er avril : 16h00–20h00 ; vendredi 2 avril : 10h00–20h00 ; samedi 3 avril : 09h00–19h00",
+      "same_day_possible": false
+    },
+    "start_access": null,
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": true,
+      "license_accepted": true,
+      "notes": "La FAQ officielle indique qu’une licence de fédération d’athlétisme valide le jour de la course peut être fournie. Pour les personnes sans licence, elle indique une Runcard et un certificat médical valide le jour de l’événement. Le PPS n’est pas précisé dans les informations officielles fournies."
+    },
+    "aid_stations": "Ravitaillements et points d’épongement le long du parcours, plus un ravitaillement final ; nombre et kilomètres non précisés.",
+    "time_limit": null,
+    "registration_platform": "Njuko",
+    "registration_url": "https://milanomarathon.it/maratona/iscriviti",
+    "price_eur": 109.0,
+    "registration_status": "ouvert",
+    "official_url": "https://www.milanomarathon.it/",
+    "regulation_url": "https://www.milanomarathon.it/en/marathon/milano-marathon-regulation/",
+    "sources": [
+      {
+        "url": "https://www.milanomarathon.it/informazioni-pratiche/",
+        "title": "Informations pratiques officielles — édition 2027"
+      },
+      {
+        "url": "https://www.milanomarathon.it/fr/informations-pratiques/",
+        "title": "Informations pratiques officielles en français — édition 2027"
+      },
+      {
+        "url": "https://milanomarathon.it/maratona/iscriviti",
+        "title": "Inscription officielle — redirection vers Njuko"
+      },
+      {
+        "url": "https://www.milanomarathon.it/en/marathon/milano-marathon-regulation/",
+        "title": "Règlement officiel — page de téléchargement"
+      },
+      {
+        "url": "https://indd.adobe.com/view/df2de770-b512-4444-b94c-73c2090c09d8",
+        "title": "Document du règlement officiel"
+      },
+      {
+        "url": "https://www.milanomarathon.it/la-25-edizione-si-correra-domenica-4-aprile/",
+        "title": "Annonce officielle de la 25e édition"
+      },
+      {
+        "url": "https://www.vibeevents.it/eventi/wizz-air-milano-marathon-2027/",
+        "title": "Wizz Air Milano Marathon 2027: biglietti, date e orari · Vibe Events"
+      },
+      {
+        "url": "https://rundida.com/marathon/milan/",
+        "title": "Milan Marathon 2027: Flat PB Course &amp; Entry Guide | RunDida"
+      },
+      {
+        "url": "https://pace-perfect.com/blog/milan-marathon-training-plan-2027",
+        "title": "Milan Marathon Training Plan 2027: Pacing &amp; BQ Tips"
+      },
+      {
+        "url": "https://worldsmarathons.com/marathon/milano-marathon",
+        "title": "Wizz Air Milano Marathon, 04 Apr 2027 | World&#39;s Marathons"
+      },
+      {
+        "url": "https://getbpmoov.com/browse-events/wizz-air-marathon-de-milan-2027",
+        "title": "Wizz Air Marathon de Milan 2027 — 4 avr., 42 km | BPMoov"
+      },
+      {
+        "url": "https://mercadantesuite.it/en/milan-guide/milano-marathon/",
+        "title": "Milano Marathon 2027: date and runner tips | M10 Suite"
+      },
+      {
+        "url": "https://www.milanomarathon.it/wizz-air-milano-marathon/",
+        "title": "Wizz Air Milano Marathon – Domenica 12 aprile 2026 - Iscriviti ora"
+      },
+      {
+        "url": "https://bcnrunhub.com/en/europe-marathons/maraton-de-milan/",
+        "title": "Wizz Air Milano Marathon 2027 - BCN Run Hub"
+      },
+      {
+        "url": "https://www.milanomarathon.it/en/marathon/register/",
+        "title": "Milano Marathon Registration - Milano Marathon 2027"
+      },
+      {
+        "url": "https://www.milanomarathon.it/fr/marathon-fr/",
+        "title": "Wizz Air Milano Marathon 2027 - 4 avril 2027 - S&#039;inscrire"
+      },
+      {
+        "url": "https://www.rcssportsandevents.it/milano-marathon-awards-celebra-il-running-e-guarda-al-4-aprile-2027/",
+        "title": "Milano Marathon Awards celebra il running e guarda al 4 aprile 2027 - RCS Sports and Events"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 6.42,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.006,
+      "missing_critical": [
+        "start_time",
+        "start_location",
+        "registration_url"
+      ]
+    },
+    {
+      "depth": "deep",
+      "latency_s": 124.32,
+      "list_price_usd": 0.055,
+      "balance_delta_usd": 0.158,
+      "missing_critical": [
+        "start_time"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-04-03T13:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-03T16:00",
+      "label": "Arrivée à Milan",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-04-03T17:00",
+      "label": "Retrait du dossard",
+      "detail": "Milano Running Festival — adresse du site non précisée dans les informations officielles fournies (Jeudi 1er avril : 16h00–20h00 ; vendredi 2 avril : 10h00–20h00 ; samedi 3 avril : 09h00–19h00) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": false
+    },
+    {
+      "when": "2027-04-03T18:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T06:30",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T07:45",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "accès au départ à confirmer",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T08:15",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "Corso Sempione, Milan",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T09:00",
+      "label": "Départ Wizz Air Milano Marathon 2027 (25e édition)",
+      "detail": "Corso Sempione, Milan",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T13:13",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite inconnu",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T14:43",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T15:43",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T18:43",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

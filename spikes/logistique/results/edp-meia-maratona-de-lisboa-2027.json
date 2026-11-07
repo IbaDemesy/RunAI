@@ -1,0 +1,152 @@
+{
+  "query": "EDP Meia Maratona de Lisboa 2027",
+  "race": {
+    "name": "EDP Meia Maratona de Lisboa 2027",
+    "edition_year": 2027,
+    "date": "2027-03-07",
+    "distance_km": 21.0,
+    "start_time": "09:20",
+    "start_location": "Ponte 25 de Abril, Lisbonne (le départ est situé sur le pont ; le règlement fourni ne précise pas de point de départ plus exact)",
+    "city": "Lisbonne",
+    "country": "Portugal",
+    "bib_pickup": {
+      "location": "Centro de Congressos de Lisboa, zone de Junqueira, Lisbonne",
+      "days": [
+        "2027-03-05",
+        "2027-03-06"
+      ],
+      "hours": "10h00-20h00",
+      "same_day_possible": false
+    },
+    "start_access": "Accès obligatoire par les trains Fertagus, descendre à la gare de Pragal. L’organisation indique que c’est l’unique accès au départ. Fertagus est gratuit pour les participants munis de leur dossard ; les transports publics pour rejoindre les gares Fertagus sont également gratuits. Aucun parking n’est précisé dans les informations officielles fournies.",
+    "required_documents": {
+      "pps": false,
+      "medical_certificate": false,
+      "license_accepted": null,
+      "notes": "Les informations officielles fournies n’indiquent pas de PPS, certificat médical ou licence exigés pour les participants ordinaires. Une confirmation d’inscription est nécessaire pour retirer le dossard. Le règlement prévoit un certificat médical pour les participants malvoyants courant avec un guide."
+    },
+    "aid_stations": "Ravitaillements tous les 5 km selon le règlement fourni.",
+    "time_limit": "3h00",
+    "registration_platform": "Plateforme d’inscription de Maratona Clube de Portugal, avec candidature à un tirage au sort ; ce n’est pas une inscription finale.",
+    "registration_url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/Candidatura.aspx?lang=pt_pt",
+    "price_eur": null,
+    "registration_status": "inconnu",
+    "official_url": "https://maratonaclubedeportugal.com/corrida-marco/edp-meia-maratona-de-lisboa/",
+    "regulation_url": "https://maratonaclubedeportugal.com/wp-content/uploads/Regulamento_EDP_Meia_Maratona_de_Lisboa_MAR2027_PT.pdf",
+    "sources": [
+      {
+        "url": "https://maratonaclubedeportugal.com/corrida-marco/edp-meia-maratona-de-lisboa/",
+        "title": "EDP Meia Maratona de Lisboa 2027 - Site Oficial"
+      },
+      {
+        "url": "https://maratonaclubedeportugal.com/wp-content/uploads/Regulamento_EDP_Meia_Maratona_de_Lisboa_MAR2027_PT.pdf",
+        "title": "Règlement officiel EDP Meia Maratona de Lisboa 2027"
+      },
+      {
+        "url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/Candidatura.aspx?lang=pt_pt",
+        "title": "Candidature au tirage au sort"
+      },
+      {
+        "url": "https://meia-maratona.inscricoes.maratonaclubedeportugal.com/ballot/docs/regulamento-pt.html?v=20260423100847",
+        "title": "Regulamento do Sorteio - EDP Meia Maratona de Lisboa 2027"
+      },
+      {
+        "url": "https://www.record.pt/modalidades/atletismo/detalhe/sorteio-para-a-edp-meia-maratona-de-lisboa-de-2027-aberto-ate-dia-19-e-com-recorde-de-procura-a-vista?ref=Record+Running_DestaquesPrincipais",
+        "title": "Sorteio para a EDP Meia Maratona de Lisboa de 2027 aberto at&#233; dia 19 e com recorde de procura &#224; vista - Atletismo - Jornal Record"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 6.46,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.006,
+      "missing_critical": [
+        "start_time",
+        "registration_url"
+      ]
+    },
+    {
+      "depth": "deep",
+      "latency_s": 124.31,
+      "list_price_usd": 0.055,
+      "balance_delta_usd": 0.373,
+      "missing_critical": []
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-03-06T09:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-06T12:00",
+      "label": "Arrivée à Lisbonne",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-06T13:00",
+      "label": "Retrait du dossard",
+      "detail": "Centro de Congressos de Lisboa, zone de Junqueira, Lisbonne (10h00-20h00) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-06T15:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T06:50",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-07T08:05",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "Accès obligatoire par les trains Fertagus, descendre à la gare de Pragal. L’organisation indique que c’est l’unique accès au départ. Fertagus est gratuit pour les participants munis de leur dossard ; les transports publics pour rejoindre les gares Fertagus sont également gratuits. Aucun parking n’est précisé dans les informations officielles fournies.",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T08:35",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "Ponte 25 de Abril, Lisbonne (le départ est situé sur le pont ; le règlement fourni ne précise pas de point de départ plus exact)",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-07T09:20",
+      "label": "Départ EDP Meia Maratona de Lisboa 2027",
+      "detail": "Ponte 25 de Abril, Lisbonne (le départ est situé sur le pont ; le règlement fourni ne précise pas de point de départ plus exact)",
+      "assumption": false
+    },
+    {
+      "when": "2027-03-07T11:26",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite 3h00",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T12:56",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T13:56",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-03-07T16:56",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}

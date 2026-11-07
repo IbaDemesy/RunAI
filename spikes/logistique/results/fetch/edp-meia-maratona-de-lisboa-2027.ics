@@ -1,0 +1,100 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RunAI//spike logistique//FR
+BEGIN:VEVENT
+UID:runai-0-20270306T090000@runai
+DTSTAMP:20261107T144524
+DTSTART:20270306T090000
+DTEND:20270306T093000
+SUMMARY:Départ de Paris (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - trajet estimé 3 h
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-1-20270306T120000@runai
+DTSTAMP:20261107T144524
+DTSTART:20270306T120000
+DTEND:20270306T123000
+SUMMARY:Arrivée à Lisbonne
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - 
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-2-20270306T130000@runai
+DTSTAMP:20261107T144524
+DTSTART:20270306T130000
+DTEND:20270306T133000
+SUMMARY:Retrait du dossard
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - Sport Expo, Centro de Congressos de Lisboa, zone de Junqueira, Lisbonne (10:00–20:00) ; apporter pièce d'identité + PPS/certificat/licence
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-3-20270306T150000@runai
+DTSTAMP:20261107T144524
+DTSTART:20270306T150000
+DTEND:20270306T153000
+SUMMARY:Check-in hôtel (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - hôtel choisi selon l'accès au départ
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-4-20270307T065000@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T065000
+DTEND:20270307T072000
+SUMMARY:Réveil, petit-déjeuner
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - 
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-5-20270307T080500@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T080500
+DTEND:20270307T083500
+SUMMARY:Départ de l'hôtel vers la ligne (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - Accès obligatoire en train Fertagus jusqu’à la gare de Pragal, seule voie d’accès indiquée par l’organisateur. Le train Fertagus est gratuit sur présentation du dossard ; les transports publics permettant de rejoindre les gares Fertagus (métro, bus et trains) sont également gratuits pour les participants. Aucun parking n’est indiqué dans les informations disponibles.
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-6-20270307T083500@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T083500
+DTEND:20270307T090500
+SUMMARY:Arrivée en zone de départ / consigne
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - Ponte 25 de Abril (départ sur le pont ; accès par la gare de Pragal)
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-7-20270307T092000@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T092000
+DTEND:20270307T095000
+SUMMARY:Départ EDP Meia Maratona de Lisboa 2027
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - Ponte 25 de Abril (départ sur le pont ; accès par la gare de Pragal)
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-8-20270307T112634@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T112634
+DTEND:20270307T115634
+SUMMARY:Arrivée estimée (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - allure 6 min/km ; temps limite 3h00
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-9-20270307T125634@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T125634
+DTEND:20270307T132634
+SUMMARY:Check-out hôtel (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - demander un late check-out si après 12h
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-10-20270307T135634@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T135634
+DTEND:20270307T142634
+SUMMARY:Retour vers Paris (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - 
+END:VEVENT
+BEGIN:VEVENT
+UID:runai-11-20270307T165634@runai
+DTSTAMP:20261107T144524
+DTSTART:20270307T165634
+DTEND:20270307T172634
+SUMMARY:Arrivée à Paris (estimé)
+DESCRIPTION:EDP Meia Maratona de Lisboa 2027 - 
+END:VEVENT
+END:VCALENDAR

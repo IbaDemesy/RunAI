@@ -1,0 +1,282 @@
+{
+  "query": "Schneider Electric Marathon de Paris 2027",
+  "race": {
+    "name": "ASICS Marathon de Paris 2027 (anciennement Schneider Electric Marathon de Paris)",
+    "edition_year": 2027,
+    "date": "2027-04-04",
+    "distance_km": 42.195,
+    "start_time": null,
+    "start_location": null,
+    "city": "Paris",
+    "country": "France",
+    "bib_pickup": {
+      "location": null,
+      "days": [],
+      "hours": null,
+      "same_day_possible": null
+    },
+    "start_access": null,
+    "required_documents": {
+      "pps": null,
+      "medical_certificate": null,
+      "license_accepted": null,
+      "notes": "Le règlement officiel de l’édition 2027 et ses exigences documentaires n’ont pas été trouvés dans les informations disponibles."
+    },
+    "aid_stations": null,
+    "time_limit": null,
+    "registration_platform": null,
+    "registration_url": null,
+    "price_eur": 169.0,
+    "registration_status": "inconnu",
+    "official_url": "https://www.asicsmarathondeparis.com/en",
+    "regulation_url": null,
+    "sources": [
+      {
+        "url": "https://www.asicsmarathondeparis.com/en",
+        "title": "Site officiel indiqué dans les informations disponibles"
+      },
+      {
+        "url": "https://www.20minutes.fr/tempo/4243525-20260908-marathon-paris-2027-parcours-orga-partenaire-tout-va-changer-prochaine-edition",
+        "title": "Marathon de Paris 2027 : parcours, organisation et partenaire"
+      },
+      {
+        "url": "https://jogging-international.net/les-courses/inscriptions-parcours-sponsors-organisateurs-tout-savoir-sur-le-marathon-de-paris-2027/",
+        "title": "Informations sur les inscriptions, le parcours et les tarifs 2027"
+      },
+      {
+        "url": "https://racenotify.com/fr/event/schneider-electric-marathon-de-paris-2027",
+        "title": "Schneider Electric Marathon de Paris - Paris, Île-de-France | RaceNotify"
+      },
+      {
+        "url": "https://trainerday.com/fr/events/fr/schneider-electric-marathon-de-paris",
+        "title": "Schneider Electric marathon de Paris 2027 — Paris, France | TrainerDay"
+      },
+      {
+        "url": "https://sportstoursinternational.fr/evenements/marathon-de-paris/",
+        "title": "SCHNEIDER ELECTRIC MARATHON DE PARIS 2027 - Sports Tours International"
+      },
+      {
+        "url": "https://eurotravelo.com/explore/schneider-electric-marathon-de-paris-paris-france/",
+        "title": "Schneider Electric Paris Marathon 2027 – Paris, France - Euro Travelo"
+      },
+      {
+        "url": "https://www.ouest-france.fr/sport/running/marathon/marathon-de-paris/marathon-de-paris-date-et-tarifs-de-ledition-2027-loterie-des-ce-8-septembre-tout-ce-quil-faut-savoir-64e9d370-aae3-11f1-a618-771a80631f2f",
+        "title": "Marathon de Paris. Date et tarifs de l’édition 2027, loterie dès ce 8 septembre : tout ce qu’il faut savoir"
+      },
+      {
+        "url": "https://www.ratp.fr/en/ligne42km",
+        "title": "Ratp.fr | Schneider Electric Marathon of Paris"
+      },
+      {
+        "url": "https://www.jds.fr/paris/sports/courses/marathon-de-paris-262353_A",
+        "title": "Marathon de Paris 2027 : dates, parcours, inscription"
+      },
+      {
+        "url": "https://www.schneiderelectricparismarathon.com/en/information/route-and-profiles",
+        "title": "Schneider Electric Marathon de Paris - Route"
+      },
+      {
+        "url": "https://www.instagram.com/parismarathon/",
+        "title": "SE Marathon de Paris (@parismarathon) • Instagram photos and videos"
+      },
+      {
+        "url": "https://runresell.com/fr/blog/marathon-de-paris-2027-inscription-transfert-dinscription-date-de-la-course-et-tout-ce-que-vous-devez-savoir/",
+        "title": "Marathon de Paris 2027 : Tarifs d’inscription, validation médicale PPS et règles d’échange Timeto - revente sécurisée de dossards - RunResell.com"
+      },
+      {
+        "url": "https://ndss.org/events/schneider-electric-marathon-de-paris",
+        "title": "Schneider Electric Marathon de Paris | National Down Syndrome Society (NDSS)"
+      },
+      {
+        "url": "https://fueledbylolz.com/2026/09/12/paris-marathon-2027-is-switching-to-a-lottery-how-registration-works/",
+        "title": "Paris Marathon 2027 Is Switching to a Lottery: How Registration Works - FueledByLOLZ"
+      },
+      {
+        "url": "https://www.alzheimersresearchuk.org/activities/paris-marathon/",
+        "title": "Paris Marathon 2027 - Alzheimer&#039;s Research UK"
+      },
+      {
+        "url": "https://adventuretimetravel.com.au/tours/2027-schneider-electric-marathon-de-paris/",
+        "title": "2027 Schneider Electric Marathon de Paris - Adventure Time Travel"
+      },
+      {
+        "url": "https://sportstoursinternational.fr/evenements/marathon-de-paris/",
+        "title": "SCHNEIDER ELECTRIC MARATHON DE PARIS 2027 - Sports Tours International"
+      },
+      {
+        "url": "https://www.jds.fr/paris/sports/courses/marathon-de-paris-262353_A",
+        "title": "Marathon de Paris 2027 : dates, parcours, inscription"
+      },
+      {
+        "url": "https://www.runners.quest/paris-marathon/",
+        "title": "Asics Marathon De Paris – 2027 Registration &#038; 2026 Results &#8211; Runner&#039;s Quest"
+      },
+      {
+        "url": "https://prostatecanceruk.org/get-involved/fundraise-for-us/find-a-fundraising-event/paris-marathon-2026",
+        "title": "Paris Marathon 2027 | Prostate Cancer UK | Prostate Cancer UK"
+      },
+      {
+        "url": "https://www.schneiderelectricparismarathon.com/fr/l-evenement/presentation",
+        "title": "Schneider Electric Marathon de Paris"
+      },
+      {
+        "url": "https://www.se.com/fr/fr/about-us/events/marathondeparis/",
+        "title": "Événements et innovation | Schneider Electric France"
+      },
+      {
+        "url": "https://www.schneiderelectricparismarathon.com/en",
+        "title": "Schneider Electric Marathon de Paris - Home"
+      },
+      {
+        "url": "https://www.schneiderelectricparismarathon.com/fr/l-evenement/resultats",
+        "title": "Schneider Electric Marathon de Paris - Résultats"
+      },
+      {
+        "url": "https://parisjetaime.com/evenement/marathon-de-paris-e003",
+        "title": "Asics Electric Marathon de Paris 2027 : 50 ans, parcours et infos"
+      },
+      {
+        "url": "https://fr.milesrepublic.com/event/schneider-electric-marathon-de-paris-3209",
+        "title": "ASICS Marathon de Paris 2027 | Miles Republic"
+      },
+      {
+        "url": "https://mecenat-cardiaque.org/en/nos-evenements/se-marathon-de-paris/",
+        "title": "SE Marathon de Paris - Mécénat Chirurgie Cardiaque"
+      },
+      {
+        "url": "https://www.linkedin.com/in/manale-el-ammari-601685173",
+        "title": "Manale Ammari"
+      },
+      {
+        "url": "https://www.ouest-france.fr/sport/running/marathon/marathon-de-paris/marathon-de-paris-date-et-tarifs-de-ledition-2027-loterie-des-ce-8-septembre-tout-ce-quil-faut-savoir-64e9d370-aae3-11f1-a618-771a80631f2f",
+        "title": "Marathon de Paris. Date et tarifs de l’édition 2027, loterie dès ce 8 septembre : tout ce qu’il faut savoir"
+      },
+      {
+        "url": "https://marathonhandbook.com/paris-marathon-2027-lottery-asics/",
+        "title": "Paris Marathon 2027 Entry Moves to a Lottery"
+      },
+      {
+        "url": "https://www.sportstrategies.com/fin-de-course-pour-aso-ce-qui-se-joue-derriere-lappel-doffres-du-marathon-de-paris/",
+        "title": "Fin de course pour ASO ? Ce qui se joue derrière l’appel d’offres du Marathon de Paris | Sport Stratégies"
+      },
+      {
+        "url": "https://www.intervalcoach.app/en/events/schneider-electric-marathon-de-paris-race_VGTSFR84JMCB",
+        "title": "Schneider Electric Marathon de Paris · Apr 11, 2027"
+      },
+      {
+        "url": "https://www.linkedin.com/in/katia-bourbonnaud",
+        "title": "Katia Bourbonnaud"
+      },
+      {
+        "url": "https://runcorner.net/marathon-de-paris-asics-partenaire/",
+        "title": "Marathon de Paris : Asics va remplacer Schneider Electric comme partenaire titre dès 2027"
+      },
+      {
+        "url": "https://www.gosh.org/get-involved/fundraising-events/paris-marathon/",
+        "title": "Paris Marathon 2027 Charity Places | GOSH Charity"
+      },
+      {
+        "url": "https://www.asicsmarathondeparis.com/en",
+        "title": "fetch"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "depth": "standard",
+      "latency_s": 6.1,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.006,
+      "missing_critical": [
+        "start_time",
+        "start_location",
+        "registration_url"
+      ]
+    },
+    {
+      "depth": "fetch",
+      "latency_s": 8.09,
+      "list_price_usd": 0.006,
+      "balance_delta_usd": 0.018,
+      "missing_critical": [
+        "start_time",
+        "start_location",
+        "registration_url"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "when": "2027-04-03T09:00",
+      "label": "Départ de Paris",
+      "detail": "trajet estimé 3 h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-03T12:00",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": false
+    },
+    {
+      "when": "2027-04-03T13:00",
+      "label": "Retrait du dossard",
+      "detail": "lieu à confirmer (horaires à confirmer) ; apporter pièce d'identité + PPS/certificat/licence",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-03T15:00",
+      "label": "Check-in hôtel",
+      "detail": "hôtel choisi selon l'accès au départ",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T06:30",
+      "label": "Réveil, petit-déjeuner",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T07:45",
+      "label": "Départ de l'hôtel vers la ligne",
+      "detail": "accès au départ à confirmer",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T08:15",
+      "label": "Arrivée en zone de départ / consigne",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T09:00",
+      "label": "Départ ASICS Marathon de Paris 2027 (anciennement Schneider Electric Marathon de Paris)",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T13:13",
+      "label": "Arrivée estimée",
+      "detail": "allure 6 min/km ; temps limite inconnu",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T14:43",
+      "label": "Check-out hôtel",
+      "detail": "demander un late check-out si après 12h",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T15:43",
+      "label": "Retour vers Paris",
+      "detail": "",
+      "assumption": true
+    },
+    {
+      "when": "2027-04-04T18:43",
+      "label": "Arrivée à Paris",
+      "detail": "",
+      "assumption": true
+    }
+  ]
+}
