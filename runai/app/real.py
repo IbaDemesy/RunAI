@@ -3,13 +3,13 @@
 import asyncio
 import os
 import re
-from collections.abc import AsyncIterable, Callable
+from collections.abc import AsyncIterable, AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
 from hai_agents.tools import Tool, tool
-from pydantic import HttpUrl, TypeAdapter, ValidationError
+from pydantic import BaseModel, HttpUrl, TypeAdapter, ValidationError
 
 from runai.app.ports import AskUser, EventSink
 from runai.app.providers import (
@@ -37,10 +37,10 @@ from runai.safety import guard_task
 from runai.search.linkup_search import search_race
 from runai.search.models import RaceSheet
 from runai.voice.audio import load_pcm, pcm_chunks
-from runai.voice.live import stream_transcripts
+from runai.voice.live import stream_voice_events
 
 RaceSearchCall = Callable[..., RaceSheet]
-TranscriptStream = Callable[..., AsyncIterable[Any]]
+TranscriptStream = Callable[..., AsyncIterator[BaseModel]]
 _HOTEL_PRICE_TOTAL = re.compile(
     r"\bPRIX_TOTAL_(?:\d+_NUITS|SEJOUR)\s*:\s*(?P<price>\d[\d\s.,]*?)\s*(?:EUR|€)",
     re.IGNORECASE,
@@ -285,8 +285,11 @@ class RealBrowserAgents:
 
 
 class RealTranscriber:
-    def __init__(self, streamer: TranscriptStream = stream_transcripts):
+    def __init__(self, streamer: TranscriptStream = stream_voice_events):
         self.streamer = streamer
+
+    def stream(self, chunks: AsyncIterable[bytes], sample_rate: int) -> AsyncIterator[BaseModel]:
+        return self.streamer(chunks, sample_rate=sample_rate)
 
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         pcm, sample_rate = await asyncio.to_thread(load_pcm, audio)
@@ -297,7 +300,7 @@ class RealTranscriber:
 
         transcripts = []
         async for event in self.streamer(chunks(), sample_rate=sample_rate):
-            if event.is_final and event.text.strip():
+            if getattr(event, "is_final", False) and event.text.strip():
                 transcripts.append(event.text.strip())
         result = " ".join(transcripts).strip()
         if not result:

@@ -9,7 +9,7 @@ import importlib.util
 import os
 import re
 import unicodedata
-from collections.abc import Mapping
+from collections.abc import AsyncIterable, AsyncIterator, Mapping
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
@@ -168,6 +168,9 @@ class UnavailableTranscriber:
 
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         raise ProviderUnavailableError(self.message)
+
+    def stream(self, chunks: AsyncIterable[bytes], sample_rate: int) -> AsyncIterator[BaseModel]:
+        raise ProviderUnavailableError("Gladia is unavailable in live mode. Check the provider configuration.")
 
 
 class LabeledRun:

@@ -4,12 +4,14 @@ Les vraies implémentations (`runai/h/`, `runai/voice/`, `runai/search/`) n'ont 
 ces Protocols pour être branchées dans `MissionService` à la place des fakes.
 """
 
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from runai.app.tasks import TripBrief
     from runai.search.logistics_sweep import LogisticsSweep
+
+from pydantic import BaseModel
 
 from runai.models import Race, RunnerProfile, StepKind, StepResult, TraceEvent
 
@@ -64,3 +66,5 @@ class Transcriber(Protocol):
     """Brique Gladia : transcrit un enregistrement court envoyé par le navigateur."""
 
     async def transcribe(self, audio: bytes, content_type: str) -> str: ...
+
+    def stream(self, chunks: AsyncIterable[bytes], sample_rate: int) -> AsyncIterator[BaseModel]: ...
