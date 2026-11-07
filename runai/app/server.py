@@ -89,6 +89,14 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     if credentials := os.getenv("RUNAI_BASIC_AUTH"):
         app.add_middleware(BasicAuthMiddleware, credentials=credentials)
     app.state.service = service or build_service()
+    if (
+        os.getenv("RUNAI_PUBLIC") == "1"
+        and not os.getenv("RUNAI_BASIC_AUTH")
+        and not app.state.service.simulated
+    ):
+        raise RuntimeError(
+            "RUNAI_PUBLIC=1 en mode réel : définissez RUNAI_BASIC_AUTH, sinon n'importe qui consomme vos crédits"
+        )
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     def get_service() -> MissionService:

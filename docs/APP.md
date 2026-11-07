@@ -18,7 +18,7 @@ Parcours : on tape la course ou on clique sur **Dire la course** (micro → `/ap
 `render.yaml` décrit un service web Render : une seule instance (les missions vivent en mémoire), démarrage `uvicorn runai.app.server:create_app --factory`, sonde `/api/health`.
 
 1. Render → **New → Blueprint**, choisir ce dépôt et la branche à déployer.
-2. Renseigner les variables demandées : `RUNAI_BASIC_AUTH` (obligatoire dès qu'il y a des clés, sinon n'importe qui consomme vos crédits), `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY` (facultative, voix). Sans clé H ou Linkup, l'app reste en mode démo.
+2. Renseigner les variables demandées : `RUNAI_BASIC_AUTH` (obligatoire dès qu'il y a des clés, sinon n'importe qui consomme vos crédits), `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY` (facultative, voix). Sans clé H ou Linkup, l'app reste en mode démo. `render.yaml` fixe `RUNAI_PUBLIC=1` : en mode réel, l'app refuse alors de démarrer sans `RUNAI_BASIC_AUTH`.
 3. Garde-fous crédits : `RUNAI_H_MAX_STEPS=40`, `RUNAI_H_MAX_TIME_S=600` ; en mode réel, les 3 slots H sont partagés entre toutes les missions. En démo, les missions ne s'attendent pas.
 
 Couper le service après le hackathon.

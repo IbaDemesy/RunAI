@@ -778,3 +778,15 @@ def test_basic_auth_rejects_malformed_setting(tmp_path, monkeypatch):
     monkeypatch.setenv("RUNAI_BASIC_AUTH", "sans-deux-points")
     with pytest.raises(ValueError), TestClient(create_app(make_service(tmp_path))) as client:
         client.get("/")
+
+
+def test_public_real_mode_requires_a_password(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    real = make_service(tmp_path)
+    real.simulated = False
+    with pytest.raises(RuntimeError):
+        create_app(real)
+    create_app(make_service(tmp_path))
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "equipe:secret")
+    create_app(real)

@@ -12,6 +12,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
+      - key: RUNAI_PUBLIC
+        value: "1"
       - key: RUNAI_BASIC_AUTH
         sync: false
       - key: HAI_API_KEY
