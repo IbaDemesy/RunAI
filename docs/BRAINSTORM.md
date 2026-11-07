@@ -117,6 +117,34 @@ Ce test décide du périmètre. Si tout passe, on fait course + hôtel + vol. Si
 
 Hors périmètre, ou mention « vision » dans le pitch : coach d'entraînement, abonnement Stripe, mode club.
 
+## Projets déjà faits (H Showcase)
+
+Source : le H Showcase (page collée par Mathieu), qui liste 35 agents construits sur l'API H Agents. On y trouve des démos officielles de H et les projets du hackathon de San Francisco.
+
+### Les plus proches de notre idée
+
+| Projet | Ce qu'il fait | Recoupement avec RunAI |
+| --- | --- | --- |
+| **Life-Admin Operator** (Hackathon SF) | Agent piloté uniquement à la voix sur de vrais sites, qui demande avant toute action irréversible | Même UX que nous : la voix et l'arrêt avant le paiement. **Ce n'est donc pas un argument d'originalité** |
+| **Kylian** (Hackathon SF) | On l'appelle ou on lui écrit sur WhatsApp, et il agit sur l'ordinateur en notre absence | Assistant vocal généraliste |
+| **BuyWith402** (Hackathon SF) | Des agents navigateur H remplissent des commandes sur n'importe quel site | Remplissage de formulaires jusqu'au checkout |
+| **Workfleet** (Hackathon SF) | Clone l'ordinateur pour faire travailler plusieurs agents en parallèle | Agents en parallèle |
+| **Hiking Routes in Google Maps** (Hackathon SF) | Planifie des randonnées urbaines et les trace dans Google Maps | Seul projet lié au sport ou à l'outdoor |
+| **Add to cart**, **Product availability**, **Price Check**, **Pricehunter** | Démos e-commerce : panier, stock, prix, codes promo | Briques de navigation e-commerce, sans orchestration |
+
+### Les autres catégories
+
+- **QA et tests** : QA any web UI, A-Test, GrannySmith, Simulation Labs, Houston.
+- **Apprendre des vidéos et rejouer** : Holo Forge, Reel-Learn, AI Runbooks, ImproveMe, Voodoo.
+- **Agents métier ou applis desktop** : ArcFlash Copilot, Claw-DJ (Mixxx), Cloud CUA (console AWS), Holodev (Roblox Studio), CUA Molecular Visualizer, AI Teaching Assistant.
+- **Divers** : HoloMobile (mobile), Halo (panneau Chrome), Privacy Layer, Snowglobe, FollowThrough, Agent Kalshi, Glassbox, HoloBlocks et HoloBricks.
+
+### Ce qu'on en retient
+
+- **Aucun projet ne porte sur la course à pied, l'inscription à une course ou le déplacement sportif.** La verticale reste libre.
+- La voix et la validation avant une action irréversible existent déjà (Life-Admin Operator). L'originalité doit venir d'ailleurs : **une seule intention qui déclenche plusieurs agents coordonnés** (course, hôtel, transport), le profil coureur (PPS, certificat, t-shirt) et la chaîne Linkup → H.
+- Le jury a déjà vu beaucoup d'agents « QA » et « rejouer une vidéo ». Mieux vaut éviter ces angles.
+
 ## Questions ouvertes
 
 1. ~~Quel fil rouge ?~~ Orientation : une feature unique, « déplacement course complet » (voir plus haut). Son périmètre final dépend du test de faisabilité.
