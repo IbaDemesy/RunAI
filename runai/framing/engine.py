@@ -51,6 +51,18 @@ LABELS = {
 }
 
 
+def _valid_place(value: object) -> bool:
+    if not isinstance(value, str) or not 2 <= len(value.strip()) <= 80:
+        return False
+    normalized = value.strip().casefold().replace("’", "'").strip(".!?")
+    return any(c.isalpha() for c in value) and not re.search(
+        r"^(?:oui|non|yes|no|none|aucun[e]?|peu importe|n'importe quoi|"
+        r"je (?:ne )?sais pas|i (?:don't|do not) know|not sure|"
+        r"maybe|perhaps|whatever)(?:\b|$)",
+        normalized,
+    )
+
+
 class FramingEngine:
     def __init__(
         self,
@@ -83,7 +95,10 @@ class FramingEngine:
     def _validate(values: dict[SlotName, object]) -> None:
         for name, value in values.items():
             try:
-                if name == SlotName.race_date and value is not None:
+                if name in (SlotName.city, SlotName.origin, SlotName.race) and value is not None:
+                    if not _valid_place(value):
+                        raise ValueError()
+                elif name == SlotName.race_date and value is not None:
                     date.fromisoformat(str(value))
                 elif (
                     name in (SlotName.distance_km, SlotName.budget, SlotName.nights)
@@ -161,13 +176,39 @@ class FramingEngine:
                     ),
                     None,
                 )
+            pending = question or next(iter(session.open_questions), None)
+            if (
+                pending and pending.choices and answer and not choice
+                and not reply.corrections
+            ):
+                return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
+            correction = re.match(
+                r"^(?:(?:en fait|actually)[,\s]+)?(?:plutôt|rather|instead)[,\s]+(.+?)\s*[.!?]?$"
+                r"|^(?:en fait|actually)[,\s]+(.+?)\s*[.!?]?$",
+                answer, re.IGNORECASE,
+            )
+            corrected_city = None
+            if correction and pending and pending.slots[0] in (SlotName.city, SlotName.origin):
+                corrected_city = next(group for group in correction.groups() if group)
+                if not _valid_place(corrected_city) or not re.fullmatch(
+                    r"[^\W\d_]+(?:[ '\u2019-][^\W\d_]+){0,4}", corrected_city
+                ):
+                    return self._clarify(session, reply, "Please specify the race city you want instead.")
+            if (
+                pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
+                and answer and not choice and not reply.corrections
+                and not corrected_city and not _valid_place(answer)
+            ):
+                return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
             values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
+            if corrected_city:
+                values = {SlotName.city: corrected_city} | reply.corrections
             if not values and not choice and not reply.question_id:
                 question = next(
                     (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
                     None,
                 )
-            if question and len(question.slots) == 1 and answer and (not question.choices or reply.question_id) and not choice:
+            if question and len(question.slots) == 1 and answer and not question.choices and not choice and not corrected_city:
                 slot = question.slots[0]
                 if slot == SlotName.date_window and slot not in values:
                     answer = reply.text.strip()
@@ -204,10 +245,11 @@ class FramingEngine:
                     and slot not in values
                     and (reply.question_id or not values)
                 ):
-                    if reply.question_id or (
+                    candidate = public_origin(answer) if slot == SlotName.origin else answer
+                    if _valid_place(candidate) and (reply.question_id or (
                         len(answer) <= 60 and not any(c.isdigit() for c in answer)
-                    ):
-                        values[slot] = answer
+                    )):
+                        values[slot] = candidate.strip()
                 elif not values and slot in (
                     SlotName.distance_km,
                     SlotName.budget,
@@ -237,6 +279,8 @@ class FramingEngine:
             if isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
             if not values and choice is None and session.turns:
+                if answer and session.open_questions:
+                    return self._clarify(session, reply, guidance)
                 raise FramingError(guidance)
             self._validate(values)
             if isinstance(origin := values.get(SlotName.origin), str):
@@ -362,6 +406,19 @@ class FramingEngine:
             await self._phrase_next_question(session)
             self.sessions[framing_id] = session
             return self.get(framing_id)
+
+    def _clarify(self, session: FramingSession, reply: FramingReply, message: str) -> FramingSession:
+        session.revision += 1
+        session.summary = None
+        session.confirm_key = session.confirmed_revision = None
+        for question in session.open_questions:
+            question.revision = session.revision
+        session.turns.extend([
+            FramingTurn(role="user", text=_mask_address(reply.text or ""), channel=reply.channel, revision=session.revision),
+            FramingTurn(role="assistant", text=message, revision=session.revision),
+        ])
+        self.sessions[session.id] = session
+        return self.get(session.id)
 
     async def _holo_fill(
         self, session: FramingSession, text: str, values: dict[SlotName, object]
