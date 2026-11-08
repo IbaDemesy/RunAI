@@ -96,6 +96,28 @@ _DISCLOSE_INSTRUCTIONS = re.compile(
     r"|instrucoes\W+(?:do\W+sistema|internas|de\W+seguranca))\b"
 )
 
+_HOMOGLYPHS = str.maketrans({
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y",
+    "х": "x", "і": "i", "ј": "j", "ѕ": "s", "к": "k", "м": "m",
+    "т": "t", "в": "b", "н": "h", "α": "a", "ε": "e", "ο": "o",
+    "ρ": "p", "ι": "i", "κ": "k", "τ": "t", "υ": "y", "χ": "x",
+})
+_RELEASE_ACTIONS = re.compile(
+    r"\b(?:validat(?:e|ing|ion)|valid(?:er|ez|e)|confirm(?:er|ez|e|ar|are|a)?|conferma(?:re)?"
+    r"|place\s+(?:the\s+|an?\s+)?order|pay(?:ment|er|ez|ing)?|paiement|regler"
+    r"|buy|purchase|checkout|submit|soumettre|acheter|achetez|achat"
+    r"|comprar|compre|compra|acquistare|acquista|pagar|pagare|pagamento"
+    r"|accept\w*|acept\w*|aceit\w*|accett\w*|agree|iagree|consent\w*"
+    r"|tick|check\s+(?:the\s+|a\s+)?box|coch(?:er|ez|e)|spuntare|spunta"
+    r"|iban|cvv\d*|cvc\d*|card|credit\s+card|carte\s+bancaire|tarjeta|cartao"
+    r"|password|mot\s+de\s+passe|senha|contrasena"
+    r"|ignore\s+previous)\b"
+)
+_BENIGN_RELEASE = re.compile(
+    r"(?:continue|go back|scroll down|next page|\d{1,2}:\d{2}|option\s+\d+"
+    r"|(?:choose|select|take)\s+(?:the\s+)?[\w :.-]+(?:train|room|fare|slot|time|option\s+\d+))"
+)
+
 
 def release_attempt(text: str) -> str | None:
     """Reject stop releases and common injections, not ordinary steering.
@@ -105,8 +127,13 @@ def release_attempt(text: str) -> str | None:
     """
     normalized = "".join(
         char
-        for char in unicodedata.normalize("NFKD", text).casefold()
+        for char in unicodedata.normalize("NFKD", unicodedata.normalize("NFKC", text).casefold())
         if unicodedata.category(char) not in {"Mn", "Cf"}
+    ).translate(_HOMOGLYPHS)
+    collapsed = re.sub(
+        r"(?<!\w)(?:[a-z]\s+){2,}[a-z](?!\w)",
+        lambda match: re.sub(r"\s+", "", match.group()),
+        normalized,
     )
     if _OVERRIDE_INSTRUCTIONS.search(normalized):
         return "Safety instructions cannot be overridden through agent messages or answers."
@@ -118,7 +145,11 @@ def release_attempt(text: str) -> str | None:
         or _RELEASE_KEYWORDS.search(normalized)
         or _RELEASE_CONSENT.search(normalized)
         or _RELEASE_SUBMISSION.search(normalized)
+        or _RELEASE_ACTIONS.search(normalized)
+        or _RELEASE_ACTIONS.search(collapsed)
     ):
         action = stop.value.replace("_", " ") if stop else "a binding action"
         return f"Human action required: {action} cannot be authorized through agent messages or answers."
+    if _BENIGN_RELEASE.fullmatch(normalized.strip()):
+        return None
     return None

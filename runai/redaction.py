@@ -54,3 +54,24 @@ def redact_secrets(value: Any) -> Any:
         return item
 
     return walk(value)
+
+
+_STREET_WORDS = (
+    r"rue|avenue|av|bd|boulevard|chemin|impasse|all[ée]e|allee|place|quai|route|cours|r[ée]sidence|"
+    r"street|st|road|rd|lane|drive|via|viale|piazza|calle|avenida|rua|travessa|stra(?:ss|ß)e|str|platz|weg"
+)
+_STREET_ADDRESS = re.compile(
+    rf"\b\d{{1,4}}\s*(?:bis|ter|[a-z])?\s*,?\s+(?:{_STREET_WORDS})\.?\s+[^\d,;\n]{{1,60}}",
+    re.IGNORECASE,
+)
+_TRAILING_STREET = re.compile(
+    r"\b\d{1,4}\s+(?:[A-Za-zÀ-ÿ'-]+\s+){1,3}(?:street|st|road|rd|avenue|ave|lane|drive|strasse|straße)\b\.?",
+    re.IGNORECASE,
+)
+_POSTCODE = re.compile(r"\b\d{5}\b")
+
+
+def mask_address(text: str) -> str:
+    """Remove street numbers with their street and postcodes before text leaves the server."""
+    text = _TRAILING_STREET.sub("[address]", _STREET_ADDRESS.sub("[address]", text))
+    return re.sub(r"[ \t]{2,}", " ", _POSTCODE.sub("", text)).strip()
