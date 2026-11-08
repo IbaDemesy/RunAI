@@ -864,6 +864,7 @@ class FramingEngine:
                 known = {n.value: str(x.value) for n, x in session.slots.items() if x.is_known and x.value is not None}
                 asked = await self.phraser.phrase(
                     session.turns, "Invite the runner to pick one of the proposed races shown below, or say none fits.", known)
+                ack = ""  # the phrased invitation already acknowledges the runner: no double "Parfait..."
             else:
                 wanted = decision.get("ask_slot") if decision else None
                 chosen = next((q for q in plain if wanted in q.slots), None) if wanted else None

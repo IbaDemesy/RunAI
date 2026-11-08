@@ -182,8 +182,14 @@ def _registration_task(race: Race, brief: TripBrief, profile: RunnerProfile) -> 
     return (
         f"Prepare the registration for {_untrusted_data('race name', brief.race_label)} on {platform}, "
         f"starting from the official link: {url}{distance_text}. "
-        f"Never use Klikego or a reseller; if the link is not on {platform}, stop "
-        "and report that the official link is missing. Continue as a guest with only "
+        "Never use Klikego or a reseller; "
+        + (
+            "the official site may send you to its own registration platform: follow that official link, "
+            "but never a reseller, a ticket marketplace or a forbidden site. "
+            if platform.startswith("the organiser's official site")
+            else f"if the link is not on {platform}, stop and report that the official link is missing. "
+        )
+        + "Continue as a guest with only "
         "the fictitious profile below, filling only the required fields; if guest "
         "registration is impossible, stop before creating an account. Ask no health "
         "question: the user provides the medical certificate or PPS. Never tick a "

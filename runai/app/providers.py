@@ -633,6 +633,29 @@ def registration_coverage(race: Race, official_url: str | None = None) -> StepCo
                 )
             ],
         )
+    if official_url and not forbidden_reason(official_url):
+        host = _host(official_url)
+        site = Platform(
+            "official-site", f"the organiser's official site ({host})", StepKind.registration,
+            (host.removeprefix("www."),),
+        )
+        return StepCoverage(
+            StepKind.registration,
+            Automation.automated,
+            site,
+            official_url,
+            limitations=[
+                Limitation(
+                    code="registration_from_official_site",
+                    message=(
+                        "No direct registration link was found: the agent starts from the official race site "
+                        "and follows its registration link; finish yourself if it cannot."
+                    ),
+                    step="registration",
+                    manual_url=official_url,
+                )
+            ],
+        )
     message = "Official registration link not found by search: check the organizer's site."
     return StepCoverage(
         StepKind.registration,

@@ -280,19 +280,22 @@ class RealBrowserAgents:
         if start_url and (reason := forbidden_reason(start_url)):
             raise RuntimeError(f"Start URL rejected: {reason}.")
         if kind is StepKind.registration:
-            if not race.registration_url:
+            start_url = str(race.registration_url) if race.registration_url else start_url
+            if not start_url:
                 raise RuntimeError("Official registration link missing: use the organiser's site.")
-            start_url = str(race.registration_url)
             if reason := forbidden_reason(start_url):
                 raise RuntimeError(f"Registration link rejected: {reason}.")
-            allowed_hosts = platform("njuko").hosts if _njuko_url(start_url) else ()
+            # Njuko stays pinned to Njuko. An organiser's site usually hands over to its own registration
+            # platform on another domain, so no host allowlist there: forbidden sites and payment pages
+            # still stop the agent at once (host drift guard).
+            allowed_hosts = platform("njuko").hosts if _njuko_url(start_url) else None
         else:
             platform_url = getattr(brief, f"{kind.value}_url", None) or start_url
             allowed_hosts = next(
                 (candidate.hosts for candidate in PLATFORMS if candidate.kind is kind and host_matches(platform_url, candidate.hosts)),
                 (),
             )
-        if start_url and (host := urlsplit(start_url).hostname):
+        if allowed_hosts is not None and start_url and (host := urlsplit(start_url).hostname):
             allowed_hosts = tuple(dict.fromkeys((*allowed_hosts, host.lower())))
         typed_enabled = os.getenv("RUNAI_H_TYPED_ANSWERS", "1") != "0"
         job = self.lifecycle.submit(

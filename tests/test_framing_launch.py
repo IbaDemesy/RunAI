@@ -102,8 +102,9 @@ def test_tokyo_out_of_europe_plan_comes_from_confirmed_summary():
     assert plan.brief.origin == "Lyon" and plan.brief.nights == 4
     assert plan.brief.budget_total_eur == 1800
     registration = plan.steps[StepKind.registration]
-    assert registration.automation is Automation.not_covered
-    assert registration.limitations[0].code == "registration_link_missing"
+    # no direct registration link: the agent starts from the official race site
+    assert registration.automation is Automation.automated
+    assert registration.limitations[0].code == "registration_from_official_site"
     assert str(registration.limitations[0].manual_url) == "https://example.org/tokyo-b"
     transport = plan.steps[StepKind.transport]
     assert transport.automation is Automation.automated and transport.platform == "rome2rio"
@@ -116,7 +117,7 @@ def test_tokyo_out_of_europe_plan_comes_from_confirmed_summary():
     assert "1800 EUR for everything" in task
     assert task.endswith(STOP_INSTRUCTIONS)
     assert not any(word in task for word in ("Milan", "Paris", "Corso", "42,195", "42.195"))
-    assert set(plan.automated_steps()) == {StepKind.accommodation, StepKind.transport}
+    assert set(plan.automated_steps()) == {StepKind.registration, StepKind.accommodation, StepKind.transport}
 
 
 def test_milan_train_with_njuko_automates_three_steps_without_v1_strings():
