@@ -1,6 +1,7 @@
 """FastAPI backend: mission API, SSE streams and handoff web page."""
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -14,7 +15,14 @@ import anyio
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.concurrency import run_in_threadpool
@@ -40,7 +48,13 @@ from runai.app.tasks import STEP_LABELS
 from runai.app.telemetry import router as telemetry_router
 from runai.config import get_settings
 from runai.contracts.common import DataMode
-from runai.contracts.framing import USER_ID_PATTERN
+from runai.contracts.framing import (
+    USER_ID_PATTERN,
+    FramingConfirm,
+    FramingCreate,
+    FramingError,
+    FramingReply,
+)
 from runai.contracts.mission import HumanAnswer, MissionStatusV2
 from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
@@ -138,6 +152,29 @@ def framing_phraser(providers: ProviderSet) -> Phraser:
 
 def app_version() -> str:
     return (os.getenv("RENDER_GIT_COMMIT") or "")[:7] or "dev"
+
+
+async def launch_demo(engine: FramingEngine, service: MissionService):
+    providers = service.providers
+    race = providers.search.trace.race if providers.mode is DataMode.replay else DEMO_RACES["milan"]
+    if race is None or race.race_date is None or race.distance_km is None:
+        raise HTTPException(409, "The demo race must include a date and distance.")
+    label = providers.search.trace.label if providers.mode is DataMode.replay else "milan"
+    key = "demo-replay-" + hashlib.sha256(label.encode()).hexdigest()
+    session = await engine.create(FramingCreate(text="Prepare a demo race trip."))
+    session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={
+        "race": race.name, "city": race.city, "race_date": race.race_date.isoformat(),
+        "distance_km": race.distance_km, "origin": "Paris", "budget": None,
+        "nights": 2, "transport_mode": "train",
+    }))
+    if not session.candidates:
+        raise HTTPException(409, "No recorded demo race is available.")
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, choice_id=session.candidates[0].id,
+    ))
+    return await engine.confirm(session.id, FramingConfirm(
+        revision=session.revision, idempotency_key=key,
+    ), service.confirm)
 
 
 def create_app(service: MissionService | None = None) -> FastAPI:
@@ -244,6 +281,49 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     def handle(error: MissionError) -> HTTPException:
         return HTTPException(
             status_code=404 if isinstance(error, MissionNotFound) else 409, detail=redact_secrets(str(error))
+        )
+
+    demo_lock = asyncio.Lock()
+    demo_mission_id: str | None = None
+
+    def require_demo():
+        if selected.providers.mode not in (DataMode.replay, DataMode.demo):
+            raise HTTPException(404, "Demo replay is only available in replay or demo mode.")
+
+    @app.get("/demo/replay")
+    async def demo_replay(request: Request):
+        nonlocal demo_mission_id
+        require_demo()
+        async with demo_lock:
+            if demo_mission_id is None:
+                try:
+                    snapshot = await launch_demo(engine, selected)
+                except MissionError as error:
+                    raise handle(error) from None
+                except FramingError:
+                    raise HTTPException(409, "The demo framing could not be confirmed.") from None
+                demo_mission_id = snapshot.mission_id
+        url = f"/demo/missions/{demo_mission_id}"
+        if "application/json" in request.headers.get("accept", "").lower():
+            return {"mission_id": demo_mission_id, "url": url}
+        return RedirectResponse(url, status_code=303)
+
+    @app.get("/demo/missions/{mission_id}", response_class=HTMLResponse)
+    async def demo_mission(mission_id: str):
+        require_demo()
+        try:
+            selected.get(mission_id)
+        except MissionError:
+            raise HTTPException(404, "Unknown demo mission.") from None
+        encoded = json.dumps(mission_id).replace("<", "\\u003c")
+        return HTMLResponse(
+            '<!doctype html><html lang="en"><meta charset="utf-8"><title>Demo replay</title>'
+            '<p>Opening demo mission...</p><script>'
+            f'const id = {encoded};'
+            'sessionStorage.removeItem("runai:framing");'
+            'sessionStorage.setItem("runai:mission", id);'
+            'location.replace("/?mission=" + encodeURIComponent(id));'
+            '</script></html>'
         )
 
     @app.get("/", include_in_schema=False)
