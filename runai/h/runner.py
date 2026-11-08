@@ -155,6 +155,8 @@ def build_step_result(
     result_data = {"h_status": h_status, "answer": answer, **(data or {}), "outcome": outcome, "error_code": error_code}
     typed_answer = answer if isinstance(answer, dict) else {}
     screen = typed_answer.get("stop_screen")
+    if not isinstance(screen, str):
+        screen = None
     price = typed_answer.get("total_price")
     if not isinstance(price, int | float) or isinstance(price, bool):
         price = None
@@ -585,7 +587,10 @@ class HRun:
             raise
         except Exception as exc:  # noqa: BLE001 - toute erreur de suivi devient un échec tracé
             await self._abandon()
-            result = self._result(error=f"{type(exc).__name__}: {exc}")
+            try:
+                result = self._result(error=f"{type(exc).__name__}: {exc}")
+            except Exception as inner:  # noqa: BLE001 - untrusted H output must not crash the wait
+                result = StepResult(kind=self.kind, error=f"{type(inner).__name__}: {inner}")
             result.status = StepStatus.failed
         if self.status in TERMINAL_STATUSES:
             self._release()

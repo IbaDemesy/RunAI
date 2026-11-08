@@ -1023,3 +1023,11 @@ def test_forwarded_metrics_line_keeps_message_and_fields():
     assert event.type == "metrics"
     assert event.message == "step 2/5 · $0.010"
     assert event.data["steps"] == 2 and event.data["total_cost"] == 0.01
+
+
+@pytest.mark.parametrize("screen", [["payment"], {"screen": "payment"}, 3])
+def test_m5_unhashable_stop_screen_does_not_raise(screen):
+    result = build_step_result(
+        StepKind.registration, "completed", answer={"stop_screen": screen, "summary": "done"},
+    )
+    assert result.status in (StepStatus.completed, StepStatus.stopped_before_commitment)
