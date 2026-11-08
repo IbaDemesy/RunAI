@@ -88,6 +88,14 @@ _ET_COMPOUNDS = {(20, 1), (30, 1), (40, 1), (50, 1), (60, 1), (60, 11)}
 def _normalize(text: str) -> str:
     t = text.lower().replace("’", "'")
     t = re.sub(r"(\d) (\d{3})\b", r"\1\2", t)
+    tens = "vingt|trente|quarante|cinquante|soixante|twenty|thirty|forty|fifty|sixty"
+    units = "un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|one|two|three|four|five|seven|eight|nine"
+    t = re.sub(  # "vingt-deux", "twenty two": the only place where two words make one number
+        rf"\b({tens})[- ]({units})\b",
+        lambda m: str(_NUMBER_WORDS[m[1]] + _NUMBER_WORDS[m[2]]),
+        t,
+    )
+    t = re.sub(r"\b(?:un|une)\s+(?=" + r"\d+(?:[.,]\d+)?\s*(?:km|k|kilom\w*|miles?)\b)", "", t)
     for word, value in sorted(_NUMBER_WORDS.items(), key=lambda kv: -len(kv[0])):
         t = re.sub(rf"\b{word}\b", str(value), t)
     t = re.sub(
@@ -96,7 +104,6 @@ def _normalize(text: str) -> str:
         t,
     )
     t = re.sub(r"\bentre (\d+) et (\d+)\b", lambda m: f"{(int(m[1]) + int(m[2])) / 2:g}", t)
-    t = re.sub(r"\b(\d+)[- ](\d)\b", lambda m: str(int(m[1]) + int(m[2])) if int(m[1]) % 10 == 0 else m[0], t)
     t = re.sub(r"\b(\d+) et demi(e)?\b", lambda m: f"{m[1]}.5", t)
     return re.sub(r"\b(?:kilomètres|kilometres|kilometers|bornes)\b", "km", t)
 
@@ -192,7 +199,11 @@ def extract_rule_based(transcript: str) -> CoachProfile:
     )
     if m and 800 <= _num(m[1]) <= 5000:
         data["cooper_m"] = int(_num(m[1]))
-    m = re.search(rf"(?:j'ai|âgée? de|agee? de)\s*{_NUM}\s*ans\b", t) or re.search(rf"\b(?:i am|i'm|aged)\s*{_NUM}\b", t)
+    m = re.search(rf"(?:j'ai|âgée? de|agee? de)\s*{_NUM}\s*ans\b", t) or re.search(
+        rf"\b(?:i am|i'm|aged)\s*{_NUM}\b(?!\s*(?:weeks?|months?|days?|km|k\b|miles?|min|minutes?|hours?|h\b|times|kg|m\b|%|:)"
+        rf"|\s+years?\s+(?:into|of|in)\b|\s*(?:semaines?|mois|jours?)\b)",
+        t,
+    )
     if m and 8 <= _num(m[1]) <= 100:
         data["age"] = int(_num(m[1]))
     m = re.search(rf"(?:depuis|ça fait|ca fait)\s*{_NUM}\s*(mois|ans?)\s*(?:que je cours|de course)?", t)
@@ -202,16 +213,25 @@ def extract_rule_based(transcript: str) -> CoachProfile:
     if m:
         data["running_since_months"] = int(_num(m[1]) * (12 if m[2].startswith("year") else 1))
 
+    def wanted(pattern: str) -> bool:
+        """True when a match is not negated earlier in its own sentence ("I do not run trail")."""
+        for match in re.finditer(pattern, t):
+            start = max(t.rfind(mark, 0, match.start()) for mark in ".!?;\n") + 1
+            before = t[max(start, match.start() - 40) : match.start()]
+            if not re.search(r"\b(?:not|never|no|pas|jamais|sans|ni|don't|dont|doesn't|won't|aucun\w*)\b|n't\b", before):
+                return True
+        return False
+
     goals = []
-    if re.search(r"premier 10|1er 10|premier dix|first 10\s*k", t):
+    if wanted(r"premier 10|1er 10|premier dix|first 10\s*k"):
         goals.append(Goal.premier_10k)
-    if re.search(r"chrono|record|battre|sous les|\b(?:pr|pb)\b", t) and "pas de chrono" not in t:
+    if wanted(r"chrono|record|battre|sous les|\b(?:pr|pb)\b") and "pas de chrono" not in t:
         goals.append(Goal.chrono)
-    if "trail" in t:
+    if wanted("trail"):
         goals.append(Goal.trail)
-    if re.search(r"voyage|étranger|etranger|week-end|abroad|travel", t):
+    if wanted(r"voyage|étranger|etranger|week-end|abroad|travel"):
         goals.append(Goal.voyage)
-    if re.search(r"\bfinir\b|terminer|\bfinish\b", t):
+    if wanted(r"\bfinir\b|terminer|\bfinish\b"):
         goals.append(Goal.finir)
     data["goals"] = goals
     return CoachProfile(**data)

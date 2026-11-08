@@ -43,6 +43,11 @@ class FramingStore:
                 with contextlib.suppress(OSError):
                     temporary.unlink(missing_ok=True)
 
+    def delete(self, framing_id: str) -> None:
+        if _FRAMING_ID.fullmatch(framing_id):
+            with contextlib.suppress(OSError):
+                (self.directory / f"{framing_id}.json").unlink(missing_ok=True)
+
     def load(self) -> list[FramingSession]:
         """Return the conversations still worth restoring; expired or unreadable files are dropped."""
         sessions = []

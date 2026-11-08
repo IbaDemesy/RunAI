@@ -6,7 +6,7 @@
   "use strict";
   function replyPayload(framing, text, options = {}) {
     const payload = { revision: framing.revision, channel: options.channel || "text", text };
-    for (const key of ["question_id", "choice_id", "corrections"]) {
+    for (const key of ["question_id", "choice_id", "corrections", "client_message_id"]) {
       if (options[key] !== undefined) payload[key] = options[key];
     }
     return payload;
@@ -17,6 +17,12 @@
     if (!key) { key = generate(); storage.setItem(name, key); }
     return key;
   }
+  // Server refusals (409) carry a user-safe explanation; anything else stays generic (never raw validation dumps).
+  function errorMessage(status, detail) {
+    if ([400, 409].includes(status) && typeof detail === "string" && detail.trim() && detail.length <= 300 && !/^[\[{]/.test(detail.trim())) return detail.trim();
+    return "The request failed (" + status + "). Try again.";
+  }
+  function isStale(detail) { return !detail || /^Stale (?:revision|or unknown question)/i.test(detail); }
   function framingState(framing) { return framing.mission_id ? "launched" : framing.status; }
   // Search -> two explicit steps (pick the race, confirm the trip) -> agents live -> the trip proposal.
   const STAGES = ["Search", "Pick your race", "Confirm your trip", "Agents at work", "Your trip"];
@@ -37,5 +43,5 @@
         : (budget.over_cap ? "Over cap" : "Within cap") + " : " + money(budget.cap),
     };
   }
-  return { replyPayload, idempotencyKey, framingState, budgetText, STAGES, journeyStage };
+  return { replyPayload, idempotencyKey, errorMessage, isStale, framingState, budgetText, STAGES, journeyStage };
 });

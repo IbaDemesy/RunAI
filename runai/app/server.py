@@ -232,6 +232,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         search=candidate_search(selected.providers), mode=selected.providers.mode,
         phraser=selected.phraser,
         store=FramingStore(get_settings().traces_dir / "framings"),
+        mission_lookup=lambda mission_id: app.state.service.snapshot(mission_id),
     )
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))

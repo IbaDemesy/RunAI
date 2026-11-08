@@ -11,11 +11,15 @@
       const response = await fetch(path, body === undefined ? {} : {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
-      if (!response.ok) { const error = new Error("The request failed (" + response.status + "). Try again."); error.status = response.status; throw error; }
+      if (!response.ok) {
+        let detail = "";
+        try { const body = await response.json(); if (typeof body?.detail === "string") detail = body.detail; } catch (_) { /* no readable body */ }
+        const error = new Error(core.errorMessage(response.status, detail)); error.status = response.status; error.detail = detail; throw error;
+      }
       return response.json();
     },
   };
-  let framing, mission, events, view, plan, busy = false, page = "progress";
+  let framing, mission, events, view, plan, lastSend, busy = false, page = "progress";
   const drafts = new Map();
   let journeyScripts, pendingFocus, voiceFraming, voiceMission, voiceAborted = false, voiceState = "idle";
   function loadJourneyScripts() {
@@ -67,6 +71,7 @@
     document.getElementById("mode").className = "badge" + (value === "live" ? " real" : "");
     document.getElementById("mode").textContent = ({ live: "Live · live", demo: "Demo · demo", replay: "Replay · replay" })[value] || "Mode not verified";
   }
+  function messageId() { return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "m-" + Date.now().toString(36) + Math.random().toString(36).slice(2); }
   function key(id, revision) { return core.idempotencyKey(storage, id, revision, () => crypto.randomUUID()); }
   function persist() {
     if (framing) storage.setItem("runai:framing", framing.id);
@@ -138,7 +143,11 @@
     try { await action(); accepted = true; persist(); announce("Request accepted.", true); }
     catch (error) {
       if (error.status === 409 && reload) {
-        try { await reload(); announce("Conversation updated.", true); }
+        try {
+          await reload();
+          if (core.isStale(error.detail)) announce("Conversation updated.", true);
+          else { announce(error.message); feedback.className = "error"; }
+        }
         catch (_) { announce("Unable to refresh. Reload the page to resume without starting again."); }
       } else { announce(error.message || "Connection unavailable. Try again."); feedback.className = "error"; }
     } finally { busy = false; render(); }
@@ -154,8 +163,12 @@
       await reloadFraming(); render();
       throw new Error("Voice revision expired. Check the updated request before answering.");
     }
+    // The same text re-sent at the same revision (retry after a lost response) reuses its id: the server applies it once.
+    const same = lastSend && lastSend.framing === framing.id && lastSend.revision === framing.revision && lastSend.text === text;
+    lastSend = same ? lastSend : { framing: framing.id, revision: framing.revision, text, id: messageId() };
     return mutate(async () => {
-      framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/replies", core.replyPayload(framing, text, options));
+      framing = await api.request("/api/framings/" + encodeURIComponent(framing.id) + "/replies",
+        core.replyPayload(framing, text, { ...options, client_message_id: lastSend.id }));
       drafts.clear();
     }, reloadFraming);
   }
@@ -288,7 +301,8 @@
     core.STAGES.forEach((title, index) => {
       const item = el("li", null, index < current ? "done" : index === current ? "current" : "todo");
       if (index === current) item.setAttribute("aria-current", "step");
-      item.append(el("span", String(index + 1), "n"), el("span", title)); list.append(item);
+      item.append(el("span", String(index + 1), "n"), el("span", title));
+      item.append(el("span", index < current ? " (done)" : index === current ? " (current step)" : " (upcoming)", "sr-only")); list.append(item);
     });
     nav.append(list); return nav;
   }
@@ -339,6 +353,7 @@
       const row = el("div", null, "slot-row");
       row.append(el("p", label(name) + " : " + (known ? (slot.value == null ? "Not applicable" : typeof slot.value === "object" ? JSON.stringify(slot.value) : typeof slot.value === "number" ? String(slot.value) : label(slot.value)) : "unknown")));
       row.append(button("Correct · " + label(name), () => {
+        if (row.querySelector("form")) return;
         const editor = el("div"); row.append(editor);
         form(editor, "New value: " + label(name), (text) => submitReply(text, { corrections: { [name]: text } }), "slot:" + name);
         editor.querySelector("input").focus();
@@ -580,7 +595,13 @@
         catch (_) { mode(null); announce("Mode unavailable. Check your connection before preparing your request."); }
       }
       const missionId = storage.getItem("runai:mission"), framingId = storage.getItem("runai:framing");
-      if (framingId) await reloadStoredFraming(framingId);
+      if (framingId) {
+        try { await reloadStoredFraming(framingId); }
+        catch (error) {
+          if (error.status === 404) { storage.removeItem("runai:framing"); framing = null; announce("The previous conversation expired. Start a new request.", true); }
+          else announce("Unable to resume the conversation: " + error.message);
+        }
+      }
       if (!mission && missionId) await loadMission(missionId);
       render();
     } catch (error) { announce("Unable to resume: " + error.message + " Reload to try again without starting again."); }

@@ -2,6 +2,7 @@ import asyncio
 import math
 import os
 import re
+import time
 import unicodedata
 from collections.abc import Awaitable, Callable
 from datetime import date, timedelta
@@ -34,7 +35,7 @@ from runai.contracts.framing import (
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.holo import TRANSPORTS, Phraser, _mask_address, clean_extraction
 from runai.framing.interpret import extract_slots, normalize_date_window
-from runai.framing.store import FramingStore
+from runai.framing.store import RETENTION_SECONDS, FramingStore
 from runai.journey import public_origin
 from runai.models import Race
 from runai.redaction import mask_address, redact_secrets
@@ -74,10 +75,32 @@ LLM_SLOTS = {
 }
 
 
+_CONTROL = re.compile("[" + chr(0) + "-" + chr(8) + chr(11) + "-" + chr(31) + chr(127) + "-" + chr(159)
+                      + chr(0x200B) + "-" + chr(0x200F) + chr(0x2028) + "-" + chr(0x202E) + chr(0x2066) + "-" + chr(0x2069) + "]")
+
+
+_ANSI = re.compile(chr(27) + r"\[[0-9;?]*[A-Za-z]")
+
+
+def _clean_text(value):
+    """Strip control, zero-width and bidi override characters from what the runner typed."""
+    if not isinstance(value, str):
+        return value
+    return _CONTROL.sub(" ", _ANSI.sub("", value)).strip() if isinstance(value, str) else value
+
+
 def _norm(text: str) -> str:
     """Case, accent and whitespace-insensitive form used to check quoted evidence."""
     folded = unicodedata.normalize("NFKD", text).casefold()
     return " ".join("".join(c for c in folded if not unicodedata.combining(c)).split())
+
+
+def _evidence_in(evidence: str, haystack: str) -> bool:
+    """The quote must be a whole-word extract of the message, not a one-letter substring."""
+    quote = _norm(evidence)
+    if len(quote) < 2 and not quote.isdigit():
+        return False
+    return re.search(r"(?<!\w)" + re.escape(quote) + r"(?!\w)", haystack) is not None
 
 
 def _sanitize_ack(value: object, *, allow_question: bool) -> str:
@@ -101,6 +124,7 @@ class FramingEngine:
         mode: DataMode = DataMode.live,
         phraser: Phraser | None = None,
         store: FramingStore | None = None,
+        mission_lookup: Callable[[str], MissionSnapshot | None] | None = None,
     ):
         self.search = search
         self.mode = mode
@@ -111,18 +135,64 @@ class FramingEngine:
         self._manual: set[str] = set()
         self._search_keys: dict[str, tuple] = {}
         self._origin_misses: dict[str, int] = {}
+        self._seen: dict[str, list[str]] = {}
+        self._touched: dict[str, float] = {}
         self.store = store
+        self.retention_s = store.retention_s if store else RETENTION_SECONDS
+        self._mission_lookup = mission_lookup
         for restored in store.load() if store else []:
-            self.sessions[restored.id] = restored
-            self._locks[restored.id] = asyncio.Lock()
+            self._restore(restored)
+
+    def _restore(self, session: FramingSession) -> None:
+        """Rebuild the in-memory bookkeeping that is not part of the persisted session."""
+        self.sessions[session.id] = session
+        self._locks[session.id] = asyncio.Lock()
+        self._touched[session.id] = time.time()
+        if session.status in (FramingStatus.cancelled, FramingStatus.launched):
+            return
+        if not session.selected_candidate_id and any(x.code == "manual_event" for x in session.limitations):
+            self._manual.add(session.id)
+        if session.candidates or session.selected_candidate_id or session.search_stats:
+            # the search already ran for these slots: do not repeat (and overwrite) it on the next reply
+            self._search_keys[session.id] = self._search_key(session)
+
+    def _forget(self, framing_id: str, *, session: bool = False) -> None:
+        """Drop per-conversation bookkeeping (and the conversation itself once expired)."""
+        self._manual.discard(framing_id)
+        self._search_keys.pop(framing_id, None)
+        self._origin_misses.pop(framing_id, None)
+        self._seen.pop(framing_id, None)
+        if session:
+            self.sessions.pop(framing_id, None)
+            self._locks.pop(framing_id, None)
+            self._touched.pop(framing_id, None)
+            if self.store:
+                self.store.delete(framing_id)
+
+    def purge_expired(self, now: float | None = None) -> int:
+        """Forget conversations idle for longer than the retention; never one being handled."""
+        now = time.time() if now is None else now
+        expired = [
+            framing_id for framing_id, touched in self._touched.items()
+            if now - touched > self.retention_s
+            and (lock := self._locks.get(framing_id)) is not None and not lock.locked()
+        ]
+        for framing_id in expired:
+            session = self.sessions.get(framing_id)
+            if session and session.mission_id:
+                self._missions.pop(session.mission_id, None)
+            self._forget(framing_id, session=True)
+        return len(expired)
 
     def get(self, framing_id: str) -> FramingSession:
         return self.sessions[framing_id].model_copy(deep=True)
 
     async def create(self, request: FramingCreate) -> FramingSession:
+        self.purge_expired()
         session = FramingSession(id=uuid4().hex, mode=self.mode, user_id=request.user_id)
         self.sessions[session.id] = session
         self._locks[session.id] = asyncio.Lock()
+        self._touched[session.id] = time.time()
         return await self.reply(
             session.id,
             FramingReply(revision=0, text=request.text, channel=request.channel),
@@ -170,6 +240,14 @@ class FramingEngine:
     async def reply(self, framing_id: str, reply: FramingReply) -> FramingSession:
         async with self._locks[framing_id]:
             session = self.get(framing_id)
+            reply = reply.model_copy(update={
+                "text": _clean_text(reply.text),
+                "corrections": {name: _clean_text(value) for name, value in reply.corrections.items()},
+            })
+            if reply.client_message_id and reply.client_message_id in self._seen.get(framing_id, ()):
+                return session  # duplicate delivery of a message already processed
+            if self._stale_but_compatible(session, reply):
+                reply = reply.model_copy(update={"revision": session.revision})
             check_reply_revision(session, reply)
             for turn in session.turns:
                 turn.text = _mask_address(turn.text)
@@ -494,6 +572,8 @@ class FramingEngine:
             else:
                 await self._phrase_next_question(session)
             self.sessions[framing_id] = session
+            self._touched[framing_id] = time.time()
+            self._mark_seen(framing_id, reply)
             self._persist(session)
             return self.get(framing_id)
 
@@ -531,36 +611,75 @@ class FramingEngine:
             if name not in LLM_SLOTS:
                 continue
             evidence = update.get("evidence")
-            if not isinstance(evidence, str) or not _norm(evidence) or _norm(evidence) not in haystack:
-                continue  # unquoted or invented: reject
+            if not isinstance(evidence, str) or not _evidence_in(evidence, haystack):
+                continue  # unquoted, too short or invented: reject
+            current = session.slots[name]
+            known_value = current.is_known and current.value is not None
+            # a known slot is only overwritten by an explicit correction or by the answer to its own question
+            may_replace = bool(update.get("replaces_previous")) and (
+                intent == "correction" or (pending is not None and name in pending.slots)
+            )
             value = update.get("value")
             if value is None:
-                if name in (SlotName.budget, SlotName.date_window):
+                if name in (SlotName.budget, SlotName.date_window) and (not known_value or may_replace):
                     values[name] = None
                 continue
+            if name in (SlotName.city, SlotName.origin, SlotName.race) and not isinstance(value, str):
+                continue
             if name == SlotName.origin:
-                if not isinstance(value, str):
-                    continue
                 value = _mask_address(public_origin(value))
                 if value == public_origin("") or not _valid_place(value):
                     origin_rejected = True
                     continue
-            elif name in (SlotName.city, SlotName.race):
-                if not isinstance(value, str) or not _valid_place(value, 200 if name == SlotName.race else 80):
+            if name in (SlotName.city, SlotName.origin, SlotName.race) and _norm(value) not in haystack:
+                continue  # a place or event name must be written in the message itself
+            if name in (SlotName.city, SlotName.race):
+                if not _valid_place(value, 200 if name == SlotName.race else 80):
                     continue
                 value = value.strip()
             else:
                 value = clean_extraction({name.value: value}).get(name.value)
             if value is None:
                 continue
-            current = session.slots[name]
-            if current.is_known and current.value is not None and str(current.value) == str(value):
+            try:
+                self._validate({name: value})
+            except FramingError:
                 continue
-            if current.is_known and current.value is not None and not update.get("replaces_previous"):
+            if known_value and str(current.value) == str(value):
+                continue
+            if known_value and not may_replace:
                 continue
             values[name] = value
         return {"intent": intent, "values": values, "origin_rejected": origin_rejected,
                 "message": _sanitize_ack(raw.get("message"), allow_question=intent == "unclear")}
+
+    @staticmethod
+    def _search_key(session: FramingSession, place: str | None = None) -> tuple:
+        if place is None:
+            place = location_hint(" / ".join(t.text for t in session.turns if t.role == "user" and t.text))
+        date_window = session.slots[SlotName.date_window]
+        return (
+            session.slots[SlotName.city].value,
+            session.slots[SlotName.race].value,
+            session.slots[SlotName.distance_km].value,
+            date_window.value,
+            date_window.status,
+            session.slots[SlotName.race_date].value,
+            session.slots[SlotName.edition].value,
+            session.slots[SlotName.preferences].value,
+            place,
+        )
+
+    @staticmethod
+    def _stale_but_compatible(session: FramingSession, reply: FramingReply) -> bool:
+        """An older-revision reply is replayed on the current state when nothing it targets changed."""
+        if not 0 <= reply.revision < session.revision or reply.choice_id:
+            return False
+        if reply.question_id:
+            return any(q.id == reply.question_id for q in session.open_questions)
+        return bool(reply.corrections) and not reply.text and all(
+            session.slots[name].revision <= reply.revision for name in reply.corrections
+        )
 
     @staticmethod
     def _drop_candidate_limitations(session: FramingSession) -> None:
@@ -603,7 +722,9 @@ class FramingEngine:
 
     def _clarify(self, session: FramingSession, reply: FramingReply, message: str) -> FramingSession:
         session.revision += 1
-        session.summary = None
+        if session.summary is not None:
+            # nothing was learned: the summary is still true, so keep it valid for the new revision
+            session.summary.revision = session.revision
         session.confirm_key = session.confirmed_revision = None
         for question in session.open_questions:
             question.revision = session.revision
@@ -612,8 +733,16 @@ class FramingEngine:
             FramingTurn(role="assistant", text=message, revision=session.revision),
         ])
         self.sessions[session.id] = session
+        self._touched[session.id] = time.time()
+        self._mark_seen(session.id, reply)
         self._persist(session)
         return self.get(session.id)
+
+    def _mark_seen(self, framing_id: str, reply: FramingReply) -> None:
+        if reply.client_message_id:
+            seen = self._seen.setdefault(framing_id, [])
+            seen.append(reply.client_message_id)
+            del seen[:-20]
 
     async def _holo_fill(
         self, session: FramingSession, text: str, values: dict[SlotName, object]
@@ -742,17 +871,7 @@ class FramingEngine:
                 return
             if search:
                 date_window = session.slots[SlotName.date_window]
-                search_key = (
-                    session.slots[SlotName.city].value,
-                    session.slots[SlotName.race].value,
-                    session.slots[SlotName.distance_km].value,
-                    date_window.value,
-                    date_window.status,
-                    session.slots[SlotName.race_date].value,
-                    session.slots[SlotName.edition].value,
-                    session.slots[SlotName.preferences].value,
-                    place,
-                )
+                search_key = self._search_key(session, place)
                 if self._search_keys.get(session.id) != search_key:
                     self._search_keys[session.id] = search_key
                     session.limitations = [
@@ -933,7 +1052,11 @@ class FramingEngine:
             mission_id = assert_launchable(session, request)
             if mission_id:
                 if mission_id not in self._missions:
-                    raise FramingError("Mission already launched: open it from your trip page")
+                    # after a restart the in-memory replay cache is empty: ask the mission service
+                    found = self._lookup_mission(mission_id)
+                    if found is None:
+                        raise FramingError("Mission already launched: open it from your trip page")
+                    self._missions[mission_id] = found
                 return self._missions[mission_id].model_copy(deep=True)
             session.status = FramingStatus.confirmed
             session.confirmed_revision = session.revision
@@ -947,8 +1070,18 @@ class FramingEngine:
             session.status = FramingStatus.launched
             session.mission_id = mission.mission_id
             self._missions[mission.mission_id] = mission.model_copy(deep=True)
+            self._forget(framing_id)
+            self._touched[framing_id] = time.time()
             self._persist(session)
             return mission
+
+    def _lookup_mission(self, mission_id: str) -> MissionSnapshot | None:
+        if self._mission_lookup is None:
+            return None
+        try:
+            return self._mission_lookup(mission_id)
+        except Exception:  # noqa: BLE001 - unknown mission: fall back to the explicit refusal
+            return None
 
     async def cancel(self, framing_id: str) -> FramingSession:
         async with self._locks[framing_id]:
@@ -958,5 +1091,8 @@ class FramingEngine:
             session.status = FramingStatus.cancelled
             session.summary = None
             session.open_questions = []
+            session.candidates = []
+            self._forget(framing_id)
+            self._touched[framing_id] = time.time()
             self._persist(session)
             return self.get(framing_id)

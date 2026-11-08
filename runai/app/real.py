@@ -78,6 +78,8 @@ LOOKUP_OFFICIAL_INFO_DESCRIPTION = (
     "before asking the user. Returns a short cited answer from the race's official pages only."
 )
 _NO_OFFICIAL_SITE = "No official race website is known; ask the user with ask_user instead."
+MAX_OFFICIAL_LOOKUPS = 5  # paid Linkup calls per agent run
+_LOOKUP_LIMIT = "Official lookup limit reached for this run; ask the user with ask_user instead."
 
 
 def lookup_official_info_tool(
@@ -85,11 +87,21 @@ def lookup_official_info_tool(
     on_event: EventSink,
     client: Callable[[], SearchClient] = default_client,
 ) -> Tool:
+    calls = 0
+    answers: dict[str, str] = {}
+
     async def lookup_official_info(question: str) -> str:
         """Look up race rules on the official site before asking the user."""
+        nonlocal calls
         domains = official_domains(race)
         if not domains:
             return _NO_OFFICIAL_SITE
+        key = " ".join(question.casefold().split())
+        if key in answers:
+            return answers[key]
+        if calls >= MAX_OFFICIAL_LOOKUPS:
+            return _LOOKUP_LIMIT
+        calls += 1
         try:
             answer = await asyncio.to_thread(
                 answer_official, question, domains, client(), race=race
@@ -106,7 +118,8 @@ def lookup_official_info_tool(
                 data=answer.model_dump(mode="json"),
             )
         )
-        return format_for_agent(answer)
+        answers[key] = format_for_agent(answer)
+        return answers[key]
 
     return tool(
         lookup_official_info,

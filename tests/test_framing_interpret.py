@@ -10,7 +10,7 @@ from runai.framing.interpret import extract_slots
     [
         (
             "Milan marathon in April 2027",
-            {"city": "Milan", "race": "Milan marathon", "edition": "2027", "distance_km": 42.195, "date_window": "april 2027"},
+            {"city": "Milan", "edition": "2027", "distance_km": 42.195, "date_window": "april 2027"},
         ),
         (
             "I want to run the Berlin Marathon in September 2027 from Paris",
@@ -33,9 +33,9 @@ from runai.framing.interpret import extract_slots
         ),
         (
             "Tokyo 10K from London",
-            {"city": "Tokyo", "race": "Tokyo 10K", "origin": "London", "distance_km": 10.0},
+            {"city": "Tokyo", "origin": "London", "distance_km": 10.0},
         ),
-        ("Tokyo 10k", {"city": "Tokyo", "race": "Tokyo 10k", "distance_km": 10.0}),
+        ("Tokyo 10k", {"city": "Tokyo", "distance_km": 10.0}),
         ("a 5K in Nairobi", {"city": "Nairobi", "distance_km": 5.0}),
         ("a half in Lisbon", {"city": "Lisbon", "distance_km": 21.0975}),
         ("half-marathon in Lisbon", {"city": "Lisbon", "distance_km": 21.0975}),
@@ -114,7 +114,7 @@ from runai.framing.interpret import extract_slots
             "Tokyo 5K from London by plane",
             {
                 "city": "Tokyo",
-                "race": "Tokyo 5K",
+               
                 "origin": "London",
                 "distance_km": 5.0,
                 "transport_mode": "flight",

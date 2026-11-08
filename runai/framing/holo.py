@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import time
 from calendar import month_name
 from collections.abc import Mapping, Sequence
 from datetime import date
@@ -18,6 +19,7 @@ from runai.telemetry import timed
 H_MODELS_URL = "https://api.hcompany.ai/v1/chat/completions"
 MAX_REPLY_CHARS = 420
 HISTORY_TURNS = 30
+FAILURE_COOLDOWN_S = 20.0
 
 SYSTEM_PROMPT = """You are Holo, RunAI's friendly assistant helping a runner plan race registration, hotels and transport.
 You receive optional conversation history, known context and a question to ask.
@@ -153,9 +155,21 @@ def _mask_address(text: str) -> str:
     return re.sub(r"\b\d{5}(?:-\d{4})?\b", "[redacted postcode]", text)
 
 
+_DELIMITER = re.compile(r"<\s*/?\s*user_message\s*>", re.IGNORECASE)
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f\u200b-\u200f\u2028-\u202e\u2066-\u2069]")
+
+
+def prompt_text(text: str) -> str:
+    """Make user text safe to embed in a prompt: no fake delimiters, no control characters."""
+    text = _CONTROL.sub(" ", text)
+    while _DELIMITER.search(text):
+        text = _DELIMITER.sub(" ", text)
+    return text
+
+
 def _history(turns: Sequence[FramingTurn]) -> str:
     return "\n".join(
-        ("Runner: " if turn.role == "user" else "Holo: ") + turn.text
+        ("Runner: " if turn.role == "user" else "Holo: ") + prompt_text(turn.text).replace("\n", " ")
         for turn in list(turns)[-HISTORY_TURNS:]
     ) or "(start of conversation)"
 
@@ -195,8 +209,11 @@ class HoloPhraser:
         self._timeout_s = timeout_s
         self._fallback = fallback or TemplatePhraser()
         self._transport = transport
+        self._down_until = 0.0
 
     async def _complete(self, messages: list[dict[str, str]], max_tokens: int, operation: str = "chat.phrase") -> str:
+        if time.monotonic() < self._down_until:
+            return ""  # recently failing: do not stack timeouts within one turn
         messages = [
             {**message, "content": _mask_address(message["content"])}
             if message["role"] != "system" else message
@@ -226,6 +243,7 @@ class HoloPhraser:
                                       if key in {"prompt_tokens", "completion_tokens"}})
                 content = data["choices"][0]["message"]["content"]
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+            self._down_until = time.monotonic() + FAILURE_COOLDOWN_S
             return ""
         return content if isinstance(content, str) else ""
 
@@ -238,7 +256,7 @@ class HoloPhraser:
             {"role": "user", "content": (
                 f"Today: {date.today().isoformat()}\n"
                 f"Recent conversation:\n{_history(turns)}\n\nKnown context:\n{context}\n\n"
-                f"New message to analyze: {text}"
+                f"New message to analyze: {prompt_text(text)}"
             )},
         ], 200, operation="chat.extract")
         match = re.search(r"\{.*\}", content, re.DOTALL)
@@ -267,7 +285,7 @@ class HoloPhraser:
                 f"STATE: {context}\n"
                 f"PENDING: {pending or '(none)'}\n"
                 f"RECENT:\n{_history(turns)}\n\n"
-                f"<user_message>{text}</user_message>"
+                f"<user_message>{prompt_text(text)}</user_message>"
             )},
         ], 420, operation="chat.decide")
         match = re.search(r"\{.*\}", content, re.DOTALL)
