@@ -9,7 +9,7 @@ from runai.safety import detect_stop_point
 
 
 class HumanQuestionError(Exception):
-    """Réponse non corrélée, périmée ou non autorisée."""
+    """Uncorrelated, expired or unauthorized answer."""
 
 
 class HumanQuestionNotFound(HumanQuestionError):
@@ -34,9 +34,9 @@ class HumanQuestionRegistry:
         ttl: float = 300,
     ) -> HumanQuestion:
         if question.id in self.questions:
-            raise HumanQuestionError("Identifiant de question déjà utilisé")
+            raise HumanQuestionError("Question ID already used")
         if question.answer is not None:
-            raise HumanQuestionError("Question déjà répondue")
+            raise HumanQuestionError("Question already answered")
         wrapped = HumanQuestion.from_agent_question(
             question,
             mission_id,
@@ -64,7 +64,7 @@ class HumanQuestionRegistry:
         self.get(question_id)
         question = self.questions[question_id]
         if question.mission_id != mission_id or question.revision != answer.revision:
-            raise HumanQuestionError("Mission ou révision incorrecte")
+            raise HumanQuestionError("Incorrect mission or revision")
         digest = hashlib.sha256(answer.answer.encode()).hexdigest()
         if question.status in (QuestionStatus.answered, QuestionStatus.refused):
             if (
@@ -72,13 +72,13 @@ class HumanQuestionRegistry:
                 and self._answer_digests.get(question_id) == digest
             ):
                 return self.get(question_id)
-            raise HumanQuestionError("Question déjà répondue")
+            raise HumanQuestionError("Question already answered")
         if question.status != QuestionStatus.open:
             raise HumanQuestionError(f"Question {question.status.value}")
         if question.expires_at and (now or utcnow()) >= question.expires_at:
             question.status = QuestionStatus.expired
             self._events[question_id].set()
-            raise HumanQuestionError("Question expirée")
+            raise HumanQuestionError("Question expired")
         text = f"{question.text} {' '.join(question.choices)} {question.reason or ''} {answer.answer}"
         stop = detect_stop_point(text)
         forbidden = stop is not None or re.search(
@@ -91,7 +91,7 @@ class HumanQuestionRegistry:
         )
         question.answer = None if forbidden else answer.answer
         if forbidden:
-            question.reason = f"Arrêt humain obligatoire : {stop.value if stop else 'engagement interdit'}. Aucune autorisation d'automatisation."
+            question.reason = f"Mandatory human stop: {stop.value if stop else 'forbidden commitment'}. No automation authorized."
         self._keys[question_id] = answer.idempotency_key
         self._answer_digests[question_id] = digest
         self._events[question_id].set()
@@ -130,11 +130,11 @@ class HumanQuestionRegistry:
             if self.questions[question_id].status == QuestionStatus.open:
                 self.questions[question_id].status = QuestionStatus.expired
                 self._events[question_id].set()
-            raise HumanQuestionError("Question expirée") from exc
+            raise HumanQuestionError("Question expired") from exc
         question = self.get(question_id)
         if question.status != QuestionStatus.answered:
             raise HumanQuestionError(
-                f"Question {question.status.value} : arrêt humain maintenu"
+                f"Question {question.status.value} : human stop maintained"
             )
         return question.answer
 

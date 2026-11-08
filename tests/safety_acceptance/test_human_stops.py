@@ -39,7 +39,7 @@ def test_yes_never_releases_human_stop(text):
         )
         assert result.status is QuestionStatus.refused
         assert registry.to_agent_question("q").answer is None
-        with pytest.raises(HumanQuestionError, match="arrêt humain maintenu"):
+        with pytest.raises(HumanQuestionError, match="human stop maintained"):
             await registry.wait_answer("q")
 
     asyncio.run(scenario())
@@ -137,12 +137,20 @@ def test_question_mission_revision_and_cancellation_isolation():
             2,
         )
     answer = HumanAnswer(answer="matin", revision=2, idempotency_key="answer-1")
-    with pytest.raises(HumanQuestionError, match="Mission ou révision"):
+    with pytest.raises(HumanQuestionError, match="Incorrect mission or revision"):
         registry.answer("m1", "m2", answer)
-    with pytest.raises(HumanQuestionError, match="Mission ou révision"):
+    with pytest.raises(HumanQuestionError, match="Incorrect mission or revision"):
         registry.answer("m1", "m1", answer.model_copy(update={"revision": 1}))
     registry.cancel_mission("m1")
     with pytest.raises(HumanQuestionError, match="cancelled"):
         registry.answer("m1", "m1", answer)
     assert registry.get("m2").status is QuestionStatus.open
     assert registry.answer("m2", "m2", answer).status is QuestionStatus.answered
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Stopped at rules acceptance on the registration page.", "Stopped before accepting the race rules."],
+)
+def test_english_rules_acceptance_report_is_consent(text):
+    assert detect_stop_point(text, ignore_negated=True) is StopPoint.consent

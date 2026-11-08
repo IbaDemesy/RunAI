@@ -106,7 +106,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
         )
     )
     assert kind is StepKind.registration
-    assert "STOP" in task or "arrête" in task.lower()
+    assert "stop" in task.lower()
     assert params["start_url"] == "https://in.njuko.com/milano-marathon"
     assert params["allowed_hosts"] == ("njuko.com", "in.njuko.com")
     assert params["mission_id"] == "mission-1"
