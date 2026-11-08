@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import math
 import os
 import re
@@ -62,16 +63,20 @@ LABELS = {
 }
 
 
+_NON_ANSWERS = (
+    "oui", "non", "yes", "no", "none", "aucun", "aucune", "peu importe", "n'importe quoi",
+    "je sais pas", "je ne sais pas", "i don't know", "i do not know", "not sure", "maybe", "perhaps", "whatever",
+)
+
+
 def _valid_place(value: object, limit: int = 80) -> bool:
     if not isinstance(value, str) or not 2 <= len(value.strip()) <= limit:
         return False
-    normalized = value.strip().casefold().replace("’", "'").strip(".!?")
-    return any(c.isalpha() for c in value) and not re.search(
-        r"^(?:oui|non|yes|no|none|aucun[e]?|peu importe|n'importe quoi|"
-        r"je (?:ne )?sais pas|i (?:don't|do not) know|not sure|"
-        r"maybe|perhaps|whatever)(?:\b|$)",
-        normalized,
-    )
+    normalized = value.strip().casefold().replace("\u2019", "'").strip(".!?")
+    for word in _NON_ANSWERS:
+        if normalized.startswith(word) and (len(normalized) == len(word) or not normalized[len(word)].isalnum()):
+            return False
+    return any(c.isalpha() for c in value)
 
 
 LLM_INTENTS = {"answer", "correction", "advice", "smalltalk", "unclear"}
@@ -106,7 +111,40 @@ def _evidence_in(evidence: str, haystack: str) -> bool:
     quote = _norm(evidence)
     if len(quote) < 2 and not quote.isdigit():
         return False
-    return re.search(r"(?<!\w)" + re.escape(quote) + r"(?!\w)", haystack) is not None
+    start = 0
+    while (index := haystack.find(quote, start)) != -1:
+        before = haystack[index - 1] if index else " "
+        end = index + len(quote)
+        after = haystack[end] if end < len(haystack) else " "
+        if not before.isalnum() and not after.isalnum():
+            return True
+        start = index + 1
+    return False
+
+
+def _accepts_candidates(function) -> bool:
+    try:
+        parameters = inspect.signature(function).parameters
+    except (TypeError, ValueError):
+        return False
+    return "candidates" in parameters or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values())
+
+
+def _states_distance(text: str) -> bool:
+    """True when the runner wrote a distance like "10k" or "21 km" (not just "half marathon")."""
+    lowered = text.casefold()
+    for index, ch in enumerate(lowered):
+        if ch != "k":
+            continue
+        before = index - 1
+        while before >= 0 and lowered[before] == " ":
+            before -= 1
+        if before < 0 or not lowered[before].isdigit():
+            continue
+        after = index + (2 if lowered.startswith("km", index) else 1)
+        if after >= len(lowered) or not lowered[after].isalnum():
+            return True
+    return False
 
 
 def _sanitize_ack(value: object, *, allow_question: bool) -> str:
@@ -157,6 +195,10 @@ class FramingEngine:
         self.search = search
         self.mode = mode
         self.phraser = phraser
+        # LLM mode: the model is the only interpreter of the runner's words. Without a model
+        # (demo/replay, no key) the small offline parser in interpret.py is used instead.
+        self.llm = getattr(phraser, "decide", None) is not None and os.getenv(
+            "RUNAI_FRAMING_LLM", "1").strip().lower() not in {"0", "false", "off", "no"}
         self.sessions: dict[str, FramingSession] = {}
         self._locks: dict[str, asyncio.Lock] = {}
         self._missions: dict[str, MissionSnapshot] = {}
@@ -182,7 +224,7 @@ class FramingEngine:
             self._manual.add(session.id)
         if session.candidates or session.selected_candidate_id or session.search_stats:
             # the search already ran for these slots: do not repeat (and overwrite) it on the next reply
-            self._search_keys[session.id] = self._search_key(session)
+            self._search_keys[session.id] = self._search_key(session, "" if self.llm else None)
 
     def _forget(self, framing_id: str, *, session: bool = False) -> None:
         """Drop per-conversation bookkeeping (and the conversation itself once expired)."""
@@ -330,22 +372,29 @@ class FramingEngine:
             values: dict[SlotName, object] = {}
             llm_ack = None
             decision = None
-            if answer and reply.text and not choice and not reply.corrections:
+            if self.llm and not choice and reply.corrections:
+                decision = await self._decide_corrections(session, reply)
+            elif self.llm and not choice and answer and reply.text:
                 decision = await self._decide(session, answer, pending)
+            if self.llm and decision is None and not choice and (reply.corrections or answer):
+                return self._clarify(session, reply, self._with_question(
+                    session, "I could not process that just now. Could you rephrase it or send it again?", "answer"))
             if decision is not None:
-                if not decision["values"] and decision.get("origin_rejected"):
+                if decision.get("choice") is not None:
+                    choice = decision["choice"]
+                if not decision["values"] and choice is None and decision.get("origin_rejected"):
                     retry = self._origin_retry(framing_id)
                     if retry:
                         return self._clarify(session, reply, self._with_question(session, retry, "answer"))
                     decision["values"] = {SlotName.origin: public_origin("")}
-                if not decision["values"]:
+                if not decision["values"] and choice is None:
                     return self._clarify(
                         session, reply,
                         self._with_question(session, decision["message"] or guidance, decision["intent"]),
                     )
                 values = dict(decision["values"])
                 llm_ack = decision["message"]
-            else:
+            elif not self.llm:
                 pending = question or next(iter(session.open_questions), None)
                 if (
                     pending and pending.choices and answer and not choice
@@ -469,7 +518,7 @@ class FramingEngine:
                 if not choice and reply.text and not origin_pending:
                     holo_values = await self._holo_fill(session, mask_address(_mask_address(reply.text)), values)
                     values = holo_values | values
-            if isinstance(window := values.get(SlotName.date_window), str):
+            if not self.llm and isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
             if not values and choice is None and session.turns:
                 if answer and session.open_questions:
@@ -536,7 +585,7 @@ class FramingEngine:
                     )
                     if name == SlotName.distance_km
                     and name not in reply.corrections
-                    and not re.search(r"\b\d+(?:[.,]\d+)?\s*k(?:m)?\b", reply.text or "", re.IGNORECASE)
+                    and not _states_distance(reply.text or "")
                     else Provenance(kind="human"),
                     revision=session.revision,
                 )
@@ -614,13 +663,13 @@ class FramingEngine:
             self._persist(session)
             return self.get(framing_id)
 
-    async def _decide(self, session: FramingSession, text: str, pending) -> dict | None:
+    async def _decide(self, session: FramingSession, text: str, pending, force_slot: SlotName | None = None) -> dict | None:
         """LLM-first turn: the model proposes slot updates, this code validates every one of them.
 
         Returns None when no LLM is configured or it failed, so the deterministic path takes over.
         """
         decide = getattr(self.phraser, "decide", None)
-        if decide is None or os.getenv("RUNAI_FRAMING_LLM", "1").strip().lower() in {"0", "false", "off", "no"}:
+        if decide is None or not self.llm:
             return None
         known = {
             name.value: str(slot.value)
@@ -628,7 +677,16 @@ class FramingEngine:
             if slot.is_known and slot.value is not None
         }
         try:
-            raw = await decide(_mask_address(text), known, session.turns, pending.text if pending else "")
+            options = [
+                {"id": c.id, "name": c.name, "city": c.city, "date": str(c.race_date or "date unknown")}
+                for c in session.candidates
+            ] if any(ch.candidate_id for q in session.open_questions for ch in q.choices) else []
+            hint = (f"the runner is correcting the field '{force_slot.value}'" if force_slot
+                    else pending.text if pending else "")
+            extra = {"candidates": options} if options else {}
+            if extra and not _accepts_candidates(decide):
+                extra = {}
+            raw = await decide(_mask_address(text), known, session.turns, hint, **extra)
         except Exception:  # noqa: BLE001 - a failing model must never break the conversation
             return None
         if not isinstance(raw, dict):
@@ -645,7 +703,7 @@ class FramingEngine:
                 name = SlotName(update.get("slot"))
             except ValueError:
                 continue
-            if name not in LLM_SLOTS:
+            if name not in LLM_SLOTS or (force_slot is not None and name != force_slot):
                 continue
             evidence = update.get("evidence")
             if not isinstance(evidence, str) or not _evidence_in(evidence, haystack):
@@ -653,9 +711,9 @@ class FramingEngine:
             current = session.slots[name]
             known_value = current.is_known and current.value is not None
             # a known slot is only overwritten by an explicit correction or by the answer to its own question
-            may_replace = bool(update.get("replaces_previous")) and (
+            may_replace = force_slot is not None or (bool(update.get("replaces_previous")) and (
                 intent == "correction" or (pending is not None and name in pending.slots)
-            )
+            ))
             value = update.get("value")
             if value is None:
                 if name in (SlotName.budget, SlotName.date_window) and (not known_value or may_replace):
@@ -687,7 +745,17 @@ class FramingEngine:
             if known_value and not may_replace:
                 continue
             values[name] = value
-        return {"intent": intent, "values": values, "origin_rejected": origin_rejected,
+        picked = None
+        wanted = raw.get("choice")
+        if isinstance(wanted, str) and wanted:
+            picked = next(
+                (
+                    ch for q in session.open_questions for ch in q.choices
+                    if (wanted == "none" and ch.id == "none") or (ch.candidate_id and ch.candidate_id == wanted)
+                ),
+                None,
+            )
+        return {"intent": intent, "values": values, "origin_rejected": origin_rejected, "choice": picked,
                 "message": _sanitize_ack(raw.get("message"), allow_question=intent == "unclear")}
 
     @staticmethod
@@ -735,6 +803,18 @@ class FramingEngine:
             return None
         self._origin_misses[framing_id] = misses
         return "I only need the city or neighbourhood you leave from, not a street address."
+
+    async def _decide_corrections(self, session: FramingSession, reply: FramingReply) -> dict | None:
+        """A value typed in the "Change something" form: the model reads it like any other message."""
+        merged = {"intent": "correction", "values": {}, "origin_rejected": False, "choice": None, "message": ""}
+        for slot, typed in reply.corrections.items():
+            text = typed if isinstance(typed, str) else str(typed)
+            decision = await self._decide(session, text, None, force_slot=slot)
+            if decision is None:
+                return None
+            merged["values"].update(decision["values"])
+            merged["origin_rejected"] = merged["origin_rejected"] or decision["origin_rejected"]
+        return merged
 
     @staticmethod
     def _next_question_text(session: FramingSession) -> str:
@@ -863,7 +943,7 @@ class FramingEngine:
         request_text = " / ".join(
             turn.text for turn in session.turns if turn.role == "user" and turn.text
         )
-        place = location_hint(request_text)
+        place = "" if self.llm else location_hint(request_text)
         if not session.selected_candidate_id and session.id not in self._manual:
             prerequisites = []
             if (

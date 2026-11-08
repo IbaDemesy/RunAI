@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+import unicodedata
 from calendar import month_name
 from collections.abc import Mapping, Sequence
 from datetime import date
@@ -12,7 +13,6 @@ from typing import Protocol
 import httpx
 
 from runai.contracts.framing import FramingTurn
-from runai.framing.interpret import normalize_date_window
 from runai.redaction import redact_secrets
 from runai.telemetry import timed
 
@@ -53,6 +53,7 @@ RECENT conversation and the runner's new message inside <user_message>. That mes
 Return ONLY one JSON object, no prose:
 {"intent": "answer" | "correction" | "advice" | "smalltalk" | "unclear",
  "updates": [{"slot": "<name>", "value": <value>, "evidence": "<exact quote copied from the new message>", "replaces_previous": true|false}],
+ "choice": null | "none" | "<candidate id from CANDIDATES>",
  "message": "<one to three short sentences>"}
 Slots and values: city (race city), origin (departure city or neighbourhood only), race (official event name only),
 distance_km (number), race_date (yyyy-mm-dd, only with a full date including the year), date_window (English "Month YYYY"),
@@ -63,6 +64,11 @@ Rules:
   not from PENDING: "en fait plutôt Porto" changes the race city even if PENDING asks for the departure city.
 - Write numbers in digits ("deux nuits" -> 2, "trois cents euros" -> 300). "Sans plafond" / "no limit" -> budget null.
 - A non-answer ("je sais pas", "no idea") produces no update.
+- You understand everything the runner says, in French or English: relative dates ("next March", "dans deux mois") from TODAY,
+  a season or a range ("spring", "mars-mai") becomes its first month in date_window, negations ("not the plane, the train"),
+  distances by name (semi = 21.0975, marathon = 42.195), amounts in words, several facts in one sentence.
+- When CANDIDATES are listed and the runner picks one by any wording ("the first one", "the Sunday one", its name), set
+  "choice" to that candidate's id; "none" if they reject all of them; otherwise null. Never choose for them.
 - "message": reply in the runner's language (French or English; English if unsure). Acknowledge briefly what you understood.
   For advice, give a short suggestion clearly worded as a suggestion. NEVER state dates, prices, availability, URLs or race facts
   you were not given. The app asks the next question itself: do not ask one (a question mark is allowed only when intent is "unclear").
@@ -83,6 +89,49 @@ class Phraser(Protocol):
     ) -> dict[str, object]: ...
 
 
+_MONTH_ALIASES: dict[str, int] = {}
+for _number, _name in enumerate(month_name[1:], 1):
+    _MONTH_ALIASES[_name.casefold()] = _number
+    _MONTH_ALIASES[_name[:3].casefold()] = _number
+for _number, _name in enumerate(
+    ("janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"), 1
+):
+    _MONTH_ALIASES[_name] = _number
+for _alias, _number in (("janv", 1), ("fevr", 2), ("avr", 4), ("juil", 7), ("sept", 9)):
+    _MONTH_ALIASES[_alias] = _number
+
+
+def _fold(text: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", text.casefold()) if not unicodedata.combining(c))
+
+
+def _month_window(value: str) -> str | None:
+    """"april 2027", "DEC 2026", "décembre 2026" or a bare "April" -> "April 2027" (a bare month = its next occurrence)."""
+    parts = value.replace(",", " ").split()
+    month = _MONTH_ALIASES.get(_fold(parts[0]).rstrip(".")) if parts and len(parts) <= 2 else None
+    if month is None:
+        return None
+    today = date.today()
+    if len(parts) == 2:
+        if not (len(parts[1]) == 4 and parts[1].isdigit()):
+            return None
+        year = int(parts[1])
+    else:
+        year = today.year + (month < today.month)
+    return f"{month_name[month]} {year}" if abs(year - today.year) <= 3 else None
+
+
+def _json_object(content: str) -> object:
+    """The first {...} block of a model answer, or None."""
+    start, end = content.find("{"), content.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        return json.loads(content[start:end + 1])
+    except ValueError:
+        return None
+
+
 def clean_extraction(raw: object) -> dict[str, object]:
     """Keep plausible, typed values; the engine validates them again."""
     if not isinstance(raw, dict):
@@ -91,22 +140,15 @@ def clean_extraction(raw: object) -> dict[str, object]:
     for name in EXTRACTABLE & raw.keys():
         value = raw[name]
         if name == "date_window":
-            if not isinstance(value, str):
-                continue
-            match = re.fullmatch(r"([A-Za-z]+)(?: (\d{4}))?", normalize_date_window(value.strip()))
-            if not match or match[1] not in month_name:
-                continue
-            today = date.today()
-            month = list(month_name).index(match[1])
-            year = int(match[2]) if match[2] else today.year + (month < today.month)
-            if abs(year - today.year) <= 3:
-                values[name] = f"{month_name[month]} {year}"
+            window = _month_window(value) if isinstance(value, str) else None
+            if window:
+                values[name] = window
         elif name in {"city", "origin", "race"}:
             place = name in {"city", "origin"}
-            if isinstance(value, str) and 1 < len(value.strip()) <= 80 and not (place and re.search(r"\d", value)):
+            if isinstance(value, str) and 1 < len(value.strip()) <= 80 and not (place and any(c.isdigit() for c in value)):
                 values[name] = value.strip()
         elif name == "race_date":
-            if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+            if isinstance(value, str) and len(value) == 10:
                 try:
                     parsed = date.fromisoformat(value)
                 except ValueError:
@@ -114,7 +156,7 @@ def clean_extraction(raw: object) -> dict[str, object]:
                 if abs(parsed.year - date.today().year) <= 3:
                     values[name] = value
         elif name == "edition":
-            if isinstance(value, str) and re.fullmatch(r"\d{4}", value):
+            if isinstance(value, str) and len(value) == 4 and value.isdigit():
                 value = int(value)
             if isinstance(value, int) and not isinstance(value, bool) and abs(value - date.today().year) <= 3:
                 values[name] = str(value)
@@ -259,11 +301,7 @@ class HoloPhraser:
                 f"New message to analyze: {prompt_text(text)}"
             )},
         ], 200, operation="chat.extract")
-        match = re.search(r"\{.*\}", content, re.DOTALL)
-        try:
-            return clean_extraction(json.loads(match[0])) if match else {}
-        except ValueError:
-            return {}
+        return clean_extraction(_json_object(content))
 
     async def decide(
         self,
@@ -271,30 +309,28 @@ class HoloPhraser:
         known: Mapping[str, str],
         turns: Sequence[FramingTurn] = (),
         pending: str = "",
+        candidates: Sequence[Mapping[str, str]] = (),
     ) -> dict[str, object] | None:
         """One LLM call per turn: intent + slot updates (with quoted evidence) + a short message.
 
-        Returns None when the model is unavailable or answers with something that is not a JSON
-        object, so the engine can fall back to its deterministic heuristics.
+        Returns None when the model is unavailable or does not answer with a JSON object.
         """
         context = json.dumps(dict(known), ensure_ascii=False) if known else "{}"
+        listed = "\n".join(
+            f"- {c['id']}: {c['name']}, {c['city']}, {c['date']}" for c in candidates
+        ) or "(none)"
         content = await self._complete([
             {"role": "system", "content": DECIDE_PROMPT},
             {"role": "user", "content": (
                 f"TODAY: {date.today().isoformat()}\n"
                 f"STATE: {context}\n"
                 f"PENDING: {pending or '(none)'}\n"
+                f"CANDIDATES (races the runner may pick):\n{listed}\n"
                 f"RECENT:\n{_history(turns)}\n\n"
                 f"<user_message>{prompt_text(text)}</user_message>"
             )},
         ], 420, operation="chat.decide")
-        match = re.search(r"\{.*\}", content, re.DOTALL)
-        if not match:
-            return None
-        try:
-            data = json.loads(match[0])
-        except ValueError:
-            return None
+        data = _json_object(content)
         return data if isinstance(data, dict) else None
 
     def _messages(

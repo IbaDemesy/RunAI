@@ -400,3 +400,9 @@ async def test_candidate_question_is_announced_plainly_not_rephrased():
     assert session.turns[-1].role == "assistant"
     assert "found" in session.turns[-1].text and "below" in session.turns[-1].text
     assert phraser.calls == []
+
+
+@pytest.fixture(autouse=True)
+def _legacy_extractor_path(monkeypatch):
+    """These tests cover HoloPhraser.extract() filling slots behind the offline parser, not the LLM-only mode."""
+    monkeypatch.setenv("RUNAI_FRAMING_LLM", "0")

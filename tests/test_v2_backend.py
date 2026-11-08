@@ -462,7 +462,9 @@ def test_mission_secrets_are_redacted_on_snapshot_and_sse(tmp_path, monkeypatch)
     ("normal", None), ("no_stop", None), ("anti_bot", "h_anti_bot"),
     ("timeout", "h_timeout"), ("missing", "h_key_missing"), ("quota", "h_quota_saturated"),
 ])
-def test_live_lifecycle_preserves_guards_errors_and_closes_idle(tmp_path, outcome, code):
+def test_live_lifecycle_preserves_guards_errors_and_closes_idle(tmp_path, monkeypatch, outcome, code):
+    # This test is about the H lifecycle: framing runs on the offline parser, not on a model it does not mock.
+    monkeypatch.setenv("RUNAI_FRAMING_LLM", "0")
     from runai.app.candidates import FixtureCandidateSearch
     from runai.app.fakes import DEMO_RACES
     from runai.app.real import RealBrowserAgents

@@ -145,11 +145,12 @@ def test_origin_address_is_masked_before_the_model_and_in_the_slot():
     assert after.slots[SlotName.origin].value == "Paris"
 
 
-def test_model_failure_falls_back_to_the_deterministic_path():
+def test_model_failure_asks_again_and_never_guesses_with_regex():
     eng, llm = engine(None, None)
     session = start(eng, "A half marathon in Lisbon in March 2027")
-    assert llm.calls, "the model was tried first"
-    assert session.slots[SlotName.city].is_known  # heuristics still understood the request
+    assert llm.calls, "the model was tried"
+    assert not session.slots[SlotName.city].is_known, "no regex fallback writes a slot"
+    assert "could not process" in session.turns[-1].text
 
 
 def test_flag_disables_the_model(monkeypatch):
