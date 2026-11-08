@@ -35,6 +35,7 @@ class StoredMission(BaseModel):
     framing_turns: list[FramingTurn] = Field(default_factory=list)
     plan: LaunchPlan
     created_at: datetime
+    finished_at: datetime | None = None
     user_id: str | None = None
     journey: JourneyPlan | None = None
 

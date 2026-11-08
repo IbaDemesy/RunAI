@@ -246,7 +246,8 @@ class MissionService:
         self.store.save(mission.id, lambda: StoredMission(
             snapshot=self.snapshot(mission.id), envelopes=mission.envelopes,
             framing_summary=mission.framing_summary, framing_turns=mission.framing_turns,
-            plan=mission.plan, created_at=mission.created_at, journey=mission.journey,
+            plan=mission.plan, created_at=mission.created_at, finished_at=mission.finished_at,
+            journey=mission.journey,
         ), terminal=mission.is_terminal)
 
     def rehydrate(self) -> None:
@@ -256,7 +257,8 @@ class MissionService:
                 continue
             mission = Mission(
                 id=snapshot.mission_id, query=document.plan.brief.race_label,
-                status=snapshot.status, created_at=document.created_at, race=snapshot.race,
+                status=snapshot.status, created_at=document.created_at, finished_at=document.finished_at,
+                race=snapshot.race,
                 steps={step.kind: step for step in snapshot.steps}, plan=document.plan,
                 events=[TraceEvent.model_validate(event.payload) for event in document.envelopes if event.type == "trace"],
                 envelopes=document.envelopes, limitations=snapshot.limitations, error=snapshot.error,
@@ -270,6 +272,7 @@ class MissionService:
             if not mission.is_terminal:
                 message = "The server restarted while agents were running; relaunch the request."
                 mission.status = MissionStatus.failed
+                mission.finished_at = utcnow()
                 mission.error = message
                 mission.limitations.append(Limitation(code="server_restarted", message=message))
                 for question in snapshot.questions:
