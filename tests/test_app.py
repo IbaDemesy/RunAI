@@ -53,6 +53,19 @@ from runai.tracing import TraceWriter
 AGENT_KINDS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 
 
+@pytest.mark.parametrize("read_only", [False, True])
+def test_snapshot_does_not_publish_stored_public_share_url(read_only):
+    share = "https://live.example/share"
+    mission = Mission(id="restored", query="race", read_only=read_only, steps={
+        StepKind.registration: StepResult(
+            kind=StepKind.registration, live_view_url=share, data={"share_url": share},
+        ),
+    })
+    step, = MissionService._snapshot_steps(mission)
+    assert step.live_view_url is None
+    assert "share_url" not in step.data
+
+
 @pytest.mark.parametrize("capture", [False, True])
 def test_live_agent_step_contract(tmp_path, monkeypatch, capture):
     monkeypatch.setenv("HAI_API_KEY", "private-policy-secret")
@@ -95,7 +108,8 @@ def test_live_agent_step_contract(tmp_path, monkeypatch, capture):
     assert data["h_key_name"] == "HAI_API_KEY" and data["provider"] == "h"
     snapshot = service.snapshot(mission.id).model_dump(mode="json")
     assert snapshot["steps"][0]["data"]["agent_step"] == data
-    assert snapshot["steps"][0]["live_view_url"] == "https://live.example/share"
+    assert snapshot["steps"][0]["live_view_url"] is None
+    assert "share_url" not in snapshot["steps"][0]["data"]
     assert snapshot["h_slots"] == {"HAI_API_KEY": {"active": 2, "max": 3}}
     assert snapshot["agents_busy"] == 2 and snapshot["agents_total"] == 3
     assert set(snapshot["partners"]) == {"h", "linkup", "gladia", "holo"}
