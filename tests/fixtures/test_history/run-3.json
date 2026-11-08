@@ -1,0 +1,56 @@
+{
+  "schema_version": "test-history.v1",
+  "run_id": "run-3",
+  "started_at": "2026-01-03T12:00:00Z",
+  "finished_at": "2026-01-03T12:00:10Z",
+  "duration_s": 12,
+  "git": {
+    "sha": "abcdef0123456789",
+    "branch": "main",
+    "dirty": false
+  },
+  "wave": "beta",
+  "ci": {
+    "provider": "github",
+    "run_id": "2",
+    "run_url": "https://github.com/IbaDemesy/RunAI/actions/runs/1"
+  },
+  "verdict": "passed",
+  "suites": {
+    "pytest": {
+      "verdict": "passed",
+      "duration_s": 11,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 1,
+        "errors": 0
+      },
+      "failures": [],
+      "tests": [
+        {
+          "id": "regression",
+          "outcome": "passed",
+          "duration_s": 0.1
+        },
+        {
+          "id": "fix",
+          "outcome": "passed",
+          "duration_s": 1.1
+        },
+        {
+          "id": "expected",
+          "outcome": "xpassed",
+          "duration_s": 2.1
+        },
+        {
+          "id": "flaky",
+          "outcome": "passed",
+          "duration_s": 3.1
+        }
+      ]
+    }
+  }
+}
