@@ -81,7 +81,7 @@ def test_budget_display(mission):
 
 @pytest.mark.xfail(strict=False, reason="JURY-W1-2: omit empty user-answer summaries")
 def test_no_empty_answers(mission):
-    assert all(not re.search(r"(?:Réponses utilisateur|User answers)\s*:\s*\.", s["summary"]) for s in mission[0]["steps"])
+    assert all(not re.search(r"(?:Réponses utilisateur|User answers|Your answers)\s*:\s*\.", s["summary"]) for s in mission[0]["steps"])
 
 
 @pytest.mark.xfail(strict=False, reason="JURY-W1-3: ask about the start pen only once per step")

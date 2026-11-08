@@ -1,4 +1,4 @@
-"""Projection des résultats structurés, sans géocodage ni horaires déduits du texte."""
+"""Project structured results without geocoding or inferring times from text."""
 
 from copy import deepcopy
 
@@ -59,13 +59,13 @@ def project_journey(mission):
                 provenance=Provenance(kind=kind, url=step.url, collected_at=mission.created_at),
             )
     if not isinstance(raw["home"], dict) or not isinstance(raw["race"], dict):
-        raise TypeError("Lieu ou course structuré invalide")
+        raise TypeError("Invalid structured place or race")
     raw["home"]["label"] = summary.origin_public
     _timestamps(raw, mission.created_at)
     if raw.get("hotel"):
         raw["hotel"] = {"check_in_from": None, "check_out_until": None, **raw["hotel"]}
     if raw["race"].get("rules") and "timezone" not in raw["race"]["rules"]:
-        raise ValueError("Règlement sans fuseau : horaire non interprétable")
+        raise ValueError("Rules lack a timezone: cannot interpret the time")
     inputs = JourneyInputs.model_validate(raw)
     for leg in (inputs.outbound, inputs.return_trip):
         if leg and (leg.mode != "train" or mission.plan.steps[StepKind.transport].automation is not Automation.automated):
@@ -81,7 +81,7 @@ def project_journey(mission):
     rules = None
     if evidence.get("rules"):
         if "timezone" not in evidence["rules"]:
-            raise ValueError("Règlement sans fuseau : horaire non interprétable")
+            raise ValueError("Rules lack a timezone: cannot interpret the time")
         rules = RaceRules.model_validate(evidence["rules"])
         inputs.race.rules = rules
     elif inputs.race.rules:
@@ -101,17 +101,17 @@ def project_journey(mission):
         if step_kind in prices and not any(line.money for line in lines if line.category is category):
             lines = [line for line in lines if line.category is not category]
             lines.append(CostLine(id=f"step-{category.value}", category=category,
-                                  label=f"{category.value} (total de l'étape)", money=prices[step_kind],
-                                  note="Détails du choix encore incomplets."))
+                                  label=f"{category.value} (step total)", money=prices[step_kind],
+                                  note="Choice details are still incomplete."))
     plan.budget = build_budget(lines, cap=summary.budget_eur)
     plan.warnings = [warning for warning in plan.warnings if not warning.startswith("Budget partiel :")]
     if not plan.budget.complete:
-        plan.warnings.append("Budget partiel : postes non chiffrés exclus du total.")
+        plan.warnings.append("Partial budget: unpriced items excluded from the total.")
     for line in plan.budget.lines:
         if line.money:
             provenance = line.money.provenance
             if mode is DataMode.live and provenance.kind.value in {"fixture", "replay"}:
-                raise ValueError("Preuve simulée refusée dans un séjour live")
+                raise ValueError("Simulated evidence rejected in a live trip")
             if provenance not in plan.sources:
                 plan.sources.append(provenance)
     previous = mission.journey

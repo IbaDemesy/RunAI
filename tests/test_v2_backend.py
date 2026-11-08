@@ -16,7 +16,7 @@ def prepare(client, city, *, channel="text", nights=2):
     mode = "train" if city == "Milan" else "avion"
     text = (
         f"une course à {city}, {distance} en {period}, depuis Lyon, "
-        f"900 euros, {nights} nuits, {mode}"
+        f"900 euros, {nights} nights, {mode}"
     )
     response = client.post("/api/framings", json={"text": text, "channel": channel})
     assert response.status_code == 201
@@ -251,7 +251,7 @@ def test_cancel_and_stale_or_expired_question_cannot_restart(tmp_path):
             time.sleep(.005)
         q = snapshot["questions"][0]
         url = f"/api/missions/{mid}/questions/{q['question_id']}/answer"
-        body = {"answer": "Découverte", "revision": q["revision"] - 1, "idempotency_key": "stale-answer"}
+        body = {"answer": "Discovery", "revision": q["revision"] - 1, "idempotency_key": "stale-answer"}
         assert client.post(url, json=body).status_code == 409
         response = client.post(f"/api/missions/{mid}/cancel")
         assert response.json()["status"] == "cancelled"
@@ -309,7 +309,7 @@ def test_expired_question_endpoint_rejects_answer(tmp_path):
         q = snapshot["questions"][0]
         assert q["status"] == "expired"
         assert client.post(f"/api/missions/{mid}/questions/{q['question_id']}/answer", json={
-            "answer": "Découverte", "revision": q["revision"], "idempotency_key": "expired-answer",
+            "answer": "Discovery", "revision": q["revision"], "idempotency_key": "expired-answer",
         }).status_code == 409
 
 
@@ -383,7 +383,7 @@ def test_live_lifecycle_preserves_guards_errors_and_closes_idle(tmp_path, outcom
 
         async def wait(self, **kwargs):
             if outcome == "normal" and self.kind is StepKind.registration:
-                await self.tools[0].fn(question="Quel sas souhaitez-vous ?", options=["Découverte"])
+                await self.tools[0].fn(question="Quel sas souhaitez-vous ?", options=["Discovery"])
             if outcome == "anti_bot":
                 return StepResult(kind=self.kind, status="failed", error="captcha/anti-bot")
             if outcome == "timeout":

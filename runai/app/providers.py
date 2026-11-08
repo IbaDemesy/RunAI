@@ -1,8 +1,8 @@
-"""Mode de données explicite, santé des fournisseurs et plateformes couvertes par les agents.
+"""Explicit data modes, provider health and platforms supported by agents.
 
-`live` utilise uniquement H, Linkup et Gladia : une clé absente produit une erreur explicite,
-jamais un repli silencieux vers les fakes. `demo` (fakes) et `replay` (trace rejouée) sont
-choisis explicitement et étiquettent chaque `StepResult.data["provenance"]`.
+Live mode uses only H, Linkup and Gladia: missing keys cause explicit errors,
+never a silent fallback to fakes. Demo and replay are explicitly selected
+and label every StepResult with provenance.
 """
 
 import importlib.util
@@ -47,7 +47,7 @@ class ProviderStatus(str, Enum):
 
 
 class ProviderUnavailableError(RuntimeError):
-    """Fournisseur live inutilisable (clé absente, SDK manquant) : jamais remplacé par un fake."""
+    """Unavailable live provider (missing key or SDK): never replaced by a fake."""
 
 
 PROVIDERS = ("h", "linkup", "gladia")
@@ -59,9 +59,9 @@ _KEY_NAMES = {
 }
 _SDK_MODULES = {"h": "hai_agents", "linkup": "linkup", "gladia": "gladiaio_sdk"}
 _LABELS = {
-    "h": "H (agents navigateur)",
-    "linkup": "Linkup (recherche)",
-    "gladia": "Gladia (voix)",
+    "h": "H (browser agents)",
+    "linkup": "Linkup (search)",
+    "gladia": "Gladia (voice)",
 }
 
 
@@ -72,7 +72,7 @@ class ProviderHealth(BaseModel):
 
 
 def select_mode(env: Mapping[str, str] | None = None) -> DataMode:
-    """`RUNAI_MODE` explicite, sinon `RUNAI_DEMO=1` → demo (compat V1), sinon live."""
+    """Use explicit RUNAI_MODE, otherwise RUNAI_DEMO=1 for demo, otherwise live."""
     env = os.environ if env is None else env
     raw = (env.get("RUNAI_MODE") or "").strip().lower()
     if raw:
@@ -80,7 +80,7 @@ def select_mode(env: Mapping[str, str] | None = None) -> DataMode:
             return DataMode(raw)
         except ValueError:
             raise ValueError(
-                f"RUNAI_MODE={raw!r} invalide : live, demo ou replay attendu"
+                f"RUNAI_MODE={raw!r} invalid: expected live, demo or replay"
             ) from None
     if env.get("RUNAI_DEMO") == "1":
         return DataMode.demo
@@ -107,37 +107,37 @@ def _sdk_available(name: str) -> bool:
 
 
 def provider_health(env: Mapping[str, str] | None = None) -> dict[str, ProviderHealth]:
-    """Santé locale (sans appel réseau ni valeur de clé) : ok, missing_key ou error (SDK absent)."""
+    """Local health without network calls or key values: ok, missing_key or error."""
     env = os.environ if env is None else env
     health = {}
     for name in PROVIDERS:
         if not _has_key(name, env):
             status = ProviderStatus.missing_key
             detail = (
-                f"{_KEY_NAMES[name]} absente : {_LABELS[name]} indisponible en live."
+                f"{_KEY_NAMES[name]} missing: {_LABELS[name]} unavailable in live mode."
             )
         elif not _sdk_available(name):
             status = ProviderStatus.error
-            detail = f"SDK {_SDK_MODULES[name]} non installé : pip install -r requirements.txt."
+            detail = f"SDK {_SDK_MODULES[name]} not installed: pip install -r requirements.txt."
         else:
             status = ProviderStatus.ok
             detail = (
-                f"{len(_h_key_names(env))} clé(s) H configurée(s)."
+                f"{len(_h_key_names(env))} H key(s) configured."
                 if name == "h"
-                else f"{_KEY_NAMES[name]} configurée."
+                else f"{_KEY_NAMES[name]} configured."
             )
         health[name] = ProviderHealth(name=name, status=status, detail=detail)
     return health
 
 
 def unavailable_message(name: str, health: ProviderHealth) -> str:
-    return f"Mode live : {_LABELS[name]} indisponible ({health.status.value}). {health.detail}"
+    return f"Live mode: {_LABELS[name]} unavailable ({health.status.value}). {health.detail}"
 
 
 def provenance_data(
     mode: DataMode, kind: ProvenanceKind, label: str, url: str | None = None
 ) -> dict[str, Any]:
-    """Étiquette posée dans `StepResult.data["provenance"]` : mode + `Provenance` du contrat."""
+    """StepResult provenance label: data mode plus contract Provenance."""
     return {
         "mode": mode.value,
         **Provenance(kind=kind, url=url, label=label).model_dump(mode="json"),
@@ -174,7 +174,7 @@ class UnavailableTranscriber:
 
 
 class LabeledRun:
-    """Enveloppe un `AgentRun` et étiquette son résultat (demo/fixture par exemple)."""
+    """Wrap an AgentRun and label its result (for example, demo/fixture)."""
 
     def __init__(self, run: AgentRun, mode: DataMode, kind: ProvenanceKind, label: str):
         self.run = run
@@ -253,7 +253,7 @@ class ProviderSet:
         return self.mode is not DataMode.live
 
     def health_payload(self) -> dict[str, Any]:
-        """Corps de `GET /api/health` (contrat G1)."""
+        """Response body for GET /api/health (G1 contract)."""
         return {
             "ok": True,
             "version": (os.getenv("RENDER_GIT_COMMIT") or os.getenv("RUNAI_GIT_COMMIT") or "dev")[:7],
@@ -345,7 +345,7 @@ def build_providers(
     return ProviderSet(mode, search, agents, transcriber, health)
 
 
-# --- Plateformes : ce que les agents H ont le droit d'automatiser (interdictions V1 conservées) ---
+# --- Platforms H agents may automate (V1 restrictions retained) ---
 
 
 @dataclass(frozen=True)
@@ -363,7 +363,7 @@ PLATFORMS: tuple[Platform, ...] = (
     Platform("njuko", "Njuko", StepKind.registration, ("njuko.com",)),
     Platform(
         "accor",
-        "site officiel Accor",
+        "official Accor site",
         StepKind.accommodation,
         ("all.accor.com", "accor.com"),
         "https://all.accor.com",
@@ -379,12 +379,12 @@ PLATFORMS: tuple[Platform, ...] = (
     ),
 )
 FORBIDDEN_HOSTS: dict[str, str] = {
-    "klikego.com": "Klikego est interdit (le parcours invité crée un compte coureur)",
-    "booking.com": "Booking.com est un agrégateur interdit",
-    "expedia.com": "Expedia est un agrégateur interdit",
-    "hotels.com": "Hotels.com est un agrégateur interdit",
-    "airbnb.com": "Airbnb est interdit",
-    "flytap.com": "TAP est interdit",
+    "klikego.com": "Klikego is forbidden (the guest flow creates a runner account)",
+    "booking.com": "Booking.com is a forbidden aggregator",
+    "expedia.com": "Expedia is a forbidden aggregator",
+    "hotels.com": "Hotels.com is a forbidden aggregator",
+    "airbnb.com": "Airbnb is forbidden",
+    "flytap.com": "TAP is forbidden",
 }
 FORBIDDEN_ACCOMMODATION_SITES = ("Booking.com", "Expedia", "Hotels.com", "Airbnb")
 _COUNTRY_ALIASES = {"ITALY": "IT", "ITALIE": "IT", "ITALIA": "IT", "ITA": "IT"}
@@ -537,7 +537,7 @@ def registration_coverage(race: Race, official_url: str | None = None) -> StepCo
     if url and host_matches(url, njuko.hosts):
         return StepCoverage(StepKind.registration, Automation.automated, njuko, url)
     if url and (reason := forbidden_reason(url)):
-        message = f"{reason} : inscrivez-vous vous-même via le lien officiel."
+        message = f"{reason}: register manually via the official link."
         return StepCoverage(
             StepKind.registration,
             Automation.manual,
@@ -552,7 +552,7 @@ def registration_coverage(race: Race, official_url: str | None = None) -> StepCo
         )
     if url:
         host = _host(url)
-        message = f"Plateforme d'inscription {host} non automatisée : inscription manuelle via le lien officiel."
+        message = f"Registration platform {host} not automated: register manually via the official link."
         return StepCoverage(
             StepKind.registration,
             Automation.manual,
@@ -565,7 +565,7 @@ def registration_coverage(race: Race, official_url: str | None = None) -> StepCo
                 )
             ],
         )
-    message = "Lien d'inscription officiel non trouvé par la recherche : consultez le site de l'organisateur."
+    message = "Official registration link not found by search: check the organizer's site."
     return StepCoverage(
         StepKind.registration,
         Automation.not_covered,
@@ -655,18 +655,18 @@ def transport_coverage(
             limitations=[
                 Limitation(
                     code="transport_not_needed",
-                    message="Aucun transport à préparer (déplacement géré par l'utilisateur).",
+                    message="No transport to prepare (travel handled by the user).",
                     step="transport",
                 )
             ],
         )
     if mode is None:
-        message = f"Mode de transport « {transport_mode or 'inconnu'} » non reconnu : à préparer manuellement."
+        message = f"Unrecognized transport mode {transport_mode or 'unknown'}: prepare manually."
     elif mode == "flight":
-        message = "Vols non automatisés (aucun vendeur aérien validé, TAP interdit) : comparez et réservez vous-même sur le site de la compagnie."
+        message = "Flights not automated (no approved airline vendor, TAP forbidden): compare and book yourself on the airline's site."
     else:
-        where = ", ".join(sorted(countries)) or "cette destination"
-        message = f"Aucun vendeur {mode} officiel validé pour {where} : recherche manuelle sur le site de l'opérateur."
+        where = ", ".join(sorted(countries)) or "this destination"
+        message = f"No approved official {mode} vendor for {where}: search manually on the operator's site."
     return StepCoverage(
         StepKind.transport,
         Automation.manual,

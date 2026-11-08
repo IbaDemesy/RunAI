@@ -1,7 +1,7 @@
-"""Interfaces minimales attendues des briques H, voix et recherche.
+"""Minimal interfaces for H, voice and search components.
 
-Les vraies implémentations (`runai/h/`, `runai/voice/`, `runai/search/`) n'ont qu'à respecter
-ces Protocols pour être branchées dans `MissionService` à la place des fakes.
+Real implementations in runai/h/, runai/voice/ and runai/search/ implement
+these protocols to replace fakes in MissionService.
 """
 
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
@@ -24,13 +24,13 @@ class LogisticsSweeper(Protocol):
 
 
 class RaceSearch(Protocol):
-    """Brique Linkup : transforme une phrase libre en fiche course sourcée."""
+    """Linkup component: turn free text into a sourced race record."""
 
     async def find_race(self, query: str) -> Race: ...
 
 
 class AgentRun(Protocol):
-    """Un agent de navigation en cours (une session H)."""
+    """A running browser agent (an H session)."""
 
     session_id: str
     live_view_url: str | None
@@ -42,12 +42,12 @@ class AgentRun(Protocol):
     async def send_message(self, text: str) -> None: ...
 
     async def wait(self) -> StepResult:
-        """Attend la fin de l'agent ; le résultat porte le `StopPoint` atteint."""
+        """Wait for the agent; the result includes the reached StopPoint."""
         ...
 
 
 class BrowserAgents(Protocol):
-    """Brique H : lance un agent pour une étape. `task` est déjà passé par `guard_task()`."""
+    """H component: launch a step agent with an already guarded task."""
 
     async def start(
         self,
@@ -63,7 +63,7 @@ class BrowserAgents(Protocol):
 
 
 class Transcriber(Protocol):
-    """Brique Gladia : transcrit un enregistrement court envoyé par le navigateur."""
+    """Gladia component: transcribe a short browser recording."""
 
     async def transcribe(self, audio: bytes, content_type: str) -> str: ...
 

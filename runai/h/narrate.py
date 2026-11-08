@@ -4,18 +4,18 @@ from urllib.parse import urlsplit
 from runai.models import TraceEvent
 
 _CAPTCHA_ERROR = (
-    "Site protégé par un captcha : l'agent s'est arrêté. "
-    "Finissez cette étape vous-même sur le site officiel."
+    "The site is protected by a captcha: the agent stopped. "
+    "Finish this step yourself on the official site."
 )
 _TIMEOUT_ERROR = (
-    "Le site a mis trop de temps à répondre. Vous pouvez reprendre cette étape vous-même."
+    "The site took too long to respond. You can complete this step yourself."
 )
-_SERVICE_ERROR = "Le service d'agents est indisponible pour le moment."
+_SERVICE_ERROR = "The agent service is currently unavailable."
 _GENERIC_ERROR = (
-    "L'agent n'a pas pu terminer cette étape. Vous pouvez la faire vous-même "
-    "depuis le site officiel."
+    "The agent could not finish this step. You can complete it yourself "
+    "on the official site."
 )
-_STOPPED_HEADLINE = "Prêt : à finaliser vous-même sur le site officiel"
+_STOPPED_HEADLINE = "Ready: finish it yourself on the official site"
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -43,7 +43,7 @@ def _observation_headline(event: TraceEvent) -> str | None:
     if host.lower().startswith("www."):
         host = host[4:]
     title = metadata.get("title") or event.data.get("title")
-    page = f"Sur {host}"
+    page = f"On {host}"
     if isinstance(title, str) and title:
         page += f" · {title[:80]}{'…' if len(title) > 80 else ''}"
     return _truncate(page, 120)
@@ -74,9 +74,9 @@ def headline(event: TraceEvent) -> str | None:
     if event.type == "AgentEvent.observation_event":
         return _observation_headline(event)
     if event.type == "step_started":
-        return "Ouverture du navigateur…"
+        return "Opening the browser…"
     if event.type == "question" and event.message:
-        return _truncate(f"Attend votre réponse : {event.message}", 120)
+        return _truncate(f"Waiting for your answer: {event.message}", 120)
     if event.type in {"AgentErrorEvent", "AgentEvent.error_event"}:
         return _truncate(friendly_error(event.message or ""), 120)
     return None

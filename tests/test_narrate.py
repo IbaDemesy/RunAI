@@ -24,7 +24,7 @@ from runai.models import TraceEvent
                     }
                 },
             ),
-            "Sur example.com · Course officielle",
+            "On example.com · Course officielle",
         ),
         (
             TraceEvent(
@@ -39,11 +39,11 @@ from runai.models import TraceEvent
                     }
                 },
             ),
-            "Sur example.com",
+            "On example.com",
         ),
         (
             TraceEvent(source="app", type="step_started"),
-            "Ouverture du navigateur…",
+            "Opening the browser…",
         ),
         (
             TraceEvent(
@@ -51,7 +51,7 @@ from runai.models import TraceEvent
                 type="question",
                 message="Quel sas souhaitez-vous ?",
             ),
-            "Attend votre réponse : Quel sas souhaitez-vous ?",
+            "Waiting for your answer: Quel sas souhaitez-vous ?",
         ),
         (
             TraceEvent(
@@ -59,7 +59,7 @@ from runai.models import TraceEvent
                 type="AgentErrorEvent",
                 message="captcha",
             ),
-            "Site protégé par un captcha : l'agent s'est arrêté. Finissez cette étape vous-même sur le site officiel.",
+            "The site is protected by a captcha: the agent stopped. Finish this step yourself on the official site.",
         ),
         (
             TraceEvent(
@@ -67,7 +67,7 @@ from runai.models import TraceEvent
                 type="AgentEvent.error_event",
                 message="403 Forbidden",
             ),
-            "Le service d'agents est indisponible pour le moment.",
+            "The agent service is currently unavailable.",
         ),
         (
             TraceEvent(
@@ -82,7 +82,7 @@ from runai.models import TraceEvent
             None,
         ),
         (
-            TraceEvent(source="agent:registration", type="answer", message="Découverte"),
+            TraceEvent(source="agent:registration", type="answer", message="Discovery"),
             None,
         ),
     ],
@@ -106,7 +106,7 @@ def test_observation_headline_truncates_long_title():
         },
     )
 
-    assert headline(event) == f"Sur race.example · {title[:80]}…"
+    assert headline(event) == f"On race.example · {title[:80]}…"
     assert len(headline(event)) <= 120
 
 
@@ -115,19 +115,19 @@ def test_observation_headline_truncates_long_title():
     [
         (
             "ANTI-BOT BLOCAGE",
-            "Site protégé par un captcha : l'agent s'est arrêté. Finissez cette étape vous-même sur le site officiel.",
+            "The site is protected by a captcha: the agent stopped. Finish this step yourself on the official site.",
         ),
         (
             "The operation TIMED OUT",
-            "Le site a mis trop de temps à répondre. Vous pouvez reprendre cette étape vous-même.",
+            "The site took too long to respond. You can complete this step yourself.",
         ),
         (
             "API KEY rejected: 401",
-            "Le service d'agents est indisponible pour le moment.",
+            "The agent service is currently unavailable.",
         ),
         (
-            "HORS BUDGET : 401 € dépasse 403 euros pour 2 nuits.",
-            "HORS BUDGET : 401 € dépasse 403 euros pour 2 nuits.",
+            "OVER BUDGET: 401 € exceeds 403 euros pour 2 nuits.",
+            "OVER BUDGET: 401 € exceeds 403 euros pour 2 nuits.",
         ),
         (
             "Hébergement non automatisé : aucun site officiel autorisé.",
@@ -135,7 +135,7 @@ def test_observation_headline_truncates_long_title():
         ),
         (
             "Traceback (most recent call last):\nRuntimeError: failed",
-            "L'agent n'a pas pu terminer cette étape. Vous pouvez la faire vous-même depuis le site officiel.",
+            "The agent could not finish this step. You can complete it yourself on the official site.",
         ),
     ],
 )

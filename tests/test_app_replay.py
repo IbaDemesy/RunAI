@@ -90,14 +90,14 @@ def test_replay_missing_step_fails_honestly():
     trace = ReplayTrace.from_mission_snapshot(SNAPSHOT)
     result, _, _ = run_step(trace, StepKind.transport)
     assert result.status is StepStatus.failed
-    assert "absente" in result.error
+    assert "missing" in result.error
     assert result.data["provenance"]["mode"] == "replay"
 
 
 def test_replay_provider_set_reads_trace_file(tmp_path):
     trace = ReplayTrace(
         label="Lisbonne",
-        race=Race(name="Corrida fictive", city="Lisbonne", country="PT"),
+        race=Race(name="Corrida fictive", city="Lisbon", country="PT"),
         transcript="une course à Lisbonne",
         steps={
             StepKind.transport: {
@@ -112,7 +112,7 @@ def test_replay_provider_set_reads_trace_file(tmp_path):
         env={"RUNAI_MODE": "replay", "RUNAI_REPLAY_TRACE": str(path)}, delay=0
     )
     assert providers.mode is DataMode.replay and providers.simulated
-    assert asyncio.run(providers.search.find_race("x")).city == "Lisbonne"
+    assert asyncio.run(providers.search.find_race("x")).city == "Lisbon"
     assert (
         asyncio.run(providers.transcriber.transcribe(b"", "audio/wav"))
         == "une course à Lisbonne"
