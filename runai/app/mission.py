@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from runai.app.mission_journey import project_journey
 from runai.app.ports import AgentRun, BrowserAgents, RaceSearch, Transcriber
 from runai.app.providers import UnavailableBrowserAgents
+from runai.app.store import MissionStore, StoredMission
 from runai.app.tasks import (
     STEP_LABELS,
     human_action,
@@ -23,7 +24,12 @@ from runai.app.tasks import (
 from runai.contracts.common import DataMode, Limitation
 from runai.contracts.framing import FramingError, FramingSummary, FramingTurn
 from runai.contracts.journey import JourneyPlan
-from runai.contracts.mission import EventEnvelope, HumanAnswer, MissionSnapshot
+from runai.contracts.mission import (
+    EventEnvelope,
+    HumanAnswer,
+    MissionSnapshot,
+    QuestionStatus,
+)
 from runai.framing.holo import Phraser
 from runai.framing.launch import LaunchPlan, plan_launch
 from runai.h.human_questions import HumanQuestionRegistry
@@ -83,6 +89,7 @@ class Mission(BaseModel):
     framing_summary: FramingSummary | None = Field(default=None, exclude=True)
     framing_turns: list[FramingTurn] = Field(default_factory=list, exclude=True)
     journey: JourneyPlan | None = Field(default=None, exclude=True)
+    read_only: bool = Field(default=False, exclude=True)
 
     @property
     def is_terminal(self) -> bool:
@@ -138,6 +145,7 @@ class MissionService:
             else question_timeout_s
         )
         self.missions: dict[str, Mission] = {}
+        self._store: MissionStore | None = None
         self._runs: dict[tuple[str, StepKind], AgentRun] = {}
         self._capture_runs: dict[tuple[str, StepKind], AgentRun] = {}
         self._writers: dict[str, TraceWriter] = {}
@@ -195,10 +203,67 @@ class MissionService:
         self._record(mission, TraceEvent(source="app", type="mission_created",
                                         message=f"Mission créée : « {mission.query} »"))
         self._emit(mission, "snapshot", self.snapshot(mission.id).model_dump(mode="json"))
+        self._save_mission(mission)
         task = asyncio.create_task(self._run_mission(mission))
         self._tasks.add(task)
         self._mission_tasks[mission.id] = task
         task.add_done_callback(self._tasks.discard)
+        return mission
+
+    @property
+    def store(self) -> MissionStore:
+        if self._store is None:
+            self._store = MissionStore(self.traces_dir)
+        return self._store
+
+    def _save_mission(self, mission: Mission) -> None:
+        if mission.plan is None:
+            return
+        self.store.save(mission.id, lambda: StoredMission(
+            snapshot=self.snapshot(mission.id), envelopes=mission.envelopes,
+            framing_summary=mission.framing_summary, framing_turns=mission.framing_turns,
+            plan=mission.plan, created_at=mission.created_at, journey=mission.journey,
+        ), terminal=mission.is_terminal)
+
+    def rehydrate(self) -> None:
+        for document in self.store.load():
+            snapshot = document.snapshot
+            if snapshot.mission_id in self.missions:
+                continue
+            mission = Mission(
+                id=snapshot.mission_id, query=document.plan.brief.race_label,
+                status=snapshot.status, created_at=document.created_at, race=snapshot.race,
+                steps={step.kind: step for step in snapshot.steps}, plan=document.plan,
+                events=[TraceEvent.model_validate(event.payload) for event in document.envelopes if event.type == "trace"],
+                envelopes=document.envelopes, limitations=snapshot.limitations, error=snapshot.error,
+                framing_summary=document.framing_summary, framing_turns=document.framing_turns,
+                journey=document.journey, read_only=True,
+            )
+            self.missions[mission.id] = mission
+            self.questions.questions.update({question.question_id: question for question in snapshot.questions})
+            if mission.journey:
+                self._recaps[(mission.id, mission.journey.revision)] = recap_from_journey(mission.journey)
+            if not mission.is_terminal:
+                message = "The server restarted while agents were running; relaunch the request."
+                mission.status = MissionStatus.failed
+                mission.error = message
+                mission.limitations.append(Limitation(code="server_restarted", message=message))
+                for question in snapshot.questions:
+                    if question.status is QuestionStatus.open:
+                        question.status = QuestionStatus.cancelled
+                        self._emit(mission, "question_resolved", question.model_dump(mode="json"))
+                for step in mission.steps.values():
+                    if step.status in {StepStatus.pending, StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user}:
+                        step.status = StepStatus.failed
+                        step.error = message
+                self._emit(mission, "error", {"code": "server_restarted", "message": message})
+                self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
+                self._publish_state(mission)
+
+    def _writable(self, mission_id: str) -> Mission:
+        mission = self.get(mission_id)
+        if mission.read_only:
+            raise MissionError("Restored missions are read-only; relaunch the request.")
         return mission
 
     def snapshot(self, mission_id: str) -> MissionSnapshot:
@@ -218,6 +283,8 @@ class MissionService:
 
     @staticmethod
     def _snapshot_steps(mission: Mission) -> list[StepResult]:
+        if mission.read_only:
+            return list(mission.steps.values())
         return [step.model_copy(update={"data": {**step.data, "history": [
             {"at": event.at.isoformat(), "message": event.message, "type": event.type}
             for event in mission.events
@@ -300,7 +367,7 @@ class MissionService:
             self._event_subscribers[mission_id].discard(queue)
 
     async def cancel(self, mission_id: str) -> None:
-        mission = self.get(mission_id)
+        mission = self._writable(mission_id)
         if mission.status is MissionStatus.cancelled:
             return
         mission.status = MissionStatus.cancelled
@@ -366,7 +433,7 @@ class MissionService:
         return known
 
     async def ask(self, mission_id: str, kind: StepKind, question: str, options: list[str]) -> str:
-        mission = self.get(mission_id)
+        mission = self._writable(mission_id)
         if mission.status is MissionStatus.cancelled:
             raise MissionError("Mission annulée")
         display_text = question
@@ -415,10 +482,11 @@ class MissionService:
             self._publish(mission, ("answer", question_model.model_dump(mode="json")))
 
     def answer_question(self, mission_id: str, question_id: str, answer: HumanAnswer):
-        mission = self.get(mission_id)
+        mission = self._writable(mission_id)
         result = self.questions.answer(question_id, mission_id, answer)
         if (result.reason or "").startswith("eligibility:") or question_id.startswith("eligibility-"):
             self._emit(mission, "question_resolved", result.model_dump(mode="json"))
+        self._save_mission(mission)
         return result
 
     async def pause(self, mission_id: str, kind: StepKind) -> None:
@@ -470,11 +538,13 @@ class MissionService:
         )
 
     async def pause_all(self, mission_id: str) -> None:
+        self._writable(mission_id)
         for kind in AGENT_STEPS:
             if self.get(mission_id).steps[kind].status is StepStatus.running:
                 await self.pause(mission_id, kind)
 
     async def resume_all(self, mission_id: str) -> None:
+        self._writable(mission_id)
         for kind in AGENT_STEPS:
             if self.get(mission_id).steps[kind].status is StepStatus.paused:
                 await self.resume(mission_id, kind)
@@ -510,7 +580,7 @@ class MissionService:
     def _active(
         self, mission_id: str, kind: StepKind
     ) -> tuple[Mission, StepResult, AgentRun]:
-        mission = self.get(mission_id)
+        mission = self._writable(mission_id)
         step = mission.steps.get(kind)
         run = self._runs.get((mission_id, kind))
         if step is None or run is None or step.status not in ACTIVE_STATUSES:
@@ -556,6 +626,7 @@ class MissionService:
     def _publish_state(self, mission: Mission) -> None:
         self._publish(mission, ("mission", mission.snapshot()))
         self._emit(mission, "step", {"steps": [step.model_dump(mode="json") for step in self._snapshot_steps(mission)]})
+        self._save_mission(mission)
 
     def _publish(self, mission: Mission, message: tuple[str, dict[str, Any]]) -> None:
         for queue in self._subscribers.get(mission.id, ()):
