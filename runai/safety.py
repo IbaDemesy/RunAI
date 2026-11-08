@@ -5,7 +5,7 @@ from runai.models import StopPoint
 
 STOP_INSTRUCTIONS = """\
 Absolute safety rules:
-- Never make a payment, confirm a booking, or submit a final form.
+- Never make a payment, place or confirm a booking or reservation, or submit a final form.
 - Never create an account or enter a password.
 - Never tick a consent, terms and conditions, or health declaration checkbox.
 - Stop as soon as the next step would require any of these actions and describe the exact screen reached.
@@ -27,7 +27,7 @@ _PATTERNS: dict[StopPoint, re.Pattern[str]] = {
         re.IGNORECASE,
     ),
     StopPoint.consent: re.compile(
-        r"\b(j'accepte|i agree|accept (the )?terms|cgu|cgv|r[èe]glement|terms and conditions|rules acceptance|accept (the )?(race |event )?rules|(race|event) rules|aceito|accetto)\b",
+        r"\b(j'accepte|i agree|accept (the )?terms|cgu|cgv|r[èe]glement|terms and conditions|rules acceptance|accept(?:ing|ed)? (the )?(race |event )?rules|aceito|accetto)\b",
         re.IGNORECASE,
     ),
     StopPoint.submission: re.compile(
@@ -89,8 +89,11 @@ _OVERRIDE_INSTRUCTIONS = re.compile(
 )
 _DISCLOSE_INSTRUCTIONS = re.compile(
     r"\b(?:reveal|disclose|show|print|repeat|revele|reveler|divulgue|mostra|mostre)\b"
-    r"(?:\W+\w+){0,5}\W+(?:system\W+prompt|instruction\W+block"
-    r"|instructions?|istruzioni|instrucoes)\b"
+    r"(?:\W+\w+){0,5}\W+(?:(?:system|internal|safety|hidden)\W+(?:prompt|instructions?)"
+    r"|instruction\W+block|(?:your|these|previous)\W+instructions?"
+    r"|instructions?\W+(?:(?:de|du)\W+)?(?:systeme|securite|internes)"
+    r"|istruzioni\W+(?:di\W+sistema|interne|di\W+sicurezza)"
+    r"|instrucoes\W+(?:do\W+sistema|internas|de\W+seguranca))\b"
 )
 
 
