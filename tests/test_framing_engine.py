@@ -163,7 +163,7 @@ def test_candidate_search_waits_for_date_and_logistics_answers():
             [SlotName.transport_mode],
         ]
         assert session.open_questions[0].text == (
-            "Quelle période (mois ou saison) ? Répondez « peu importe » si vous êtes flexible."
+            "Which period (month or season)? Say 'any time' if you are flexible."
         )
 
         answers = ("en avril", "depuis Paris", "300 euros", "2 nuits", "train")
@@ -243,7 +243,7 @@ def test_country_hint_satisfies_location_question_but_month_does_not():
 
 
 @pytest.mark.parametrize(
-    "answer", ["PEU IMPORTE", "n'importe", "FLEXIBLE", "pas de préférence"]
+    "answer", ["PEU IMPORTE", "n'importe", "FLEXIBLE", "pas de préférence", "any time", "no preference"]
 )
 def test_flexible_date_window_is_marked_not_needed_and_flow_continues(answer):
     async def run():
@@ -391,10 +391,13 @@ def test_changing_date_window_while_candidates_are_shown_searches_again():
     asyncio.run(run())
 
 
-def test_selection_survives_filling_a_previously_unknown_date_window():
+def test_conversational_period_change_replaces_derived_date_window():
     class DateWindowFiller:
         async def extract(self, text, known, turns=()):
-            return {"date_window": "avril 2028"} if text == "ma période" else {}
+            if text == "actually I'd rather go the following month":
+                assert "date_window" not in known
+                return {"date_window": "May 2028"}
+            return {}
 
         async def phrase(self, turns, question, known):
             return question
@@ -417,13 +420,21 @@ def test_selection_survives_filling_a_previously_unknown_date_window():
             session.id, FramingReply(revision=session.revision, choice_id="c0")
         )
         assert session.status == FramingStatus.ready_to_confirm
-        selected_id = session.selected_candidate_id
         session = await engine.reply(
-            session.id, FramingReply(revision=session.revision, text="ma période")
+            session.id, FramingReply(
+                revision=session.revision, text="actually I'd rather go the following month"
+            )
         )
-        assert session.slots[SlotName.date_window].value == "avril 2028"
-        assert session.selected_candidate_id == selected_id == "c0"
-        assert session.status == FramingStatus.ready_to_confirm
+        window = session.slots[SlotName.date_window]
+        assert window.value == "May 2028"
+        assert window.status.value == "answered"
+        assert window.provenance.kind == "human"
+        assert session.selected_candidate_id is None
+        assert session.status == FramingStatus.choosing_candidate
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, choice_id="c0")
+        )
+        assert session.slots[SlotName.date_window] == window
 
     asyncio.run(run())
 
@@ -576,7 +587,7 @@ def test_candidates_selection_and_channel_parity():
             assert session.slots[SlotName.race].value is None
             assert len(session.open_questions[0].choices) == 3
             assert session.open_questions[0].text == (
-                "Quel événement souhaitez-vous ? Vérifiez les sources et l'édition."
+                "Which event would you like? Check the sources and edition."
             )
             session = await engine.reply(
                 session.id, FramingReply(revision=1, choice_id="c1", channel=channel)
@@ -606,14 +617,14 @@ def test_close_candidates_use_close_match_choice_copy():
         )
         question = session.open_questions[0]
         assert question.text == (
-            "Je n'ai pas trouvé exactement votre course. Voici les plus proches — "
-            "laquelle vous intéresse ?"
+            "I could not find your exact race. Here are the closest matches — "
+            "which one interests you?"
         )
         assert question.choices[0].label == (
-            "Course 0 — 2028-06-12 · proche de votre demande"
+            "Course 0 — 2028-06-12 · close to your request"
         )
         assert question.choices[-1].id == "none"
-        assert question.choices[-1].label == "Aucune, je précise"
+        assert question.choices[-1].label == "None of these, let me clarify"
 
     asyncio.run(run())
 
@@ -678,8 +689,8 @@ def test_no_candidates_message_explains_that_search_was_expanded():
             if limitation.code == "no_candidates"
         )
         assert limitation.message == (
-            "Je n'ai trouvé aucune course correspondante, même en élargissant. "
-            "Donnez le nom officiel de la course ou le lien de son site."
+            "I found no matching race, even after broadening the search. "
+            "Provide the official race name or its website URL."
         )
 
     asyncio.run(run())
@@ -744,7 +755,7 @@ def test_manual_answers_stale_empty_and_errors():
         city_question = next(
             q for q in session.open_questions if q.slots == [SlotName.city]
         )
-        assert city_question.text == "Dans quelle ville ou quel pays ?"
+        assert city_question.text == "Which city or country?"
         session = await engine.reply(
             session.id,
             FramingReply(revision=1, question_id=city_question.id, text="Nairobi"),
@@ -838,3 +849,100 @@ def test_french_conjunction_car_is_not_a_transport_mode():
         "je viens car je veux courir à Tokyo"
     )
     assert extract_slots("j'y vais en voiture")[SlotName.transport_mode] == "car"
+
+
+@pytest.mark.parametrize(
+    "budget,nights,budget_line,stay",
+    [(800.0, 2, "Budget: €800", "2 nights"),
+     (800.5, 1, "Budget: €800.5", "1 night"),
+     (1000000.0, 2, "Budget: €1000000", "2 nights"),
+     (None, 0, "Budget: No budget cap", "0 nights")],
+)
+def test_summary_formats_human_values_without_changing_numbers(budget, nights, budget_line, stay):
+    async def run():
+        engine = FramingEngine(Search(), DataMode.demo)
+        session = await engine.create(FramingCreate(text="a race"))
+        session = await engine.reply(
+            session.id,
+            FramingReply(revision=session.revision, corrections={
+                SlotName.city: "Tokyo", SlotName.race: "City Marathon",
+                SlotName.race_date: "2028-06-12", SlotName.distance_km: 42.195,
+                SlotName.origin: "Lyon", SlotName.budget: budget,
+                SlotName.nights: nights, SlotName.transport_mode: "train",
+            }),
+        )
+        summary = session.summary
+        assert summary.lines == [
+            "City Marathon, Tokyo, 2028-06-12, 42.2 km",
+            f"Departure: Lyon; {stay}; train", budget_line,
+        ]
+        assert summary.race.distance_km == 42.195
+        assert summary.budget_eur == budget
+        assert summary.nights == nights
+        window = session.slots[SlotName.date_window]
+        assert window.value == "2028-06-12"
+        assert window.status == session.slots[SlotName.race_date].status
+        assert window.provenance.kind == "derived"
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("explicit_window", [None, "June 2028"])
+def test_sourced_date_derives_period_without_overriding_explicit_answer(explicit_window):
+    async def run():
+        engine = FramingEngine(Search(1), DataMode.demo)
+        session = await engine.create(FramingCreate(text="a race"))
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={
+                SlotName.city: "Tokyo", SlotName.distance_km: 10,
+                SlotName.date_window: explicit_window, SlotName.origin: "Lyon",
+                SlotName.budget: 800, SlotName.nights: 2, SlotName.transport_mode: "train",
+            },
+        ))
+        before = session.slots[SlotName.date_window]
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0",
+        ))
+        assert session.slots[SlotName.date_window] == before
+
+    asyncio.run(run())
+
+
+def test_sourced_date_fills_unknown_period():
+    async def run():
+        engine = FramingEngine(Search(1), DataMode.demo)
+        session = await engine.create(FramingCreate(text="a race"))
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={
+                SlotName.city: "Tokyo", SlotName.race: "City Run",
+                SlotName.origin: "Lyon", SlotName.budget: 800,
+                SlotName.nights: 2, SlotName.transport_mode: "train",
+            },
+        ))
+        assert not session.slots[SlotName.date_window].is_known
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0",
+        ))
+        window = session.slots[SlotName.date_window]
+        assert window.value == "2028-06-12"
+        assert window.status.value == "sourced"
+        assert window.provenance.kind == "derived"
+
+    asyncio.run(run())
+
+
+def test_clearing_race_date_clears_derived_period():
+    async def run():
+        engine = FramingEngine(Search(), DataMode.demo)
+        session = await engine.create(FramingCreate(text="race in Tokyo on 2028-06-12"))
+        assert session.slots[SlotName.date_window].provenance.kind == "derived"
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.race_date: None},
+        ))
+        window = session.slots[SlotName.date_window]
+        assert not window.is_known
+        assert window.value is None
+        assert window.provenance is None
+        assert any(q.slots == [SlotName.date_window] for q in session.open_questions)
+
+    asyncio.run(run())

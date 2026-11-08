@@ -103,26 +103,26 @@ def test_candidates_are_sourced_and_offered_as_choices():
 def test_confirmation_requires_current_revision_and_is_idempotent():
     session = FramingSession.model_validate(load_fixture("framing_ready.json"))
     assert not missing_slots(session)
-    with pytest.raises(FramingError, match="révision 4"):
+    with pytest.raises(FramingError, match="revision 4"):
         assert_launchable(session, FramingConfirm(revision=4, idempotency_key=KEY))
     assert assert_launchable(session, FramingConfirm(revision=5, idempotency_key=KEY)) is None
     session.mission_id, session.confirm_key, session.status = "m1", KEY, FramingStatus.launched
     assert assert_launchable(session, FramingConfirm(revision=5, idempotency_key=KEY)) == "m1"
-    with pytest.raises(FramingError, match="déjà lancée"):
+    with pytest.raises(FramingError, match="already launched"):
         assert_launchable(session, FramingConfirm(revision=5, idempotency_key="other-key-1"))
 
 
 def test_correction_after_summary_invalidates_launch():
     session = FramingSession.model_validate(load_fixture("framing_ready.json"))
     session.revision += 1
-    with pytest.raises(FramingError, match="obsolète"):
+    with pytest.raises(FramingError, match="stale"):
         assert_launchable(session, FramingConfirm(revision=session.revision, idempotency_key=KEY))
 
 
 def test_stale_or_cancelled_replies_are_rejected():
     session = FramingSession.model_validate(load_fixture("framing_candidates.json"))
     check_reply_revision(session, FramingReply(revision=2, text="la B"))
-    with pytest.raises(FramingError, match="obsolète"):
+    with pytest.raises(FramingError, match="Stale"):
         check_reply_revision(session, FramingReply(revision=1, text="la B"))
     session.status = FramingStatus.cancelled
     with pytest.raises(FramingError):

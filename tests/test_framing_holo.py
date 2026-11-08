@@ -274,5 +274,5 @@ async def test_candidate_question_is_announced_plainly_not_rephrased():
     if not session.candidates:
         pytest.skip("no demo candidates for Milan")
     assert session.turns[-1].role == "assistant"
-    assert "trouvé" in session.turns[-1].text and "ci-dessous" in session.turns[-1].text
+    assert "found" in session.turns[-1].text and "below" in session.turns[-1].text
     assert phraser.calls == []

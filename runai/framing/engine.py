@@ -30,21 +30,20 @@ from runai.framing.holo import Phraser
 from runai.framing.interpret import extract_slots
 from runai.journey import public_origin
 from runai.models import Race
-from runai.redaction import redact_secrets
 from runai.search.candidates import CandidateSearchError, location_hint
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
 
 LABELS = {
-    SlotName.city: "Dans quelle ville ou quel pays ?",
-    SlotName.race: "Quel événement officiel (nom ou URL) souhaitez-vous ?",
-    SlotName.race_date: "À quelle date se déroule la course ?",
-    SlotName.date_window: "Quelle période (mois ou saison) ? Répondez « peu importe » si vous êtes flexible.",
-    SlotName.distance_km: "Quelle distance en km ?",
-    SlotName.origin: "De quelle ville partez-vous ?",
-    SlotName.budget: "Quel budget total en euros (ou sans plafond) ?",
-    SlotName.nights: "Combien de nuits ?",
-    SlotName.transport_mode: "Quel transport : train, avion, voiture ou bus ?",
+    SlotName.city: "Which city or country?",
+    SlotName.race: "Which official event (name or URL)?",
+    SlotName.race_date: "What is the race date?",
+    SlotName.date_window: "Which period (month or season)? Say 'any time' if you are flexible.",
+    SlotName.distance_km: "What distance in km?",
+    SlotName.origin: "Which city are you departing from?",
+    SlotName.budget: "What total budget in euros (or no cap)?",
+    SlotName.nights: "How many nights?",
+    SlotName.transport_mode: "Which transport: train, plane, car or bus?",
 }
 
 
@@ -104,7 +103,7 @@ class FramingEngine:
                 ) and (not isinstance(value, str) or not value.strip()):
                     raise ValueError()
             except (ValueError, TypeError, OverflowError) as exc:
-                raise FramingError(f"Valeur invalide : {name.value}") from exc
+                raise FramingError(f"Invalid value: {name.value}") from exc
 
     async def reply(self, framing_id: str, reply: FramingReply) -> FramingSession:
         async with self._locks[framing_id]:
@@ -114,7 +113,7 @@ class FramingEngine:
                 (q for q in session.open_questions if q.id == reply.question_id), None
             )
             if reply.question_id and question is None:
-                raise FramingError("Question périmée ou inconnue")
+                raise FramingError("Stale or unknown question")
             answer = (reply.text or "").strip()
             guidance = (
                 "Please enter a city, race name, or an explicit correction; "
@@ -143,7 +142,7 @@ class FramingEngine:
                     None,
                 )
                 if choice is None:
-                    raise FramingError("Choix inconnu")
+                    raise FramingError("Unknown choice")
             elif answer.casefold() in {
                 "none", "aucune", "no", "other", "autre", "not this one"
             }:
@@ -172,7 +171,9 @@ class FramingEngine:
                         "n'importe",
                         "n’importe",
                         "flexible",
-                        "pas de préférence",
+                        "pas de pr\u00e9f\u00e9rence",
+                        "any time",
+                        "no preference",
                     )
                     if any(phrase in normalized for phrase in flexible):
                         values[slot] = None
@@ -208,7 +209,7 @@ class FramingEngine:
             self._validate(values)
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
-                values[SlotName.origin] = None if public == "Origin not specified" else public
+                values[SlotName.origin] = None if public == public_origin("") else public
             turn_text = reply.text or reply.choice_id or str(values)
             if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
@@ -245,7 +246,7 @@ class FramingEngine:
                     else SlotStatus.unknown,
                     value=value,
                     provenance=Provenance(
-                        kind="derived", label="Distance du terme humain marathon/semi"
+                        kind="derived", label="Distance from the human term marathon/half-marathon"
                     )
                     if name == SlotName.distance_km
                     and name not in reply.corrections
@@ -319,18 +320,27 @@ class FramingEngine:
     async def _holo_fill(
         self, session: FramingSession, text: str, values: dict[SlotName, object]
     ) -> dict[SlotName, object]:
-        """Complète, sans jamais écraser, les slots que l'heuristique n'a pas compris."""
+        """Fill slots missed by the heuristic without overwriting existing values."""
         extract = getattr(self.phraser, "extract", None)
         if not extract:
             return {}
-        known = {name.value: str(slot.value) for name, slot in session.slots.items() if slot.is_known}
+        known = {
+            name.value: str(slot.value)
+            for name, slot in session.slots.items()
+            if slot.is_known
+            and not (
+                name == SlotName.date_window
+                and slot.provenance
+                and slot.provenance.kind == "derived"
+            )
+        }
         filled: dict[SlotName, object] = {}
         for raw, value in (await extract(text, known, session.turns)).items():
             try:
                 name = SlotName(raw)
             except ValueError:
                 continue
-            if name in values or session.slots[name].is_known:
+            if name in values or name.value in known:
                 continue
             try:
                 self._validate({name: value})
@@ -355,9 +365,9 @@ class FramingEngine:
         if candidates:
             count = len(candidates)
             text = (
-                "J'ai trouvé une course qui correspond. Vérifiez-la ci-dessous et choisissez-la, ou dites-moi si ce n'est pas la bonne."
+                "I found a matching race. Review it below and select it, or tell me if it is not the right one."
                 if count == 1
-                else f"J'ai trouvé {count} courses qui correspondent. Choisissez celle qui vous intéresse ci-dessous, ou dites-moi si aucune ne convient."
+                else f"I found {count} matching races. Select the one you want below, or tell me if none is suitable."
             )
         else:
             text = await self.phraser.phrase(session.turns, question.text, known)
@@ -367,6 +377,25 @@ class FramingEngine:
 
     async def _advance(self, session: FramingSession, *, search: bool) -> None:
         session.open_questions = []
+        race_date = session.slots[SlotName.race_date]
+        date_window = session.slots[SlotName.date_window]
+        if (
+            (not race_date.is_known or race_date.value is None)
+            and date_window.provenance
+            and date_window.provenance.kind == "derived"
+        ):
+            session.slots[SlotName.date_window] = Slot(name=SlotName.date_window)
+        if race_date.is_known and race_date.value is not None and (
+            not date_window.is_known
+            or (date_window.provenance and date_window.provenance.kind == "derived")
+        ):
+            session.slots[SlotName.date_window] = Slot(
+                name=SlotName.date_window,
+                status=race_date.status,
+                value=str(race_date.value),
+                provenance=Provenance(kind="derived"),
+                revision=session.revision,
+            )
         request_text = " / ".join(
             turn.text for turn in session.turns if turn.role == "user" and turn.text
         )
@@ -457,13 +486,13 @@ class FramingEngine:
                             session.candidates = await self.search.find_candidates(
                                 session.slots
                             )
-                    except CandidateSearchError as exc:
+                    except CandidateSearchError:
                         self._search_keys.pop(session.id, None)
                         session.candidates = []
                         session.limitations.append(
                             Limitation(
                                 code="candidate_provider_error",
-                                message=redact_secrets(str(exc)),
+                                message="Race search is temporarily unavailable. Please try again or provide the official event details.",
                             )
                         )
                     if not session.candidates and not any(
@@ -474,9 +503,8 @@ class FramingEngine:
                             Limitation(
                                 code="no_candidates",
                                 message=(
-                                    "Je n'ai trouvé aucune course correspondante, "
-                                    "même en élargissant. Donnez le nom officiel "
-                                    "de la course ou le lien de son site."
+                                    "I found no matching race, even after broadening the search. "
+                                    "Provide the official race name or its website URL."
                                 ),
                             )
                         )
@@ -491,10 +519,10 @@ class FramingEngine:
                     id=uuid4().hex,
                     slots=[SlotName.race],
                     text=(
-                        "Je n'ai pas trouvé exactement votre course. Voici les plus proches — "
-                        "laquelle vous intéresse ?"
+                        "I could not find your exact race. Here are the closest matches — "
+                        "which one interests you?"
                         if close_matches_only
-                        else "Quel événement souhaitez-vous ? Vérifiez les sources et l'édition."
+                        else "Which event would you like? Check the sources and edition."
                     ),
                     revision=session.revision,
                     choices=[
@@ -502,9 +530,9 @@ class FramingEngine:
                             id=c.id,
                             candidate_id=c.id,
                             label=(
-                                f"{c.name} — {c.race_date or 'date à confirmer'}"
+                                f"{c.name} — {c.race_date or 'date to be confirmed'}"
                                 + (
-                                    " · proche de votre demande"
+                                    " · close to your request"
                                     if any(
                                         limitation.code == "close_match"
                                         for limitation in c.limitations
@@ -516,7 +544,7 @@ class FramingEngine:
                         )
                         for c in session.candidates
                     ]
-                    + [FramingChoice(id="none", label="Aucune, je précise")],
+                    + [FramingChoice(id="none", label="None of these, let me clarify")],
                 )
             )
             return
@@ -535,7 +563,7 @@ class FramingEngine:
         if candidate and candidate.distances_km and race_km is not None:
             race_km = matching_distance(candidate.distances_km, race_km)
             if race_km is None:
-                raise FramingError("Distance non proposée par cet événement")
+                raise FramingError("Distance not offered by this event")
         for name in missing:
             session.open_questions.append(
                 FramingQuestion(
@@ -566,10 +594,15 @@ class FramingEngine:
             session.limitations.append(
                 Limitation(
                     code="manual_event",
-                    message="Événement renseigné par l'utilisateur, non vérifié : vérifier manuellement le site officiel et le pays avant toute automatisation.",
+                    message="User-provided event, not verified: manually check the official website and country before any automation.",
                 )
             )
         nights = int(value(SlotName.nights))
+        budget = value(SlotName.budget)
+        budget_label = "No budget cap"
+        if budget is not None:
+            amount = float(budget)
+            budget_label = f"€{int(amount) if amount.is_integer() else amount}"
         dates = (
             (
                 race.race_date - timedelta(days=nights - 1),
@@ -588,9 +621,9 @@ class FramingEngine:
             budget_eur=value(SlotName.budget),
             transport_mode=value(SlotName.transport_mode),
             lines=[
-                f"{race.name}, {race.city}, {race.race_date}, {race.distance_km} km",
-                f"Départ : {value(SlotName.origin)} ; {nights} nuits ; {value(SlotName.transport_mode)}",
-                f"Budget : {value(SlotName.budget) if value(SlotName.budget) is not None else 'sans plafond'}",
+                f"{race.name}, {race.city}, {race.race_date}, {race.distance_km:.1f} km",
+                f"Departure: {value(SlotName.origin)}; {nights} {'night' if nights == 1 else 'nights'}; {value(SlotName.transport_mode)}",
+                f"Budget: {budget_label}",
             ],
             limitations=session.limitations,
         )
@@ -622,7 +655,7 @@ class FramingEngine:
         async with self._locks[framing_id]:
             session = self.sessions[framing_id]
             if session.status == FramingStatus.launched:
-                raise FramingError("Mission lancée : utilisez l'annulation de mission")
+                raise FramingError("Mission launched: use mission cancellation")
             session.status = FramingStatus.cancelled
             session.summary = None
             session.open_questions = []
