@@ -82,6 +82,9 @@ edition (yyyy), budget (total euros as a number, or null for "no limit"), nights
 transport_mode ("train"|"flight"|"car"|"bus"), preferences (short English phrase).
 Rules:
 - Every update needs an exact quote in "evidence". Never guess or fill defaults. A non-answer ("je sais pas") produces no update.
+- Flexibility about the period IS an answer: "any time", "anytime", "flexible", "peu importe", "n'importe quand", "dès que possible",
+  "asap", "the next one", "la prochaine" -> {"slot": "date_window", "value": null, "evidence": "<their words>"}. Never ask the period again
+  after that. "No limit" / "sans plafond" for money -> {"slot": "budget", "value": null}.
 - The message may answer PENDING, correct ANY known slot, ask for advice, or be small talk: decide from its meaning, not from PENDING.
   "en fait plutôt Porto" changes the race city even if PENDING asks for the departure city.
 - Pick a CANDIDATE only when the runner clearly chooses one, by any wording ("the first", "the Sunday one", its name);

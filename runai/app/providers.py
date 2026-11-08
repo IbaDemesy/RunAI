@@ -382,7 +382,7 @@ PLATFORMS: tuple[Platform, ...] = (
         "trenitalia",
         "trenitalia.com",
         StepKind.transport,
-        ("trenitalia.com",),
+        ("trenitalia.com", "lefrecce.it"),  # Trenitalia runs its search and results on lefrecce.it
         "https://www.trenitalia.com/en.html",
         transport_modes=frozenset({"train"}),
         countries=frozenset({"IT"}),

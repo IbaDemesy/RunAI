@@ -444,8 +444,6 @@
       if (step.stop_point) content.append(el("p", "Stop point: " + label(step.stop_point)));
       if (step.error) content.append(el("p", step.error));
       link(content, step.data?.manual_url || step.url, "Continue manually on the official site");
-      if (active) link(content, step.live_view_url, "Watch the agent live");
-      link(content, step.agent_view_url, "Replay");
       let history = block.querySelector(".agent-history");
       if (!history) {
         history = el("details", null, "agent-history");

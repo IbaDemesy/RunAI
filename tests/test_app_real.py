@@ -132,7 +132,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool(monkeypatch, ty
     "kind,brief,start_url,expected_hosts",
     [
         (StepKind.accommodation, SimpleNamespace(accommodation_url="https://all.accor.com"), "https://reservation.accor.com/room", ("all.accor.com", "accor.com", "reservation.accor.com")),
-        (StepKind.transport, SimpleNamespace(transport_url="https://www.trenitalia.com"), "https://booking.trenitalia.com/train", ("trenitalia.com", "booking.trenitalia.com")),
+        (StepKind.transport, SimpleNamespace(transport_url="https://www.trenitalia.com"), "https://booking.trenitalia.com/train", ("trenitalia.com", "lefrecce.it", "booking.trenitalia.com")),
         (StepKind.accommodation, None, "https://all.accor.com/hotel", ("all.accor.com", "accor.com")),
     ],
 )
