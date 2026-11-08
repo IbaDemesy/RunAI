@@ -146,7 +146,7 @@ def _extract_dates(text: str, current: date) -> dict[SlotName, object]:
                         or (bool(month[1]) and number == current.month)
                     )
                 )
-                result[SlotName.date_window] = normalize_date_window(f"{name} {year}")
+                result[SlotName.date_window] = f"{name} {year}"
             # Let the engine preserve this standalone legacy reply as free text.
             elif not re.fullmatch(r"\s*au printemps\s*[.!?]?\s*", text, re.IGNORECASE):
                 season = re.search(

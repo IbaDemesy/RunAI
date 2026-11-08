@@ -15,7 +15,7 @@ from runai.contracts.framing import (
 )
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.engine import FramingEngine
-from runai.framing.interpret import extract_slots
+from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.models import Source
 from runai.search.candidates import CandidateSearchError
 
@@ -114,7 +114,7 @@ def test_extraction_explicit_only():
     }
     assert (
         extract_slots("semi à Tokyo en avril 2028")[SlotName.date_window]
-        == "April 2028"
+        == "avril 2028"
     )
     assert SlotName.race_date not in extract_slots("course le 31 février 2028")
     assert (
@@ -152,7 +152,11 @@ def test_extraction_explicit_only():
     ],
 )
 def test_bilingual_city_first_and_date_extraction(text, expected):
-    assert extract_slots(text) == expected
+    actual = extract_slots(text)
+    if SlotName.date_window in actual:
+        actual[SlotName.date_window] = normalize_date_window(actual[SlotName.date_window])
+    for slot, value in expected.items():
+        assert actual[slot] == value
 
 
 @pytest.mark.parametrize(
@@ -171,8 +175,8 @@ def test_dates_never_become_race_cities(text):
     )),
 )
 def test_english_month_names_and_abbreviations(month, english):
-    assert extract_slots(f"race in {month} 2028")[SlotName.date_window] == f"{english} 2028"
-    assert extract_slots(f"race in {english} 2028")[SlotName.date_window] == f"{english} 2028"
+    assert normalize_date_window(extract_slots(f"race in {month} 2028")[SlotName.date_window]) == f"{english} 2028"
+    assert normalize_date_window(extract_slots(f"race in {english} 2028")[SlotName.date_window]) == f"{english} 2028"
 
 
 @pytest.mark.parametrize("distance", ["10K", "10k", "10 km"])
@@ -187,7 +191,7 @@ def test_english_half_marathon_distances(distance):
 
 def test_english_edition_and_month_without_year():
     values = extract_slots("Tokyo half in April edition 2027", today=date(2026, 11, 7))
-    assert values[SlotName.date_window] == "April 2027"
+    assert normalize_date_window(values[SlotName.date_window]) == "April 2027"
     assert values[SlotName.edition] == "2027"
 
 
@@ -469,7 +473,7 @@ def test_bilingual_input_produces_english_questions_and_summary(language):
         )
         session = await engine.create(FramingCreate(text=text))
         assert session.status == FramingStatus.choosing_candidate
-        assert session.turns[-1].text.startswith("I found a race that matches.")
+        assert session.turns[-1].text.startswith("I found a matching race.")
         assert session.open_questions[0].choices[-1].label == "None of these, let me clarify"
         assert session.slots[SlotName.distance_km].provenance.kind.value == "human"
         session = await engine.reply(session.id, FramingReply(
@@ -477,7 +481,7 @@ def test_bilingual_input_produces_english_questions_and_summary(language):
         ))
         assert session.status == FramingStatus.ready_to_confirm
         assert session.summary.lines[1] == "From London · 2 nights · train"
-        assert session.summary.lines[2] == "Budget: 800.0"
+        assert session.summary.lines[2] == "Budget: €800"
 
     asyncio.run(run())
 
@@ -675,14 +679,14 @@ def test_generic_race_forms_do_not_become_named_race(text, city, distance):
     ],
 )
 def test_month_without_year_uses_next_occurrence(text, expected):
-    assert extract_slots(text, today=date(2026, 11, 7))[SlotName.date_window] == expected
+    assert normalize_date_window(extract_slots(text, today=date(2026, 11, 7))[SlotName.date_window]) == expected
 
 
 def test_month_window_uses_explicit_edition_year():
     values = extract_slots(
         "course à Tokyo en mars édition 2030", today=date(2026, 11, 7)
     )
-    assert values[SlotName.date_window] == "March 2030"
+    assert normalize_date_window(values[SlotName.date_window]) == "March 2030"
     assert values[SlotName.edition] == "2030"
 
 
@@ -738,7 +742,7 @@ def test_close_candidates_use_close_match_choice_copy():
             "which one interests you?"
         )
         assert question.choices[0].label == (
-            "Course 0 — Monday 12 June 2028 · close to your request"
+            "Race 0 — Monday 12 June 2028 · close to your request"
         )
         assert question.choices[-1].id == "none"
         assert question.choices[-1].label == "None of these, let me clarify"

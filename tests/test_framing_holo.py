@@ -8,7 +8,13 @@ import pytest
 from runai.contracts.common import DataMode
 from runai.contracts.framing import FramingCreate, FramingTurn
 from runai.framing.engine import FramingEngine
-from runai.framing.holo import HoloPhraser, TemplatePhraser, _history, clean_extraction
+from runai.framing.holo import (
+    EXTRACT_PROMPT,
+    HoloPhraser,
+    TemplatePhraser,
+    _history,
+    clean_extraction,
+)
 
 TURNS = [FramingTurn(role="user", text="A marathon in spring", revision=1)]
 
@@ -114,10 +120,10 @@ async def test_holo_extract_context_accepts_both_languages(text):
         messages = json.loads(request.content)["messages"]
         assert messages[0]["content"] == EXTRACT_PROMPT
         assert "French or English" in EXTRACT_PROMPT
-        assert '"December 2026"' in EXTRACT_PROMPT
-        assert "Today's date:" in messages[1]["content"]
-        assert "Conversation so far:" in messages[1]["content"]
-        assert "Already understood:" in messages[1]["content"]
+        assert '"April 2027"' in EXTRACT_PROMPT
+        assert "Today:" in messages[1]["content"]
+        assert "Recent conversation:" in messages[1]["content"]
+        assert "Known context:" in messages[1]["content"]
         assert f"New message to analyze: {text}" in messages[1]["content"]
         return httpx.Response(200, json={"choices": [{"message": {"content": '{"date_window": "December 2026"}'}}]})
 
