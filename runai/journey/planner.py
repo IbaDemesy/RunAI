@@ -150,6 +150,13 @@ class JourneyInputs(BaseModel):
     local_cost: Money | None = None
 
 
+_COUNTRY_NAMES = {
+    "france", "uk", "united kingdom", "england", "usa", "us", "united states", "germany",
+    "deutschland", "italy", "italia", "spain", "españa", "espana", "portugal", "belgium",
+    "belgique", "switzerland", "suisse", "netherlands", "brazil", "brasil", "japan",
+}
+
+
 def public_origin(text: str) -> str:
     """City or neighborhood only: remove street numbers and postcodes from an address."""
     street_word = re.compile(
@@ -164,6 +171,8 @@ def public_origin(text: str) -> str:
     for part in parts:
         value = " ".join(_POSTCODE.sub(" ", part).split())
         if not value or _STREET_NUMBER.match(value) or street_word.search(value):
+            continue
+        if cleaned and value.casefold() in _COUNTRY_NAMES:
             continue
         if re.search(r"\d", value) and not re.fullmatch(
             r"[^\d]+\s(?:\d{1,2}(?:e|er|ème|th|st|nd|rd)?|T\d{1,2})", value,
