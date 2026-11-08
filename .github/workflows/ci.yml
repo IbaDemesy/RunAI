@@ -11,8 +11,13 @@ concurrency:
 
 jobs:
   test:
+    name: test (python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -22,15 +27,27 @@ jobs:
           node-version: "24"
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - name: Install uv
-        run: pip install uv==0.13.7
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+          enable-cache: true
+          cache-dependency-glob: "requirements*.txt"
+          cache-suffix: py${{ matrix.python-version }}
       - name: Install dependencies
-        run: uv pip install --system -r requirements.txt ruff pytest
+        run: uv pip install --system -r requirements.txt -r requirements-dev.txt
       - name: Lint
         run: ruff check .
       - name: Test
-        run: pytest -q
+        run: pytest -q --durations=10 --junitxml=reports/pytest-${{ matrix.python-version }}.xml
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pytest-results-py${{ matrix.python-version }}
+          path: reports/
+          if-no-files-found: warn
       - name: JavaScript syntax
         run: |
           for script in runai/app/static/*.js web/flyover/*.js web/voice/voice-input.js; do
