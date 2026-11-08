@@ -121,7 +121,7 @@ class ReplayTrace(BaseModel):
 
 
 def _replay_label(trace: ReplayTrace) -> str:
-    return f"Replay de « {trace.label} » (enregistré en {trace.recorded_mode.value})"
+    return f"Replay of {trace.label} (recorded in {trace.recorded_mode.value})"
 
 
 class ReplayRaceSearch:

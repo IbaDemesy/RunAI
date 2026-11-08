@@ -148,9 +148,9 @@ def test_demo_results_are_labeled_demo():
     assert result.data["provenance"]["kind"] == "fixture"
 
 
-def test_replay_requires_a_trace():
-    with pytest.raises(ValueError, match="RUNAI_REPLAY_TRACE"):
-        build_providers(DataMode.replay, env={})
+def test_replay_defaults_to_committed_trace():
+    providers = build_providers(DataMode.replay, env={})
+    assert providers.health["replay"].detail == "Default demo replay trace"
 
 
 @pytest.mark.parametrize(

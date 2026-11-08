@@ -76,7 +76,7 @@ def test_replay_from_snapshot_is_labeled_and_never_live(tmp_path):
     )
     assert result.data["provenance"]["mode"] == "replay"
     assert result.data["provenance"]["kind"] == "replay"
-    assert "enregistré en live" in result.data["provenance"]["label"]
+    assert "recorded in live" in result.data["provenance"]["label"]
     assert result.data["replay_of"] == "h-real-1"
     assert (
         result.h_session_id == "replay-accommodation" and result.live_view_url is None
