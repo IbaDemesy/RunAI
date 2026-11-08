@@ -89,8 +89,11 @@ _OVERRIDE_INSTRUCTIONS = re.compile(
 )
 _DISCLOSE_INSTRUCTIONS = re.compile(
     r"\b(?:reveal|disclose|show|print|repeat|revele|reveler|divulgue|mostra|mostre)\b"
-    r"(?:\W+\w+){0,5}\W+(?:system\W+prompt|instruction\W+block"
-    r"|instructions?|istruzioni|instrucoes)\b"
+    r"(?:\W+\w+){0,5}\W+(?:(?:system|internal|safety|hidden)\W+(?:prompt|instructions?)"
+    r"|instruction\W+block|(?:your|these|previous)\W+instructions?"
+    r"|instructions?\W+(?:(?:de|du)\W+)?(?:systeme|securite|internes)"
+    r"|istruzioni\W+(?:di\W+sistema|interne|di\W+sicurezza)"
+    r"|instrucoes\W+(?:do\W+sistema|internas|de\W+seguranca))\b"
 )
 
 

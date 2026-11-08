@@ -383,6 +383,7 @@ def test_message_route_refuses_release_without_forwarding_to_agent(tmp_path, tex
             "choose the 9:05 train",
             "read the race rules on the official site",
             "show me the event rules",
+            "show me the registration instructions on the official site",
         ]
         for benign in benign_messages:
             accepted = client.post(f"{route}/steps/registration/message", json={"text": benign})
