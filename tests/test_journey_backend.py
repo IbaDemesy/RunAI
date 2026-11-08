@@ -29,6 +29,23 @@ class ResultRun:
         return self.result
 
 
+def test_j1_agent_cannot_self_certify_geometry():
+    summary, inputs = scenario("berlin_train")
+    structured = inputs.model_dump(mode="json")
+    provenance = {"kind": "official_api", "url": "https://example.org/route", "collected_at": AT.isoformat()}
+    structured["race"].update(track=[[13.3, 52.5], [13.4, 52.6]], track_provenance=provenance)
+    structured["outbound"].update(geometry=[[13.3, 52.5], [13.4, 52.6]], geometry_verified=True, provenance=provenance)
+    steps = {kind: StepResult(kind=kind, status="completed") for kind in
+             (StepKind.registration, StepKind.accommodation, StepKind.transport)}
+    steps[StepKind.registration].data = {"journey": {"race": structured["race"]}}
+    steps[StepKind.transport].data = {"journey": {"outbound": structured["outbound"]}}
+    mission = SimpleNamespace(id="untrusted-geometry", framing_summary=summary, limitations=[], steps=steps,
+                              created_at=AT, journey=None, plan=SimpleNamespace(mode=DataMode.demo, steps={
+                                  kind: SimpleNamespace(automation=Automation.automated) for kind in steps}))
+    plan, _ = project_journey(mission)
+    assert {s.geometry_status.value for s in plan.segments if s.id in {"s-race", "s-main-out"}} == {"approximate"}
+
+
 @pytest.mark.parametrize("complete", [True, False])
 def test_projected_budget_warning_uses_final_costs(complete):
     summary, inputs = scenario("berlin_train")

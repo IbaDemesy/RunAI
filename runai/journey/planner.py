@@ -305,7 +305,8 @@ def _geometry(geometry, provenance, verified, a: Coords | None, b: Coords | None
     if geometry and len(geometry) >= 2:
         if provenance is None:
             return GeometryStatus.illustrative, geometry
-        return (GeometryStatus.verified if verified else GeometryStatus.approximate), geometry
+        trusted = provenance.kind in {ProvenanceKind.official_api, ProvenanceKind.human, ProvenanceKind.linkup}
+        return (GeometryStatus.verified if verified and trusted and provenance.url else GeometryStatus.approximate), geometry
     if a and b:
         return GeometryStatus.illustrative, [(a.lon, a.lat), (b.lon, b.lat)]
     return GeometryStatus.unavailable, None

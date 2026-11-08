@@ -80,6 +80,27 @@ def train_plan(**kw):
                               mission_id="m-train", mode=DataMode.demo)
 
 
+@pytest.mark.parametrize(("kind", "url", "verified"), [
+    ("h_agent", None, False), ("h_agent", "https://example.org/route", False),
+    ("linkup", None, False), ("human", None, False),
+    ("official_api", "https://example.org/route", True),
+    ("human", "https://example.org/route", True),
+    ("linkup", "https://example.org/route", True),
+])
+def test_j1_geometry_requires_trusted_sourced_provenance(kind, url, verified):
+    inputs = train_inputs()
+    provenance = Provenance(kind=kind, url=url, collected_at=AT)
+    inputs.race.track = [(4.8, 52.3), (4.9, 52.4)]
+    inputs.race.track_provenance = provenance
+    inputs.outbound.geometry = inputs.race.track
+    inputs.outbound.geometry_verified = True
+    inputs.outbound.provenance = provenance
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j1", mode=DataMode.demo)
+    expected = GeometryStatus.verified if verified else GeometryStatus.approximate
+    assert {s.geometry_status for s in plan.segments if s.id in {"s-race", "s-main-out"}} == {expected}
+
+
 def flight_plan():
     lis, par = "Europe/Lisbon", "Europe/Paris"
     out_hub, in_hub = place("ORY", 48.7262, 2.3652, par), place("LIS", 38.7742, -9.1342, lis)
@@ -229,7 +250,7 @@ def test_unsourced_link_is_illustrative_and_sourced_is_verified():
     assert segs["s-main-out"].geometry_status is GeometryStatus.illustrative
     assert segs["s-race"].geometry_status is GeometryStatus.unavailable
     assert "race_track_unavailable" in {lim.code for lim in plan.limitations}
-    race = inputs.race.model_copy(update={"track": track, "track_provenance": FIX})
+    race = inputs.race.model_copy(update={"track": track, "track_provenance": LINKUP})
     plan2 = build_journey_plan(s, inputs.model_copy(update={"race": race}), mission_id="m", mode=DataMode.demo)
     assert {seg.id: seg for seg in plan2.segments}["s-race"].geometry_status is GeometryStatus.verified
 
