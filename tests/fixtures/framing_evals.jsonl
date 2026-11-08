@@ -1,0 +1,50 @@
+{"id":"jury_spring","text":"Un marathon au printemps, depuis Lyon","expected":{"origin":"Lyon","distance_km":42.195},"tags":["fr","jury","must_not_misfill"]}
+{"id":"jury_lisbon","text":"Lisbon","expected":{"city":"Lisbon"},"tags":["en","jury","pending_u1"]}
+{"id":"jury_milan_april","text":"Milan marathon in April 2027","expected":{"city":"Milan","distance_km":42.195,"date_window":"avril 2027"},"tags":["en","jury","must_not_misfill","pending_u1"]}
+{"id":"jury_tokyo","text":"Tokyo 10K from London","expected":{"city":"Tokyo","distance_km":10,"origin":"London"},"tags":["en","jury","pending_u1"]}
+{"id":"jury_milan_race","text":"Marathon de Milan","expected":{"city":"Milan","race":"Marathon de Milan","distance_km":42.195},"tags":["fr","jury"]}
+{"id":"vague_en","text":"I would like to run somewhere","expected":{},"tags":["en","must_not_misfill"]}
+{"id":"vague_fr","text":"Je cherche une course sympa","expected":{},"tags":["fr","must_not_misfill"]}
+{"id":"empty","text":"","expected":{},"tags":["en","must_not_misfill"]}
+{"id":"filler","text":"euh ben je sais pas encore","expected":{},"tags":["fr","voice","must_not_misfill"]}
+{"id":"spring_en","text":"A marathon in spring","expected":{"distance_km":42.195},"tags":["en","must_not_misfill","pending_u1"]}
+{"id":"spring_fr","text":"Un marathon au printemps","expected":{"distance_km":42.195},"tags":["fr","must_not_misfill"]}
+{"id":"neg_marathon","text":"not a marathon","expected":{},"tags":["en","negation","must_not_misfill"]}
+{"id":"neg_train","text":"pas en train","expected":{},"tags":["fr","negation","must_not_misfill","pending_u1"]}
+{"id":"neg_city","text":"Not in Paris, in Berlin","expected":{"city":"Berlin"},"tags":["en","negation","must_not_misfill","pending_u1"]}
+{"id":"neg_origin","text":"Not from London, from Bristol","expected":{"origin":"Bristol"},"tags":["en","negation","must_not_misfill","pending_u1"]}
+{"id":"preferred_en","text":"Berlin or Valencia, preferably Valencia","expected":{"city":"Valencia"},"tags":["en","multi_city","must_not_misfill","pending_u1"]}
+{"id":"preferred_fr","text":"Paris ou Lyon, de préférence Lyon","expected":{"city":"Lyon"},"tags":["fr","multi_city","must_not_misfill","pending_u1"]}
+{"id":"undecided","text":"in Berlin or Valencia","expected":{},"tags":["en","multi_city","must_not_misfill"]}
+{"id":"place_like","text":"I want to run in spring","expected":{},"tags":["en","must_not_misfill","pending_u1"]}
+{"id":"place_like_fr","text":"Je veux courir à fond","expected":{},"tags":["fr","must_not_misfill","pending_u1"]}
+{"id":"voice_fr","text":"euh un marathon à milan depuis lyon","expected":{"city":"Milan","origin":"Lyon","distance_km":42.195},"tags":["fr","voice","combo"]}
+{"id":"voice_en","text":"um a marathon in berlin from london","expected":{"city":"Berlin","origin":"London","distance_km":42.195},"tags":["en","voice","combo"]}
+{"id":"voice_budget","text":"euh 800 euros pour 3 nuits en train","expected":{"budget":800,"nights":3,"transport_mode":"train"},"tags":["fr","voice","combo"]}
+{"id":"voice_flight","text":"um 900 euros 2 nights flight please","expected":{"budget":900,"nights":2,"transport_mode":"flight"},"tags":["en","voice","combo"]}
+{"id":"combo_fr","text":"À Milan, depuis Lyon, 700 euros, 2 nuits en train","expected":{"city":"Milan","origin":"Lyon","budget":700,"nights":2,"transport_mode":"train"},"tags":["fr","combo"]}
+{"id":"combo_en","text":"in Berlin from London, 650 euros, 3 nights by car","expected":{"city":"Berlin","origin":"London","budget":650,"nights":3,"transport_mode":"car"},"tags":["en","combo"]}
+{"id":"combo_bus","text":"500 euros, 4 nights, bus","expected":{"budget":500,"nights":4,"transport_mode":"bus"},"tags":["en","combo"]}
+{"id":"no_budget","text":"pas de budget, 2 nuits","expected":{"budget":null,"nights":2},"tags":["fr","combo"]}
+{"id":"no_budget_en","text":"no budget, 3 nights","expected":{"budget":null,"nights":3},"tags":["en","combo"]}
+{"id":"decimal_budget","text":"850,50 euros","expected":{"budget":850.5},"tags":["fr"]}
+{"id":"zero_nights","text":"0 nights","expected":{"nights":0},"tags":["en"]}
+{"id":"city_fr","text":"à Bordeaux","expected":{"city":"Bordeaux"},"tags":["fr"]}
+{"id":"city_en","text":"in Edinburgh","expected":{"city":"Edinburgh"},"tags":["en"]}
+{"id":"origin_fr","text":"depuis Nantes","expected":{"origin":"Nantes"},"tags":["fr"]}
+{"id":"origin_en","text":"from Manchester","expected":{"origin":"Manchester"},"tags":["en"]}
+{"id":"half_en","text":"half marathon","expected":{"distance_km":21.0975},"tags":["en"]}
+{"id":"half_fr","text":"un semi-marathon","expected":{"distance_km":21.0975},"tags":["fr"]}
+{"id":"distance_decimal","text":"21,1 km","expected":{"distance_km":21.1},"tags":["fr"]}
+{"id":"distance_ten","text":"10 km","expected":{"distance_km":10},"tags":["en"]}
+{"id":"date_iso","text":"2027-04-11","expected":{"race_date":"2027-04-11"},"tags":["en"]}
+{"id":"date_fr","text":"11 avril 2027","expected":{"race_date":"2027-04-11"},"tags":["fr"]}
+{"id":"window_fr","text":"en avril 2027","expected":{"date_window":"avril 2027"},"tags":["fr","must_not_misfill"]}
+{"id":"month_rollover","text":"en avril","expected":{"date_window":"avril 2027"},"tags":["fr","must_not_misfill"]}
+{"id":"month_current","text":"en novembre","expected":{"date_window":"novembre 2026"},"tags":["fr","must_not_misfill"]}
+{"id":"edition","text":"édition 2027","expected":{"edition":"2027"},"tags":["fr"]}
+{"id":"invalid_date","text":"2027-02-30","expected":{},"tags":["en","must_not_misfill"]}
+{"id":"train","text":"en train","expected":{"transport_mode":"train"},"tags":["fr"]}
+{"id":"flight","text":"by plane","expected":{"transport_mode":"flight"},"tags":["en"]}
+{"id":"car","text":"en voiture","expected":{"transport_mode":"car"},"tags":["fr"]}
+{"id":"named_trail","text":"Trail des Templiers","expected":{"race":"Trail des Templiers"},"tags":["fr"]}
