@@ -40,8 +40,10 @@ def test_yes_never_releases_human_stop(text):
         )
         assert result.status is QuestionStatus.refused
         assert registry.to_agent_question("q").answer is None
-        with pytest.raises(HumanQuestionError, match="human stop maintained"):
-            await registry.wait_answer("q")
+        with pytest.raises(TimeoutError):
+            await asyncio.wait_for(registry.wait_answer("q"), timeout=0.01)
+        assert registry.get("q").status is QuestionStatus.refused
+        assert registry.to_agent_question("q").answer is None
 
     asyncio.run(scenario())
 
