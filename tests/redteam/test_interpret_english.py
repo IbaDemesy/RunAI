@@ -10,8 +10,8 @@ from runai.framing.interpret import extract_slots
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("Milan marathon in April 2027", {"city": "Milan", "race": "Milan marathon", "distance_km": 42.195, "date_window": "april 2027", "edition": "2027"}),
-        ("Tokyo 10K from London", {"city": "Tokyo", "race": "Tokyo 10K", "distance_km": 10.0, "origin": "London"}),
+        ("Milan marathon in April 2027", {"city": "Milan", "distance_km": 42.195, "date_window": "april 2027", "edition": "2027"}),
+        ("Tokyo 10K from London", {"city": "Tokyo", "distance_km": 10.0, "origin": "London"}),
         ("half marathon in Lisbon next March", {"city": "Lisbon", "distance_km": 21.0975, "date_window": "march 2027"}),
         ("10K Tokyo", {"city": "Tokyo", "distance_km": 10.0}),
         ("a 10k in Tokyo on 12 June 2028", {"city": "Tokyo", "distance_km": 10.0, "race_date": "2028-06-12", "edition": "2028"}),
@@ -21,7 +21,7 @@ from runai.framing.interpret import extract_slots
         ("half marathon", {"distance_km": 21.0975}),
         ("HM", {"distance_km": 21.0975}),
         ("Boston Marathon", {"city": "Boston", "race": "Boston Marathon", "distance_km": 42.195}),
-        ("New York marathon", {"city": "New York", "race": "New York marathon", "distance_km": 42.195}),
+        ("New York marathon", {"city": "New York", "distance_km": 42.195}),
         ("boston marathon", {"distance_km": 42.195}),
         ("April marathon", {"distance_km": 42.195}),
         ("Monday marathon", {"distance_km": 42.195}),

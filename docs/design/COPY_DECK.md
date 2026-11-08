@@ -241,6 +241,9 @@ Keep race names and official place names as supplied by their source. Preserve p
 | app.144 | Failed | Could not finish | Request / trip | 32 | — |
 | app.145 | Trip screens | Trip views | Request / trip | 32 | — |
 | app.146 | Edition | Edition | Request / trip | 32 | — |
+| app.147 |  (current step) |  (current step) | Request / trip | 24 | — |
+| app.148 | The previous conversation expired. Start a new request. | The previous conversation expired. Start a new request. | Request / trip | 80 | — |
+| app.149 | Unable to resume the conversation:  | Unable to resume the conversation:  | Request / trip | 60 | — |
 
 ### runai/app/static/live.html
 
