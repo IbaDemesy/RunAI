@@ -256,6 +256,7 @@ class FramingEngine:
                 )
             )
             if discovery_changed:
+                session.search_stats = None
                 self._manual.discard(framing_id)
                 self._search_keys.pop(framing_id, None)
                 session.selected_candidate_id = None
@@ -501,6 +502,7 @@ class FramingEngine:
                         }
                     ]
                     try:
+                        session.search_stats = None
                         if hasattr(self.search, "search"):
                             if place:
                                 result = await self.search.search(
@@ -509,6 +511,7 @@ class FramingEngine:
                             else:
                                 result = await self.search.search(session.slots)
                             session.candidates = result.candidates
+                            session.search_stats = result.search_stats
                             session.limitations.extend(result.limitations)
                         elif place:
                             session.candidates = await self.search.find_candidates(
@@ -518,7 +521,8 @@ class FramingEngine:
                             session.candidates = await self.search.find_candidates(
                                 session.slots
                             )
-                    except CandidateSearchError:
+                    except CandidateSearchError as exc:
+                        session.search_stats = exc.search_stats
                         self._search_keys.pop(session.id, None)
                         session.candidates = []
                         session.limitations.append(

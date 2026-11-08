@@ -94,6 +94,79 @@ def test_generic_candidates(city):
     assert client.calls[0][1] != threading.get_ident()
 
 
+def test_search_stats_and_candidate_labels_cover_next_edition_calls():
+    client = FakeClient(
+        [row("Past Race", race_date="2020-06-01")],
+        next_edition_responses={
+            "Past Race": SimpleNamespace(data={
+                "race_date": "2030-06-01",
+                "source_url": "https://official.example/next",
+            }, sources=[])
+        },
+    )
+    search = LinkupCandidateSearch(client, today=date(2029, 1, 1))
+    result = asyncio.run(search.search(slots(city="Tokyo")))
+    stats = result.search_stats
+    assert stats.provider == "linkup"
+    assert len(stats.calls) == 2
+    assert stats.total_latency_ms > 0
+    assert all(call.latency_ms > 0 for call in stats.calls)
+    assert stats.estimated_cost_usd == pytest.approx(0.012)
+    assert stats.source_count == 3
+    assert stats.domains == ["race.example", "unrelated.example", "official.example"]
+    candidate = result.candidates[0]
+    assert candidate.provenance.kind == "linkup"
+    assert candidate.provenance.url == candidate.sources[0].url
+    assert candidate.provenance.label.startswith("Found by Linkup · ")
+    assert candidate.provenance.label.endswith(" s · 2 sources")
+    again = asyncio.run(search.search(slots(city="Tokyo")))
+    assert len(again.search_stats.calls) == 2
+    assert len(result.search_stats.calls) == 2
+
+
+def test_relaxed_search_stats_include_both_searches():
+    client = FakeClient(responses=[[], [row()]])
+    result = asyncio.run(LinkupCandidateSearch(client).search(slots(city="Tokyo", distance_km=10)))
+    assert len(result.search_stats.calls) == 2
+    assert result.search_stats.estimated_cost_usd == pytest.approx(0.012)
+    assert result.candidates[0].provenance.label.endswith(" s · 1 source")
+
+
+def test_merged_candidate_provenance_uses_the_first_source():
+    client = FakeClient([row(), row(source_url="https://official.example/rules")])
+    result = asyncio.run(LinkupCandidateSearch(client).search(slots(city="Tokyo")))
+    candidate = result.candidates[0]
+    assert len(result.candidates) == 1
+    assert candidate.provenance.url == candidate.sources[0].url
+    assert candidate.provenance.label.endswith(" s · 2 sources")
+
+
+def test_concurrent_candidate_searches_do_not_share_stats():
+    barrier = threading.Barrier(2)
+
+    class Client(FakeClient):
+        def search(self, query, **kwargs):
+            city = json.loads(query.split("constraints: ", 1)[1].split(". Return", 1)[0])[
+                "city_or_region_or_country"
+            ]
+            barrier.wait(timeout=5)
+            return SimpleNamespace(data={"candidates": [row(
+                city=city, source_url=f"https://{city.lower()}.example/race"
+            )]}, sources=[])
+
+    async def run():
+        search = LinkupCandidateSearch(Client(), today=date(2029, 1, 1))
+        return await asyncio.gather(search.search(slots(city="Tokyo")), search.search(slots(city="Nairobi")))
+
+    first, second = asyncio.run(run())
+    assert first.search_stats.domains == ["tokyo.example"]
+    assert second.search_stats.domains == ["nairobi.example"]
+    for result in (first, second):
+        assert len(result.search_stats.calls) == 1
+        assert result.search_stats.source_count == 1
+        assert result.search_stats.estimated_cost_usd == 0.006
+
+
 def test_city_prompt_allows_a_country_or_region_value():
     client = FakeClient([row(city="Beijing", country="CN")])
     result = asyncio.run(LinkupCandidateSearch(client).search(slots(city="Chine")))
@@ -506,6 +579,13 @@ def test_provider_error_does_not_retry():
             )
         )
     assert len(client.calls) == 1
+
+
+def test_provider_error_keeps_attempt_statistics():
+    with pytest.raises(CandidateSearchError) as error:
+        asyncio.run(LinkupCandidateSearch(FakeClient(error=True)).search(slots(city="Tokyo")))
+    assert len(error.value.search_stats.calls) == 1
+    assert error.value.search_stats.estimated_cost_usd == 0.006
 
 
 def test_results_are_capped_at_five_with_exact_dated_candidates_first():
