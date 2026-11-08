@@ -110,7 +110,8 @@ def test_controls_messages_and_cancel(demo):
     for action in ("resume", "pause", "pause", "resume"):
         assert client.post(step + "/" + action).status_code == 200
     error(client.post(step + "/message", json={"text": "x" * 501}), 422)
-    text = '<script>\n"pay now with card"'
+    error(client.post(step + "/message", json={"text": '<script>\n"pay now with card"'}), 409)
+    text = '<script>\n"prefer the 10 km distance"'
     assert client.post(step + "/message", json={"text": text}).status_code == 200
     run = service._runs[(mid, StepKind.registration)].run
     assert run.received[-1].endswith(STOP_INSTRUCTIONS)
@@ -128,7 +129,7 @@ def test_controls_messages_and_cancel(demo):
     stream = client.get(base + "/events").text
     events = [json.loads(line[6:]) for line in stream.splitlines() if line.startswith("data: ")]
     assert any(text in e["payload"].get("message", "") for e in events)
-    assert '\\n' in stream and '\\"pay now with card\\"' in stream
+    assert '\\n' in stream and '\\"prefer the 10 km distance\\"' in stream
 
 
 def test_competing_valid_answers_have_one_effect(demo):

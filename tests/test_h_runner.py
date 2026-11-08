@@ -236,9 +236,13 @@ def test_invalid_environment_overrides(tmp_path, monkeypatch, value):
         make_runner(tmp_path, FakeSessions())
 
 
-def test_guard_task_does_not_duplicate_safety_instructions():
-    guarded = guard_task("Lis le titre")
+@pytest.mark.parametrize("task", ["Read the title", "  Read the title\n"])
+def test_guard_task_does_not_duplicate_safety_instructions(task):
+    guarded = guard_task(task)
+    assert guarded.endswith(STOP_INSTRUCTIONS)
+    assert guarded.count("Absolute safety rules:") == 1
     assert guard_task(guarded) == guarded
+    assert guard_task(guarded.rstrip()) == guarded
 
 
 def test_h_run_dispatches_async_ask_user_tool_without_blocking(tmp_path):

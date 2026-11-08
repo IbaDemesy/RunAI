@@ -26,6 +26,7 @@ from runai.app.server import build_service, create_app
 from runai.h.answers import AccommodationAnswer, RegistrationAnswer
 from runai.h.lifecycle import HAntiBotBlocked, HJob, HLifecycle, JobState
 from runai.models import Race, RunnerProfile, Source, StepKind, StepResult, StepStatus
+from runai.safety import STOP_INSTRUCTIONS
 from runai.search.models import RaceSheet
 
 
@@ -110,7 +111,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool(monkeypatch, ty
         )
     )
     assert kind is StepKind.registration
-    assert "stop" in task.lower()
+    assert task.endswith(STOP_INSTRUCTIONS)
     assert params["start_url"] == "https://in.njuko.com/milano-marathon"
     assert params["allowed_hosts"] == ("njuko.com", "in.njuko.com")
     assert params["mission_id"] == "mission-1"
