@@ -149,11 +149,11 @@ def test_ac04_no_empty_joins(client):
     assert ": ." not in " ".join(ready(client)["summary"]["lines"])
 
 
-@pytest.mark.parametrize("budget", [pytest.param(900, marks=pytest.mark.xfail(strict=True, reason="AC-04, unit U4")), None])
+@pytest.mark.parametrize("budget", [900, None])
 def test_ac04_readable_budget(client, budget):
     line = ready(client, budget=budget)["summary"]["lines"][-1]
     if budget is None:
-        assert any(word in line.lower() for word in ("no limit", "unlimited", "sans plafond"))
+        assert any(word in line.lower() for word in ("no limit", "unlimited", "sans plafond", "no budget cap"))
     else:
         assert "900" in line and any(unit in line for unit in ("€", "EUR", "euros")), line
 
