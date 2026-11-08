@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunAI design system specimen</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--chalk); font-family: var(--text); font-size: var(--type-body); line-height: 1.5; }
+  main { max-width: 1200px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-12); display: grid; gap: var(--space-8); }
+  h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.1; }
+  h1 { font-size: var(--type-title); font-weight: 800; }
+  h2 { font-size: var(--type-heading); font-weight: 700; }
+  p { margin: 0; }
+  .meta { color: var(--mist); font-size: var(--type-small); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4); }
+  :focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 2px; }
+  button { font: inherit; font-weight: 600; min-height: var(--button-min); min-width: var(--button-min); padding: 0 var(--space-4); border-radius: var(--radius-pill); border: 1px solid transparent; cursor: pointer; transition: background-color var(--motion-fast) var(--ease); }
+  .primary { background: var(--button-primary-bg); color: var(--button-primary-fg); }
+  .secondary { background: var(--button-secondary-bg); color: var(--button-secondary-fg); border-color: var(--border); }
+  .quiet { background: none; color: var(--button-quiet-fg); text-decoration: underline; text-underline-offset: 4px; }
+  .danger { background: var(--button-danger-bg); color: var(--button-danger-fg); border-color: var(--status-failed-fg); }
+  .chip { display: inline-flex; gap: 6px; align-items: center; font-size: var(--type-small); font-weight: 600; padding: 3px 10px; border-radius: var(--radius-pill); }
+  .chip[data-s="pending"] { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+  .chip[data-s="running"] { background: var(--status-running-bg); color: var(--status-running-fg); }
+  .chip[data-s="pausing"] { background: var(--status-paused-bg); color: var(--status-paused-fg); border: 1px dashed var(--status-paused-fg); }
+  .chip[data-s="paused"] { background: var(--status-paused-bg); color: var(--status-paused-fg); }
+  .chip[data-s="waiting"] { background: var(--status-waiting-bg); color: var(--status-waiting-fg); }
+  .chip[data-s="stopped"] { background: var(--status-stopped-bg); color: var(--status-stopped-fg); }
+  .chip[data-s="failed"] { background: var(--status-failed-bg); color: var(--status-failed-fg); }
+  .chip[data-s="completed"] { background: var(--status-completed-bg); color: var(--status-completed-fg); }
+  .badge { display: inline-flex; gap: 8px; align-items: center; font-size: var(--type-small); font-weight: 600; padding: 4px 12px; border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--border); color: var(--chalk); }
+  .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); }
+  .partner { color: var(--dot); border-color: var(--dot); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-6); display: grid; gap: var(--space-3); }
+  .lane { min-width: 0; align-content: start; background: var(--surface-1); border: 1px solid var(--border); border-left: 2px solid var(--lane, var(--border)); border-radius: var(--radius-lane); padding: var(--space-4); display: grid; gap: var(--space-3); }
+  .lane header { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; }
+  .shot { aspect-ratio: 16 / 9; border-radius: var(--radius-small); border: 1px solid var(--border); background: var(--chalk); color: var(--ink-3); display: grid; place-items: center; font-size: var(--type-small); }
+  .url { font-family: var(--mono); font-size: .75rem; color: var(--mist); background: var(--surface-2); padding: 6px 8px; border-radius: var(--radius-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  a { color: var(--haze); text-underline-offset: 3px; }
+  a.ext::after { content: " \2197"; }
+  details { background: var(--surface-2); border-radius: var(--radius-small); padding: var(--space-2) var(--space-3); }
+  summary { cursor: pointer; color: var(--mist); font-weight: 600; min-height: var(--button-min); display: flex; align-items: center; }
+  .halt { background: var(--card); color: var(--ink); border-top: 4px solid var(--sun); border-radius: var(--radius-lane); padding: var(--space-6); display: grid; gap: var(--space-2); }
+  .halt .meta { color: var(--ink-3); }
+  .halt :focus-visible { outline-color: var(--focus-on-bright); }
+  .holo { font-family: var(--holo-voice); font-size: 1.4rem; font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="row" style="justify-content: space-between">
+    <h1>RunAI design system</h1>
+    <div class="row">
+      <span class="badge" style="--dot: var(--mode-live)">Live</span>
+      <span class="badge" style="--dot: var(--mode-demo)">Demo</span>
+      <span class="badge" style="--dot: var(--mode-replay)">Replay</span>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>Holo</h2>
+    <p class="holo">Which race are you running, and from which city do you leave?</p>
+    <div class="row">
+      <button class="primary">Start my trip</button>
+      <button class="secondary">Half marathon</button>
+      <button class="quiet">Start over</button>
+      <button class="danger">Cancel mission</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Agent step states</h2>
+    <div class="row">
+      <span class="chip" data-s="pending">○ Waiting to start</span>
+      <span class="chip" data-s="running">● Working</span>
+      <span class="chip" data-s="pausing">‖ Pausing…</span>
+      <span class="chip" data-s="paused">‖ Paused</span>
+      <span class="chip" data-s="waiting">? Your answer needed</span>
+      <span class="chip" data-s="stopped">■ Ready, stopped before payment</span>
+      <span class="chip" data-s="failed">! Failed, see why</span>
+      <span class="chip" data-s="completed">✓ Done</span>
+    </div>
+    <div class="row">
+      <span class="badge partner" style="--dot: var(--partner-h)">H agent</span>
+      <span class="badge partner" style="--dot: var(--partner-linkup)">Linkup</span>
+      <span class="badge partner" style="--dot: var(--partner-gladia)">Gladia</span>
+      <span class="badge partner" style="--dot: var(--partner-holo)">Holo</span>
+      <span class="badge partner" style="--dot: var(--partner-devin)">Devin</span>
+    </div>
+  </section>
+
+  <section class="grid" aria-label="Live agent lanes">
+    <article class="lane" style="--lane: var(--status-running-bg)">
+      <header><h3>Registration</h3><span class="row"><span class="badge partner" style="--dot: var(--partner-h)">H agent</span><span class="chip" data-s="running">● Working</span></span></header>
+      <div class="shot">H browser screenshot</div>
+      <p>Filling in the runner form</p>
+      <div class="url" title="https://in.njuko.com/example-race/registration">in.njuko.com/example-race/registration</div>
+    </article>
+    <article class="lane" style="--lane: var(--status-waiting-bg)">
+      <header><h3>Accommodation</h3><span class="row"><span class="badge partner" style="--dot: var(--partner-h)">H agent</span><span class="chip" data-s="waiting">? Your answer needed</span></span></header>
+      <div class="shot">H browser screenshot</div>
+      <p>Two hotels match your budget. Which one should I hold?</p>
+      <div class="row"><button class="secondary">Hotel near the start</button><button class="secondary">Cheaper, 15 min away</button></div>
+    </article>
+    <article class="lane">
+      <header><h3>Transport</h3><span class="row"><span class="badge partner" style="--dot: var(--partner-linkup)">Linkup</span><span class="chip" data-s="pending">○ Waiting to start</span></span></header>
+      <p class="meta">Sources found so far</p>
+      <a class="ext" href="https://example.com" target="_blank" rel="noopener" aria-label="Official race site (opens in a new tab)">Official race site</a>
+      <details><summary>▸ Technical details</summary><p class="meta">Session, step count and raw trace live here.</p></details>
+    </article>
+  </section>
+
+  <section class="halt">
+    <span class="chip" data-s="stopped" style="justify-self: start; background: var(--ink); color: var(--card)">■ Stopped before payment</span>
+    <h2>Your trip is ready to pay</h2>
+    <p class="meta">RunAI never pays. Open each site to review and confirm.</p>
+    <div class="row"><button class="primary">Open registration page</button></div>
+  </section>
+</main>
+</body>
+</html>
