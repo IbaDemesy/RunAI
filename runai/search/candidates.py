@@ -61,6 +61,7 @@ _DATE_WORDS = frozenset(
         "september", "october", "november", "december", "lundi", "mardi",
         "mercredi", "jeudi", "vendredi", "samedi", "dimanche", "monday",
         "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+        "spring", "summer", "autumn", "fall", "winter",
     ]
 )
 
@@ -68,13 +69,18 @@ _DATE_WORDS = frozenset(
 def location_hint(text: str | None) -> str | None:
     if not text:
         return None
-    match = _LOCATION_REQUEST.search(text)
-    if not match:
-        return None
-    hint = match.group(1)
-    if any(word.casefold() in _DATE_WORDS for word in re.findall(r"[^\W\d_]+", hint)):
-        return None
-    return hint
+    named = re.search(
+        r"\b(?!(?i:un|une|le|la|les|a|an|the|my|half|semi|ultra)\b)"
+        r"([A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*){0,2})"
+        r"\s+(?i:half(?:[ -]marathon)?|marathon|(?:10|5|21)\s*k(?:m)?|trail)\b",
+        text,
+    )
+    matches = ([named] if named else []) + list(_LOCATION_REQUEST.finditer(text))
+    for match in matches:
+        hint = match.group(1)
+        if not any(word.casefold() in _DATE_WORDS for word in re.findall(r"[^\W\d_]+", hint)):
+            return hint
+    return None
 
 
 SEARCH_SLOTS = (
