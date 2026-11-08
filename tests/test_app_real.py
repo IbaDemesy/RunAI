@@ -348,6 +348,7 @@ def test_typed_hotel_price_cannot_fall_back_to_summary(currency):
 @pytest.mark.parametrize("data,error", [
     ({"error_code": "answer_validation"}, "Traceback"),
     ({}, "answer_validation: Traceback"),
+    ({"error_code": None}, "answer_validation: Traceback"),
 ])
 def test_answer_validation_has_readable_error(data, error):
     class Run:
