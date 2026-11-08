@@ -394,7 +394,7 @@ def test_changing_date_window_while_candidates_are_shown_searches_again():
 def test_conversational_period_change_replaces_derived_date_window():
     class DateWindowFiller:
         async def extract(self, text, known, turns=()):
-            if text == "actually I'd rather go in May":
+            if text == "actually I'd rather go the following month":
                 assert "date_window" not in known
                 return {"date_window": "May 2028"}
             return {}
@@ -422,7 +422,7 @@ def test_conversational_period_change_replaces_derived_date_window():
         assert session.status == FramingStatus.ready_to_confirm
         session = await engine.reply(
             session.id, FramingReply(
-                revision=session.revision, text="actually I'd rather go in May"
+                revision=session.revision, text="actually I'd rather go the following month"
             )
         )
         window = session.slots[SlotName.date_window]
