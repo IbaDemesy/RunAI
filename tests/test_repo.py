@@ -19,7 +19,11 @@ def test_env_example_declares_only_empty_required_keys():
     ]
     declarations = [line.partition("=") for line in lines]
     keys = [key.strip() for key, separator, _ in declarations if separator]
-    assert sorted(keys) == ["GLADIA_API_KEY", "HAI_API_KEY", "LINKUP_API_KEY"]
+    assert sorted(keys) == sorted([
+        "GLADIA_API_KEY", "GLADIA_API_KEY_2", "HAI_API_KEY", "HAI_API_KEY_2", "LINKUP_API_KEY",
+        "LINKUP_API_KEY_2", "RUNAI_BASIC_AUTH", "RUNAI_H_MAX_STEPS", "RUNAI_H_MAX_TIME_S", "RUNAI_MODE",
+        "RUNAI_PUBLIC", "RUNAI_TRACES_DIR",
+    ])
     assert all(separator and not value.strip() for _, separator, value in declarations)
 
 

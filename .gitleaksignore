@@ -1,0 +1,8 @@
+# Historical findings reviewed and accepted (see PR "Pre-publication sweep").
+# H docs sample key in a vendored skill (since replaced by hk-EXAMPLE_KEY_REDACTED in the tree).
+a9bd0241ae1004035593a3418768509c4c4637a6:.devin/skills/hai-agents/references/portal/api-keys.md:curl-auth-header:101
+a9bd0241ae1004035593a3418768509c4c4637a6:.devin/skills/hai-agents/references/portal/api-keys.md:generic-api-key:51
+a9bd0241ae1004035593a3418768509c4c4637a6:.devin/skills/hai-agents/references/portal/api-keys.md:h-company-api-key:51
+a9bd0241ae1004035593a3418768509c4c4637a6:.devin/skills/hai-agents/references/portal/api-keys.md:h-company-api-key:101
+# False positive: a variable name (attachments_b64_bytes) in a removed spike.
+8ce0084600a1c929ae01024db6c6d7db966c7afc:spikes/recap_pdf_ics/resend_mail.py:generic-api-key:64

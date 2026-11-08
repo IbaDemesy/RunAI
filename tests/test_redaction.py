@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from runai.app.replay import ReplayTrace
@@ -50,3 +52,42 @@ def test_replay_snapshot_masks_raw_events(monkeypatch):
                     "data": {"step": "transport"}}],
     })
     assert trace.steps[StepKind.transport].events[0].message == "[REDACTED]"
+
+
+@pytest.mark.parametrize("name", ["DEVIN_API_KEY", "OPENAI_API_KEY", "RESEND_API_KEY_3"])
+def test_any_api_key_variant_is_masked(monkeypatch, name):
+    secret = "another-secret-987654"
+    monkeypatch.setenv(name, secret)
+    assert redact_secrets(f"failed with {secret}") == "failed with [REDACTED]"
+
+
+def test_basic_auth_credentials_masked(monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "user:pass")
+    value = redact_secrets({"h": "Basic dXNlcjpwYXNz", "a": os.environ["RUNAI_BASIC_AUTH"]})
+    assert value == {"h": "Basic [REDACTED]", "a": "[REDACTED]"}
+
+
+def test_basic_auth_password_part_masked(monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "demo:long-password-42")
+    assert redact_secrets("pw=long-password-42") == "pw=[REDACTED]"
+    assert redact_secrets("demo:long-password-42") == "[REDACTED]"
+
+
+def test_short_basic_auth_password_kept_but_pair_masked(monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "u:pw")
+    assert redact_secrets("u:pw pw") == "u:pw pw"
+
+
+def test_authorization_header_values_masked(monkeypatch):
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    value = {
+        "headers": {"Authorization": "Bearer abcdefghijklmnop", "Proxy-Authorization": "token xyz",
+                    "Accept": "application/json"},
+        "log": "sent Authorization: Bearer abcdefghijklmnop",
+    }
+    assert redact_secrets(value) == {
+        "headers": {"Authorization": "[REDACTED]", "Proxy-Authorization": "[REDACTED]",
+                    "Accept": "application/json"},
+        "log": "sent Authorization: Bearer [REDACTED]",
+    }
+    assert redact_secrets("Bearer short") == "Bearer short"

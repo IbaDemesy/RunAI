@@ -11,3 +11,6 @@ venv/
 .pytest_cache/
 traces/
 reports/
+
+# Partner credit PDFs carry promo codes: keep them outside the repo.
+Infos/*.pdf
