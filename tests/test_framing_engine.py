@@ -15,7 +15,7 @@ from runai.contracts.framing import (
 )
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.engine import FramingEngine
-from runai.framing.interpret import extract_slots
+from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.models import Source
 from runai.search.candidates import CandidateSearchError
 
@@ -31,11 +31,11 @@ class Search:
     async def find_candidates(self, slots, request_text: str | None = None):
         self.calls.append(slots)
         if self.fail:
-            raise RuntimeError("Service indisponible")
+            raise RuntimeError("Service unavailable")
         return [
             RaceCandidate(
                 id=f"c{i}",
-                name=f"Course {i}",
+                name=f"Race {i}",
                 city=slots[SlotName.city].value,
                 country="",
                 race_date=date(2028, 6, 12),
@@ -45,7 +45,7 @@ class Search:
                 limitations=[
                     Limitation(
                         code="close_match",
-                        message="Proche de votre demande, pas exactement ce que vous avez demandé.",
+                        message="Close to your request, not an exact match.",
                     )
                 ]
                 if self.close_match
@@ -123,6 +123,83 @@ def test_extraction_explicit_only():
     )
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Milan marathon in April 2027 from London",
+            {SlotName.city: "Milan", SlotName.origin: "London",
+             SlotName.date_window: "April 2027", SlotName.distance_km: 42.195},
+        ),
+        (
+            "Tokyo 10K from London",
+            {SlotName.city: "Tokyo", SlotName.origin: "London", SlotName.distance_km: 10},
+        ),
+        (
+            "marathon de Milan en avril 2027 depuis Londres",
+            {SlotName.city: "Milan", SlotName.origin: "Londres",
+             SlotName.date_window: "April 2027", SlotName.distance_km: 42.195},
+        ),
+        (
+            "course de 10 km à Tokyo depuis Londres",
+            {SlotName.city: "Tokyo", SlotName.origin: "Londres", SlotName.distance_km: 10},
+        ),
+        (
+            "half in New York in Apr 2027 from São Paulo",
+            {SlotName.city: "New York", SlotName.origin: "São Paulo",
+             SlotName.date_window: "April 2027", SlotName.distance_km: 21.0975},
+        ),
+    ],
+)
+def test_bilingual_city_first_and_date_extraction(text, expected):
+    actual = extract_slots(text)
+    if SlotName.date_window in actual:
+        actual[SlotName.date_window] = normalize_date_window(actual[SlotName.date_window])
+    for slot, value in expected.items():
+        assert actual[slot] == value
+
+
+@pytest.mark.parametrize(
+    "text", ["in April 2027", "in Apr. 2027", "en avril 2027", "in December", "in 2027"]
+)
+def test_dates_never_become_race_cities(text):
+    assert SlotName.city not in extract_slots(text)
+
+
+@pytest.mark.parametrize(
+    ("month", "english"),
+    list(zip(
+        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        strict=True,
+    )),
+)
+def test_english_month_names_and_abbreviations(month, english):
+    assert normalize_date_window(extract_slots(f"race in {month} 2028")[SlotName.date_window]) == f"{english} 2028"
+    assert normalize_date_window(extract_slots(f"race in {english} 2028")[SlotName.date_window]) == f"{english} 2028"
+
+
+@pytest.mark.parametrize("distance", ["10K", "10k", "10 km"])
+def test_english_numeric_distances(distance):
+    assert extract_slots(distance)[SlotName.distance_km] == 10
+
+
+@pytest.mark.parametrize("distance", ["half marathon", "half-marathon", "half"])
+def test_english_half_marathon_distances(distance):
+    assert extract_slots(distance)[SlotName.distance_km] == 21.0975
+
+
+def test_english_edition_and_month_without_year():
+    values = extract_slots("Tokyo half in April edition 2027", today=date(2026, 11, 7))
+    assert normalize_date_window(values[SlotName.date_window]) == "April 2027"
+    assert values[SlotName.edition] == "2027"
+
+
+@pytest.mark.parametrize("text", ["12 April 2027", "April 12, 2027", "Apr 12 2027"])
+def test_english_full_dates(text):
+    assert extract_slots(text)[SlotName.race_date] == "2027-04-12"
+
+
 def test_named_race_capture_and_numeric_location_boundary():
     templiers = extract_slots("le trail des Templiers à Millau")
     assert templiers[SlotName.race] == "trail des Templiers"
@@ -181,7 +258,7 @@ def test_candidate_search_waits_for_date_and_logistics_answers():
 
         assert session.status == FramingStatus.choosing_candidate
         assert len(search.calls) == 1
-        assert session.slots[SlotName.date_window].value.startswith("avril ")
+        assert session.slots[SlotName.date_window].value.startswith("April ")
 
     asyncio.run(run())
 
@@ -361,6 +438,50 @@ def test_candidate_search_reuses_candidates_when_search_key_is_unchanged():
         assert len(search.calls) == 1
         assert [candidate.id for candidate in session.candidates] == original_ids
         assert session.status == FramingStatus.choosing_candidate
+
+    asyncio.run(run())
+
+
+def test_french_date_correction_matches_canonical_english_search_key():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search, DataMode.demo)
+        session = await engine.create(FramingCreate(
+            text="Tokyo 10K in June 2028 from London, 800 euros, 2 nights, train",
+        ))
+        assert session.slots[SlotName.date_window].value == "June 2028"
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.date_window: "juin 2028"},
+        ))
+        assert session.slots[SlotName.date_window].value == "June 2028"
+        assert len(search.calls) == 1
+        assert session.status == FramingStatus.choosing_candidate
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("language", ["English", "French"])
+def test_bilingual_input_produces_english_questions_and_summary(language):
+    async def run():
+        from runai.framing.holo import TemplatePhraser
+
+        engine = FramingEngine(Search(1), DataMode.demo, phraser=TemplatePhraser())
+        text = (
+            "Tokyo 10K in June 2028 from London, 800 euros, 2 nights, train"
+            if language == "English" else
+            "course de 10 km à Tokyo en juin 2028 depuis London, 800 euros, 2 nuits, train"
+        )
+        session = await engine.create(FramingCreate(text=text))
+        assert session.status == FramingStatus.choosing_candidate
+        assert session.turns[-1].text.startswith("I found a matching race.")
+        assert session.open_questions[0].choices[-1].label == "None of these, let me clarify"
+        assert session.slots[SlotName.distance_km].provenance.kind.value == "human"
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0",
+        ))
+        assert session.status == FramingStatus.ready_to_confirm
+        assert session.summary.lines[1] == "From London · 2 nights · train"
+        assert session.summary.lines[2] == "Budget: €800"
 
     asyncio.run(run())
 
@@ -552,20 +673,20 @@ def test_generic_race_forms_do_not_become_named_race(text, city, distance):
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("course à Tokyo en mars", "mars 2027"),
-        ("course à Tokyo en novembre", "novembre 2026"),
-        ("course à Tokyo au mois de mai", "mai 2027"),
+        ("course à Tokyo en mars", "March 2027"),
+        ("course à Tokyo en novembre", "November 2026"),
+        ("course à Tokyo au mois de mai", "May 2027"),
     ],
 )
 def test_month_without_year_uses_next_occurrence(text, expected):
-    assert extract_slots(text, today=date(2026, 11, 7))[SlotName.date_window] == expected
+    assert normalize_date_window(extract_slots(text, today=date(2026, 11, 7))[SlotName.date_window]) == expected
 
 
 def test_month_window_uses_explicit_edition_year():
     values = extract_slots(
         "course à Tokyo en mars édition 2030", today=date(2026, 11, 7)
     )
-    assert values[SlotName.date_window] == "mars 2030"
+    assert normalize_date_window(values[SlotName.date_window]) == "March 2030"
     assert values[SlotName.edition] == "2030"
 
 
@@ -621,7 +742,7 @@ def test_close_candidates_use_close_match_choice_copy():
             "which one interests you?"
         )
         assert question.choices[0].label == (
-            "Course 0 — Monday 12 June 2028 · close to your request"
+            "Race 0 — Monday 12 June 2028 · close to your request"
         )
         assert question.choices[-1].id == "none"
         assert question.choices[-1].label == "None of these, let me clarify"
@@ -773,7 +894,7 @@ def test_manual_answers_stale_empty_and_errors():
             FramingReply(
                 revision=2,
                 corrections={
-                    SlotName.race: "Course officielle",
+                    SlotName.race: "Official race",
                     SlotName.race_date: "2028-06-12",
                     SlotName.distance_km: 10,
                     SlotName.origin: "Mombasa",
@@ -787,14 +908,14 @@ def test_manual_answers_stale_empty_and_errors():
         assert session.summary.date_range == (date(2028, 6, 12),) * 2
 
         async def fail(s):
-            raise RuntimeError("Impossible de lancer")
+            raise RuntimeError("Unable to launch")
 
         with pytest.raises(RuntimeError):
             await engine.confirm(
                 session.id, FramingConfirm(revision=3, idempotency_key="fail-key"), fail
             )
         assert engine.get(session.id).status == FramingStatus.ready_to_confirm
-        with pytest.raises(RuntimeError, match="Service indisponible"):
+        with pytest.raises(RuntimeError, match="Service unavailable"):
             await FramingEngine(Search(fail=True)).create(
                 FramingCreate(
                     text=(

@@ -8,9 +8,15 @@ import pytest
 from runai.contracts.common import DataMode
 from runai.contracts.framing import FramingCreate, FramingTurn
 from runai.framing.engine import FramingEngine
-from runai.framing.holo import HoloPhraser, TemplatePhraser, _history, clean_extraction
+from runai.framing.holo import (
+    EXTRACT_PROMPT,
+    HoloPhraser,
+    TemplatePhraser,
+    _history,
+    clean_extraction,
+)
 
-TURNS = [FramingTurn(role="user", text="Un marathon au printemps", revision=1)]
+TURNS = [FramingTurn(role="user", text="A marathon in spring", revision=1)]
 
 
 class NoCandidates:
@@ -75,7 +81,7 @@ async def test_holo_phraser_falls_back_to_local_wording(response):
 async def test_engine_adds_one_assistant_turn_for_the_next_question():
     phraser = Recorder()
     engine = FramingEngine(NoCandidates(), DataMode.demo, phraser=phraser)
-    session = await engine.create(FramingCreate(text="Je veux courir un marathon", channel="text"))
+    session = await engine.create(FramingCreate(text="I want to run a marathon", channel="text"))
     assert [turn.role for turn in session.turns] == ["user", "assistant"]
     assistant = session.turns[-1]
     assert assistant.revision == session.revision
@@ -86,7 +92,7 @@ async def test_engine_adds_one_assistant_turn_for_the_next_question():
 @pytest.mark.anyio
 async def test_engine_without_phraser_keeps_turns_unchanged():
     session = await FramingEngine(NoCandidates(), DataMode.demo).create(
-        FramingCreate(text="Je veux courir un marathon", channel="text")
+        FramingCreate(text="I want to run a marathon", channel="text")
     )
     assert [turn.role for turn in session.turns] == ["user"]
 
@@ -100,6 +106,29 @@ async def test_holo_extract_parses_and_cleans_json():
     assert await phraser.extract("une course en avril, Paris de préférence", {}) == {
         "city": "Paris", "date_window": "April 2027", "nights": 2,
     }
+
+
+@pytest.mark.parametrize("window", ["décembre 2026", "December 2026", "DEC 2026"])
+def test_holo_and_local_extraction_use_the_same_english_month_format(window):
+    assert clean_extraction({"date_window": window}) == {"date_window": "December 2026"}
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("text", ["a race in December 2026", "une course en décembre 2026"])
+async def test_holo_extract_context_accepts_both_languages(text):
+    def handler(request):
+        messages = json.loads(request.content)["messages"]
+        assert messages[0]["content"] == EXTRACT_PROMPT
+        assert "French or English" in EXTRACT_PROMPT
+        assert '"April 2027"' in EXTRACT_PROMPT
+        assert "Today:" in messages[1]["content"]
+        assert "Recent conversation:" in messages[1]["content"]
+        assert "Known context:" in messages[1]["content"]
+        assert f"New message to analyze: {text}" in messages[1]["content"]
+        return httpx.Response(200, json={"choices": [{"message": {"content": '{"date_window": "December 2026"}'}}]})
+
+    phraser = HoloPhraser("hk-test", transport=transport(handler))
+    assert await phraser.extract(text, {}, TURNS) == {"date_window": "December 2026"}
 
 
 @pytest.mark.anyio
@@ -225,7 +254,7 @@ async def test_engine_fills_only_unknown_slots_from_holo():
     assert session.slots["city"].value == "Paris"
     assert session.slots["distance_km"].value == 42.195
     assert not session.slots["nights"].is_known
-    assert not any("ville" in q.text.lower() and "partez" not in q.text.lower() for q in session.open_questions)
+    assert not any(q.slots == ["city"] for q in session.open_questions)
 
 
 class TwoCandidates:

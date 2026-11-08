@@ -1,4 +1,4 @@
-"""Provenance et mode partagés par le cadrage, la mission et le séjour."""
+"""Provenance and mode shared by framing, missions and journeys."""
 
 from datetime import datetime
 from enum import Enum
@@ -9,7 +9,7 @@ from runai.models import utcnow
 
 
 class DataMode(str, Enum):
-    """`live` = vrais fournisseurs ; `demo` = fakes/fixtures ; `replay` = trace rejouée. Jamais mélangés."""
+    """`live` = real providers; `demo` = fakes/fixtures; `replay` = recorded trace. Never mixed."""
 
     live = "live"
     demo = "demo"
@@ -42,7 +42,7 @@ class Provenance(BaseModel):
 
 
 class Automation(str, Enum):
-    """Ce que RunAI fait sur un poste : agent H autorisé, lien officiel manuel, ou rien."""
+    """What RunAI does for a step: allowed H agent, manual official link, or nothing."""
 
     automated = "automated"
     manual = "manual"
@@ -50,7 +50,7 @@ class Automation(str, Enum):
 
 
 class Limitation(BaseModel):
-    """Limite précise et alternative manuelle ; remplace un refus global ou une fausse promesse."""
+    """Specific limitation and manual alternative instead of a blanket refusal or false promise."""
 
     code: str
     message: str

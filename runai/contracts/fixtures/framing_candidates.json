@@ -12,7 +12,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -48,7 +48,7 @@
       "provenance": {
         "kind": "human",
         "url": null,
-        "label": "Réponse utilisateur",
+        "label": "Runner response",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "revision": 1
@@ -99,7 +99,7 @@
   "candidates": [
     {
       "id": "cand-a",
-      "name": "Course fictive A de Tokyo",
+      "name": "Fictional Tokyo Race A",
       "city": "Tokyo",
       "country": "JP",
       "race_date": "2027-03-07",
@@ -117,13 +117,13 @@
       "provenance": {
         "kind": "fixture",
         "url": "https://example.org/tokyo-a",
-        "label": "Candidat fictif",
+        "label": "Fictional candidate",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "limitations": [
         {
           "code": "registration_lottery",
-          "message": "Inscription par tirage au sort : préparation manuelle.",
+          "message": "Lottery registration: manual preparation.",
           "step": "registration",
           "manual_url": null
         }
@@ -131,7 +131,7 @@
     },
     {
       "id": "cand-b",
-      "name": "Course fictive B de Tokyo",
+      "name": "Fictional Tokyo Race B",
       "city": "Tokyo",
       "country": "JP",
       "race_date": "2027-04-18",
@@ -150,7 +150,7 @@
       "provenance": {
         "kind": "fixture",
         "url": "https://example.org/tokyo-b",
-        "label": "Candidat fictif",
+        "label": "Fictional candidate",
         "collected_at": "2026-11-07T12:00:00Z"
       },
       "limitations": []
@@ -163,17 +163,17 @@
       "slots": [
         "race"
       ],
-      "text": "Laquelle de ces courses ?",
+      "text": "Which of these races?",
       "choices": [
         {
           "id": "ch-cand-a",
-          "label": "Course fictive A de Tokyo — 2027-03-07",
+          "label": "Fictional Tokyo Race A — 2027-03-07",
           "value": null,
           "candidate_id": "cand-a"
         },
         {
           "id": "ch-cand-b",
-          "label": "Course fictive B de Tokyo — 2027-04-18",
+          "label": "Fictional Tokyo Race B — 2027-04-18",
           "value": null,
           "candidate_id": "cand-b"
         }
@@ -186,14 +186,14 @@
     {
       "role": "user",
       "channel": "text",
-      "text": "Une course à Tokyo au printemps 2027",
+      "text": "A race in Tokyo in spring 2027",
       "revision": 1,
       "at": "2026-11-07T12:00:00Z"
     },
     {
       "role": "assistant",
       "channel": "text",
-      "text": "J'ai trouvé deux événements sourcés.",
+      "text": "I found two sourced events.",
       "revision": 2,
       "at": "2026-11-07T12:00:00Z"
     }

@@ -1,7 +1,7 @@
-"""JourneyPlan v1 : source unique de la carte, de la timeline et des exports.
+"""JourneyPlan v1: single source for the map, timeline and exports.
 
-L'adresse exacte du domicile n'apparaît jamais : `origin_public` est une ville ou un quartier.
-Coordonnée inconnue = None ; liaison sans géométrie sourcée = `illustrative` ou `unavailable`.
+Exact home addresses never appear: `origin_public` is a city or neighborhood.
+Unknown coordinates = None; links without sourced geometry = `illustrative` or `unavailable`.
 """
 
 from datetime import date, datetime
@@ -109,9 +109,9 @@ class JourneySegment(BaseModel):
     @model_validator(mode="after")
     def _geometry_matches_status(self) -> "JourneySegment":
         if self.geometry_status is GeometryStatus.unavailable and self.geometry:
-            raise ValueError(f"{self.id}: géométrie présente mais statut unavailable")
+            raise ValueError(f"{self.id}: geometry present but status is unavailable")
         if self.geometry_status is not GeometryStatus.unavailable and not self.geometry:
-            raise ValueError(f"{self.id}: statut {self.geometry_status.value} sans géométrie")
+            raise ValueError(f"{self.id}: status {self.geometry_status.value} without geometry")
         return self
 
 
@@ -124,7 +124,7 @@ class CostLine(BaseModel):
 
 
 class Budget(BaseModel):
-    """Poste sans `money` = total partiel ; jamais compté comme zéro."""
+    """A line without `money` makes the total partial; never counted as zero."""
 
     currency: str = "EUR"
     cap: float | None = None
@@ -134,7 +134,7 @@ class Budget(BaseModel):
     def _single_currency(self) -> "Budget":
         for line in self.lines:
             if line.money and line.money.currency != self.currency:
-                raise ValueError(f"{line.id}: devise {line.money.currency} ≠ {self.currency}")
+                raise ValueError(f"{line.id}: currency {line.money.currency} differs from {self.currency}")
         return self
 
     @computed_field
@@ -197,16 +197,16 @@ class JourneyPlan(BaseModel):
         stop_ids = {stop.id for stop in self.stops}
         segment_ids = {segment.id for segment in self.segments}
         if len(stop_ids) != len(self.stops) or len(segment_ids) != len(self.segments):
-            raise ValueError("identifiants d'étape ou de liaison dupliqués")
+            raise ValueError("duplicate stop or segment IDs")
         for segment in self.segments:
             for ref in (segment.from_stop_id, segment.to_stop_id):
                 if ref not in stop_ids:
-                    raise ValueError(f"{segment.id}: étape inconnue {ref}")
+                    raise ValueError(f"{segment.id}: unknown stop {ref}")
         for chapter in self.chapters:
             if unknown := (set(chapter.stop_ids) - stop_ids) | (set(chapter.segment_ids) - segment_ids):
-                raise ValueError(f"chapitre {chapter.id.value}: références inconnues {sorted(unknown)}")
+                raise ValueError(f"chapter {chapter.id.value}: unknown references {sorted(unknown)}")
         if self.budget.currency != self.currency:
-            raise ValueError("devise du budget ≠ devise du séjour")
+            raise ValueError("budget currency differs from journey currency")
         if self.date_range and self.date_range[0] > self.date_range[1]:
-            raise ValueError("date_range inversée")
+            raise ValueError("date_range is reversed")
         return self

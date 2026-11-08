@@ -1,6 +1,6 @@
-"""Questions humaines corrélées, enveloppe SSE v1 et instantané de mission v2.
+"""Correlated human questions, SSE v1 envelope and mission v2 snapshot.
 
-Compatibles avec `AgentQuestion`/`StepResult` de la V1 : ce sont des vues additives.
+Compatible with V1 `AgentQuestion`/`StepResult`: these are additive views.
 """
 
 from datetime import date, datetime
@@ -82,7 +82,7 @@ class HumanQuestion(BaseModel):
 
 
 class HumanAnswer(BaseModel):
-    """Un « oui » n'autorise jamais paiement, compte, santé, consentement ou envoi."""
+    """A yes never authorizes payment, accounts, health, consent or submission."""
 
     answer: str = Field(min_length=1, max_length=500)
     revision: int
@@ -104,7 +104,7 @@ EventType = Literal[
 
 
 class EventEnvelope(BaseModel):
-    """`event_id` = f"{mission_id}:{sequence}" ; sert de `id:` SSE et de Last-Event-ID."""
+    """`event_id` = f"{mission_id}:{sequence}"; used as SSE `id:` and Last-Event-ID."""
 
     schema_version: Literal["events.v1"] = EVENTS_SCHEMA_VERSION
     event_id: str

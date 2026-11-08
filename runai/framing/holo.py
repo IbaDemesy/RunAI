@@ -11,6 +11,7 @@ from typing import Protocol
 import httpx
 
 from runai.contracts.framing import FramingTurn
+from runai.framing.interpret import normalize_date_window
 from runai.redaction import redact_secrets
 from runai.telemetry import timed
 
@@ -69,7 +70,7 @@ def clean_extraction(raw: object) -> dict[str, object]:
         if name == "date_window":
             if not isinstance(value, str):
                 continue
-            match = re.fullmatch(r"([A-Za-z]+)(?: (\d{4}))?", value.strip())
+            match = re.fullmatch(r"([A-Za-z]+)(?: (\d{4}))?", normalize_date_window(value.strip()))
             if not match or match[1] not in month_name:
                 continue
             today = date.today()

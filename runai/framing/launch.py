@@ -1,8 +1,8 @@
-"""Lancement : un `FramingSession` confirmé devient une `Race` + consignes par étape.
+"""Launch: a confirmed `FramingSession` becomes a `Race` and per-step instructions.
 
-Ville, dates, nuits, distance, origine, budget et transport viennent uniquement du résumé
-confirmé, des slots connus et du `RaceCandidate` sourcé choisi. Un poste non couvert par une
-plateforme autorisée devient une `Limitation` (lien officiel manuel), jamais un faux résultat.
+City, dates, nights, distance, origin, budget and transport come only from the confirmed
+summary, known slots and selected sourced `RaceCandidate`. A step not covered by an
+allowed platform becomes a `Limitation` (manual official link), never a fabricated result.
 """
 
 from datetime import date
@@ -81,21 +81,21 @@ def _selected_candidate(session: FramingSession) -> RaceCandidate | None:
     for candidate in session.candidates:
         if candidate.id == session.selected_candidate_id:
             return candidate
-    raise FramingError(f"Candidat choisi introuvable : {session.selected_candidate_id}")
+    raise FramingError(f"Selected candidate not found: {session.selected_candidate_id}")
 
 
 def _check_confirmed(session: FramingSession) -> None:
     if session.status not in (FramingStatus.confirmed, FramingStatus.launched):
-        raise FramingError(f"Cadrage non confirmé : {session.status.value}")
+        raise FramingError(f"Framing not confirmed: {session.status.value}")
     if session.confirmed_revision != session.revision:
         raise FramingError(
-            f"Confirmation de la révision {session.confirmed_revision}, courante {session.revision}"
+            f"Stale revision {session.confirmed_revision} (current {session.revision})"
         )
     if session.summary is None or session.summary.revision != session.revision:
-        raise FramingError("Résumé absent ou obsolète")
+        raise FramingError("Summary missing or stale")
     if missing := missing_slots(session):
         raise FramingError(
-            "Informations manquantes : " + ", ".join(m.value for m in missing)
+            "Missing information: " + ", ".join(m.value for m in missing)
         )
 
 
@@ -123,11 +123,11 @@ def _brief(session: FramingSession, race: Race) -> TripBrief:
     arrival, departure = summary.date_range
     if departure < arrival or (departure == arrival and summary.nights):
         raise FramingError(
-            "Fenêtre de séjour incohérente : départ avant ou égal à l'arrivée"
+            "Inconsistent stay window: departure is before or equal to arrival"
         )
     if (departure - arrival).days != summary.nights:
         raise FramingError(
-            f"{summary.nights} nuits confirmées mais {(departure - arrival).days} entre les dates"
+            f"{summary.nights} nights confirmed but {(departure - arrival).days} days between dates"
         )
     preferences = _slot_value(session, SlotName.preferences)
     label = race.name
@@ -163,7 +163,7 @@ def _merge_limitations(*groups: list[Limitation]) -> list[Limitation]:
 def plan_launch(
     session: FramingSession, profile: RunnerProfile | None = None
 ) -> LaunchPlan:
-    """Plan d'exécution d'un cadrage confirmé ; lève `FramingError` sinon. N'appelle aucun service."""
+    """Build an execution plan for confirmed framing or raise `FramingError`. No service calls."""
     _check_confirmed(session)
     profile = profile or RunnerProfile()
     candidate = _selected_candidate(session)
@@ -182,7 +182,7 @@ def plan_launch(
             limitations=[
                 Limitation(
                     code="no_accommodation_requested",
-                    message="0 nuit confirmée : aucun hébergement à rechercher.",
+                    message="0 nights confirmed: no accommodation to search for.",
                     step=StepKind.accommodation.value,
                 )
             ],

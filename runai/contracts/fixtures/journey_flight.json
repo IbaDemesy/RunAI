@@ -4,7 +4,7 @@
   "revision": 2,
   "framing_revision": 6,
   "mode": "demo",
-  "origin_public": "Paris 11e",
+  "origin_public": "Paris 11th arrondissement",
   "date_range": [
     "2027-03-20",
     "2027-03-22"
@@ -15,7 +15,7 @@
     {
       "id": "home",
       "kind": "home",
-      "label": "Paris 11e (quartier)",
+      "label": "Paris 11th arrondissement (neighborhood)",
       "coords": {
         "lat": 48.859,
         "lon": 2.38
@@ -28,7 +28,7 @@
     {
       "id": "ap-out",
       "kind": "airport",
-      "label": "Aéroport de départ (fixture)",
+      "label": "Departure airport (fixture)",
       "coords": {
         "lat": 48.7262,
         "lon": 2.3652
@@ -41,7 +41,7 @@
     {
       "id": "ap-in",
       "kind": "airport",
-      "label": "Aéroport d'arrivée (fixture)",
+      "label": "Arrival airport (fixture)",
       "coords": {
         "lat": 38.7742,
         "lon": -9.1342
@@ -54,7 +54,7 @@
     {
       "id": "hotel",
       "kind": "hotel",
-      "label": "Hôtel suggéré (fixture, non réservé)",
+      "label": "Suggested hotel (fixture, not booked)",
       "coords": {
         "lat": 38.7223,
         "lon": -9.1393
@@ -67,7 +67,7 @@
     {
       "id": "bib",
       "kind": "bib_pickup",
-      "label": "Retrait des dossards (fixture)",
+      "label": "Bib pickup (fixture)",
       "coords": {
         "lat": 38.768,
         "lon": -9.094
@@ -80,7 +80,7 @@
     {
       "id": "start",
       "kind": "race_start",
-      "label": "Départ (fixture)",
+      "label": "Race start (fixture)",
       "coords": {
         "lat": 38.697,
         "lon": -9.206
@@ -93,7 +93,7 @@
     {
       "id": "finish",
       "kind": "race_finish",
-      "label": "Arrivée (fixture)",
+      "label": "Race finish (fixture)",
       "coords": {
         "lat": 38.7075,
         "lon": -9.1365
@@ -159,7 +159,7 @@
         "provenance": {
           "kind": "fixture",
           "url": null,
-          "label": "Vol fictif",
+          "label": "Fictional flight",
           "collected_at": "2026-11-07T12:00:00Z"
         }
       },
@@ -168,7 +168,7 @@
       "provenance": null,
       "limitation": {
         "code": "flight_arc_illustrative",
-        "message": "Arc de vol illustratif, pas une trajectoire réelle.",
+        "message": "Illustrative flight arc, not an actual flight path.",
         "step": null,
         "manual_url": null
       }
@@ -281,7 +281,7 @@
       "provenance": null,
       "limitation": {
         "code": "race_track_example",
-        "message": "Tracé d'exemple, pas le parcours officiel.",
+        "message": "Example route, not the official course.",
         "step": null,
         "manual_url": null
       }
@@ -314,7 +314,7 @@
         "provenance": {
           "kind": "fixture",
           "url": null,
-          "label": "Vol fictif",
+          "label": "Fictional flight",
           "collected_at": "2026-11-07T12:00:00Z"
         }
       },
@@ -327,7 +327,7 @@
   "chapters": [
     {
       "id": "home",
-      "label": "Chez moi",
+      "label": "Home",
       "stop_ids": [
         "home"
       ],
@@ -338,7 +338,7 @@
     },
     {
       "id": "departure_hub",
-      "label": "Aéroport",
+      "label": "Airport",
       "stop_ids": [
         "ap-out"
       ],
@@ -347,7 +347,7 @@
     },
     {
       "id": "main_transport",
-      "label": "Vol",
+      "label": "Flight",
       "stop_ids": [
         "ap-in"
       ],
@@ -358,7 +358,7 @@
     },
     {
       "id": "arrival_hotel",
-      "label": "Arrivée et hôtel",
+      "label": "Arrival and hotel",
       "stop_ids": [
         "hotel"
       ],
@@ -369,7 +369,7 @@
     },
     {
       "id": "bib_pickup",
-      "label": "Dossard",
+      "label": "Bib pickup",
       "stop_ids": [
         "bib"
       ],
@@ -380,7 +380,7 @@
     },
     {
       "id": "race",
-      "label": "Départ et course",
+      "label": "Start and race",
       "stop_ids": [
         "start",
         "finish"
@@ -393,7 +393,7 @@
     },
     {
       "id": "return_trip",
-      "label": "Retour",
+      "label": "Return",
       "stop_ids": [
         "ap-out"
       ],
@@ -410,7 +410,7 @@
       {
         "id": "c-reg",
         "category": "registration",
-        "label": "Inscription",
+        "label": "Registration",
         "money": {
           "amount": 60.0,
           "currency": "EUR",
@@ -419,7 +419,7 @@
           "provenance": {
             "kind": "fixture",
             "url": null,
-            "label": "Tarif fictif",
+            "label": "Fictional fare",
             "collected_at": "2026-11-07T12:00:00Z"
           }
         },
@@ -428,7 +428,7 @@
       {
         "id": "c-hotel",
         "category": "accommodation",
-        "label": "Hôtel 2 nuits",
+        "label": "Hotel, 2 nights",
         "money": {
           "amount": 210.0,
           "currency": "EUR",
@@ -437,7 +437,7 @@
           "provenance": {
             "kind": "fixture",
             "url": null,
-            "label": "Tarif fictif",
+            "label": "Fictional fare",
             "collected_at": "2026-11-07T12:00:00Z"
           }
         },
@@ -446,7 +446,7 @@
       {
         "id": "c-flight",
         "category": "transport",
-        "label": "Vols aller-retour",
+        "label": "Round-trip flights",
         "money": {
           "amount": 270.0,
           "currency": "EUR",
@@ -455,7 +455,7 @@
           "provenance": {
             "kind": "fixture",
             "url": null,
-            "label": "Somme des deux vols fictifs",
+            "label": "Sum of both fictional flights",
             "collected_at": "2026-11-07T12:00:00Z"
           }
         },
@@ -464,9 +464,9 @@
       {
         "id": "c-local",
         "category": "local",
-        "label": "Transports locaux",
+        "label": "Local transport",
         "money": null,
-        "note": "Non estimé"
+        "note": "Not estimated"
       }
     ],
     "known_total": 540.0,
@@ -477,14 +477,14 @@
     "over_cap": null
   },
   "warnings": [
-    "Données de démonstration : course, vols et hôtel fictifs."
+    "Demo data: fictional race, flights and hotel."
   ],
   "limitations": [],
   "sources": [
     {
       "kind": "fixture",
       "url": null,
-      "label": "Fixture contractuelle G1",
+      "label": "G1 contract fixture",
       "collected_at": "2026-11-07T12:00:00Z"
     }
   ]

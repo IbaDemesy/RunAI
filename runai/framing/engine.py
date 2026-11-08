@@ -1,5 +1,6 @@
 import asyncio
 import math
+import re
 from collections.abc import Awaitable, Callable
 from datetime import date, timedelta
 from uuid import uuid4
@@ -30,7 +31,7 @@ from runai.contracts.framing import (
 )
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.holo import Phraser
-from runai.framing.interpret import extract_slots
+from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
 from runai.search.candidates import CandidateSearchError, location_hint
@@ -176,6 +177,10 @@ class FramingEngine:
                         "flexible",
                         "pas de pr\u00e9f\u00e9rence",
                         "any time",
+                        "anytime",
+                        "doesn't matter",
+                        "does not matter",
+                        "whenever",
                         "no preference",
                     )
                     if any(phrase in normalized for phrase in flexible):
@@ -217,6 +222,8 @@ class FramingEngine:
             if not choice and reply.text:
                 holo_values = await self._holo_fill(session, reply.text, values)
                 values = holo_values | values
+            if isinstance(window := values.get(SlotName.date_window), str):
+                values[SlotName.date_window] = normalize_date_window(window)
             if not values and choice is None and session.turns:
                 raise FramingError(guidance)
             self._validate(values)
@@ -271,7 +278,7 @@ class FramingEngine:
                     )
                     if name == SlotName.distance_km
                     and name not in reply.corrections
-                    and "km" not in (reply.text or "").lower()
+                    and not re.search(r"\b\d+(?:[.,]\d+)?\s*k(?:m)?\b", reply.text or "", re.IGNORECASE)
                     else Provenance(kind="human"),
                     revision=session.revision,
                 )
