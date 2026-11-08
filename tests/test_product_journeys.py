@@ -85,7 +85,6 @@ def completed(client):
     return session, mid, snapshot, answers
 
 
-@pytest.mark.xfail(strict=True, reason="AC-01, unit U3")
 def test_ac01_happy_path(client):
     session = ready(client, "Marathon de Milan")
     mid = confirm(client, session)
@@ -129,7 +128,6 @@ def test_ac02_idea_with_one_reply(client, idea):
     ("Milan marathon in April 2027", "Milan", 42.195),
     ("Tokyo 10K from London", "Tokyo", 10),
 ])
-@pytest.mark.xfail(strict=True, reason="AC-03, unit U2")
 def test_ac03_english_slots(client, prompt, city, distance):
     slots = start(client, prompt)["slots"]
     assert slots["city"]["value"] == city
