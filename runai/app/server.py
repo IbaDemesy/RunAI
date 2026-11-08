@@ -34,6 +34,7 @@ from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSea
 from runai.app.fakes import DEMO_RACES
 from runai.app.headers import SecurityHeadersMiddleware
 from runai.app.history import DEFAULT_LIMIT, MAX_LIMIT, list_summaries, summarize
+from runai.app.metrics import build_metrics_router
 from runai.app.mission import MissionError, MissionNotFound, MissionService
 from runai.app.profile import ProfileStore
 from runai.app.providers import (
@@ -228,6 +229,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     )
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
+    app.include_router(build_metrics_router(selected))
     app.include_router(build_screenshot_router(selected))
     app.include_router(telemetry_router)
     app.include_router(voice_ws.router)

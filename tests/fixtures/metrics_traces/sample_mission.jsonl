@@ -1,0 +1,12 @@
+{"at":"2026-01-01T00:00:00Z","source":"app","type":"mission_created"}
+{"at":"2026-01-01T00:00:01Z","source":"app","type":"step_started","data":{"step":"registration"}}
+{"at":"2026-01-01T00:00:02Z","source":"h","type":"session_created","data":{"step":"registration","h_session_id":"sample-session","h_key":"primary","max_steps":30}}
+{"at":"2026-01-01T00:00:03Z","source":"app","type":"step_started","data":{"step":"accommodation"}}
+{"at":"2026-01-01T00:00:04Z","source":"h","type":"AgentEvent.observation_event","data":{"step":"registration","event":{"type":"AgentEvent","data":{"kind":"observation_event","metadata":{"url":"https://tickets.example.com/signup?token=anonymous"}}}}}
+{"at":"2026-01-01T00:00:05Z","source":"agent:registration","type":"question","data":{"step":"registration","question_id":"q1"},"message":"Which option?"}
+{"at":"2026-01-01T00:00:06Z","source":"h","type":"AgentEvent.observation_event","data":{"step":"accommodation","event":{"type":"AgentEvent","data":{"kind":"observation_event","metadata":{"url":"https://example.org/rooms?guests=1"}}}}}
+{"at":"2026-01-01T00:00:09Z","source":"human","type":"answer","data":{"step":"registration","question_id":"q1"},"message":"Standard"}
+{"at":"2026-01-01T00:00:10Z","source":"h","type":"MetricsUpdateEvent","data":{"step":"registration","event":{"type":"MetricsUpdateEvent","data":{"metrics":{"steps":7,"total_cost":0.125}}}}}
+{"at":"2026-01-01T00:00:11Z","source":"app","type":"step_done","data":{"step":"registration","status":"stopped_before_commitment"}}
+{"at":"2026-01-01T00:00:13Z","source":"app","type":"step_done","data":{"step":"accommodation","status":"completed"}}
+{"at":"2026-01-01T00:00:14Z","source":"app","type":"mission_done"}
