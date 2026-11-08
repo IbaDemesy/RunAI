@@ -1,11 +1,14 @@
-# Hébergement du POC sur Render (Blueprint). Voir README, section « Héberger le POC ».
-# Une seule instance : les missions vivent en mémoire du serveur.
+# RunAI hosting on Render (Blueprint synced from `main`). See README, "Deploy on Render".
+# Each service runs a single instance: missions live in the server's memory.
 services:
+  # Live app: real H / Linkup / Gladia calls, consumes partner credits.
+  # With RUNAI_PUBLIC=1 the app refuses to start unless RUNAI_BASIC_AUTH is set.
   - type: web
     name: runai
     runtime: python
     plan: free
     numInstances: 1
+    autoDeploy: true
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn runai.app.server:create_app --factory --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
@@ -16,17 +19,54 @@ services:
         value: "1"
       - key: RUNAI_MODE
         value: live
+      # user:password, set in the Render dashboard.
       - key: RUNAI_BASIC_AUTH
         sync: false
+      # Report-only CSP by default; set to "1" to enforce.
       - key: RUNAI_CSP_ENFORCE
         value: "0"
+      # Partner keys, set in the Render dashboard. The *_2 keys are optional backups;
+      # the H runner pools every HAI_API_KEY[_N] key (one H organization each).
       - key: HAI_API_KEY
+        sync: false
+      - key: HAI_API_KEY_2
         sync: false
       - key: LINKUP_API_KEY
         sync: false
+      - key: LINKUP_API_KEY_2
+        sync: false
       - key: GLADIA_API_KEY
         sync: false
+      - key: GLADIA_API_KEY_2
+        sync: false
+      # Local cap on concurrent H sessions per key (H Free plan: 3 sessions).
+      - key: RUNAI_H_MAX_CONCURRENCY
+        value: "3"
       - key: RUNAI_H_MAX_STEPS
         value: "40"
       - key: RUNAI_H_MAX_TIME_S
         value: "600"
+      # Render free disk is ephemeral: traces are lost on every redeploy or restart.
+      - key: RUNAI_TRACES_DIR
+        value: /tmp/runai-traces
+
+  # Public demo for judges: simulated providers, no partner calls, no credits,
+  # so no basic auth and no API key.
+  - type: web
+    name: runai-demo
+    runtime: python
+    plan: free
+    numInstances: 1
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn runai.app.server:create_app --factory --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: RUNAI_PUBLIC
+        value: "1"
+      - key: RUNAI_MODE
+        value: demo
+      - key: RUNAI_TRACES_DIR
+        value: /tmp/runai-traces
