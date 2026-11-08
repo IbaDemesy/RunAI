@@ -12,6 +12,10 @@ class HumanQuestionError(Exception):
     """Réponse non corrélée, périmée ou non autorisée."""
 
 
+class HumanQuestionNotFound(HumanQuestionError):
+    pass
+
+
 class HumanQuestionRegistry:
     def __init__(self):
         self.questions: dict[str, HumanQuestion] = {}
@@ -48,7 +52,7 @@ class HumanQuestionRegistry:
         try:
             return self.questions[question_id].model_copy(deep=True)
         except KeyError as exc:
-            raise HumanQuestionError("Question inconnue") from exc
+            raise HumanQuestionNotFound("Unknown question") from exc
 
     def answer(
         self,
