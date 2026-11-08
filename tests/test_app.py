@@ -17,7 +17,8 @@ from runai.app.fakes import (
     FakeTranscriber,
 )
 from runai.app.mission import Mission, MissionService, MissionStatus
-from runai.app.server import MAX_AUDIO_BYTES, create_app
+from runai.app.replay import ReplayTrace
+from runai.app.server import MAX_AUDIO_BYTES, build_service, create_app
 from runai.app.tasks import (
     HUMAN_ACTIONS,
     STEP_LABELS,
@@ -1086,3 +1087,91 @@ def test_public_live_mode_requires_a_password(tmp_path, monkeypatch):
     create_app(make_service(tmp_path))
     monkeypatch.setenv("RUNAI_BASIC_AUTH", "equipe:secret")
     create_app(live)
+
+
+def test_demo_replay_redirect_bootstrap_and_progress(tmp_path, monkeypatch):
+    race = DEMO_RACES["milan"].model_copy(update={"name": "Recorded race"})
+    trace = ReplayTrace(label="Recorded demo", race=race, steps={
+        kind: {
+            "result": StepResult(kind=kind, status=StepStatus.stopped_before_commitment),
+            "events": [TraceEvent(source="agent", type="action", message="Recorded action")],
+        } for kind in AGENT_KINDS
+    })
+    path = tmp_path / "replay.json"
+    trace.dump(path)
+    monkeypatch.setenv("RUNAI_MODE", "replay")
+    monkeypatch.setenv("RUNAI_REPLAY_TRACE", str(path))
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    app = create_app(build_service(delay=0.05))
+    with TestClient(app) as client:
+        response = client.get("/demo/replay", follow_redirects=False)
+        assert response.status_code == 303
+        url = response.headers["location"]
+        mission_id = url.rsplit("/", 1)[1]
+        assert url == f"/demo/missions/{mission_id}"
+        page = client.get(url)
+        assert page.status_code == 200
+        assert page.headers["content-type"].startswith("text/html")
+        assert mission_id in page.text
+        assert 'sessionStorage.setItem("runai:mission", id)' in page.text
+        assert 'sessionStorage.removeItem("runai:framing")' in page.text
+        assert 'location.replace("/?mission=" + encodeURIComponent(id))' in page.text
+        first = client.get(f"/api/missions/{mission_id}").json()
+        assert first["race"]["name"] == "Recorded race"
+        assert len(first["steps"]) == 3
+        for _ in range(100):
+            snapshot = client.get(f"/api/missions/{mission_id}").json()
+            if all(step["status"] == "stopped_before_commitment" for step in snapshot["steps"]):
+                break
+            time.sleep(0.01)
+        assert all(step["status"] == "stopped_before_commitment" for step in snapshot["steps"])
+        assert all(step["data"]["provenance"]["mode"] == "replay" for step in snapshot["steps"])
+        assert client.get("/demo/replay", follow_redirects=False).headers["location"] == url
+        assert client.get("/demo/replay", headers={"Accept": "application/json"}).json() == {
+            "mission_id": mission_id, "url": url,
+        }
+        assert len(app.state.service.missions) == 1
+        missing = client.get("/demo/missions/unknown")
+        assert missing.status_code == 404
+        assert missing.json()["detail"] == "Unknown demo mission."
+
+
+def test_demo_replay_live_mode_is_not_found(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_MODE", "live")
+    monkeypatch.setenv("RUNAI_FRAMING_LLM", "0")
+    with TestClient(create_app()) as client:
+        for url in ("/demo/replay", "/demo/missions/unknown"):
+            response = client.get(url)
+            assert response.status_code == 404
+            assert response.json()["detail"] == "Demo replay is only available in replay or demo mode."
+
+
+def test_demo_replay_demo_mode(tmp_path):
+    with TestClient(create_app(make_service(tmp_path))) as client:
+        response = client.get("/demo/replay", headers={"Accept": "application/json"})
+        assert response.status_code == 200
+        mission = client.get(f'/api/missions/{response.json()["mission_id"]}').json()
+        assert mission["race"]["city"] == "Milan"
+        for _ in range(100):
+            mission = client.get(f'/api/missions/{response.json()["mission_id"]}').json()
+            for question in mission["questions"]:
+                if question["status"] == "open":
+                    client.post(f'/api/missions/{mission["mission_id"]}/questions/{question["question_id"]}/answer', json={
+                        "answer": question["choices"][0], "revision": question["revision"],
+                        "idempotency_key": f'answer-{question["question_id"]}',
+                    })
+            if mission["status"] == "awaiting_human":
+                break
+            time.sleep(0.01)
+        assert mission["status"] == "awaiting_human"
+
+
+def test_demo_replay_without_recorded_race(tmp_path, monkeypatch):
+    path = tmp_path / "empty.json"
+    ReplayTrace(label="Empty").dump(path)
+    monkeypatch.setenv("RUNAI_MODE", "replay")
+    monkeypatch.setenv("RUNAI_REPLAY_TRACE", str(path))
+    with TestClient(create_app()) as client:
+        response = client.get("/demo/replay")
+        assert response.status_code == 409
+        assert response.json()["detail"] == "The demo race must include a date and distance."
