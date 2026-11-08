@@ -160,7 +160,6 @@ def test_every_step_has_provenance(demo_contract):
         assert step["data"].get("provenance", {}).get("mode") in {"demo", "live", "replay"}
 
 
-@pytest.mark.xfail(strict=True, reason="backend gap: v2 SSE StepResult serialization omits human_action")
 def test_stopped_steps_have_human_action(demo_contract):
     stopped = [step for step in steps(demo_contract[0]) if step["status"] == "stopped_before_commitment"]
     assert stopped, "Demo must exercise the pre-payment halt"

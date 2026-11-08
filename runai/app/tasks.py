@@ -7,7 +7,14 @@ from datetime import date
 from pydantic import BaseModel, Field
 
 from runai.app.providers import FORBIDDEN_ACCOMMODATION_SITES
-from runai.models import Race, RunnerProfile, StepKind, StopPoint
+from runai.models import (
+    HUMAN_ACTIONS,
+    NO_STOP_POINT_ACTION,
+    Race,
+    RunnerProfile,
+    StepKind,
+    StopPoint,
+)
 from runai.safety import guard_task
 
 STEP_LABELS: dict[StepKind, str] = {
@@ -17,13 +24,6 @@ STEP_LABELS: dict[StepKind, str] = {
     StepKind.transport: "Transport",
 }
 
-HUMAN_ACTIONS: dict[StopPoint, str] = {
-    StopPoint.payment: "Check the summary and the price, then pay yourself on the official site.",
-    StopPoint.account_creation: "Create your account yourself: the agent never enters a password.",
-    StopPoint.health_declaration: "Provide the medical certificate or PPS yourself: no health data goes through the agent.",
-    StopPoint.consent: "Read and accept the rules, terms or consent yourself.",
-    StopPoint.submission: "Review the pre-filled fields and submit the final form yourself.",
-}
 
 ANTI_BOT_MARKER = "BLOCKED: CAPTCHA/ANTI-BOT"
 ASK_USER_RULES = (
@@ -85,7 +85,7 @@ def extract_budget_per_night(
 
 def human_action(stop_point: StopPoint | None) -> str:
     if stop_point is None:
-        return "Nothing was committed: take over from the live view if needed."
+        return NO_STOP_POINT_ACTION
     return HUMAN_ACTIONS[stop_point]
 
 

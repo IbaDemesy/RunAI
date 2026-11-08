@@ -6,6 +6,7 @@ from pydantic import (
     BaseModel,
     Field,
     HttpUrl,
+    computed_field,
     field_serializer,
     field_validator,
     model_serializer,
@@ -86,6 +87,16 @@ class StopPoint(str, Enum):
     payment = "payment"
 
 
+HUMAN_ACTIONS: dict[StopPoint, str] = {
+    StopPoint.payment: "Check the summary and the price, then pay yourself on the official site.",
+    StopPoint.account_creation: "Create your account yourself: the agent never enters a password.",
+    StopPoint.health_declaration: "Provide the medical certificate or PPS yourself: no health data goes through the agent.",
+    StopPoint.consent: "Read and accept the rules, terms or consent yourself.",
+    StopPoint.submission: "Review the pre-filled fields and submit the final form yourself.",
+}
+NO_STOP_POINT_ACTION = "Nothing was committed: take over from the live view if needed."
+
+
 class StepStatus(str, Enum):
     pending = "pending"
     running = "running"
@@ -108,6 +119,15 @@ class StepResult(BaseModel):
     h_session_id: str | None = None
     data: dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
+
+    @computed_field  # additive: what the human must do at the halt
+    @property
+    def human_action(self) -> str | None:
+        if self.status is not StepStatus.stopped_before_commitment:
+            return None
+        if self.stop_point is None:
+            return NO_STOP_POINT_ACTION
+        return HUMAN_ACTIONS[self.stop_point]
 
     @model_serializer(mode="wrap")
     def serialize_result(self, handler):

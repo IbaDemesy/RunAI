@@ -62,7 +62,6 @@ def test_optional_pdf(client, mission):
     assert response.content.startswith(b"%PDF")
 
 
-@pytest.mark.xfail(strict=True, reason="GAP-W1-1: mission.v2 snapshot steps (StepResult) do not expose human_action for stop points")
 def test_stop_points_expose_human_action(client, mission):
     snapshot = checked(client.get(f"/api/missions/{mission[0]['mission_id']}"))
     stopped = [step for step in snapshot["steps"] if step["stop_point"]]
