@@ -105,6 +105,19 @@ refuses to run without basic auth, protecting provider credits.
 If provider access fails during judging, use a `RUNAI_MODE=replay` deployment or the
 local replay command above, and present it explicitly as a replay.
 
+## Observability
+
+Logs are one line per record on stderr, with every provider key value redacted.
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `RUNAI_LOG_FORMAT` | `json` on Render or with `RUNAI_PUBLIC=1`, `text` otherwise | `json` lines carry `ts`, `level`, `logger`, `msg` plus extra fields (`request_id`, `mission_id`, `step`, `h_session_id`, `provider`, `duration_ms`); `text` is human-readable. |
+| `RUNAI_LOG_LEVEL` | `INFO` | Root log level (uvicorn logs go through the same handler). |
+
+- Every response carries an `X-Request-ID` header (the incoming one is reused, otherwise generated); each non-SSE request logs one `request` line with `method`, `path` (no query string), `status` and `duration_ms`.
+- The mission event stream logs `sse_open` and `sse_close` with `mission_id`, `duration_s`, `events_sent` and `last_event_id`.
+- `GET /api/health` (unauthenticated) adds `uptime_s`, `version` (`RENDER_GIT_COMMIT`, short, or `dev`), `started_at`, `active_missions` and, in live H mode, `h_slots` (H key names only) and `h_queued`.
+
 ## Tests
 
 Offline checks from the repository root (Node 24 must be on pytest's PATH):

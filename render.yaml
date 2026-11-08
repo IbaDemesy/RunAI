@@ -19,6 +19,10 @@ services:
         value: "1"
       - key: RUNAI_MODE
         value: live
+      - key: RUNAI_LOG_FORMAT
+        value: json
+      - key: RUNAI_LOG_LEVEL
+        value: INFO
       # user:password, set in the Render dashboard.
       - key: RUNAI_BASIC_AUTH
         sync: false
