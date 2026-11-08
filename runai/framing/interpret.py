@@ -52,8 +52,10 @@ SEASONS = {
     "hiver": (12, 2, MONTHS),
 }
 TEMPORAL_PATTERN = MONTH_PATTERN + "|" + "|".join(SEASONS)
+DATE_WORDS = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "this"}
+NIGHT_NUMBERS = dict(zip(("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"), range(1, 11)))
 LOCATION_BOUNDARY = (
-    r"(?=\s+(?:depuis|from|leaving|departing|au départ|en|in|le|pour|avec|with|budget|au|on|by|"
+    r"(?=\s+(?:depuis|from|to|this|leaving|departing|au départ|en|in|le|pour|avec|with|budget|au|on|by|"
     r"flying|édition|edition|next|prochain|prochaine|"
     + MONTH_PATTERN
     + r"|\d+)\b|[,;.!?]|$)"
@@ -65,6 +67,8 @@ HINT_BOUNDARY = (
 
 
 def _is_temporal(value: str) -> bool:
+    if value.casefold() in DATE_WORDS:
+        return True
     return bool(
         re.fullmatch(
             r"next|prochain|prochaine|(?:(?:next|prochain|prochaine)\s+)?(?:"
@@ -189,8 +193,12 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
     boundary = LOCATION_BOUNDARY
     english = english_race(text)
     if english and not any(_is_temporal(word) for word in english[1].split()):
-        result[SlotName.city] = english[1]
-        result[SlotName.race] = english[0]
+        words = english[1].split()
+        while words and words[0].casefold() in {"run", "do", "book", "register", "join", "find", "i", "want", "please", "to", "would", "like", "need", "let", "me"}:
+            words.pop(0)
+        if words:
+            result[SlotName.city] = " ".join(words)
+            result[SlotName.race] = " ".join(words) + english[0][len(english[1]):]
     for slot, prefix in (
         (SlotName.origin, r"(?:depuis|au départ de|départ de|leaving\s+from|departing(?:\s+from)?|from)"),
         (SlotName.city, r"(?:à|in|(?:marathon|semi|course|race)\s+(?:de|of))"),
@@ -206,6 +214,20 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
                 r"\b(?:ou|or)\b", value, re.IGNORECASE
             ):
                 result[slot] = value
+                break
+    if SlotName.city not in result:
+        destination = re.search(
+            r"\b(?i:to)\s+([A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*)" + boundary,
+            text,
+        )
+        after_distance = re.search(
+            r"\b(?i:10\s*k(?:m)?|ten\s+k|half(?:\s+marathon)?|HM)\s+"
+            r"([A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ž'’\-]*)*)" + boundary,
+            text,
+        )
+        for match in (destination, after_distance):
+            if match and not _is_temporal(match[1]) and match[1].casefold() not in {"run", "race"}:
+                result[SlotName.city] = match[1]
                 break
     named_race = re.search(
         r"\b(?i:ultra-trail|trail|ultra|course|corrida|foulées|ekiden|raid)"
@@ -245,7 +267,7 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             text,
             re.IGNORECASE,
         )
-        if before_race and not _is_negated(text, before_race.start()):
+        if before_race and before_race[1][0].isupper() and not _is_temporal(before_race[1]) and not _is_negated(text, before_race.start()):
             result[SlotName.city] = before_race[1]
     for distance in re.finditer(
         r"\b(\d+(?:[.,]\d+)?)\s*(km|k|miles?)\b", text, re.IGNORECASE
@@ -259,8 +281,10 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             )
             break
     if SlotName.distance_km not in result:
+        if re.search(r"\bten\s+k\b", text, re.IGNORECASE):
+            result[SlotName.distance_km] = 10.0
         for distance in re.finditer(
-            r"\b(?:semi(?:[ -]marathon)?|half(?:[ -]marathon)?|marathon)\b",
+            r"\b(?:semi(?:[ -]marathon)?|half(?:[ -]marathon)?|HM|marathon)\b",
             text,
             re.IGNORECASE,
         ):
@@ -281,9 +305,9 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
         result[SlotName.budget] = float((budget[1] or budget[2]).replace(",", "."))
     elif re.search(r"pas de budget|sans plafond|no budget", text, re.IGNORECASE):
         result[SlotName.budget] = None
-    nights = re.search(r"\b(\d+)\s*(?:nuits?|nights?)\b", text, re.IGNORECASE)
+    nights = re.search(r"\b(\d+|" + "|".join(NIGHT_NUMBERS) + r")\s*(?:nuits?|nights?)\b", text, re.IGNORECASE)
     if nights:
-        result[SlotName.nights] = int(nights[1])
+        result[SlotName.nights] = int(nights[1]) if nights[1].isdigit() else NIGHT_NUMBERS[nights[1].lower()]
     for pattern, mode in (
         (r"train", "train"),
         (r"avion|flight|plane|flying", "flight"),
