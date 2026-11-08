@@ -299,6 +299,7 @@ def test_official_domains_exclude_wikis_social_media_and_blogs():
 
 def test_official_lookup_is_capped_and_deduplicated():
     from types import SimpleNamespace
+
     from runai.app.real import MAX_OFFICIAL_LOOKUPS, lookup_official_info_tool
     from runai.models import Race, Source
     class Client:

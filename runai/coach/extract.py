@@ -95,7 +95,7 @@ def _normalize(text: str) -> str:
         lambda m: str(_NUMBER_WORDS[m[1]] + _NUMBER_WORDS[m[2]]),
         t,
     )
-    t = re.sub(rf"\b(?:un|une)\s+(?=" + r"\d+(?:[.,]\d+)?\s*(?:km|k|kilom\w*|miles?)\b)", "", t)
+    t = re.sub(r"\b(?:un|une)\s+(?=" + r"\d+(?:[.,]\d+)?\s*(?:km|k|kilom\w*|miles?)\b)", "", t)
     for word, value in sorted(_NUMBER_WORDS.items(), key=lambda kv: -len(kv[0])):
         t = re.sub(rf"\b{word}\b", str(value), t)
     t = re.sub(
