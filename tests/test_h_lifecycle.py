@@ -417,13 +417,28 @@ def test_retry_recovery(code):
         assert len(runner.calls) == 2
         if code == "no_answer":
             assert runner.calls[1][1]["max_steps"] == 90
-            assert runner.calls[1][0].endswith("Answer now with what you found so far.")
+            assert "Answer now with what you found so far." in runner.calls[1][0]
         elif code == "answer_validation":
             assert "answer_schema" not in runner.calls[1][1]
         else:
             first, second = ((task, {k: v for k, v in params.items() if k != "idempotency_key"})
                              for task, params, _ in runner.calls)
             assert first == second
+    asyncio.run(scenario())
+
+
+def test_no_answer_retry_keeps_one_trailing_safety_block():
+    from runai.safety import STOP_INSTRUCTIONS, guard_task
+
+    async def scenario():
+        runner = RetryRunner(["no_answer", None])
+        job = HLifecycle(runner).submit(StepKind.search, guard_task("Find a race"))
+        await job.wait()
+        retry = guard_task(runner.calls[1][0])
+        assert retry.count(STOP_INSTRUCTIONS) == 1
+        assert retry.endswith(STOP_INSTRUCTIONS)
+        assert retry.index("Answer now with what you found so far.") < retry.index(STOP_INSTRUCTIONS)
+
     asyncio.run(scenario())
 
 
