@@ -110,7 +110,8 @@ def test_controls_messages_and_cancel(demo):
     for action in ("resume", "pause", "pause", "resume"):
         assert client.post(step + "/" + action).status_code == 200
     error(client.post(step + "/message", json={"text": "x" * 501}), 422)
-    text = '<script>\n"pay now with card"'
+    error(client.post(step + "/message", json={"text": '<script>\n"pay now with card"'}), 409)
+    text = '<script>\n"prefer the 10 km distance"'
     assert client.post(step + "/message", json={"text": text}).status_code == 200
     run = service._runs[(mid, StepKind.registration)].run
     assert run.received[-1].endswith(STOP_INSTRUCTIONS)
