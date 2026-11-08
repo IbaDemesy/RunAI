@@ -58,7 +58,7 @@ def test_parse_command_ignores_small_talk(text):
 
 def test_new_mission_extracts_race_hints():
     race = parse_command("Inscris-moi au semi de Lisbonne").race
-    assert (race.name, race.city, race.country, race.distance_km) == (None, "Lisbonne", "PT", HALF_MARATHON_KM)
+    assert (race.name, race.city, race.country, race.distance_km) == (None, "Lisbon", "PT", HALF_MARATHON_KM)
 
 
 def test_official_name_and_date_are_kept():

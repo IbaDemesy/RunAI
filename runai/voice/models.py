@@ -16,6 +16,7 @@ class CommandKind(str, Enum):
 
 
 class CorrectionTarget(str, Enum):
+    registration = "registration"
     date = "date"
     accommodation = "accommodation"
     transport = "transport"
@@ -34,6 +35,7 @@ class RaceQuery(BaseModel):
 
     name: str | None = None
     city: str | None = None
+    origin: str | None = None
     country: str | None = None
     distance_km: float | None = None
     date_text: str | None = None
