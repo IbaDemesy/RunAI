@@ -107,7 +107,7 @@ def test_ac01_sourced_milan_happy_path(client, completed):
         assert step["stop_point"] and step["url"]
 
 
-IDEAS = ["Mon premier semi en octobre", "Un marathon au printemps, depuis Lyon", "Un trail en montagne cet été"]
+IDEAS = ["My first half marathon in October", "A spring marathon, leaving from Lyon", "A mountain trail this summer"]
 
 
 @pytest.mark.parametrize("idea", IDEAS)
