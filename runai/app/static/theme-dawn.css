@@ -1,0 +1,236 @@
+/*
+ * RunAI design tokens: one dark-first "dawn" system for the whole app.
+ * Drop-in replacement for the :root block of runai/app/static/style.css.
+ * Every legacy variable name is kept; see docs/design/DESIGN_SYSTEM.md for roles,
+ * the migration map and the contrast table (python -m scripts.check_design_tokens).
+ */
+:root {
+  /* Dawn identity: night sky, sun accent, chalk text. Text on dark surfaces. */
+  --night: #0f1b33;
+  --sun: #ffd84d;
+  --chalk: #f5f7fb;
+  --mist: #b9c3d6;
+  --haze: #8fb3e8;
+
+  /* Dark surfaces, from page to raised. */
+  --surface-0: var(--night);
+  --surface-1: #16264a;
+  --surface-2: #1e3160;
+  --border: #33497a;
+  --border-strong: #5a74a8;
+
+  /* Legacy names with fixed roles. ink: text on bright fills (sun, chalk, chips). */
+  /* paper, paper-2, card: bright fills (user bubble, inverted panels, light chips). */
+  --ink: var(--night);
+  --ink-2: #2b3a58;
+  --ink-3: #46536f;
+  --paper: #eef2f8;
+  --paper-2: #e4eaf3;
+  --card: var(--chalk);
+  --line: #c9d3e3;
+  --accent: var(--sun);
+  --gold: #e0ae0e;
+  --gold-soft: #ffefaa;
+  --ok: #237242;
+  --bad: #c81e2d;
+
+  /* Agent step status chips, dark-first: background and text pairs. */
+  --status-pending-bg: #22345c;
+  --status-pending-fg: var(--mist);
+  --status-running-bg: var(--haze);
+  --status-running-fg: var(--night);
+  --status-paused-bg: #2a3a5e;
+  --status-paused-fg: #dfe6f2;
+  --status-waiting-bg: var(--sun);
+  --status-waiting-fg: var(--night);
+  --status-stopped-bg: var(--chalk);
+  --status-stopped-fg: var(--night);
+  --status-completed-bg: #123d2b;
+  --status-completed-fg: #86e5ae;
+  --status-failed-bg: #4a1824;
+  --status-failed-fg: #ffb4a8;
+
+  /* Partner identity, readable as text on every dark surface. Not official brand colors. */
+  --partner-h: #ff9b6b;
+  --partner-linkup: #5fd6b5;
+  --partner-gladia: #c9a7ff;
+  --partner-holo: var(--sun);
+  --partner-devin: #7cc4ff;
+
+  /* Data mode badge: Live, Demo, Replay. */
+  --mode-live: #3ddc84;
+  --mode-demo: var(--sun);
+  --mode-replay: var(--haze);
+
+  /* Feedback text on dark surfaces. */
+  --text-error: #ffb4a8;
+  --text-success: #86e5ae;
+
+  /* Focus ring: sun on dark, night on bright fills. */
+  --focus: var(--sun);
+  --focus-on-bright: var(--night);
+  --focus-width: 3px;
+
+  /* Typography: Archivo display, Geist text, Geist Mono for URLs only. */
+  --display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --text: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+  --holo-voice: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --type-small: .875rem;
+  --type-body: 1rem;
+  --type-lead: 1.125rem;
+  --type-heading: 1.375rem;
+  --type-title: clamp(1.8rem, 5vw, 3rem);
+  --type-hero: clamp(2.5rem, 6.4vw, 5.25rem);
+
+  /* Spacing (4px grid) and radii. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-small: 8px;
+  --radius-card: 14px;
+  --radius-lane: 18px;
+  --radius-pill: 999px;
+
+  /* Buttons. Legacy pair kept for the light mission page; primary is sun on night. */
+  --button-bg: var(--ink);
+  --button-text: var(--card);
+  --button-min: 44px;
+  --button-primary-bg: var(--sun);
+  --button-primary-fg: var(--night);
+  --button-secondary-bg: var(--surface-2);
+  --button-secondary-fg: var(--chalk);
+  --button-quiet-fg: var(--mist);
+  --button-danger-bg: var(--status-failed-bg);
+  --button-danger-fg: var(--status-failed-fg);
+
+  /* Motion: progress and chapter changes only. */
+  --motion-fast: 150ms;
+  --motion-chapter: 400ms;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* Component-local custom property: icon mask set per button. */
+  --icon: none;
+
+  font-family: var(--text);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-chapter: 0ms;
+  }
+}
+
+/* ===== Dawn theme: one dark-blue system for every screen (docs/design/DESIGN_SYSTEM.md section 8) =====
+ * Loaded AFTER style.css and journey.css so it wins on equal specificity.
+ * Part 1 is docs/design/tokens.css verbatim; part 2 maps the light roles of the legacy rules to the dark ones. */
+
+/* ---- Generated from the legacy rules ---- */
+body { background: var(--surface-0); }
+a { color: var(--chalk); }
+.brand-mark { background: var(--surface-2); }
+.badge { border: 1px solid var(--border); background: var(--surface-1); color: var(--mist); }
+.hero-sub { color: var(--mist); }
+.ask { background: var(--surface-1); border: 1px solid var(--border); box-shadow: 0 1px 0 var(--border); }
+.hint { color: var(--mist); }
+button.primary, .ask button[type="submit"] { background: var(--surface-2); }
+button.ghost, button.secondary { color: var(--chalk); border-color: var(--border); }
+.course::before { background: repeating-linear-gradient(90deg, var(--border) 0 14px, transparent 14px 22px); }
+.course li { color: var(--mist); }
+.course .cp { background: var(--surface-0); border: 3px solid var(--border); color: var(--mist); }
+.course li[data-state="active"] { color: var(--chalk); }
+.course li[data-state="waiting"] { color: var(--chalk); }
+.course li[data-state="done"] { color: var(--chalk); }
+.course li[data-state="done"] .cp { background: var(--surface-2); }
+.course li[data-state="failed"] .cp { background: var(--surface-1); }
+.course .cp-note { color: var(--mist); }
+.bib { background: var(--surface-1); border: 1px solid var(--border); }
+.bib::before, .bib::after { background: var(--surface-0); border: 1px solid var(--border); }
+.bib-meta { color: var(--mist); }
+.facts dt { color: var(--mist); }
+.sources { border-top: 1px dashed var(--border); color: var(--mist); }
+.sources a { color: var(--mist); }
+.step { background: var(--surface-1); border: 1px solid var(--border); }
+.last-action { color: var(--mist); }
+.current-url { color: var(--mist); background: var(--surface-2); }
+.status { background: var(--surface-2); color: var(--mist); }
+.status-paused { background: var(--surface-2); color: var(--chalk); }
+.status-stopped_before_commitment { background: var(--surface-2); }
+.live-frame { border: 1px solid var(--border); background: var(--surface-2); }
+.message input { border: 1px solid var(--border); background: var(--surface-1); }
+.agent-question .question-text::before { color: var(--mist); }
+.question-options button { background: var(--surface-1); }
+.question-options button:hover { background: var(--surface-2); }
+.answer-form input { background: var(--surface-1); }
+.answer-form button { background: var(--surface-2); }
+.question-feedback { color: var(--mist); }
+.finish { background: var(--surface-2); }
+.finish::after { background: repeating-conic-gradient(var(--surface-1) 0 25%, var(--surface-2) 0 50%) 0 0 / 10px 10px; }
+.trace { background: var(--surface-1); border: 1px solid var(--border); }
+.trace li { border-bottom: 1px solid var(--surface-2); }
+.trace time, .source { color: var(--mist); }
+.source-human { color: var(--chalk); }
+.live-page { background: var(--surface-1); }
+.browser-bar { background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.browser-bar code { color: var(--mist); }
+.dot { background: var(--border); }
+.browser-body ol { color: var(--mist); }
+.shell-stack > .total { color: var(--chalk); }
+.thread li { background: var(--surface-1); }
+.slot-row { border-bottom: 1px solid var(--border); }
+.answer-form input, textarea { background: var(--surface-1); border: 1px solid var(--border); }
+.agent-live iframe { border: 1px solid var(--border); }
+.agent-live img { border: 1px solid var(--border); }
+.agent-history time { color: var(--mist); }
+.journey-map { background: var(--surface-2); }
+.top { background: var(--surface-0); }
+
+/* ---- Manual rules ---- */
+:root { color-scheme: dark; }
+html, body { background: var(--surface-0); color: var(--chalk); }
+body { background: var(--surface-0); color: var(--chalk); }
+a { color: var(--haze); }
+h1, h2, h3, h4 { color: var(--chalk); }
+input, textarea, select { background: var(--surface-1); color: var(--chalk); border-color: var(--border); }
+input::placeholder, textarea::placeholder { color: var(--mist); }
+button { color: var(--chalk); }
+button.primary, .ask button[type="submit"] { background: var(--sun); color: var(--night); }
+button.primary:hover, .ask button[type="submit"]:hover { background: #ffe27a; }
+button.ghost, button.secondary { background: transparent; color: var(--chalk); border-color: var(--border-strong); }
+button.ghost:hover:not(:disabled), button.secondary:hover:not(:disabled) { border-color: var(--haze); }
+:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 2px; }
+.status-running { background: var(--status-running-bg); color: var(--status-running-fg); }
+.status-paused { background: var(--status-paused-bg); color: var(--status-paused-fg); border: 1px dashed var(--border-strong); }
+.status-waiting_for_user { background: var(--status-waiting-bg); color: var(--status-waiting-fg); }
+.status-stopped_before_commitment { background: var(--status-stopped-bg); color: var(--status-stopped-fg); }
+.status-completed { background: var(--status-completed-bg); color: var(--status-completed-fg); }
+.status-failed { background: var(--status-failed-bg); color: var(--status-failed-fg); }
+.live-page { background: var(--surface-0); color: var(--chalk); }
+.badge.real::before { background: var(--mode-live); }
+
+/* ---- Journey stepper: Search > Pick your race > Confirm your trip > Agents at work > Your trip ---- */
+.stepper { margin: 0 0 var(--space-4); }
+.stepper ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); }
+.stepper li { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--mist); font-size: var(--type-small); background: var(--surface-1); min-width: 0; }
+.stepper li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stepper .n { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); color: var(--chalk); font-weight: 700; font-size: .75rem; }
+.stepper li.done { color: var(--chalk); border-color: var(--border-strong); }
+.stepper li.done .n { background: var(--status-completed-bg); color: var(--status-completed-fg); }
+.stepper li.current { color: var(--night); background: var(--sun); border-color: var(--sun); font-weight: 700; }
+.stepper li.current .n { background: var(--night); color: var(--sun); }
+@media (max-width: 720px) {
+  .stepper ol { grid-template-columns: 1fr; }
+  .stepper li:not(.current) { display: none; }
+}
+
+/* ---- Live agent panes: visible by default while the agent works ---- */
+.agent-live { background: var(--surface-0); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-3); }
+.agent-live > summary { color: var(--haze); font-weight: 600; cursor: pointer; }
+.agent-live iframe, .agent-live img { background: var(--surface-1); border-color: var(--border); border-radius: var(--radius-card); }
+.agent-live iframe { height: 360px; }

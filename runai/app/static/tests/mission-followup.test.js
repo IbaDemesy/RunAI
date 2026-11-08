@@ -110,10 +110,8 @@ test("fenêtre live HTTPS repliable, agrandissable, conservée au rafraîchissem
   const { screen, sources, update } = await setup("running", [], step);
   const panel = screen.querySelector(".agent-live");
   assert.ok(panel);
-  assert.equal(screen.querySelector("iframe"), null);
-  panel.open = true;
-  panel.ontoggle();
   const frame = screen.querySelector("iframe");
+  assert.ok(frame, "the live view opens by itself while the agent is working");
   assert.equal(frame.src, "https://live.example.org/browser");
   assert.equal(frame.attributes.sandbox, "allow-scripts allow-same-origin");
   const enlarge = panel.querySelectorAll("button").find(node => node.textContent === "Enlarge");

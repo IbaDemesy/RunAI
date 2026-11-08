@@ -282,9 +282,20 @@
     };
     step();
   }
+  function stepper() {
+    const nav = el("nav", null, "stepper"); nav.setAttribute("aria-label", "Progress");
+    const current = core.journeyStage(framing, mission), list = el("ol");
+    core.STAGES.forEach((title, index) => {
+      const item = el("li", null, index < current ? "done" : index === current ? "current" : "todo");
+      if (index === current) item.setAttribute("aria-current", "step");
+      item.append(el("span", String(index + 1), "n"), el("span", title)); list.append(item);
+    });
+    nav.append(list); return nav;
+  }
   function renderFraming() {
     screen.className = "chat";
     screen.append(el("h1", "Plan your race through conversation", "sr-only"));
+    screen.append(stepper());
     const state = core.framingState(framing);
     if (state === "cancelled") {
       screen.append(el("p", "Request cancelled. No agents started.", "say"));
@@ -437,7 +448,7 @@
       history.querySelector(".agent-events").replaceChildren(list.children.length ? list : el("p", "No events received for this step."));
       const details = el("details"); details.append(el("summary", "Technical details"), el("p", step.h_session_id || "Session unavailable")); content.append(details);
       let liveUrl;
-      try { const url = new URL(step.live_view_url); if (url.protocol === "https:") liveUrl = url.href; } catch (_) { /* No embedded view without an HTTPS URL. */ }
+      try { const url = new URL(step.live_view_url, location.href); if (url.protocol === "https:" || url.origin === location.origin) liveUrl = url.href; } catch (_) { /* No embedded view without an HTTPS or same-origin URL. */ }
       const observation = step.data?.browser_observation;
       const hasCapture = Number.isInteger(observation?.revision) && observation.revision > 0;
       const panelKey = active && liveUrl ? liveUrl : "captures";
@@ -469,6 +480,7 @@
           }
         };
         block.append(panel);
+        if (active) { panel.open = true; panel.ontoggle(); }
       }
       if (panel && hasCapture) {
         panel.querySelector(".agent-page").textContent = observation.title || "Page title unavailable";
@@ -487,6 +499,7 @@
   function renderMission() {
     screen.className = "shell-stack";
     screen.append(el("h1", "My trip"));
+    screen.append(stepper());
     const questions = mission.questions || [];
     if (questions.some((q) => q.status === "open")) {
       const priority = el("section", null, "questions"); priority.append(el("h2", "Your turn to answer"));

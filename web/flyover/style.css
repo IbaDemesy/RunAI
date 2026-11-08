@@ -1,8 +1,8 @@
 :root {
-  --bg: rgba(18, 22, 30, 0.86);
+  --bg: rgba(15, 27, 51, 0.88);
   --fg: #f4f6fa;
   --muted: #a9b2c3;
-  --accent: #ff5a1f;
+  --accent: #ffd84d;
   --todo: #ffd54a;
   --profile-height: 150px;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
