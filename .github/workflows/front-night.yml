@@ -1,0 +1,92 @@
+name: Front-night guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  front-night:
+    name: front-night guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Label frontend changes and reject mixed PRs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          N: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          files=$(gh api "repos/$REPO/pulls/$N/files" --paginate --jq '.[] | .filename, (.previous_filename // empty)')
+          has_static=false
+          outside=()
+          while IFS= read -r file; do
+            case "$file" in
+              runai/app/static/*) has_static=true ;;
+              docs/*|tests/*|README.md|'') ;;
+              *) outside+=("$file") ;;
+            esac
+          done <<< "$files"
+
+          if [[ "$has_static" == false ]]; then
+            labels=$(gh api "repos/$REPO/issues/$N/labels" --jq '.[].name') || {
+              echo "::warning::Could not read PR labels."
+              labels=''
+            }
+            while IFS= read -r label; do
+              if [[ "$label" == front-night ]]; then
+                gh api --method DELETE "repos/$REPO/issues/$N/labels/front-night" \
+                  >/dev/null || echo "::warning::Could not remove stale front-night label; it may be absent or the token read-only."
+              fi
+            done <<< "$labels"
+            comment_ids=$(gh api "repos/$REPO/issues/$N/comments" --paginate \
+              --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | startswith("<!-- front-night-guard -->")) | .id') || {
+              echo "::warning::Could not read guard comments."
+              comment_ids=''
+            }
+            while IFS= read -r comment_id; do
+              if [[ -n "$comment_id" ]]; then
+                gh api --method DELETE "repos/$REPO/issues/comments/$comment_id" \
+                  >/dev/null || echo "::warning::Could not delete stale guard comment; token may be read-only."
+              fi
+            done <<< "$comment_ids"
+            echo "::notice::No runai/app/static file touched; front-night guard not applicable."
+            exit 0
+          fi
+
+          gh api --method POST "repos/$REPO/issues/$N/labels" \
+            -f 'labels[]=front-night' >/dev/null || echo "::warning::Could not apply front-night label; token may be read-only."
+
+          body='<!-- front-night-guard -->
+          This PR changes the frontend shell (runai/app/static). It is labeled front-night and will be reviewed by Mathieu in the morning; it is not auto-merged.'
+          if (( ${#outside[@]} > 0 )); then
+            body+=$'\n\nThis PR mixes frontend static files with other files, which blocks aggressive merging of the backend part. It must be split into a static-only PR and a separate PR for the rest.\n\nOther files:\n'
+            for file in "${outside[@]}"; do
+              body+="- \`$file\`"$'\n'
+            done
+          fi
+
+          comment_ids=$(gh api "repos/$REPO/issues/$N/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | startswith("<!-- front-night-guard -->")) | .id') || {
+            echo "::warning::Could not read guard comments."
+            comment_ids=''
+          }
+          comment_id=${comment_ids%%$'\n'*}
+          if [[ -n "$comment_id" ]]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$comment_id" -f "body=$body" \
+              >/dev/null || echo "::warning::Could not update guard comment; token may be read-only."
+          else
+            gh api --method POST "repos/$REPO/issues/$N/comments" -f "body=$body" \
+              >/dev/null || echo "::warning::Could not post guard comment; token may be read-only."
+          fi
+
+          if (( ${#outside[@]} > 0 )); then
+            echo "::error::Mixed frontend/backend PR: split into a static-only PR and a separate PR for the rest."
+            exit 1
+          fi
