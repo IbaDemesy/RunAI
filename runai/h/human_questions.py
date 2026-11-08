@@ -1,10 +1,17 @@
 import asyncio
 import hashlib
+import re
 from datetime import datetime, timedelta
 
 from runai.contracts.mission import HumanAnswer, HumanQuestion, QuestionStatus
 from runai.models import AgentQuestion, utcnow
 from runai.safety import release_attempt
+
+_AFFIRMATION = re.compile(
+    r"^\W*(oui|ouais|yes|yep|yeah|ok|okay|d'accord|daccord|si|sí|sim|claro|vale|certo|va bene|"
+    r"go|go ahead|vas-y|allez|sure|confirm|confirmed|confirme|je confirme)\W*$",
+    re.IGNORECASE,
+)
 
 
 class HumanQuestionError(Exception):
@@ -71,15 +78,19 @@ class HumanQuestionRegistry:
                 and self._answer_digests.get(question_id) == digest
             ):
                 return self.get(question_id)
-            raise HumanQuestionError("Question already answered")
-        if question.status != QuestionStatus.open:
+            if question.status == QuestionStatus.answered:
+                raise HumanQuestionError("Question already answered")
+        elif question.status != QuestionStatus.open:
             raise HumanQuestionError(f"Question {question.status.value}")
         if question.expires_at and (now or utcnow()) >= question.expires_at:
             question.status = QuestionStatus.expired
             self._events[question_id].set()
             raise HumanQuestionError("Question expired")
-        text = f"{question.text} {' '.join(question.choices)} {question.reason or ''} {answer.answer}"
-        refusal = release_attempt(text)
+        refusal = release_attempt(answer.answer)
+        if refusal is None and _AFFIRMATION.match(answer.answer.strip()):
+            refusal = release_attempt(
+                f"{question.text} {' '.join(question.choices)} {question.reason or ''} {answer.answer}"
+            )
         question.status = (
             QuestionStatus.refused if refusal else QuestionStatus.answered
         )
