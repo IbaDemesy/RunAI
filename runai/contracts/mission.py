@@ -100,6 +100,9 @@ EventType = Literal[
     "budget_updated",
     "trace",
     "error",
+    "agent_step",
+    "heartbeat",
+    "linkup_call",
 ]
 
 
@@ -112,6 +115,7 @@ class EventEnvelope(BaseModel):
     mission_id: str
     emitted_at: datetime = Field(default_factory=utcnow)
     type: EventType
+    provider: Literal["h", "linkup", "gladia", "holo", "app", "human"] | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("payload")
@@ -178,6 +182,10 @@ class MissionSnapshot(BaseModel):
     limitations: list[Limitation] = Field(default_factory=list)
     error: str | None = None
     outcome: MissionOutcome | None = None
+    h_slots: dict[str, dict[str, int]] = Field(default_factory=dict)
+    agents_busy: int = 0
+    agents_total: int = 0
+    partners: dict[str, Any] = Field(default_factory=dict)
 
     @model_serializer(mode="wrap")
     def serialize_snapshot(self, handler):

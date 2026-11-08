@@ -62,7 +62,7 @@ from runai.framing.engine import FramingEngine
 from runai.framing.holo import HoloPhraser, Phraser, TemplatePhraser
 from runai.h.human_questions import HumanQuestionError
 from runai.logging_setup import RequestIdMiddleware, configure_logging, request_id
-from runai.models import RunnerProfile, StepKind
+from runai.models import RunnerProfile, StepKind, utcnow
 from runai.planning import recap_adapter
 from runai.redaction import redact_secrets
 from runai.search.candidates import LinkupCandidateSearch
@@ -110,6 +110,7 @@ def build_demo_service(delay: float | None = None) -> MissionService:
 
 
 def build_service(mode: DataMode | None = None, delay: float | None = None) -> MissionService:
+    """Lifecycle agents use per-key caps and a bounded queue, not a global semaphore."""
     settings = get_settings()
     providers = build_providers(mode, delay=delay, traces_dir=settings.traces_dir)
     agents = providers.agents
@@ -120,8 +121,8 @@ def build_service(mode: DataMode | None = None, delay: float | None = None) -> M
         providers.search, agents, providers.transcriber,
         traces_dir=settings.traces_dir,
         profile=ProfileStore(settings.traces_dir / "profile.json").load(),
-        # Agents simulés : aucun slot H à partager, les missions ne s'attendent pas.
-        max_concurrency=None if providers.simulated else settings.h_max_concurrency,
+        # Simulated agents or a shared H lifecycle: no per-mission slot limit.
+        max_concurrency=None if providers.simulated or hasattr(agents, "lifecycle") else settings.h_max_concurrency,
         simulated=providers.simulated, question_timeout_s=timeout,
         sweeper=LinkupLogisticsSweeper(default_client())
         if providers.mode is DataMode.live and providers.health["linkup"].status is ProviderStatus.ok
@@ -420,7 +421,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                     if await request.is_disconnected():
                         break
                     if not done:
-                        yield ": keepalive\n\n"
+                        payload = {"emitted_at": utcnow().isoformat(), "sequence": len(service.get(mission_id).envelopes)}
+                        yield f"event: heartbeat\ndata: {json.dumps(payload)}\n\n"
                         continue
                     try:
                         event = pending.result()

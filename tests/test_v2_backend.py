@@ -271,6 +271,9 @@ def test_live_queued_controls_and_cancellation_keep_cancelled_status(tmp_path):
     from runai.app.real import RealBrowserAgents
 
     class WaitingRunner:
+        def __init__(self):
+            self.accounts = []
+
         async def start(self, *args, **kwargs):
             await asyncio.Event().wait()
 
@@ -403,6 +406,7 @@ def test_live_lifecycle_preserves_guards_errors_and_closes_idle(tmp_path, outcom
 
     class Runner:
         def __init__(self):
+            self.accounts = []
             self.runs = []
             self.params = []
 
