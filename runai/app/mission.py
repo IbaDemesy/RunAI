@@ -11,6 +11,7 @@ from enum import Enum
 from pathlib import Path
 from threading import Lock
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -29,6 +30,7 @@ from runai.app.tasks import (
     STEP_LABELS,
     human_action,
 )
+from runai.config import get_settings
 from runai.contracts.common import DataMode, Limitation
 from runai.contracts.framing import FramingError, FramingSummary, FramingTurn
 from runai.contracts.journey import JourneyPlan
@@ -358,6 +360,8 @@ class MissionService:
                         for fmt in ("html", "pdf", "ics")} if mission.journey else {},
             elapsed_s=max(0, ((mission.finished_at or utcnow()) - mission.created_at).total_seconds()),
         )
+        lifecycle = getattr(self.agents, "lifecycle", None)
+        slots = lifecycle.slots() if lifecycle is not None else {}
         snapshot = MissionSnapshot(
             mission_id=mission.id, framing_id=plan.framing_id,
             framing_revision=plan.revision, mode=plan.mode,
@@ -369,6 +373,15 @@ class MissionService:
             journey_revision=mission.journey.revision if mission.journey else None,
             budget=mission.journey.budget if mission.journey else None,
             outcome=outcome,
+            h_slots=slots,
+            agents_busy=sum(slot["active"] for slot in slots.values()),
+            agents_total=sum(slot["max"] for slot in slots.values()),
+            partners={
+                "h": getattr(self.agents, "agent", None) or get_settings().h_agent,
+                "linkup": not self.simulated and type(self.search).__name__ == "RealRaceSearch",
+                "gladia": not self.simulated and type(self.transcriber).__name__ == "RealTranscriber",
+                "holo": type(self.phraser).__name__,
+            },
         )
         return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
 
@@ -376,7 +389,7 @@ class MissionService:
     def _snapshot_steps(mission: Mission) -> list[StepResult]:
         if mission.read_only:
             return list(mission.steps.values())
-        return [step.model_copy(update={"data": {**step.data, "history": [
+        return [step.model_copy(update={"live_view_url": step.live_view_url or step.data.get("share_url"), "data": {**step.data, "history": [
             {"at": event.at.isoformat(), "message": event.message, "type": event.type}
             for event in mission.events
             if event.data.get("step") == step.kind.value
@@ -427,6 +440,19 @@ class MissionService:
 
     def _emit(self, mission: Mission, type_: str, payload: dict) -> None:
         envelope = EventEnvelope.build(mission.id, len(mission.envelopes) + 1, type_, payload)
+        source = str(payload.get("source", "")) if type_ == "trace" else type_
+        if source == "h" or source.startswith("agent:") or type_ in {"agent_step", "question_opened"}:
+            envelope.provider = "h"
+        elif source == "human" or type_ == "question_resolved":
+            envelope.provider = "human"
+        elif source in {"framing", "holo"}:
+            envelope.provider = "holo"
+        elif source in {"search", "linkup", "linkup_call"}:
+            envelope.provider = "linkup"
+        elif source in {"transcribe", "gladia", "voice"}:
+            envelope.provider = "gladia"
+        else:
+            envelope.provider = "app"
         mission.envelopes.append(envelope)
         for queue in self._event_subscribers.get(mission.id, ()):
             queue.put_nowait(envelope)
@@ -724,7 +750,7 @@ class MissionService:
                     if session_id := event.data.get("h_session_id"):
                         step.h_session_id = session_id
                     if event.message and event.type != "AgentRunStatusChangeEvent":
-                        step.data["last_action"] = event.message
+                        step.data["last_action"] = "Live view available" if event.type == "LiveViewUrlEvent" else event.message
                     if run := self._runs.get((mission.id, StepKind(step_name))):
                         self._set_agent_views(step, run)
                         if observation := getattr(run, "browser_observation", None):
@@ -734,7 +760,44 @@ class MissionService:
                             self._capture_runs[(mission.id, StepKind(step_name))] = run
                     if event.data.get("url"):
                         step.data["current_url"] = event.data["url"]
+                    if event.type == "AgentEvent.policy_event":
+                        payload = event.data.get("event", {}).get("data", {})
+                        thought = payload.get("content") or payload.get("reasoning_content") or event.message
+                        step.data["agent_thought"] = redact_secrets(str(thought or ""))[:160]
+                    if event.type == "AgentEvent.observation_event":
+                        self._agent_step(mission, step, event)
         self._publish(mission, ("trace", event.model_dump(mode="json")))
+
+    def _agent_step(self, mission: Mission, step: StepResult, event: TraceEvent) -> None:
+        run = self._runs.get((mission.id, step.kind))
+        raw = getattr(getattr(run, "job", None), "run", None) or getattr(run, "run", run)
+        metadata = event.data.get("event", {}).get("data", {}).get("metadata") or {}
+        url = metadata.get("url") or event.data.get("url")
+        try:
+            parsed = urlsplit(url or "")
+            url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+            host = parsed.hostname
+        except ValueError:
+            url, host = None, None
+        observation = getattr(run, "browser_observation", None) or getattr(raw, "browser_observation", None) or {}
+        metrics = getattr(raw, "metrics", {}) or {}
+        revision = observation.get("revision")
+        payload = redact_secrets({
+            "step": step.kind.value,
+            "n": step.data.get("agent_step", {}).get("n", 0) + 1,
+            "url": url or None, "host": host,
+            "title": str(metadata.get("title") or "")[:80],
+            "thought": step.data.get("agent_thought", ""),
+            "screenshot_revision": revision,
+            "screenshot_url": f"/api/missions/{mission.id}/steps/{step.kind.value}/screenshot" if revision else None,
+            "steps": metrics.get("steps"), "total_cost": metrics.get("total_cost"),
+            "elapsed_s": max(0, (event.at - mission.created_at).total_seconds()),
+            "agent": getattr(self.agents, "agent", None) or get_settings().h_agent,
+            "h_key_name": getattr(getattr(raw, "account", None), "name", None),
+            "provider": "h", "at": event.at.isoformat(),
+        })
+        step.data["agent_step"] = payload
+        self._emit(mission, "agent_step", payload)
 
     def _publish_state(self, mission: Mission) -> None:
         self._publish(mission, ("mission", mission.snapshot()))
@@ -917,7 +980,10 @@ class MissionService:
 
     @staticmethod
     def _set_agent_views(step: StepResult, run: AgentRun) -> None:
-        MissionService._set_live_view(step, run.live_view_url)
+        share_url = getattr(run, "share_url", None)
+        if share_url:
+            step.data["share_url"] = share_url
+        MissionService._set_live_view(step, getattr(run, "live_view_url", None) or (share_url if step.live_view_url is None else None))
         url = getattr(run, "agent_view_url", None)
         if url and url.startswith(("http://", "https://")):
             step.agent_view_url = HttpUrl(url)

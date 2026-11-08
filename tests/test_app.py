@@ -53,6 +53,117 @@ from runai.tracing import TraceWriter
 AGENT_KINDS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 
 
+@pytest.mark.parametrize("capture", [False, True])
+def test_live_agent_step_contract(tmp_path, monkeypatch, capture):
+    monkeypatch.setenv("HAI_API_KEY", "private-policy-secret")
+    service = make_service(tmp_path)
+    service.agents.lifecycle = SimpleNamespace(slots=lambda: {"HAI_API_KEY": {"active": 2, "max": 3}})
+    service.agents.agent = "h/custom-test-agent"
+    mission = Mission(id="live-step", query="race", plan=unit_plan(), steps={
+        kind: StepResult(kind=kind) for kind in AGENT_KINDS
+    })
+    service.missions[mission.id] = mission
+    service._writers[mission.id] = TraceWriter(mission.id, traces_dir=tmp_path)
+    run = SimpleNamespace(
+        live_view_url=None, share_url="https://live.example/share",
+        browser_observation={"revision": 4} if capture else None,
+        metrics={"steps": 7, "total_cost": .12}, account=SimpleNamespace(name="HAI_API_KEY"),
+    )
+    service._runs[(mission.id, StepKind.registration)] = run
+    service._record(mission, TraceEvent(source="h", type="AgentEvent.policy_event", data={
+        "step": "registration", "event": {"data": {"content": "private-policy-secret " + "next " * 60}}
+    }))
+    service._record(mission, TraceEvent(source="h", type="AgentEvent.observation_event", data={
+        "step": "registration", "event": {"data": {"metadata": {
+            "url": "https://race.example/register?token=private#fragment", "title": "x" * 100
+        }}}
+    }))
+    events = [event for event in mission.envelopes if event.type == "agent_step"]
+    assert len(events) == 1
+    event = events[0]
+    assert event.provider == "h"
+    data = event.payload
+    assert data["step"] == "registration" and data["n"] == 1
+    assert data["url"] == "https://race.example/register" and data["host"] == "race.example"
+    assert data["title"] == "x" * 80
+    assert data["thought"].startswith("[REDACTED]") and len(data["thought"]) == 160
+    assert data["screenshot_revision"] == (4 if capture else None)
+    assert data["screenshot_url"] == ("/api/missions/live-step/steps/registration/screenshot" if capture else None)
+    assert data["steps"] == 7 and data["total_cost"] == .12
+    assert data["elapsed_s"] >= 0 and data["at"]
+    assert data["agent"] == "h/custom-test-agent"
+    assert data["h_key_name"] == "HAI_API_KEY" and data["provider"] == "h"
+    snapshot = service.snapshot(mission.id).model_dump(mode="json")
+    assert snapshot["steps"][0]["data"]["agent_step"] == data
+    assert snapshot["steps"][0]["live_view_url"] == "https://live.example/share"
+    assert snapshot["h_slots"] == {"HAI_API_KEY": {"active": 2, "max": 3}}
+    assert snapshot["agents_busy"] == 2 and snapshot["agents_total"] == 3
+    assert set(snapshot["partners"]) == {"h", "linkup", "gladia", "holo"}
+    assert snapshot["partners"]["h"] == "h/custom-test-agent"
+    service._record(mission, TraceEvent(source="h", type="AgentEvent.observation_event", data={"step": "registration"}))
+    assert mission.steps[StepKind.registration].data["agent_step"]["n"] == 2
+    assert mission.steps[StepKind.registration].data["agent_step"]["url"] is None
+    service._record(mission, TraceEvent(source="h", type="AgentEvent.observation_event", data={
+        "step": "registration", "url": "https://[broken"
+    }))
+    assert mission.steps[StepKind.registration].data["agent_step"]["host"] is None
+
+
+@pytest.mark.anyio
+async def test_named_sse_heartbeat_does_not_advance_sequence(tmp_path, monkeypatch):
+    from runai.app import server
+
+    service = make_service(tmp_path)
+    mission = Mission(id="heartbeat", query="race", plan=unit_plan(), steps={})
+    service.missions[mission.id] = mission
+    monkeypatch.setattr(server, "KEEPALIVE_SECONDS", .001)
+    app = create_app(service)
+    route = next(route for route in app.routes if getattr(route, "path", "") == "/api/missions/{mission_id}/events")
+
+    class Request:
+        headers: ClassVar[dict] = {}
+
+        async def is_disconnected(self):
+            return False
+
+    response = await route.endpoint(mission.id, Request())
+    frame = await anext(response.body_iterator)
+    assert frame.startswith("event: heartbeat\ndata: ")
+    payload = json.loads(frame.split("data: ", 1)[1])
+    assert payload["sequence"] == 0 and payload["emitted_at"]
+    assert service.snapshot(mission.id).sequence == 0 and mission.envelopes == []
+    await response.body_iterator.aclose()
+
+
+def test_lifecycle_agents_do_not_get_global_semaphore(monkeypatch):
+    import contextlib
+
+    from runai.app import server
+
+    providers = SimpleNamespace(agents=SimpleNamespace(lifecycle=object()), search=object(),
+                                transcriber=object(), simulated=False)
+    monkeypatch.setattr(server, "build_providers", lambda *args, **kwargs: providers)
+    assert isinstance(server.build_service()._slots, contextlib.nullcontext)
+    providers.agents = SimpleNamespace()
+    assert isinstance(server.build_service()._slots, asyncio.Semaphore)
+
+
+@pytest.mark.parametrize(("source", "provider"), [
+    ("h", "h"), ("agent:transport", "h"), ("human", "human"),
+    ("holo", "holo"), ("framing", "holo"), ("search", "linkup"),
+    ("transcribe", "gladia"), ("app", "app"), ("", "app"),
+])
+def test_trace_provider_tags(tmp_path, source, provider):
+    service = make_service(tmp_path)
+    mission = Mission(id="providers", query="race", steps={})
+    service._emit(mission, "trace", {"source": source})
+    assert mission.envelopes[-1].provider == provider
+    service._emit(mission, "linkup_call", {})
+    assert mission.envelopes[-1].provider == "linkup"
+    service._emit(mission, "question_opened", {})
+    assert mission.envelopes[-1].provider == "h"
+
+
 @pytest.mark.anyio
 async def test_country_only_demo_request_offers_only_recorded_alternatives():
     candidate_search = FixtureCandidateSearch(
