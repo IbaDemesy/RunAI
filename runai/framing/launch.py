@@ -38,6 +38,7 @@ class StepPlan(BaseModel):
     automation: Automation
     platform: str | None = None
     start_url: str | None = None
+    start_url_kind: str | None = None
     task: str | None = None
     limitations: list[Limitation] = Field(default_factory=list)
 
@@ -173,7 +174,7 @@ def plan_launch(
     )
     coverages = {
         StepKind.registration: registration_coverage(race, official_url),
-        StepKind.accommodation: accommodation_coverage()
+        StepKind.accommodation: accommodation_coverage(brief)
         if brief.nights
         else StepCoverage(
             StepKind.accommodation,
@@ -186,14 +187,18 @@ def plan_launch(
                 )
             ],
         ),
-        StepKind.transport: transport_coverage(brief.transport_mode, race.country),
+        StepKind.transport: transport_coverage(
+            brief.transport_mode, race.country, brief=brief
+        ),
     }
     reg, acc, tra = (coverages[k].platform for k in AGENT_STEPS)
     brief.registration_platform = reg.name if reg else None
     brief.accommodation_site = acc.name if acc else None
-    brief.accommodation_url = acc.start_url if acc else None
+    brief.accommodation_url = (
+        coverages[StepKind.accommodation].start_url if acc else None
+    )
     brief.transport_site = tra.name if tra else None
-    brief.transport_url = tra.start_url if tra else None
+    brief.transport_url = coverages[StepKind.transport].start_url if tra else None
 
     steps = {}
     for kind, coverage in coverages.items():
@@ -203,6 +208,7 @@ def plan_launch(
             automation=coverage.automation,
             platform=coverage.platform.id if coverage.platform else None,
             start_url=coverage.start_url,
+            start_url_kind=coverage.start_url_kind,
             task=build_task(kind, race, profile, brief=brief) if automated else None,
             limitations=coverage.limitations,
         )

@@ -1,4 +1,6 @@
 import asyncio
+from datetime import date
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -9,11 +11,17 @@ from runai.app.providers import (
     UnavailableBrowserAgents,
     UnavailableRaceSearch,
     UnavailableTranscriber,
+    accommodation_coverage,
+    accor_search_url,
     build_providers,
+    forbidden_reason,
+    host_matches,
+    platform,
     provider_health,
     registration_coverage,
     select_mode,
     transport_coverage,
+    trenitalia_search_url,
 )
 from runai.contracts.common import Automation, DataMode
 from runai.models import Race, RunnerProfile, StepKind
@@ -182,3 +190,98 @@ def test_registration_coverage(url, automation, code):
 )
 def test_transport_coverage(mode, country, automation):
     assert transport_coverage(mode, country).automation is automation
+
+
+ACCOR_MILAN_DEEP_LINK = (
+    "https://all.accor.com/booking/en/accor/hotels/milan-italy"
+    "?dateIn=2027-04-03&nights=2&compositions=1"
+)
+
+
+def _brief(**changes):
+    from runai.app.tasks import TripBrief
+
+    values = {
+        "race_label": "Fictive race",
+        "city": "Milan",
+        "country": "IT",
+        "arrival": date(2027, 4, 3),
+        "departure": date(2027, 4, 5),
+        "nights": 2,
+        "origin": "Turin",
+        "transport_mode": "train",
+    }
+    return TripBrief(**{**values, **changes})
+
+
+def test_accor_search_url_matches_verified_pattern():
+    url = accor_search_url("Milan", "IT", date(2027, 4, 3), date(2027, 4, 5))
+    assert url == ACCOR_MILAN_DEEP_LINK
+    assert "/booking/en/" in url and forbidden_reason(url) is None
+    assert host_matches(url, platform("accor").hosts)
+
+
+def test_accor_search_url_adults_and_country_names():
+    url = accor_search_url(
+        "Valencia", "Spain", date(2027, 4, 3), date(2027, 4, 6), adults=2
+    )
+    assert url.endswith("/valencia-spain?dateIn=2027-04-03&nights=3&compositions=2")
+
+
+@pytest.mark.parametrize(
+    ("arrival", "departure"),
+    [
+        (None, date(2027, 4, 5)),
+        (date(2027, 4, 3), None),
+        (None, None),
+        (date(2027, 4, 5), date(2027, 4, 5)),
+    ],
+)
+def test_accor_search_url_needs_dates(arrival, departure):
+    assert accor_search_url("Milan", "IT", arrival, departure) is None
+
+
+def test_accor_search_url_needs_city_and_country():
+    assert accor_search_url("", "IT", date(2027, 4, 3), date(2027, 4, 5)) is None
+    assert accor_search_url("Milan", None, date(2027, 4, 3), date(2027, 4, 5)) is None
+
+
+def test_accor_search_url_encodes_special_characters():
+    url = accor_search_url(
+        "São Paulo/../x?y#z", "BR", date(2027, 4, 3), date(2027, 4, 4)
+    )
+    path = urlsplit(url).path
+    assert path == "/booking/en/accor/hotels/sao-paulo-x-y-z-brazil"
+    assert urlsplit(url).hostname == "all.accor.com"
+    assert "#" not in url and url.count("?") == 1
+
+
+def test_trenitalia_has_no_stable_deep_link():
+    assert (
+        trenitalia_search_url("Turin", "Milan", date(2027, 4, 3), date(2027, 4, 5))
+        is None
+    )
+    coverage = transport_coverage("train", "IT", brief=_brief())
+    assert coverage.start_url == "https://www.trenitalia.com/en.html"
+    assert coverage.start_url_kind == "home"
+
+
+def test_accommodation_coverage_uses_deep_link_when_buildable():
+    coverage = accommodation_coverage(_brief())
+    assert coverage.start_url == ACCOR_MILAN_DEEP_LINK
+    assert coverage.start_url_kind == "deep_link"
+    assert forbidden_reason(coverage.start_url) is None
+
+
+def test_accommodation_coverage_derives_departure_from_nights():
+    coverage = accommodation_coverage(_brief(departure=None))
+    assert coverage.start_url == ACCOR_MILAN_DEEP_LINK
+
+
+def test_accommodation_coverage_falls_back_to_home():
+    for coverage in (
+        accommodation_coverage(),
+        accommodation_coverage(_brief(arrival=None)),
+    ):
+        assert coverage.start_url == "https://all.accor.com"
+        assert coverage.start_url_kind == "home"
