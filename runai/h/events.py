@@ -5,7 +5,7 @@ from typing import Any
 from runai.models import TraceEvent
 
 MAX_TEXT = 500
-_DROPPED_KEYS = {"image", "images", "page_html"}
+_DROPPED_KEYS = {"image", "images", "page_html", "cookies", "headers", "authorization", "set-cookie", "password"}
 
 
 def safe_text(value: str | None) -> str | None:
@@ -30,7 +30,11 @@ def as_dict(event: Any) -> dict[str, Any]:
 def compact(value: Any, max_text: int = MAX_TEXT) -> Any:
     """Allège un événement H pour la trace : sans captures d'écran ni pages entières."""
     if isinstance(value, dict):
-        return {k: compact(v, max_text) for k, v in value.items() if k not in _DROPPED_KEYS}
+        return {
+            k: v[:300] if k.lower() == "reasoning_content" and isinstance(v, str) else compact(v, max_text)
+            for k, v in value.items()
+            if k.lower() not in _DROPPED_KEYS
+        }
     if isinstance(value, list):
         return [compact(v, max_text) for v in value]
     if isinstance(value, str):
