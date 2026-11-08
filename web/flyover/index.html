@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,24 +13,24 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="map" aria-label="Carte 3D du parcours"></div>
+    <div id="map" aria-label="3D route map"></div>
 
     <aside id="panel">
       <h1>Survol du parcours</h1>
-      <p id="track-name">Chargement…</p>
-      <p id="disclaimer" hidden>Parcours d'exemple, pas un tracé officiel de course.</p>
+      <p id="track-name">Loading…</p>
+      <p id="disclaimer" hidden>Example route, not an official race route.</p>
       <dl id="stats">
         <dt>Distance</dt><dd id="stat-distance">–</dd>
-        <dt>D+ / D−</dt><dd id="stat-climb">–</dd>
-        <dt>Altitude</dt><dd id="stat-ele">–</dd>
-        <dt>Source alt.</dt><dd id="stat-source">–</dd>
+        <dt>Ascent / descent</dt><dd id="stat-climb">–</dd>
+        <dt>Elevation</dt><dd id="stat-ele">–</dd>
+        <dt>Elevation source</dt><dd id="stat-source">–</dd>
       </dl>
       <div class="controls">
-        <button id="play" type="button" disabled>▶ Lecture</button>
-        <button id="restart" type="button" disabled>⟲ Départ</button>
-        <button id="overview" type="button" disabled>Vue d'ensemble</button>
+        <button id="play" type="button" disabled>▶ Play</button>
+        <button id="restart" type="button" disabled>⟲ Start</button>
+        <button id="overview" type="button" disabled>Overview</button>
       </div>
-      <label>Durée du survol
+      <label>Flyover duration
         <select id="duration">
           <option value="30">30 s</option>
           <option value="60" selected>1 min</option>
@@ -40,22 +40,22 @@
       </label>
       <label>Fond de carte
         <select id="basemap">
-          <option value="osm" selected>Plan OpenStreetMap</option>
+          <option value="osm" selected>OpenStreetMap</option>
           <option value="satellite">Satellite Sentinel-2 (2020)</option>
         </select>
       </label>
-      <label><span>Relief ×<span id="exaggeration-value">1.5</span></span>
+      <label><span>Terrain ×<span id="exaggeration-value">1.5</span></span>
         <input id="exaggeration" type="range" min="1" max="3" step="0.1" value="1.5" />
       </label>
-      <label class="file">Ouvrir un GPX ou KML…
+      <label class="file">Open a GPX or KML…
         <input id="file" type="file" accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml" />
       </label>
-      <p class="hint">Glisser-déposer un fichier marche aussi. Espace : lecture/pause, ← → : ±500 m.</p>
+      <p class="hint">You can also drag and drop a file. Space: play/pause, ← →: ±500 m.</p>
       <p id="status" role="status"></p>
     </aside>
 
-    <section id="profile-panel" aria-label="Profil d'altitude">
-      <div id="readout">km 0,00</div>
+    <section id="profile-panel" aria-label="Elevation profile">
+      <div id="readout">km 0.00</div>
       <canvas id="profile"></canvas>
     </section>
 

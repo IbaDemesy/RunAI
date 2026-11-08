@@ -173,6 +173,7 @@ class Chapter(BaseModel):
 class JourneyPlan(BaseModel):
     schema_version: Literal["journey.v1"] = SCHEMA_VERSION
     mission_id: str
+    race_name: str | None = None
     revision: int = Field(ge=0)
     framing_revision: int | None = None
     mode: DataMode

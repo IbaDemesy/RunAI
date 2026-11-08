@@ -503,6 +503,9 @@ No user-facing literals found; contract identifiers are not UI copy.
 | app.thinking | RunAI is searching for you… | RunAI is searching for you… | Request / trip | 80 | Preserve dynamic data and source spacing. |
 | app.budget_suffix |  € max |  maximum | Request / trip | 80 | Preserve dynamic data and source spacing. |
 | app.partner_gladia | Voice by Gladia solaria-1 · live | Voice by Gladia solaria-1 · live | Request / trip | 48 | Partner attribution; keep product names. |
+| app.voice_demo | Demo voice | Demo voice | Voice | 48 | Simulated transcription. |
+| app.voice_replay | Recorded voice | Recorded voice | Voice | 48 | Recorded transcription. |
+| app.voice_unknown | Voice input | Voice input | Voice | 48 | No provider attribution without evidence. |
 | journey_fallback.walk | Marche | Walk | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.flight | Flight | Flight | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.partial | Partiel | Partial | Explore | 80 | Preserve dynamic data and source spacing. |

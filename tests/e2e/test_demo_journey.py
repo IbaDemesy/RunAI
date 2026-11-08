@@ -71,7 +71,6 @@ def test_stop_points_expose_human_action(client, mission):
         assert (step.get("human_action") or "").strip(), "Stop point is missing its HTTP human_action"
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-1: display an integral euro budget without a decimal suffix")
 def test_budget_display(mission):
     snapshot, _, html, _ = mission
     assert snapshot["budget"]["cap"] == 800

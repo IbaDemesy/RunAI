@@ -42,7 +42,8 @@ def to_ics(timeline: Timeline, *, now: datetime | None = None) -> str:
 
 
 def _escape(text: str) -> str:
-    return text.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+    return (text.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
+            .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n"))
 
 
 def _fold(line: str, limit: int = 75) -> str:

@@ -126,7 +126,7 @@
       state.chapterId = chapterId;
       if (!availability.available) {
         emit(contract.MAP_EVENTS.chapter, { chapterId, state: "unavailable", reason: availability.reason });
-        fail(availability.reason, `Chapitre ${chapterId} non affichable : aucune position sourcée.`, { chapterId });
+        fail(availability.reason, `Chapter ${chapterId} unavailable: no sourced position.`, { chapterId });
         return false;
       }
       frame(state.data.chapterBounds[chapterId], 1200);
@@ -135,13 +135,13 @@
     }
 
     function guard() {
-      if (state.destroyed) return fail("destroyed", "Vue détruite.");
-      if (!state.plan) return fail("no_plan", "Aucun JourneyPlan chargé.");
+      if (state.destroyed) return fail("destroyed", "View destroyed.");
+      if (!state.plan) return fail("no_plan", "No JourneyPlan loaded.");
       return true;
     }
 
     function setPlan(plan) {
-      if (state.destroyed) return fail("destroyed", "Vue détruite.");
+      if (state.destroyed) return fail("destroyed", "View destroyed.");
       let data;
       try {
         data = journeyData.buildJourneyData(plan);
@@ -165,7 +165,7 @@
 
     function showChapter(chapterId) {
       if (!guard()) return false;
-      if (!contract.CHAPTER_IDS.includes(chapterId)) return fail("unknown_chapter", `Chapitre inconnu : ${chapterId}`, { chapterId });
+      if (!contract.CHAPTER_IDS.includes(chapterId)) return fail("unknown_chapter", `Unknown chapter: ${chapterId}`, { chapterId });
       if (state.playback === "playing") pause();
       return moveToChapter(chapterId);
     }
@@ -201,7 +201,7 @@
       if (!guard()) return false;
       if (state.playback === "playing") return true;
       const ids = (state.plan.chapters || []).map((chapter) => chapter.id);
-      if (!ids.length) return fail("no_chapters", "Aucun chapitre dans le JourneyPlan.");
+      if (!ids.length) return fail("no_chapters", "No chapters in the JourneyPlan.");
       let start = 0;
       if (state.playback === "paused" && state.chapterId !== null) start = Math.max(0, ids.indexOf(state.chapterId));
       state.generation += 1;
@@ -221,10 +221,10 @@
 
     function seekKm(km) {
       if (!guard()) return false;
-      if (!Number.isFinite(km) || km < 0) return fail("invalid_km", `Kilomètre invalide : ${km}`, { chapterId: "race" });
+      if (!Number.isFinite(km) || km < 0) return fail("invalid_km", `Invalid distance in km: ${km}`, { chapterId: "race" });
       const race = (state.plan.segments || []).find((segment) => segment.mode === "race");
       if (!race || race.geometry_status === "unavailable" || !raceTrackLoaded() || typeof flyover.seekKm !== "function") {
-        return fail("race_track_unavailable", "Tracé de course non disponible : pas de positionnement au km.", { chapterId: "race" });
+        return fail("race_track_unavailable", "Race route unavailable: cannot seek by distance.", { chapterId: "race" });
       }
       if (state.playback === "playing") pause();
       if (state.chapterId !== "race") {

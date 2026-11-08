@@ -37,7 +37,9 @@ test("budget partiel, vide, nul et complet : aucun prix manquant inventé", asyn
   assert.match(text.total, /250/);
   assert.match(text.total, /partial/);
   assert.match(text.lines[1], /Price unknown/);
-  assert.equal(text.cap, "cap not assessable");
+  assert.match(text.cap, /Cap €2,000.*known total €250.*partial/);
+  assert.doesNotMatch(text.total, /\.00/);
+  assert.match(core.budgetText({ ...budget, known_total: 118.5 }).total, /€118\.50/);
   assert.equal(core.budgetText(null).total, "Budget pending");
   assert.deepEqual(core.budgetText({ ...budget, lines: [] }).lines, []);
   assert.match(core.budgetText({ ...budget, complete: true, over_cap: true }).cap, /Over cap/);

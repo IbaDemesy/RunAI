@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from html import unescape
 from zoneinfo import ZoneInfo
 
@@ -52,6 +52,70 @@ def calendar_starts(text):
     return sorted(starts)
 
 
+@pytest.mark.parametrize("value", ["x\rBEGIN:VEVENT", "x\r\nBEGIN:VEVENT", "x\nBEGIN:VEVENT"])
+def test_j2_ics_escapers_remove_every_line_break(value):
+    from runai.logistics.ics import _escape
+    from runai.recap.ics import escape_text
+
+    for escape in (escape_text, _escape):
+        assert escape(value) == "x\\nBEGIN:VEVENT"
+
+
+def test_j2_calendar_metadata_only_inserted_at_final_terminator():
+    plan = tokyo_plan()
+    next(s for s in plan.stops if s.id == "start").label = "END:VCALENDAR; injected\rBEGIN:VEVENT"
+    text = unfolded(recap_from_journey(plan))
+    assert text.count("X-RUNAI-SCHEMA:") == 1
+    assert "\r" not in text.replace("\r\n", "")
+    assert text.endswith("END:VCALENDAR\r\n")
+
+
+def test_j8_integral_budget_is_formatted_without_decimal_suffix():
+    plan = tokyo_plan()
+    plan.budget.cap = 800
+    snapshot = recap_from_journey(plan)
+    html = unescape(render_html(snapshot))
+    assert "€800" in html
+    assert "800.0" not in html
+
+
+def test_j8_cents_keep_two_decimal_places():
+    plan = tokyo_plan()
+    plan.budget.cap = 118.5
+    assert "€118.50" in unescape(render_html(recap_from_journey(plan)))
+
+
+def test_j9_recap_uses_race_identity_not_mission_id():
+    recap = recap_from_journey(tokyo_plan()).recap
+    assert recap.race_name == "Tokyo run"
+    assert recap.runner_name != "you"
+
+
+def test_j9_calendar_uids_survive_event_insertion_and_revision():
+    plan = tokyo_plan()
+
+    def events(text):
+        result = {}
+        for event in text.split("BEGIN:VEVENT")[1:]:
+            fields = dict(line.split(":", 1) for line in event.split("\r\n") if ":" in line)
+            result[(fields["DTSTART"], fields["SUMMARY"])] = fields
+        return result
+
+    original = events(unfolded(recap_from_journey(plan)))
+    home = next(stop for stop in plan.stops if stop.kind.value == "home")
+    home.local_time = datetime(2030, 3, 1, tzinfo=UTC)
+    plan.revision += 1
+    revised = events(unfolded(recap_from_journey(plan)))
+    assert len(revised) == len(original) + 1
+    for key, event in original.items():
+        assert revised[key]["UID"] == event["UID"]
+        assert revised[key]["SEQUENCE"] == str(plan.revision)
+    assert len({event["UID"] for event in revised.values()}) == len(revised)
+    home.local_time -= timedelta(hours=1)
+    changed = events(unfolded(recap_from_journey(plan)))
+    assert {event["UID"] for event in revised.values()} != {event["UID"] for event in changed.values()}
+
+
 @pytest.mark.parametrize("factory", [lambda: fixture("train"), lambda: fixture("flight"),
                                      lambda: fixture("incomplete"), tokyo_plan])
 def test_plan_exports(factory):
@@ -84,9 +148,14 @@ def test_plan_exports(factory):
     assert calendar_starts(ics) == sorted(expected)
     assert "DTEND" not in ics
     for line in plan.budget.lines:
-        value = f"{line.money.amount} {line.money.currency}" if line.money else "not priced"
+        if line.money:
+            amount = f"{line.money.amount:,.2f}".rstrip("0").rstrip(".")
+            value = f"€{amount}" if line.money.currency == "EUR" else f"{amount} {line.money.currency}"
+        else:
+            value = "not priced"
         assert value in html and value in ics
-    assert f"{plan.budget.known_total} {plan.budget.currency}" in html
+    total = f"{plan.budget.known_total:,.2f}".rstrip("0").rstrip(".")
+    assert (f"€{total}" if plan.budget.currency == "EUR" else f"{total} {plan.budget.currency}") in html
     if not plan.budget.complete:
         assert "Known total (partial)" in html and "Known total (partial)" in ics
     if plan.budget.over_cap is None:
@@ -145,7 +214,7 @@ def test_segment_currency_not_added_to_budget():
     snapshot = recap_from_journey(plan)
     html, ics = render_html(snapshot), unfolded(snapshot)
     assert "987.65 USD" in html and "987.65 USD" in ics
-    assert f"{plan.budget.known_total} {plan.currency}" in html
+    assert "€503" in html
     assert f"{plan.budget.known_total + 987.65} {plan.currency}" not in html
 
 

@@ -1,6 +1,7 @@
 {
   "schema_version": "journey.v1",
   "mission_id": "e1-nairobi_incomplete",
+  "race_name": "Course Nairobi",
   "revision": 0,
   "framing_revision": 3,
   "mode": "demo",

@@ -111,7 +111,7 @@ test("race helper reuses GPX and KML parsing, retaining caller status", () => {
     assert.deepEqual(feature.properties, { mode: "race", layer: "race", geometry_status: "verified" });
   }
   assert.equal(D.buildRaceLine("", "unavailable"), null);
-  assert.throws(() => D.buildRaceLine("", "verified"), /au moins deux points/);
+  assert.throws(() => D.buildRaceLine("", "verified"), /at least two points/);
   assert.throws(() => D.buildRaceLine(sample, "fake"), /Invalid geometry_status/);
 });
 

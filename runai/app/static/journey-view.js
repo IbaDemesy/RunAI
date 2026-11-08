@@ -23,7 +23,7 @@
     }
     function failed() {
       target.dispatchEvent(new root.CustomEvent(events.error, {
-        bubbles: true, detail: { fatal: true, error: { code: "map_unavailable", message: "Carte indisponible ; timeline disponible." } },
+        bubbles: true, detail: { fatal: true, error: { code: "map_unavailable", message: "Map unavailable; timeline is still available." } },
       }));
     }
     function ready() {
@@ -34,7 +34,7 @@
     target.addEventListener(events.error, fail);
     container.addEventListener("webglcontextlost", failed, true);
     try {
-      if (!root.maplibregl) throw new Error("MapLibre indisponible");
+      if (!root.maplibregl) throw new Error("MapLibre unavailable");
       map = new root.maplibregl.Map({ container, style: {
         version: 8, sources: { osm: { type: "raster", tileSize: 256,
           tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: "© OpenStreetMap contributors" } },
