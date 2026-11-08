@@ -6,7 +6,13 @@ import httpx
 import pytest
 
 from runai.contracts.common import DataMode
-from runai.contracts.framing import FramingCreate, FramingTurn
+from runai.contracts.framing import (
+    FramingCreate,
+    FramingQuestion,
+    FramingReply,
+    FramingTurn,
+    SlotName,
+)
 from runai.framing.engine import FramingEngine
 from runai.framing.holo import (
     EXTRACT_PROMPT,
@@ -31,6 +37,45 @@ class Recorder:
     async def phrase(self, turns, question, known):
         self.calls.append((len(turns), question, dict(known)))
         return "Great plan! " + question
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("origin_question", [True, False])
+@pytest.mark.parametrize("address", ["12 rue de la Paix, 75002 Paris", "42 avenue Victor Hugo, 69002 Lyon"])
+async def test_address_never_reaches_holo_or_persisted_turns(origin_question, address):
+    payloads = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        payloads.append(body)
+        content = "{}" if body["messages"][0]["content"] == EXTRACT_PROMPT else "Which city?"
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+
+    engine = FramingEngine(NoCandidates(), DataMode.demo, phraser=HoloPhraser("hk-test", transport=transport(handler)))
+    session = await engine.create(FramingCreate(text="A marathon in April 2027"))
+    question = FramingQuestion(
+        id="privacy", revision=session.revision,
+        slots=[SlotName.origin if origin_question else SlotName.budget],
+        text="Which city are you departing from?" if origin_question else "What budget?",
+    )
+    engine.sessions[session.id].open_questions = [question]
+    payloads.clear()
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision,
+        question_id=question.id if origin_question else None,
+        text=address if origin_question else f"My budget is 800 euros; my address is {address}",
+    ))
+    assert payloads, "The spy must observe actual phrasing calls"
+    private_street, city = address.split(", ")
+    postcode = city.split()[0]
+    for content in [json.dumps(payloads), *(turn.text for turn in session.turns)]:
+        assert private_street not in content
+        assert postcode not in content
+    if origin_question:
+        assert session.slots[SlotName.origin].value == city.split()[1]
+        assert not any(body["messages"][0]["content"] == EXTRACT_PROMPT for body in payloads)
+    else:
+        assert any(body["messages"][0]["content"] == EXTRACT_PROMPT for body in payloads)
 
 
 def transport(handler):

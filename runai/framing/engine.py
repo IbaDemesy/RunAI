@@ -51,6 +51,25 @@ LABELS = {
 }
 
 
+def _mask_address(text: str) -> str:
+    text = re.sub(
+        r"\b(?:\d+[a-z]?(?:\s*(?:bis|ter))?\s+)?"
+        r"(?:rue|avenue|av\.|boulevard|bd\.|chemin|route|impasse|allée|allee|place)\s+"
+        r"[^,;\n\d]+",
+        "[redacted address]",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"\b\d+[a-z]?\s+[^,;\n\d]+?\s+"
+        r"(?:street|st\.?|road|rd\.?|avenue|ave\.?|lane|drive|way)\b",
+        "[redacted address]",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return re.sub(r"\b\d{5}(?:-\d{4})?\b", "[redacted postcode]", text)
+
+
 class FramingEngine:
     def __init__(
         self,
@@ -113,6 +132,8 @@ class FramingEngine:
         async with self._locks[framing_id]:
             session = self.get(framing_id)
             check_reply_revision(session, reply)
+            for turn in session.turns:
+                turn.text = _mask_address(turn.text)
             question = next(
                 (q for q in session.open_questions if q.id == reply.question_id), None
             )
@@ -219,8 +240,16 @@ class FramingEngine:
                             f"Please enter a valid number for {slot.value}."
                         ) from exc
             holo_values = {}
-            if not choice and reply.text:
-                holo_values = await self._holo_fill(session, reply.text, values)
+            if isinstance(origin := values.get(SlotName.origin), str):
+                public = public_origin(origin)
+                values[SlotName.origin] = None if public == public_origin("") else public
+            values = {
+                name: _mask_address(value) if isinstance(value, str) else value
+                for name, value in values.items()
+            }
+            origin_pending = any(q.slots == [SlotName.origin] for q in session.open_questions)
+            if not choice and reply.text and not origin_pending:
+                holo_values = await self._holo_fill(session, _mask_address(reply.text), values)
                 values = holo_values | values
             if isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
@@ -233,6 +262,7 @@ class FramingEngine:
             turn_text = reply.text or reply.choice_id or str(values)
             if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
+            turn_text = _mask_address(turn_text)
             session.revision += 1
             session.summary = None
             session.confirm_key = session.confirmed_revision = None
