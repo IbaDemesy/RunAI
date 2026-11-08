@@ -77,28 +77,14 @@ framing and answer its questions until the mission is terminal, then run
 configured provider secrets and structured personal fields, emails and phone numbers;
 review free-text recordings before sharing.
 
-[render.yaml](render.yaml) defines the Render web service, its health check at
+[render.yaml](render.yaml) defines the Render web services, their health check at
 `/api/health`, and this production entrypoint:
 
 ```bash
 uvicorn runai.app.server:create_app --factory --host 0.0.0.0 --port $PORT
 ```
 
-Keep a single instance: missions and authentication failure counters live in
-process memory and reset on restart. `/api/health` is the only public route when
-authentication is enabled; static assets, `/demo/live`, event streams and
-screenshots require credentials. Set `RUNAI_BASIC_AUTH=user:password` in Render's
-secret environment settings; for separate credentials use a comma-separated list
-such as `user:password,user2:password2` (commas cannot be part of a password).
-After five failed authentication attempts within 60 seconds, that client IP is
-blocked with HTTP 429 and a `Retry-After` header until the window expires. The
-first `X-Forwarded-For` hop identifies clients behind Render's TLS proxy; use this
-deployment only behind a trusted proxy that supplies that header.
-
-Security headers apply to authenticated and rejected responses alike, and API
-responses use `Cache-Control: no-store`. Content Security Policy defaults to
-`Content-Security-Policy-Report-Only` (`RUNAI_CSP_ENFORCE=0`); set
-`RUNAI_CSP_ENFORCE=1` to send an enforcing `Content-Security-Policy` instead.
+See [Deploy on Render](#deploy-on-render) for the services and their settings.
 
 ## How to test it live
 
@@ -147,6 +133,41 @@ python scripts/test_linkup.py
 CI runs Ruff and offline pytest on pull requests and pushes to main. The smoke
 workflow runs selected real-provider checks separately to avoid spending credits
 on documentation PRs.
+
+## Deploy on Render
+
+`render.yaml` is a Render Blueprint synced from `main` (Render → **New → Blueprint**, pick this repo and `main`). Every push to `main` redeploys both services (`autoDeploy: true`). Each runs a single free instance, because missions live in server memory.
+
+| Service | Mode | Access | Partner credits |
+| --- | --- | --- | --- |
+| `runai-demo` | `RUNAI_MODE=demo` (simulated search, agents and voice) | Public, no password: the URL to give judges | None |
+| `runai` | `RUNAI_MODE=live` (real H, Linkup, Gladia) | HTTP Basic auth (`RUNAI_BASIC_AUTH`) | Yes |
+
+Set these in the Render dashboard for `runai` (all `sync: false`, never committed):
+
+- `RUNAI_BASIC_AUTH`: `user:password`. Required: both services set `RUNAI_PUBLIC=1`, and with it the app refuses to start in a non-simulated mode unless `RUNAI_BASIC_AUTH` is set, so nobody can spend the credits anonymously.
+- `HAI_API_KEY`, and optionally `HAI_API_KEY_2`: the H runner pools every `HAI_API_KEY[_N]` key (one H organization each) and picks the key with free quota. `RUNAI_H_MAX_CONCURRENCY=3` caps each key, but the mission service currently applies the same value as a global cap, so a second key adds failover, not more than 3 parallel H sessions.
+- `LINKUP_API_KEY`, `GLADIA_API_KEY` (voice is optional). `LINKUP_API_KEY_2` and `GLADIA_API_KEY_2` are declared as backups; the app does not read them yet, so to switch, copy the backup into the primary key.
+
+Credit guards on `runai`: `RUNAI_H_MAX_STEPS=40`, `RUNAI_H_MAX_TIME_S=600`. Traces go to `RUNAI_TRACES_DIR=/tmp/runai-traces`; the free disk is ephemeral, so they are lost on every redeploy or restart. `runai-demo` declares no API key.
+
+`/api/health` stays open (no password) on both services for the Render health check. Free instances sleep after about 15 minutes without traffic (wake-up takes about a minute and drops running missions): open the page before a demo.
+
+Authentication failure counters also live in process memory and reset on
+restart. `/api/health` is the only public route when
+authentication is enabled; static assets, `/demo/live`, event streams and
+screenshots require credentials. Set `RUNAI_BASIC_AUTH=user:password` in Render's
+secret environment settings; for separate credentials use a comma-separated list
+such as `user:password,user2:password2` (commas cannot be part of a password).
+After five failed authentication attempts within 60 seconds, that client IP is
+blocked with HTTP 429 and a `Retry-After` header until the window expires. The
+first `X-Forwarded-For` hop identifies clients behind Render's TLS proxy; use this
+deployment only behind a trusted proxy that supplies that header.
+
+Security headers apply to authenticated and rejected responses alike, and API
+responses use `Cache-Control: no-store`. Content Security Policy defaults to
+`Content-Security-Policy-Report-Only` (`RUNAI_CSP_ENFORCE=0`); set
+`RUNAI_CSP_ENFORCE=1` to send an enforcing `Content-Security-Policy` instead.
 
 ## Architecture
 
