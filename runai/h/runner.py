@@ -36,7 +36,24 @@ _PAYMENT_PROCESSOR_HOSTS = (
     "stripe.com", "adyen.com", "paypal.com", "checkout.com",
     "ingenico.com", "ingenico.fr", "worldline.com", "worldline-solutions.com",
     "mollie.com",
+    "paybox.com", "paybox.fr", "payline.com", "payline.fr",
+    "sumup.com", "sumup.me", "klarna.com", "lyra.com", "lyra-network.com",
+    "monext.com", "monext.fr",
 )
+
+_FORBIDDEN_RUN_HOSTS = (*FORBIDDEN_HOSTS, "tap.pt", "trainline.com", "thetrainline.com")
+
+
+def _event_page_urls(value: Any) -> Iterable[str]:
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"url", "current_url", "final_url"} and isinstance(item, str):
+                yield item
+            elif key not in {"image", "images"}:
+                yield from _event_page_urls(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _event_page_urls(item)
 
 
 RESERVED_CREATE_PARAMS = frozenset({"agent", "messages", "queue"})
@@ -179,12 +196,16 @@ def build_step_result(
         status = StepStatus.failed
         stop_point = None
         host = ", ".join(untrusted_hosts) or "unknown host"
-        error = (
-            "Payment provider page reached — automation stopped" if payment_processor
+        error = error or (
+            f"Payment processor reached ({host}); cancellation not confirmed" if payment_processor
             else f"The agent left the official site ({host}); result not trusted"
         )
     if off_platform or payment_processor:
         result_data.update(off_platform_hosts=untrusted_hosts, off_platform=off_platform, payment_processor=payment_processor)
+    if result_data.get("host_drift_cancelled"):
+        status = StepStatus.stopped_before_commitment
+        stop_point = StopPoint.payment if payment_processor else None
+        error = f"H session cancelled: {result_data['host_drift_reason']}"
     return StepResult(
         kind=kind,
         status=status,
@@ -257,6 +278,8 @@ class HRun:
         self.off_platform = False
         self.payment_processor = False
         self.off_platform_hosts: list[str] = []
+        self._host_drift_reason: str | None = None
+        self._host_drift_cancelled = False
         self._created_at = time.monotonic()
         self.metrics: dict[str, Any] = {"elapsed_s": 0.0}
         self.event_count = 0
@@ -308,6 +331,12 @@ class HRun:
         data = event.get("data") or {}
         if not isinstance(data, dict):
             return
+        if event_type != "LiveViewUrlEvent":
+            for url in _event_page_urls(data):
+                self.last_url = url
+                self._check_host(url)
+                if self.off_platform:
+                    break
         if event_type == "LiveViewUrlEvent" and data.get("live_view_url"):
             self.live_view_url = data["live_view_url"]
         elif event_type == "MetricsUpdateEvent" and isinstance(data.get("metrics"), dict):
@@ -325,8 +354,6 @@ class HRun:
                 metadata = data.get("metadata") or {}
                 self.last_url = metadata.get("url") or self.last_url
                 self.last_title = safe_text(metadata.get("title")) or self.last_title
-                if url := metadata.get("url"):
-                    self._check_host(url)
                 image = data.get("image")
                 if isinstance(image, dict) and image.get("type") == "url" and image.get("media_type") == "image/png":
                     self._capture_reference(image.get("source"), metadata)
@@ -335,13 +362,17 @@ class HRun:
                 self.outcome = data.get("outcome") or self.outcome
 
     def _check_host(self, url: str) -> None:
+        if self.off_platform:
+            return
         parsed = _http_url(url)
         host = parsed.host if parsed is not None else "invalid URL"
-        forbidden = parsed is not None and host_matches(str(parsed), tuple(FORBIDDEN_HOSTS))
+        forbidden = parsed is not None and host_matches(str(parsed), _FORBIDDEN_RUN_HOSTS)
         payment = parsed is not None and host_matches(str(parsed), _PAYMENT_PROCESSOR_HOSTS)
         allowed = self.allowed_hosts is None or (parsed is not None and host_matches(str(parsed), self.allowed_hosts))
         if forbidden or payment or not allowed:
             self.off_platform = True
+            reason = "forbidden host" if forbidden else "payment processor" if payment else "outside allowed_hosts"
+            self._host_drift_reason = f"{host} ({reason})"
             self.payment_processor = self.payment_processor or payment
             if host not in self.off_platform_hosts:
                 self.off_platform_hosts.append(host)
@@ -431,6 +462,9 @@ class HRun:
             ):
                 event = as_dict(raw)
                 self._absorb(event)
+                if self.off_platform:
+                    await self._stop_host_drift(event)
+                    return
                 await self._notify_metrics(on_event)
                 self.trace.write(to_trace_event(event, self.id, self.kind.value))
                 if on_event is not None:
@@ -454,6 +488,9 @@ class HRun:
             for raw in batch:
                 event = as_dict(raw)
                 self._absorb(event)
+                if self.off_platform:
+                    await self._stop_host_drift(event)
+                    return
                 await self._notify_metrics(on_event)
                 self.trace.write(to_trace_event(event, self.id, self.kind.value))
                 if on_event is not None:
@@ -470,6 +507,15 @@ class HRun:
             await self._notify_metrics(on_event)
             if self.status in self._settled and not batch:
                 return
+
+    async def _stop_host_drift(self, event: dict[str, Any]) -> None:
+        try:
+            await self.cancel()
+            self._host_drift_cancelled = True
+            self.status = "interrupted"
+        finally:
+            self._release()
+            self.trace.write(to_trace_event(event, self.id, self.kind.value))
 
     async def _finalize(self) -> StepResult:
         try:
@@ -499,6 +545,8 @@ class HRun:
             off_platform_hosts=self.off_platform_hosts,
             data={
                 "agent_view_url": self.agent_view_url,
+                "host_drift_cancelled": self._host_drift_cancelled,
+                "host_drift_reason": self._host_drift_reason,
                 "share_url": self.share_url,
                 "h_key": self.account.name,
                 "title": self.last_title,
