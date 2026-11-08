@@ -44,6 +44,13 @@ class CaptureStore:
             raise ValueError("Invalid screenshot path")
         return json.loads(path.read_text()) if path.exists() else []
 
+    def forget(self, mission_id: str, kind: StepKind) -> None:
+        """Release in-memory dedup state of a finished step; frames on disk are kept."""
+        self._seen = {key for key in self._seen if key[:2] != (mission_id, kind.value)}
+        lock = self._locks.get((mission_id, kind.value))
+        if lock is not None and not lock.locked():
+            self._locks.pop((mission_id, kind.value), None)
+
     def schedule(self, mission_id: str, kind: StepKind, observation: dict, run) -> None:
         revision = observation.get("revision")
         key = (mission_id, kind.value, revision)
