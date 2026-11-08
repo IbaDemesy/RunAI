@@ -12,8 +12,16 @@ from runai.models import StepKind
 def build_screenshot_router(service: MissionService) -> APIRouter:
     router = APIRouter()
 
+    def known_mission(mission_id: str) -> None:
+        """Frames of forgotten or unknown missions are not served, even if files remain on disk."""
+        try:
+            service.get(mission_id)
+        except MissionError:
+            raise HTTPException(404, "Mission not found") from None
+
     @router.get("/api/missions/{mission_id}/steps/{kind}/screenshots")
     async def screenshot_index(mission_id: str, kind: str):
+        known_mission(mission_id)
         try:
             return await asyncio.to_thread(service.capture_store.index, mission_id, kind)
         except (ValueError, OSError):
@@ -21,6 +29,7 @@ def build_screenshot_router(service: MissionService) -> APIRouter:
 
     @router.get("/api/missions/{mission_id}/steps/{kind}/screenshots/{revision}.png")
     async def stored_screenshot(mission_id: str, kind: str, revision: str):
+        known_mission(mission_id)
         try:
             if not revision.isascii() or not revision.isdecimal():
                 raise ValueError("Invalid revision")
@@ -28,7 +37,9 @@ def build_screenshot_router(service: MissionService) -> APIRouter:
             content = await asyncio.to_thread(path.read_bytes)
         except (ValueError, OSError):
             raise HTTPException(404, "Screenshot not found") from None
-        return Response(content, media_type="image/png")
+        return Response(content, media_type="image/png", headers={
+            "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
+        })
 
     @router.get("/api/missions/{mission_id}/steps/{kind}/screenshot")
     async def screenshot(mission_id: str, kind: StepKind):

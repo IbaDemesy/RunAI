@@ -67,9 +67,13 @@ def detect_stop_point(text: str, *, ignore_negated: bool = False) -> StopPoint |
 _RELEASE_KEYWORDS = re.compile(
     r"\b(compte|account|conta|conto|sante|health|salute|saude"
     r"|consentement|consent|consenso|consentimento"
-    r"|envoi|envoyer|send|enviar|envie|invia|inviare"
-    r"|soumission|reservation|booking|book|reserve|prenotazione|prenota|prenotare|reserva"
-    r"|paie|pagare|paghi|pague|purchase|buy|transaction)\b"
+    r"|envoi|envoie|envoies|envoyer|envoyez|send|enviar|envia|envie|invia|inviare"
+    r"|inscris\w*|inscrire|inscrivez|iscriv\w*|inscrev\w*|inscreva\w*|register|registrate|registrame|registrar\w*"
+    r"|sign\s*up|signup|subscribe|enrol|enroll|crea\s+(?:la\s+|una\s+)?cuenta"
+    r"|reserv\w*|prenot\w*|finali[sz]\w*|finalizar|login|log\s*in|sign\s*in|connecte\w*"
+    r"|order\s+(?:it|now|this|them)|sign\s+(?:it|the|me|on)"
+    r"|soumission|reservation|booking|book|reserve|reserva"
+    r"|pay|paye|payes|payons|payent|paie|paies|pagare|paghi|pague|purchase|buy|transaction)\b"
 )
 _RELEASE_CONSENT = re.compile(
     r"\b(?:accept(?:er|e|ez)?|agree|accepte|accett(?:a|are)|aceit(?:a|e|ar|o))\b"
@@ -87,6 +91,14 @@ _OVERRIDE_INSTRUCTIONS = re.compile(
     r"(?:\W+\w+){0,5}\W+(?:instructions?|rules?|regles?|regole|istruzioni"
     r"|instrucoes|regras?|consignes|directives?|guardrails?|safeguards?|safety)\b"
 )
+_OVERRIDE_PREVIOUS = re.compile(
+    r"\b(?:ignore(?:r|z)?|ignora(?:r|re)?|disregard|forget|oublie(?:r|z)?|esquece(?:r)?|dimentica|olvida(?:r)?|bypass)\b"
+    r"(?:\W+\w+){0,4}\W+(?:previous|above|prior|earlier|before|precedent\w*|anterior\w*|anteriores|precedenti|prima"
+    r"|everything|tout|todo|tutto|tudo|all)\b"
+    r"|\b(?:new|updated|real|actual|nouvelles?|nuevas?|nuove|novas?)\W+(?:instructions?|consignes|instrucciones|istruzioni|instrucoes)\b"
+    r"|\b(?:you\s+are\s+now|from\s+now\s+on|a\s+partir\s+de\s+maintenant|desormais|developer\s+mode|jailbreak)\b"
+    r"|^\W*(?:system|assistant|developer)\s*:"
+)
 _DISCLOSE_INSTRUCTIONS = re.compile(
     r"\b(?:reveal|disclose|show|print|repeat|revele|reveler|divulgue|mostra|mostre)\b"
     r"(?:\W+\w+){0,5}\W+(?:(?:system|internal|safety|hidden)\W+(?:prompt|instructions?)"
@@ -102,6 +114,8 @@ _HOMOGLYPHS = str.maketrans({
     "т": "t", "в": "b", "н": "h", "α": "a", "ε": "e", "ο": "o",
     "ρ": "p", "ι": "i", "κ": "k", "τ": "t", "υ": "y", "χ": "x",
 })
+_LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})
+_LEET_WORD = re.compile(r"(?<![\w])(?=[a-z0-9@$]*[a-z])(?=[a-z]*[0-9@$])[a-z0-9@$]{3,}(?![\w])")
 _RELEASE_ACTIONS = re.compile(
     r"\b(?:validat(?:e|ing|ion)|valid(?:er|ez|e)|confirm(?:er|ez|e|ar|are|a)?|conferma(?:re)?"
     r"|place\s+(?:the\s+|an?\s+)?order|pay(?:ment|er|ez|ing)?|paiement|regler"
@@ -135,7 +149,13 @@ def release_attempt(text: str) -> str | None:
         lambda match: re.sub(r"\s+", "", match.group()),
         normalized,
     )
-    if _OVERRIDE_INSTRUCTIONS.search(normalized):
+    leet = _LEET_WORD.sub(lambda m: m.group().translate(_LEET), normalized)
+    separated = re.sub(
+        r"(?<!\w)(?:[a-z][\s.\-_*|/·]+){2,}[a-z](?!\w)",
+        lambda match: re.sub(r"[\s.\-_*|/·]+", "", match.group()),
+        normalized,
+    )
+    if _OVERRIDE_INSTRUCTIONS.search(normalized) or _OVERRIDE_PREVIOUS.search(normalized):
         return "Safety instructions cannot be overridden through agent messages or answers."
     if _DISCLOSE_INSTRUCTIONS.search(normalized):
         return "Safety instructions and runner data must not be disclosed."
@@ -147,6 +167,12 @@ def release_attempt(text: str) -> str | None:
         or _RELEASE_SUBMISSION.search(normalized)
         or _RELEASE_ACTIONS.search(normalized)
         or _RELEASE_ACTIONS.search(collapsed)
+        or _RELEASE_ACTIONS.search(separated)
+        or _RELEASE_KEYWORDS.search(separated)
+        or _RELEASE_ACTIONS.search(leet)
+        or _RELEASE_KEYWORDS.search(leet)
+        or detect_stop_point(leet)
+        or detect_stop_point(separated)
     ):
         action = stop.value.replace("_", " ") if stop else "a binding action"
         return f"Human action required: {action} cannot be authorized through agent messages or answers."

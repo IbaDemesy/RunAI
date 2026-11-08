@@ -1,6 +1,7 @@
 """Persist browser frames without blocking mission event delivery."""
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -48,13 +49,27 @@ class CaptureStore:
         return [entry for entry in entries if self.frame_path(mission_id, kind, entry["revision"]).exists()]
 
     def purge(self) -> None:
+        """Delete expired frames, then indexes and directories that no longer hold any frame."""
+        root = self.root.resolve()
         cutoff = time.time() - CAPTURE_TTL_S
         for path in self.root.glob("*/*/*.png"):
             try:
-                if not path.is_symlink() and path.resolve().is_relative_to(self.root.resolve()) and path.stat().st_mtime < cutoff:
+                if not path.is_symlink() and path.resolve().is_relative_to(root) and path.stat().st_mtime < cutoff:
                     path.unlink()
             except OSError:
                 logger.warning("Could not purge expired screenshot %s", path)
+        for directory in self.root.glob("*/*"):
+            try:
+                if (directory.is_symlink() or not directory.is_dir() or any(directory.glob("*.png"))
+                        or time.time() - directory.stat().st_mtime < 60):  # a concurrent write may be starting
+                    continue
+                for leftover in directory.glob("index.json*"):
+                    leftover.unlink()
+                directory.rmdir()
+                with contextlib.suppress(OSError):
+                    directory.parent.rmdir()  # only succeeds once empty
+            except OSError:
+                logger.warning("Could not purge empty screenshot directory %s", directory)
 
     def forget(self, mission_id: str, kind: StepKind) -> None:
         """Release in-memory dedup state of a finished step; frames on disk are kept."""

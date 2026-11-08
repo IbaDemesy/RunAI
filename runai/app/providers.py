@@ -15,7 +15,7 @@ from datetime import date, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
-from urllib.parse import quote, urlencode, urlsplit
+from urllib.parse import quote, unquote, urlencode, urlsplit
 
 from pydantic import BaseModel
 
@@ -435,8 +435,36 @@ _TRANSPORT_ALIASES = {
 }
 
 
+_HOST_DOTS = str.maketrans({"。": ".", "．": ".", "｡": "."})
+# Brand labels forbidden whatever the TLD (booking.fr, expedia.co.uk, airbnb.fr, ...).
+_FORBIDDEN_BRANDS: dict[str, str] = {
+    "booking": "Booking.com is a forbidden aggregator",
+    "expedia": "Expedia is a forbidden aggregator",
+    "hotels": "Hotels.com is a forbidden aggregator",
+    "airbnb": "Airbnb is forbidden",
+    "klikego": "Klikego is forbidden (the guest flow creates a runner account)",
+    "flytap": "TAP is forbidden",
+    "trainline": "Trainline is forbidden",
+    "thetrainline": "Trainline is forbidden",
+}
+_SECOND_LEVEL = frozenset({"co", "com", "org", "net", "gov", "ac"})
+
+
 def _host(url: str | None) -> str:
-    return (urlsplit(str(url)).hostname or "").lower() if url else ""
+    """Normalized host, as a browser would read it (backslashes, dots, case, percent-encoding)."""
+    if not url:
+        return ""
+    text = unicodedata.normalize("NFKC", str(url)).strip()
+    text = re.sub(r"[\t\r\n]", "", text).replace("\\", "/")
+    try:
+        host = urlsplit(text).hostname or ""
+    except ValueError:
+        return ""
+    host = unquote(host).translate(_HOST_DOTS).lower().rstrip(".")
+    try:
+        return host.encode("idna").decode("ascii") if not host.isascii() else host
+    except UnicodeError:
+        return host
 
 
 def host_matches(url: str | None, hosts: tuple[str, ...] | list[str]) -> bool:
@@ -445,7 +473,7 @@ def host_matches(url: str | None, hosts: tuple[str, ...] | list[str]) -> bool:
 
 
 def forbidden_reason(url: str | None) -> str | None:
-    return next(
+    reason = next(
         (
             reason
             for host, reason in FORBIDDEN_HOSTS.items()
@@ -453,6 +481,12 @@ def forbidden_reason(url: str | None) -> str | None:
         ),
         None,
     )
+    if reason:
+        return reason
+    labels = _host(url).split(".")
+    if len(labels) >= 3 and labels[-2] in _SECOND_LEVEL:
+        return _FORBIDDEN_BRANDS.get(labels[-3])
+    return _FORBIDDEN_BRANDS.get(labels[-2]) if len(labels) >= 2 else None
 
 
 def platform(platform_id: str) -> Platform:

@@ -14,6 +14,22 @@ _AFFIRMATION = re.compile(
 )
 
 
+_AFFIRMATION_ANY = re.compile(
+    r"\b(oui|ouais|yes|yep|yeah|ok|okay|d'accord|daccord|s[iìí]|sim|claro|vale|certo|va bene|go|allez|sure|"
+    r"confirm\w*|proceed|continue\w*|please|merci|gracias|obrigad[oa]|grazie|adelante|avanti|vai|vamos|"
+    r"vas-y|fais|fait|do it|d'acord|bien s[uû]r|por favor|per favore|s'il (?:te|vous) pla[iî]t)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_bare_affirmation(answer: str) -> bool:
+    """Short answer (up to 8 words) whose meaning depends on the question it replies to."""
+    text = answer.strip()
+    return bool(_AFFIRMATION.match(text)) or (
+        len(text.split()) <= 8 and bool(_AFFIRMATION_ANY.search(text))
+    )
+
+
 class HumanQuestionError(Exception):
     """Uncorrelated, expired or unauthorized answer."""
 
@@ -87,7 +103,7 @@ class HumanQuestionRegistry:
             self._events[question_id].set()
             raise HumanQuestionError("Question expired")
         refusal = release_attempt(answer.answer)
-        if refusal is None and _AFFIRMATION.match(answer.answer.strip()):
+        if refusal is None and _is_bare_affirmation(answer.answer):
             refusal = release_attempt(
                 f"{question.text} {' '.join(question.choices)} {question.reason or ''} {answer.answer}"
             )

@@ -18,7 +18,7 @@ from hai_agents.sessions import SendSessionMessagesRequestBody_UserMessage
 from hai_agents.tools import Tool, ToolInput, as_tools
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 
-from runai.app.providers import FORBIDDEN_HOSTS, host_matches
+from runai.app.providers import FORBIDDEN_HOSTS, forbidden_reason, host_matches
 from runai.config import get_settings
 from runai.h.events import answer_text, as_dict, safe_text, to_trace_event
 from runai.models import StepKind, StepResult, StepStatus, StopPoint, TraceEvent
@@ -47,7 +47,7 @@ _FORBIDDEN_RUN_HOSTS = (*FORBIDDEN_HOSTS, "tap.pt", "trainline.com", "thetrainli
 def _event_page_urls(value: Any) -> Iterable[str]:
     if isinstance(value, dict):
         for key, item in value.items():
-            if key in {"url", "current_url", "final_url"} and isinstance(item, str):
+            if key in {"url", "current_url", "final_url", "page_url", "target_url", "new_url", "href", "location"} and isinstance(item, str):
                 yield item
             elif key not in {"image", "images"}:
                 yield from _event_page_urls(item)
@@ -388,7 +388,9 @@ class HRun:
             return
         parsed = _http_url(url)
         host = parsed.host if parsed is not None else "invalid URL"
-        forbidden = parsed is not None and host_matches(str(parsed), _FORBIDDEN_RUN_HOSTS)
+        forbidden = parsed is not None and (
+            host_matches(str(parsed), _FORBIDDEN_RUN_HOSTS) or forbidden_reason(str(parsed)) is not None
+        )
         payment = parsed is not None and host_matches(str(parsed), _PAYMENT_PROCESSOR_HOSTS)
         allowed = self.allowed_hosts is None or (parsed is not None and host_matches(str(parsed), self.allowed_hosts))
         if forbidden or payment or not allowed:
