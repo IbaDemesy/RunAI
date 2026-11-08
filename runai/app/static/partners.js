@@ -5,6 +5,12 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   function partnerFor(x = {}) {
+    const mode = x.mode || x.mission?.mode || x.framing?.mode;
+    if (mode === "demo" || mode === "replay") {
+      const label = mode === "demo" ? "Demo" : "Recorded";
+      return { id: mode, label, detail: label };
+    }
+    if (mode !== "live") return null;
     const candidate = x.candidate || x;
     const turn = x.framing?.turns?.slice().reverse().find(turn => turn.role === "assistant");
     const provider = x.event?.provider || x.step?.provider || candidate.provider || turn?.provider;
@@ -12,14 +18,7 @@
     if (["h company", "web-surfer-pro"].includes(id)) id = "h";
     if (["holo4", "holo"].includes(id)) id = "holo";
     if (id === "solaria-1") id = "gladia";
-    // Fallbacks: agent traces use H, search candidates use Linkup, assistant turns use Holo, voice uses Gladia.
-    if (!provider) {
-      const source = x.event?.source || x.step?.source || x.source;
-      if (source === "h" || source?.startsWith("agent:")) id = "h";
-      else if (candidate.sources || x.framing?.candidates?.length) id = "linkup";
-      else if (x.role === "assistant" || turn) id = "holo";
-      else if (x.voice || x.voiceState || x.type === "voice" || x.channel === "voice") id = "gladia";
-    }
+    if (!provider) return null;
     const n = candidate.sources?.length || 0;
     const latency = candidate.latency_ms == null ? "" : " · " + (candidate.latency_ms / 1000).toFixed(1) + " s";
     const labels = { h: "H web-surfer-pro", linkup: "Found by Linkup · " + n + (n === 1 ? " source" : " sources") + latency,
@@ -27,6 +26,7 @@
     return labels[id] ? { id, label: labels[id], detail: labels[id] } : null;
   }
   function decorate(screen, ctx = {}) {
+    const mode = ctx.mission?.mode || ctx.framing?.mode;
     const doc = screen?.ownerDocument || (typeof document !== "undefined" ? document : null);
     if (!screen?.querySelectorAll || !doc?.createElement) return;
     const make = (tag, text, className) => {
@@ -44,7 +44,9 @@
     for (const card of screen.querySelectorAll(".candidate")) {
       const heading = Array.from(card.children || []).find(node => /^H[1-6]$/i.test(node.tagName));
       const candidate = ctx.framing?.candidates?.find(candidate => candidate.name === heading?.textContent);
-      if (!candidate || !badge(card, partnerFor({ candidate }))) continue;
+      if (!candidate) continue;
+      badge(card, partnerFor({ candidate, mode }));
+      if (card.querySelectorAll(".sources").length) continue;
       const sources = candidate.sources || [];
       const details = make("details", null, "sources");
       details.append(make("summary", "Sources (" + sources.length + ")"));
@@ -62,19 +64,22 @@
     }
     for (const node of screen.querySelectorAll(".say")) {
       if (marked(node)) continue;
-      const partner = partnerFor({ framing: { turns: ctx.framing?.turns || [] }, role: "assistant" });
+      const partner = partnerFor({ framing: ctx.framing, mode });
       if (!partner || !node.parentNode) continue;
       const caption = make("p", partner.label, "partner-badge");
       caption.setAttribute("data-partner", partner.id); node.setAttribute("data-partner", partner.id);
       if (node.parentNode.insertBefore) node.parentNode.insertBefore(caption, node.nextSibling || null);
       else node.parentNode.append(caption);
     }
-    for (const node of screen.querySelectorAll(".voice-controls")) badge(node, partnerFor({ voice: true }));
-    for (const [index, node] of Array.from(screen.querySelectorAll(".lane")).entries()) badge(node, partnerFor({ step: ctx.mission?.steps?.[index], source: "h" }));
-    const mode = doc.getElementById?.("mode");
-    const parent = mode?.parentNode;
+    for (const node of screen.querySelectorAll(".voice-controls")) badge(node, partnerFor({ mode }));
+    for (const node of screen.querySelectorAll(".step[data-kind]")) {
+      const step = ctx.mission?.steps?.find(step => step.kind === node.dataset.kind);
+      badge(node, partnerFor({ step, mode }));
+    }
+    const modeNode = doc.getElementById?.("mode");
+    const parent = modeNode?.parentNode;
     if (parent?.insertBefore && !Array.from(parent.children || []).some(node => String(node.className).split(/\s+/).includes("powered-by"))) {
-      parent.insertBefore(make("span", "Powered by H Company · Linkup · Gladia · built with Devin", "powered-by"), mode);
+      parent.insertBefore(make("span", "Powered by H Company · Linkup · Gladia · built with Devin", "powered-by"), modeNode);
     }
   }
   return { partnerFor, decorate };

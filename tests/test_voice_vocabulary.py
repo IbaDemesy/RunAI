@@ -1,3 +1,4 @@
+# Acceptance: AC-44 (docs/product/ACCEPTANCE.md)
 import dataclasses
 import typing
 

@@ -62,7 +62,7 @@ def test_optional_pdf(client, mission):
     assert response.content.startswith(b"%PDF")
 
 
-@pytest.mark.xfail(strict=False, reason="GAP-W1-1: mission.v2 snapshot steps (StepResult) do not expose human_action for stop points")
+@pytest.mark.xfail(strict=True, reason="GAP-W1-1: mission.v2 snapshot steps (StepResult) do not expose human_action for stop points")
 def test_stop_points_expose_human_action(client, mission):
     snapshot = checked(client.get(f"/api/missions/{mission[0]['mission_id']}"))
     stopped = [step for step in snapshot["steps"] if step["stop_point"]]
@@ -71,7 +71,6 @@ def test_stop_points_expose_human_action(client, mission):
         assert (step.get("human_action") or "").strip(), "Stop point is missing its HTTP human_action"
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-1: display an integral euro budget without a decimal suffix")
 def test_budget_display(mission):
     snapshot, _, html, _ = mission
     assert snapshot["budget"]["cap"] == 800
@@ -79,12 +78,10 @@ def test_budget_display(mission):
     assert "800.0" not in html
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-2: omit empty user-answer summaries")
 def test_no_empty_answers(mission):
     assert all(not re.search(r"(?:Réponses utilisateur|User answers|Your answers)\s*:\s*\.", s["summary"]) for s in mission[0]["steps"])
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-3: ask about the start pen only once per step")
 def test_no_duplicate_start_pen(mission):
     questions = mission[0]["questions"]
     for step in mission[0]["steps"]:
@@ -92,23 +89,22 @@ def test_no_duplicate_start_pen(mission):
         assert len(topics) <= 1
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-4: a known race date resolves the period question")
 def test_known_date_resolves_period(client):
     session = prepare(client)
     session = reply(client, session, corrections={"race_date": "2027-04-11"})
     assert session["slots"]["race_date"]["value"] == "2027-04-11"
     assert not any("date_window" in q["slots"] for q in session["open_questions"])
-    assert not any(re.search(r"Période\s*\?|period.*unknown", line, re.IGNORECASE) for line in session["summary"]["lines"])
+    assert not any(re.search(r"Période\s*\?|period.*unknown", line, re.IGNORECASE) for line in (session.get("summary") or {}).get("lines", []))
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-5: parse an English month as a period, never as the city")
+@pytest.mark.xfail(strict=True, reason="JURY-W1-5: parse an English month as a period, never as the city")
 def test_english_month_is_not_city(client):
     session = checked(client.post("/api/framings", json={"text": "Milan marathon in April 2027"}), 201)
     assert session["slots"]["city"]["value"] == "Milan"
     assert session["candidates"]
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-6: city reply after a marathon chip offers the nearest demo fixture")
+@pytest.mark.xfail(strict=True, reason="JURY-W1-6: city reply after a marathon chip offers the nearest demo fixture")
 def test_chip_city_nearest_fixture(client):
     session = checked(client.post("/api/framings", json={"text": "marathon from Lyon"}), 201)
     session = reply(client, session, text="Lisbon")
@@ -116,7 +112,7 @@ def test_chip_city_nearest_fixture(client):
     assert any(c["city"] == "Lisbonne" for c in session["candidates"])
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-7: journey and recap reflect selected race, hotel and transport cards (jury-2 #5)")
+@pytest.mark.xfail(strict=True, reason="J10 / JURY-W1-7 (PB-09): transport step total is not a sourced per-leg fare")
 def test_journey_recap_consistent_with_cards(mission):
     snapshot, journey, html, _ = mission
     assert snapshot["race"]["name"] in html

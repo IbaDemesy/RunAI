@@ -2,7 +2,7 @@
 
 Status: design spec for wave 1. Mockup: [`mockups/voice.html`](mockups/voice.html) (offline, open it in a browser and press **Play demo stream**).
 
-Today the mic button records, POSTs to `/api/transcribe` and only returns final text, so Gladia is invisible. This spec defines the UI that the streaming pipeline (partials, code-switching, translation, NER, voice commands) lands in. It reuses the state names of `web/voice/voice-input.js` and the dark tokens already in `runai/app/static/styles.css` (`--night`, `--haze`, `--sun`, `--chalk`, `--mist`).
+This spec defines the UI for the streaming pipeline (partials, code-switching, translation, NER, voice commands). Streaming code now exists in `runai/app/voice_ws.py`; this document is not proof of a live-provider run. It reuses the state names of `web/voice/voice-input.js` and the dark tokens in `runai/app/static/style.css` (`--night`, `--haze`, `--sun`, `--chalk`, `--mist`).
 
 ## 1. Principles
 

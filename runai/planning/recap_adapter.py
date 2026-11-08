@@ -35,8 +35,13 @@ class JourneyRecap:
         return Recap.model_validate_json(self._recap_json)
 
 
+def _amount(value: float, currency: str) -> str:
+    amount = f"{value:,.0f}" if value == int(value) else f"{value:,.2f}"
+    return f"€{amount}" if currency == "EUR" else f"{amount} {currency}"
+
+
 def _money(value: Money | None) -> str:
-    return f"{value.amount} {value.currency}" if value else "not priced"
+    return _amount(value.amount, value.currency) if value else "not priced"
 
 
 def _local(value: datetime, timezone: str | None) -> datetime:
@@ -66,8 +71,8 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     budget = plan.budget
     facts.extend([
         KeyFact(label="Known total" + (" (partial)" if not budget.complete else ""),
-                value=f"{budget.known_total} {budget.currency}"),
-        KeyFact(label="Budget cap", value=str(budget.cap) + " " + budget.currency if budget.cap is not None else "unknown"),
+                value=_amount(budget.known_total, budget.currency)),
+        KeyFact(label="Budget cap", value=_amount(budget.cap, budget.currency) if budget.cap is not None else "unknown"),
         KeyFact(label="Over budget cap", value="unknown" if budget.over_cap is None else str(budget.over_cap).lower()),
     ])
     for line in budget.lines:
@@ -77,7 +82,7 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     timeline = []
     stamps = []
 
-    def point(title: str, value: datetime | None, timezone: str | None, detail: str) -> None:
+    def point(title: str, value: datetime | None, timezone: str | None, detail: str, calendar_id: str) -> None:
         if value is None:
             facts.append(KeyFact(label=title, value="Time not provided", detail=detail))
             return
@@ -87,12 +92,13 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
             facts.append(KeyFact(label=title, value=text))
             return
         stamps.append(local)
-        timeline.append(TimelineItem(start=local, end=local, title=title, detail=f"{notice} · {text}"))
+        timeline.append(TimelineItem(start=local, end=local, title=title, detail=f"{notice} · {text}",
+                                     calendar_id=calendar_id))
 
     labels = {s.id: public_origin(plan.origin_public) if s.kind is StopKind.home else s.label for s in plan.stops}
     stops = {s.id: s for s in plan.stops}
     for stop in plan.stops:
-        point(labels[stop.id], stop.local_time, stop.timezone, f"Stop {stop.id}")
+        point(labels[stop.id], stop.local_time, stop.timezone, f"Stop {stop.id}", f"stop:{stop.id}")
     for segment in plan.segments:
         label = f"{labels[segment.from_stop_id]} → {labels[segment.to_stop_id]} ({segment.mode.value})"
         state = ("not automated" if segment.automation.value != "automated" else "automation planned, not committed")
@@ -107,9 +113,9 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
             detail += " · official link unknown"
         facts.append(KeyFact(label=label, value=detail))
         point(f"Departure: {label}", segment.departure,
-              stops[segment.from_stop_id].timezone or segment.timezone, detail)
+              stops[segment.from_stop_id].timezone or segment.timezone, detail, f"departure:{segment.id}")
         point(f"Arrival: {label}", segment.arrival,
-              stops[segment.to_stop_id].timezone or segment.timezone, detail)
+              stops[segment.to_stop_id].timezone or segment.timezone, detail, f"arrival:{segment.id}")
         if segment.limitation:
             checklist.append(segment.limitation.message)
     for limitation in plan.limitations:
@@ -122,7 +128,8 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     # A fixed serialization epoch is metadata, not a claimed journey time.
     generated = min(stamps).astimezone(UTC) if stamps else datetime(1970, 1, 1, tzinfo=UTC)
     recap = Recap(id=f"{plan.mission_id}-r{plan.revision}-{plan.mode.value}", generated_at=generated,
-                  race_name=f"Trip · {plan.mission_id}", race_city="", runner_name="you",
+                  calendar_id=f"{plan.mission_id}-{plan.mode.value}", calendar_revision=plan.revision,
+                  race_name=plan.race_name or "Race to confirm", race_city="", runner_name="",
                   runner_fictive=False, notice=notice, key_facts=facts,
                   timeline=sorted(timeline, key=lambda item: item.start), checklist=checklist,
                   sources=sources + manual_sources, calendar_timezone="UTC")
@@ -155,4 +162,5 @@ def render_ics(snapshot: JourneyRecap) -> bytes:
                 f"X-RUNAI-MISSION-ID:{escape_text(snapshot.mission_id)}",
                 f"X-RUNAI-REVISION:{snapshot.revision}", f"X-RUNAI-MODE:{snapshot.mode}",
                 f"X-WR-CALDESC:{escape_text(description)}"]
-    return text.replace("END:VCALENDAR", "\r\n".join(fold(line) for line in metadata) + "\r\nEND:VCALENDAR").encode()
+    content, separator, tail = text.rpartition("END:VCALENDAR")
+    return (content + "\r\n".join(fold(line) for line in metadata) + "\r\n" + separator + tail).encode()

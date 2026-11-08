@@ -30,10 +30,11 @@ from runai.contracts.framing import (
     missing_slots,
 )
 from runai.contracts.mission import MissionSnapshot
-from runai.framing.holo import Phraser
+from runai.framing.holo import TRANSPORTS, Phraser, _mask_address
 from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
+from runai.redaction import mask_address
 from runai.search.candidates import CandidateSearchError, location_hint
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
@@ -49,6 +50,18 @@ LABELS = {
     SlotName.nights: "How many nights?",
     SlotName.transport_mode: "Which transport: train, plane, car or bus?",
 }
+
+
+def _valid_place(value: object, limit: int = 80) -> bool:
+    if not isinstance(value, str) or not 2 <= len(value.strip()) <= limit:
+        return False
+    normalized = value.strip().casefold().replace("’", "'").strip(".!?")
+    return any(c.isalpha() for c in value) and not re.search(
+        r"^(?:oui|non|yes|no|none|aucun[e]?|peu importe|n'importe quoi|"
+        r"je (?:ne )?sais pas|i (?:don't|do not) know|not sure|"
+        r"maybe|perhaps|whatever)(?:\b|$)",
+        normalized,
+    )
 
 
 class FramingEngine:
@@ -83,8 +96,15 @@ class FramingEngine:
     def _validate(values: dict[SlotName, object]) -> None:
         for name, value in values.items():
             try:
-                if name == SlotName.race_date and value is not None:
-                    date.fromisoformat(str(value))
+                if name in (SlotName.city, SlotName.origin, SlotName.race) and value is not None:
+                    if not _valid_place(value, 200 if name == SlotName.race else 80):
+                        raise ValueError()
+                elif name == SlotName.race_date and value is not None:
+                    if date.fromisoformat(str(value)) < date.today():
+                        raise ValueError()
+                elif name == SlotName.transport_mode and value is not None:
+                    if not isinstance(value, str) or value not in TRANSPORTS:
+                        raise ValueError()
                 elif (
                     name in (SlotName.distance_km, SlotName.budget, SlotName.nights)
                     and value is not None
@@ -93,11 +113,13 @@ class FramingEngine:
                     if (
                         not math.isfinite(number)
                         or number < 0
-                        or (name == SlotName.distance_km and number == 0)
+                        or (name in (SlotName.distance_km, SlotName.budget) and number == 0)
+                        or (name == SlotName.distance_km and number > 400)
+                        or (name == SlotName.nights and number > 30)
                     ):
                         raise ValueError()
                     if name == SlotName.nights and not number.is_integer():
-                        raise ValueError()
+                        raise FramingError("Please enter a whole number for nights.")
                 elif value is None and name != SlotName.budget:
                     continue
                 elif name not in (
@@ -113,6 +135,8 @@ class FramingEngine:
         async with self._locks[framing_id]:
             session = self.get(framing_id)
             check_reply_revision(session, reply)
+            for turn in session.turns:
+                turn.text = _mask_address(turn.text)
             question = next(
                 (q for q in session.open_questions if q.id == reply.question_id), None
             )
@@ -159,13 +183,45 @@ class FramingEngine:
                     ),
                     None,
                 )
+            pending = question or next(iter(session.open_questions), None)
+            if (
+                pending and pending.choices and answer and not choice
+                and not reply.corrections
+                and not re.search(
+                    r"https?://|\b(?:marathon|semi|half|run|race|trail|course|corrida|foulées|\d+\s*km?)\b",
+                    answer,
+                    re.IGNORECASE,
+                )
+            ):
+                return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
+            correction = re.match(
+                r"^(?:(?:en fait|actually)[,\s]+)?(?:plutôt|rather|instead)[,\s]+(.+?)\s*[.!?]?$"
+                r"|^(?:en fait|actually)[,\s]+(.+?)\s*[.!?]?$",
+                answer, re.IGNORECASE,
+            )
+            corrected_city = None
+            if correction and pending and pending.slots[0] in (SlotName.city, SlotName.origin):
+                corrected_city = next(group for group in correction.groups() if group)
+                if not _valid_place(corrected_city) or not re.fullmatch(
+                    r"[^\W\d_]+(?:[ '\u2019-][^\W\d_]+){0,4}", corrected_city
+                ):
+                    return self._clarify(session, reply, "Please specify the race city you want instead.")
+            if (
+                pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
+                and answer and not choice and not reply.corrections
+                and not corrected_city
+                and not _valid_place(answer, 200 if pending.slots[0] == SlotName.race else 80)
+            ):
+                return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
             values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
+            if corrected_city:
+                values = {SlotName.city: corrected_city} | reply.corrections
             if not values and not choice and not reply.question_id:
                 question = next(
                     (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
                     None,
                 )
-            if question and len(question.slots) == 1 and answer and (not question.choices or reply.question_id) and not choice:
+            if question and len(question.slots) == 1 and answer and not question.choices and not choice and not corrected_city:
                 slot = question.slots[0]
                 if slot == SlotName.date_window and slot not in values:
                     answer = reply.text.strip()
@@ -202,10 +258,11 @@ class FramingEngine:
                     and slot not in values
                     and (reply.question_id or not values)
                 ):
-                    if reply.question_id or (
+                    candidate = public_origin(answer) if slot == SlotName.origin else answer
+                    if _valid_place(candidate) and (reply.question_id or (
                         len(answer) <= 60 and not any(c.isdigit() for c in answer)
-                    ):
-                        values[slot] = answer
+                    )):
+                        values[slot] = candidate.strip()
                 elif not values and slot in (
                     SlotName.distance_km,
                     SlotName.budget,
@@ -219,20 +276,39 @@ class FramingEngine:
                             f"Please enter a valid number for {slot.value}."
                         ) from exc
             holo_values = {}
-            if not choice and reply.text:
-                holo_values = await self._holo_fill(session, reply.text, values)
+            if isinstance(origin := values.get(SlotName.origin), str):
+                public = public_origin(origin)
+                values[SlotName.origin] = None if public == public_origin("") else public
+            values = {
+                name: _mask_address(value)
+                if name in (SlotName.origin, SlotName.preferences) and isinstance(value, str)
+                else value
+                for name, value in values.items()
+            }
+            origin_pending = any(q.slots == [SlotName.origin] for q in session.open_questions)
+            if not choice and reply.text and not origin_pending:
+                holo_values = await self._holo_fill(session, mask_address(_mask_address(reply.text)), values)
                 values = holo_values | values
             if isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
             if not values and choice is None and session.turns:
+                if answer and session.open_questions:
+                    return self._clarify(session, reply, guidance)
                 raise FramingError(guidance)
             self._validate(values)
+            for name in (SlotName.budget, SlotName.nights, SlotName.distance_km):
+                if values.get(name) is not None:
+                    number = float(values[name])
+                    values[name] = int(number) if name == SlotName.nights else number
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
                 values[SlotName.origin] = None if public == public_origin("") else public
-            turn_text = reply.text or reply.choice_id or str(values)
+            turn_text = reply.text or reply.choice_id or "; ".join(
+                f"{name.value}: {value}" for name, value in values.items()
+            )
             if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
+            turn_text = mask_address(_mask_address(turn_text))
             session.revision += 1
             session.summary = None
             session.confirm_key = session.confirmed_revision = None
@@ -350,6 +426,19 @@ class FramingEngine:
             self.sessions[framing_id] = session
             return self.get(framing_id)
 
+    def _clarify(self, session: FramingSession, reply: FramingReply, message: str) -> FramingSession:
+        session.revision += 1
+        session.summary = None
+        session.confirm_key = session.confirmed_revision = None
+        for question in session.open_questions:
+            question.revision = session.revision
+        session.turns.extend([
+            FramingTurn(role="user", text=_mask_address(reply.text or ""), channel=reply.channel, revision=session.revision),
+            FramingTurn(role="assistant", text=message, revision=session.revision),
+        ])
+        self.sessions[session.id] = session
+        return self.get(session.id)
+
     async def _holo_fill(
         self, session: FramingSession, text: str, values: dict[SlotName, object]
     ) -> dict[SlotName, object]:
@@ -358,7 +447,7 @@ class FramingEngine:
         if not extract:
             return {}
         known = {
-            name.value: str(slot.value)
+            name.value: mask_address(str(slot.value))
             for name, slot in session.slots.items()
             if slot.is_known
             and not (
@@ -390,7 +479,7 @@ class FramingEngine:
             session.open_questions[0],
         )
         known = {
-            name.value: str(slot.value)
+            name.value: mask_address(str(slot.value))
             for name, slot in session.slots.items()
             if slot.is_known and slot.value is not None
         }

@@ -15,10 +15,27 @@ SUPPORTED_SAMPLE_RATES = (8000, 16000, 32000, 44100, 48000)
 DEFAULT_SAMPLE_RATE = 16000
 CHUNK_MS = 100
 BYTES_PER_SAMPLE = 2
+MAX_AUDIO_SECONDS = 120
+MAX_CONVERTED_BYTES = (MAX_AUDIO_SECONDS + 1) * DEFAULT_SAMPLE_RATE * BYTES_PER_SAMPLE
 
 
 class AudioError(RuntimeError):
     pass
+
+
+class AudioDurationError(AudioError):
+    pass
+
+
+def validate_wav_duration(data: bytes) -> None:
+    if data[:4] != b"RIFF":
+        return
+    try:
+        with wave.open(io.BytesIO(data)) as wav:
+            if wav.getnframes() > wav.getframerate() * MAX_AUDIO_SECONDS:
+                raise AudioDurationError("Audio exceeds the 120-second limit.")
+    except (wave.Error, EOFError):
+        pass
 
 
 @dataclass
@@ -30,6 +47,7 @@ class AudioStream:
 def load_pcm(source: str | Path | bytes) -> tuple[bytes, int]:
     """Read mono 16-bit PCM WAV directly; convert other formats to 16 kHz with ffmpeg."""
     data = source if isinstance(source, bytes) else _read_bytes(source)
+    validate_wav_duration(data)
     if data[:4] == b"RIFF":
         try:
             with wave.open(io.BytesIO(data)) as wav:
@@ -41,7 +59,10 @@ def load_pcm(source: str | Path | bytes) -> tuple[bytes, int]:
                     return wav.readframes(wav.getnframes()), wav.getframerate()
         except wave.Error:
             pass
-    return _ffmpeg_to_pcm(data), DEFAULT_SAMPLE_RATE
+    pcm = _ffmpeg_to_pcm(data)
+    if len(pcm) > DEFAULT_SAMPLE_RATE * BYTES_PER_SAMPLE * MAX_AUDIO_SECONDS:
+        raise AudioDurationError("Audio exceeds the 120-second limit.")
+    return pcm, DEFAULT_SAMPLE_RATE
 
 
 def _read_bytes(source: str | Path) -> bytes:
@@ -58,13 +79,20 @@ def _read_bytes(source: str | Path) -> bytes:
 def _ffmpeg_to_pcm(data: bytes) -> bytes:
     if shutil.which("ffmpeg") is None:
         raise AudioError("ffmpeg is required to convert this format (or provide a mono 16-bit PCM WAV).")
-    result = subprocess.run(
-        ["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-f", "s16le", "-ac", "1",
-         "-ar", str(DEFAULT_SAMPLE_RATE), "pipe:1"],
-        input=data,
-        capture_output=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-t", str(MAX_AUDIO_SECONDS + 1),
+             "-fs", str(MAX_CONVERTED_BYTES), "-f", "s16le", "-ac", "1",
+             "-ar", str(DEFAULT_SAMPLE_RATE), "pipe:1"],
+            input=data,
+            capture_output=True,
+            check=False,
+            timeout=20,
+        )
+    except subprocess.TimeoutExpired:
+        raise AudioError("Audio conversion timed out.") from None
+    if len(result.stdout) > MAX_CONVERTED_BYTES:
+        raise AudioDurationError("Audio exceeds the 120-second limit.")
     if result.returncode != 0:
         raise AudioError(f"ffmpeg conversion failed: {result.stderr.decode(errors='replace').strip()}")
     return result.stdout

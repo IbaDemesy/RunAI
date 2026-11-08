@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import re
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from runai.models import StepKind
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 MAX_FRAMES = 60
+CAPTURE_TTL_S = 24 * 60 * 60
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +44,24 @@ class CaptureStore:
         path = self.directory(mission_id, kind) / "index.json"
         if not path.resolve().is_relative_to(self.root.resolve()):
             raise ValueError("Invalid screenshot path")
-        return json.loads(path.read_text()) if path.exists() else []
+        entries = json.loads(path.read_text()) if path.exists() else []
+        return [entry for entry in entries if self.frame_path(mission_id, kind, entry["revision"]).exists()]
+
+    def purge(self) -> None:
+        cutoff = time.time() - CAPTURE_TTL_S
+        for path in self.root.glob("*/*/*.png"):
+            try:
+                if not path.is_symlink() and path.resolve().is_relative_to(self.root.resolve()) and path.stat().st_mtime < cutoff:
+                    path.unlink()
+            except OSError:
+                logger.warning("Could not purge expired screenshot %s", path)
+
+    def forget(self, mission_id: str, kind: StepKind) -> None:
+        """Release in-memory dedup state of a finished step; frames on disk are kept."""
+        self._seen = {key for key in self._seen if key[:2] != (mission_id, kind.value)}
+        lock = self._locks.get((mission_id, kind.value))
+        if lock is not None and not lock.locked():
+            self._locks.pop((mission_id, kind.value), None)
 
     def schedule(self, mission_id: str, kind: StepKind, observation: dict, run) -> None:
         revision = observation.get("revision")
@@ -82,6 +101,7 @@ class CaptureStore:
             logger.warning("Could not capture screenshot for %s/%s", mission_id, kind, exc_info=True)
 
     def _write(self, mission_id: str, kind: str, content: bytes, entries: list[dict]) -> None:
+        self.purge()
         path = self.frame_path(mission_id, kind, entries[-1]["revision"])
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)

@@ -1,4 +1,6 @@
 import asyncio
+import os
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -14,6 +16,39 @@ from runai.tracing import TraceWriter
 
 PNG = PNG_MAGIC + b"test-frame"
 KIND = StepKind.accommodation
+
+
+def test_png_ttl_purges_expired_captures_on_write(tmp_path):
+    store = CaptureStore(tmp_path)
+    store._write("mission1", KIND.value, PNG, [{"revision": 1}])
+    old = store.frame_path("mission1", KIND.value, 1)
+    expired = time.time() - 25 * 60 * 60
+    os.utime(old, (expired, expired))
+    store._write("mission1", KIND.value, PNG, [{"revision": 1}, {"revision": 2}])
+    assert not old.exists()
+    assert store.frame_path("mission1", KIND.value, 2).read_bytes() == PNG
+    assert [entry["revision"] for entry in store.index("mission1", KIND.value)] == [2]
+
+
+def test_png_purge_is_safe_for_empty_store(tmp_path):
+    store = CaptureStore(tmp_path)
+    store.purge()
+    assert not store.root.exists()
+
+
+def test_png_purge_logs_deletion_errors(tmp_path, monkeypatch, caplog):
+    store = CaptureStore(tmp_path)
+    store._write("mission1", KIND.value, PNG, [{"revision": 1}])
+    path = store.frame_path("mission1", KIND.value, 1)
+    os.utime(path, (0, 0))
+
+    def denied(*args, **kwargs):
+        raise PermissionError("deletion unavailable")
+
+    monkeypatch.setattr(type(path), "unlink", denied)
+    store.purge()
+    assert path.exists()
+    assert "Could not purge expired screenshot" in caplog.text
 
 
 class FakeRun:

@@ -43,7 +43,8 @@ def test_long_valid_initial_request_succeeds():
     "Lisboa 2026 Night Run",
     "https://example.org/races/" + "lisboa-" * 12 + "2026",
 ])
-def test_explicit_race_answer_accepts_digits_and_long_text(answer):
+def test_explicit_race_answer_on_choice_question_is_never_copied_raw(answer):
+    """F1: a choice question answered with free text must not copy it into `race`."""
     async def run():
         framing = engine()
         session = await framing.create(FramingCreate(
@@ -53,7 +54,10 @@ def test_explicit_race_answer_accepts_digits_and_long_text(answer):
         session = await framing.reply(session.id, FramingReply(
             revision=session.revision, question_id=question.id, text=f" {answer} "
         ))
-        assert session.slots[SlotName.race].value == answer
+        assert question.choices
+        assert session.slots[SlotName.race].value != answer
+        assert session.turns[-1].role != "user"
+        assert any(SlotName.race in q.slots for q in session.open_questions)
 
     asyncio.run(run())
 

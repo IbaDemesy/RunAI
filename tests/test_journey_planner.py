@@ -80,6 +80,61 @@ def train_plan(**kw):
                               mission_id="m-train", mode=DataMode.demo)
 
 
+@pytest.mark.parametrize(("kind", "url", "verified"), [
+    ("h_agent", None, False), ("h_agent", "https://example.org/route", False),
+    ("linkup", None, False), ("human", None, False),
+    ("official_api", "https://example.org/route", True),
+    ("human", "https://example.org/route", True),
+    ("linkup", "https://example.org/route", True),
+])
+def test_j1_geometry_requires_trusted_sourced_provenance(kind, url, verified):
+    inputs = train_inputs()
+    provenance = Provenance(kind=kind, url=url, collected_at=AT)
+    inputs.race.track = [(4.8, 52.3), (4.9, 52.4)]
+    inputs.race.track_provenance = provenance
+    inputs.outbound.geometry = inputs.race.track
+    inputs.outbound.geometry_verified = True
+    inputs.outbound.provenance = provenance
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j1", mode=DataMode.demo)
+    expected = GeometryStatus.verified if verified else GeometryStatus.approximate
+    assert {s.geometry_status for s in plan.segments if s.id in {"s-race", "s-main-out"}} == {expected}
+
+
+def test_j4_hotel_coverage_checked_without_checkin_times():
+    inputs = train_inputs()
+    inputs.hotel.check_in = date(2027, 10, 17)
+    inputs.hotel.check_in_from = inputs.hotel.check_out_until = None
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j4", mode=DataMode.demo)
+    assert "hotel_nights" in {lim.code for lim in plan.limitations}
+    from runai.journey.planner import journey_timeline
+
+    timeline = journey_timeline(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"), inputs)
+    transfer = next(event for event in timeline.events if event.title == "Hotel → start area journey")
+    assert transfer.end - transfer.start == timedelta(minutes=35)
+    assert not [event for event in timeline.events if event.title.startswith(("Check-in", "Check-out"))]
+
+
+@pytest.mark.parametrize(("nights", "label"), [(5, "Hotel 5 nights"), (1, "Hotel 1 night"), (0, "Hotel 0 nights")])
+def test_j7_hotel_nights_use_selected_dates(nights, label):
+    inputs = train_inputs()
+    inputs.hotel.check_out = inputs.hotel.check_in + timedelta(days=nights)
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j7", mode=DataMode.demo)
+    assert next(line for line in plan.budget.lines if line.id == "c-hotel").label == label
+    assert any("requested 2 nights" in warning for warning in plan.warnings)
+
+
+def test_j7_warn_if_stay_does_not_cover_eve_even_when_night_count_matches():
+    inputs = train_inputs()
+    inputs.hotel.check_in = date(2027, 10, 17)
+    inputs.hotel.check_out = date(2027, 10, 19)
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j7-eve", mode=DataMode.demo)
+    assert any("night before the race" in warning for warning in plan.warnings)
+
+
 def flight_plan():
     lis, par = "Europe/Lisbon", "Europe/Paris"
     out_hub, in_hub = place("ORY", 48.7262, 2.3652, par), place("LIS", 38.7742, -9.1342, lis)
@@ -211,6 +266,35 @@ def test_public_origin_never_keeps_street_address(raw, expected):
     assert public_origin(raw) == expected
 
 
+@pytest.mark.parametrize(("raw", "expected"), [
+    ("Place Bellecour 69002 Lyon", "Lyon"),
+    ("Chemin des Vignes, Lyon", "Lyon"),
+    ("Résidence Les Pins bat B, Lyon", "Lyon"),
+    ("Via Roma, Milano", "Milano"),
+    ("Place de la Bastille, Paris", "Paris"),
+    ("Avenida Paulista, Sao Paulo", "Sao Paulo"),
+    ("Karl-Marx-Allee, Berlin", "Berlin"),
+    ("Main St, Springfield", "Springfield"),
+    ("12 rue Victor Hugo 69002 Lyon", "Lyon"),
+    ("12 rue de la Roquette 75011 Paris", "Paris"),
+    ("Paris 15", "Paris 15"), ("Lyon 3", "Lyon 3"),
+    ("Roissy CDG T2", "Roissy CDG T2"),
+    ("Saint-Etienne 42", "Saint-Etienne 42"),
+    ("Part-Dieu, Lyon", "Lyon"),
+    ("Cours Lafayette, Lyon", "Lyon"),
+    ("Quai de la Fosse, Nantes", "Nantes"),
+    ("Route des Vins, Colmar", "Colmar"),
+    ("Viale Europa, Roma", "Roma"),
+    ("Alexanderplatz, Berlin", "Berlin"),
+    ("Hauptstr., Berlin", "Berlin"),
+    ("10 Main Rd, Springfield", "Springfield"),
+    ("Av. Paulista, Sao Paulo", "Sao Paulo"),
+    ("Impasse des Pins, Lyon", "Lyon"),
+])
+def test_public_origin_international_streets_and_city_labels(raw, expected):
+    assert public_origin(raw) == expected
+
+
 def test_exact_address_absent_from_plan():
     plan = flight_plan()
     dumped = plan.model_dump_json()
@@ -229,7 +313,7 @@ def test_unsourced_link_is_illustrative_and_sourced_is_verified():
     assert segs["s-main-out"].geometry_status is GeometryStatus.illustrative
     assert segs["s-race"].geometry_status is GeometryStatus.unavailable
     assert "race_track_unavailable" in {lim.code for lim in plan.limitations}
-    race = inputs.race.model_copy(update={"track": track, "track_provenance": FIX})
+    race = inputs.race.model_copy(update={"track": track, "track_provenance": LINKUP})
     plan2 = build_journey_plan(s, inputs.model_copy(update={"race": race}), mission_id="m", mode=DataMode.demo)
     assert {seg.id: seg for seg in plan2.segments}["s-race"].geometry_status is GeometryStatus.verified
 
@@ -286,7 +370,7 @@ def test_live_plan_rejects_fixture_data_and_keeps_sources():
     assert not any("Demo data" in w for w in live.warnings)
 
 
-@pytest.mark.parametrize("raw", ["12 rue de la Roquette", "12 rue de la Roquette 75011 Paris",
+@pytest.mark.parametrize("raw", ["12 rue de la Roquette",
                                 "Rue de la Roquette", "東京都新宿区西新宿2-8-1"])
 def test_unseparated_private_address_is_not_public(raw):
     assert public_origin(raw) == "Origin not specified"
@@ -388,3 +472,11 @@ def test_unsupported_outbound_cannot_claim_automation():
     segment = next(seg for seg in plan.segments if seg.id == "s-home-hotel")
     assert segment.automation is Automation.manual
     assert segment.limitation.code == "transport_not_covered"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("Paris, France", "Paris"), ("12 rue de la Paix, 75002 Paris, France", "Paris")],
+)
+def test_public_origin_keeps_city_before_country(raw, expected):
+    assert public_origin(raw) == expected

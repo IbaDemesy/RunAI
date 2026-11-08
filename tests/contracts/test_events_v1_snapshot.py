@@ -1,4 +1,5 @@
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -182,7 +183,7 @@ def test_trace_guard_rejects_nested_forbidden_keys():
 
 
 def test_golden_additions_and_update(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr("contracts.test_events_v1_snapshot.GOLDEN", tmp_path)
+    monkeypatch.setattr(sys.modules[__name__], "GOLDEN", tmp_path)
     compare_golden("keys.json", {"step": ["kind"]}, True)
     original = (tmp_path / "keys.json").read_text()
     actual = {"step": ["kind", "status"], "trace": ["data"]}
@@ -198,7 +199,7 @@ def test_golden_additions_and_update(tmp_path, monkeypatch, capsys):
     ({"step": []}, "removed key paths: ['kind']"),
 ])
 def test_golden_removals_fail_even_when_updating(tmp_path, monkeypatch, actual, message):
-    monkeypatch.setattr("contracts.test_events_v1_snapshot.GOLDEN", tmp_path)
+    monkeypatch.setattr(sys.modules[__name__], "GOLDEN", tmp_path)
     compare_golden("keys.json", {"step": ["kind"]}, True)
     with pytest.raises(AssertionError) as error:
         compare_golden("keys.json", actual, True)
@@ -206,7 +207,7 @@ def test_golden_removals_fail_even_when_updating(tmp_path, monkeypatch, actual, 
 
 
 def test_empty_and_missing_golden(tmp_path, monkeypatch):
-    monkeypatch.setattr("contracts.test_events_v1_snapshot.GOLDEN", tmp_path)
+    monkeypatch.setattr(sys.modules[__name__], "GOLDEN", tmp_path)
     with pytest.raises(AssertionError, match="Missing keys.json"):
         compare_golden("keys.json", {}, False)
     compare_golden("keys.json", {}, True)

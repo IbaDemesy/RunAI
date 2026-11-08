@@ -87,10 +87,11 @@ def build_timeline(
 
     to_start = timedelta(minutes=hotel.minutes_to_start) if hotel else DEFAULT_TO_START
     if hotel:
-        check_in = at(hotel.check_in, hotel.check_in_from)
-        if arrive and arrive.date() == hotel.check_in:
-            check_in = max(check_in, arrive)
-        add(check_in, title=f"Check-in {hotel.name}", kind="hotel")
+        if hotel.check_in_from is not None:
+            check_in = at(hotel.check_in, hotel.check_in_from)
+            if arrive and arrive.date() == hotel.check_in:
+                check_in = max(check_in, arrive)
+            add(check_in, title=f"Check-in {hotel.name}", kind="hotel")
         eve = race_day - timedelta(days=1)
         if not (hotel.check_in <= eve and hotel.check_out >= race_day):
             alerts.append(
@@ -100,9 +101,10 @@ def build_timeline(
                     message=f"The hotel ({hotel.check_in:%d/%m} → {hotel.check_out:%d/%m}) does not cover the night of {eve:%d/%m}.",
                 )
             )
-        check_out = at(hotel.check_out, hotel.check_out_until)
-        add(check_out, title=f"Check-out {hotel.name}", kind="hotel")
-        if hotel.check_out == race_day and finish + AFTER_FINISH > check_out:
+        check_out = at(hotel.check_out, hotel.check_out_until) if hotel.check_out_until is not None else None
+        if check_out is not None:
+            add(check_out, title=f"Check-out {hotel.name}", kind="hotel")
+        if check_out is not None and hotel.check_out == race_day and finish + AFTER_FINISH > check_out:
             alerts.append(
                 Alert(
                     level=AlertLevel.warning,
@@ -199,11 +201,13 @@ def build_timeline(
         if leaves < finish + AFTER_FINISH:
             alerts.append(
                 Alert(
-                    level=AlertLevel.blocking,
+                    level=AlertLevel.warning if expected_assumed else AlertLevel.blocking,
                     code="return_too_early",
                     message=(
                         f"Return at {leaves:%d/%m %H:%M}: less than {format_duration(AFTER_FINISH)} after "
-                        f"the estimated finish ({finish:%H:%M}). Take a later service."
+                        f"the estimated finish ({finish:%H:%M})"
+                        + (" at an assumed 6:00/km pace" if expected_assumed else "")
+                        + ". Check a later service."
                     ),
                 )
             )

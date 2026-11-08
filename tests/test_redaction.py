@@ -1,3 +1,4 @@
+# Acceptance: AC-63 (docs/product/ACCEPTANCE.md)
 import base64
 import os
 
@@ -6,7 +7,7 @@ import pytest
 from runai.app.replay import ReplayTrace
 from runai.contracts.mission import EventEnvelope
 from runai.models import StepKind, StepResult
-from runai.redaction import redact_secrets
+from runai.redaction import mask_address, redact_secrets
 
 
 @pytest.mark.parametrize("name", ["HAI_API_KEY", "GLADIA_API_KEY_2", "LINKUP_API_KEY_17"])
@@ -75,8 +76,29 @@ def test_basic_auth_password_part_masked(monkeypatch):
 
 
 def test_short_basic_auth_password_kept_but_pair_masked(monkeypatch):
-    monkeypatch.setenv("RUNAI_BASIC_AUTH", "u:pw")
-    assert redact_secrets("u:pw pw") == "u:pw pw"
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "u:demo,bob:pw")
+    assert redact_secrets("u:demo bob:pw demo pw") == "[REDACTED] [REDACTED] demo pw"
+    assert redact_secrets({"mode": "demo"}) == {"mode": "demo"}
+
+
+def test_multiple_basic_auth_passwords_and_encoded_pairs_masked(monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "alice:Password-1,bob:Password-2")
+    for pair in ("alice:Password-1", "bob:Password-2"):
+        password = pair.partition(":")[2]
+        encoded = base64.b64encode(pair.encode()).decode()
+        assert redact_secrets(f"failure {password} {encoded}") == "failure [REDACTED] [REDACTED]"
+    assert redact_secrets("alice:Password-1,bob:Password-2") == "[REDACTED]"
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("hk" + "-abcdefghijklmnop_123", "[REDACTED]"),
+    ("https://alice:fake-password@example.org/path", "https://[REDACTED]@example.org/path"),
+    ("https://example.org/?token=fake&city=Paris", "https://example.org/?token=[REDACTED]&city=Paris"),
+    ("?access_token=fake&api_key=fake&key=fake&secret=fake#top",
+     "?access_token=[REDACTED]&api_key=[REDACTED]&key=[REDACTED]&secret=[REDACTED]#top"),
+])
+def test_unconfigured_credential_patterns_are_masked(text, expected):
+    assert redact_secrets(text) == expected
 
 
 def test_authorization_header_values_masked(monkeypatch):
@@ -112,3 +134,18 @@ def test_short_bearer_and_non_utf8_basic_masked(monkeypatch):
 def test_bearer_prose_is_preserved():
     text = "The bearer presents identification."
     assert redact_secrets(text) == text
+
+
+@pytest.mark.parametrize("text,leak", [
+    ("12 rue de la Paix, 75002 Paris", "rue de la Paix"),
+    ("Place Bellecour 69002 Lyon", "69002"),
+    ("I live at 221 Baker Street, London", "Baker"),
+    ("12 rue Victor Hugo 69002 Lyon", "Victor Hugo"),
+])
+def test_s6_mask_address_removes_street_and_postcode(text, leak):
+    assert leak not in mask_address(text)
+
+
+@pytest.mark.parametrize("text", ["Paris 15", "I run the 10 km race", "3 nights in Lisbon", "the 2027 marathon"])
+def test_s6_mask_address_keeps_plain_text(text):
+    assert mask_address(text) == text

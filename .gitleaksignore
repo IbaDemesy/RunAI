@@ -6,3 +6,5 @@ a9bd0241ae1004035593a3418768509c4c4637a6:.devin/skills/hai-agents/references/por
 a9bd0241ae1004035593a3418768509c4c4637a6:.devin/skills/hai-agents/references/portal/api-keys.md:h-company-api-key:101
 # False positive: a variable name (attachments_b64_bytes) in a removed spike.
 8ce0084600a1c929ae01024db6c6d7db966c7afc:spikes/recap_pdf_ics/resend_mail.py:generic-api-key:64
+# S11 redaction test fixture: fake hk- key (now built at runtime).
+9849d03817adb55013f3938343dda2a1c86eaa20:tests/test_redaction.py:h-company-api-key:92

@@ -84,6 +84,7 @@ TERMINAL_STATUSES = {
     MissionStatus.cancelled,
 }
 QUESTION_TIMEOUT_ANSWER = "No answer from the user: stop here and summarize."
+MISSION_TTL_S = 24 * 3600
 
 
 class Mission(BaseModel):
@@ -210,6 +211,7 @@ class MissionService:
         if not isinstance(plan, LaunchPlan):
             raise MissionError("Confirmed framing is required: /api/framings")
         self._loop = asyncio.get_running_loop()
+        self._prune_missions()
         mission = Mission(
             id=uuid.uuid4().hex[:12], query=plan.brief.race_label, user_id=user_id,
             race=plan.race, plan=plan, limitations=list(plan.limitations),
@@ -236,6 +238,29 @@ class MissionService:
         task.add_done_callback(self._tasks.discard)
         return mission
 
+    def _prune_missions(self) -> None:
+        """Drop terminal missions older than `RUNAI_MISSION_TTL_S` from memory (they stay on disk)."""
+        ttl = float(os.getenv("RUNAI_MISSION_TTL_S", str(MISSION_TTL_S)))
+        now = utcnow()
+        for mission_id, mission in list(self.missions.items()):
+            if not mission.is_terminal or mission.finished_at is None:
+                continue
+            if (now - mission.finished_at).total_seconds() < ttl or self._event_subscribers.get(mission_id):
+                continue
+            self.missions.pop(mission_id, None)
+            self._writers.pop(mission_id, None)
+            self._mission_tasks.pop(mission_id, None)
+            self._event_subscribers.pop(mission_id, None)
+            self._subscribers.pop(mission_id, None)
+            for key in [key for key in self._recaps if key[0] == mission_id]:
+                self._recaps.pop(key, None)
+            for key in [key for key in self._capture_runs if key[0] == mission_id]:
+                self._capture_runs.pop(key, None)
+            for qid in [qid for qid, q in self.questions.questions.items() if q.mission_id == mission_id]:
+                self.questions.questions.pop(qid, None)
+            for kind in StepKind:
+                self.capture_store.forget(mission_id, kind)
+
     @property
     def store(self) -> MissionStore:
         if self._store is None:
@@ -249,16 +274,16 @@ class MissionService:
             snapshot=self.snapshot(mission.id), envelopes=mission.envelopes,
             framing_summary=mission.framing_summary, framing_turns=mission.framing_turns,
             plan=mission.plan, created_at=mission.created_at, finished_at=mission.finished_at,
-            journey=mission.journey,
+            user_id=mission.user_id, journey=mission.journey,
         ), terminal=mission.is_terminal)
 
-    def rehydrate(self) -> None:
+    async def rehydrate(self) -> None:
         for document in self.store.load():
             snapshot = document.snapshot
             if snapshot.mission_id in self.missions:
                 continue
             mission = Mission(
-                id=snapshot.mission_id, query=document.plan.brief.race_label,
+                id=snapshot.mission_id, query=document.plan.brief.race_label, user_id=document.user_id,
                 status=snapshot.status, created_at=document.created_at, finished_at=document.finished_at,
                 race=snapshot.race,
                 steps={step.kind: step for step in snapshot.steps}, plan=document.plan,
@@ -282,12 +307,29 @@ class MissionService:
                         question.status = QuestionStatus.cancelled
                         self._emit(mission, "question_resolved", question.model_dump(mode="json"))
                 for step in mission.steps.values():
+                    if step.h_session_id and step.status in {
+                        StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user,
+                    }:
+                        await self._cancel_restored_session(step)
                     if step.status in {StepStatus.pending, StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user}:
                         step.status = StepStatus.failed
                         step.error = message
                 self._emit(mission, "error", {"code": "server_restarted", "message": message})
                 self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
                 self._publish_state(mission)
+
+    async def _cancel_restored_session(self, step: StepResult) -> None:
+        lifecycle = getattr(self.agents, "lifecycle", None)
+        runner = getattr(lifecycle, "runner", None)
+        key = step.data.get("h_key_name") or step.data.get("h_key") or step.data.get("agent_step", {}).get("h_key_name")
+        for account in getattr(runner, "accounts", ()):
+            if key and account.name != key:
+                continue
+            try:
+                await account.client.sessions.cancel_session(step.h_session_id)
+                return
+            except Exception:  # noqa: BLE001 - recovery must continue after cancellation errors
+                logger.warning("Could not cancel restored H session %s", step.h_session_id)
 
     def _writable(self, mission_id: str) -> Mission:
         mission = self.get(mission_id)
@@ -387,14 +429,18 @@ class MissionService:
 
     @staticmethod
     def _snapshot_steps(mission: Mission) -> list[StepResult]:
+        steps = [step.model_copy(update={
+            "live_view_url": None if str(step.live_view_url) == step.data.get("share_url") else step.live_view_url,
+            "data": {key: value for key, value in step.data.items() if key != "share_url"},
+        }) for step in mission.steps.values()]
         if mission.read_only:
-            return list(mission.steps.values())
-        return [step.model_copy(update={"live_view_url": step.live_view_url or step.data.get("share_url"), "data": {**step.data, "history": [
+            return steps
+        return [step.model_copy(update={"data": {**step.data, "history": [
             {"at": event.at.isoformat(), "message": event.message, "type": event.type}
             for event in mission.events
             if event.data.get("step") == step.kind.value
             and (event.source == "h" or event.source.startswith("agent"))
-        ]}}) for step in mission.steps.values()]
+        ]}}) for step in steps]
 
     def _refresh_journey(self, mission: Mission) -> None:
         if mission.framing_summary is None:
@@ -487,7 +533,7 @@ class MissionService:
 
     async def cancel(self, mission_id: str) -> None:
         mission = self._writable(mission_id)
-        if mission.status is MissionStatus.cancelled:
+        if mission.is_terminal:
             return
         mission.status = MissionStatus.cancelled
         mission.finished_at = utcnow()
@@ -505,6 +551,11 @@ class MissionService:
                 await task
             except asyncio.CancelledError:
                 pass
+        for step in mission.steps.values():
+            if step.status in ACTIVE_STATUSES | {StepStatus.pending, StepStatus.waiting_for_user}:
+                step.status = StepStatus.failed
+                step.error = "Cancelled by the user."
+                step.summary = "Cancelled"
         mission.limitations.append(Limitation(code="h_cancelled", message="Mission cancelled; no new launches."))
         mission.finished_at = utcnow()
         self._emit(mission, "mission_outcome", self.snapshot(mission.id).outcome.model_dump(mode="json"))
@@ -822,6 +873,53 @@ class MissionService:
             self._publish_state(mission)
 
     async def _run_mission(self, mission: Mission) -> None:
+        try:
+            await self._execute_mission(mission)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Mission %s crashed", mission.id)
+            await self._fail_mission(mission)
+
+    async def _fail_mission(self, mission: Mission) -> None:
+        message = "Internal error while preparing the trip; nothing has been paid."
+        for (mid, _), run in list(self._runs.items()):
+            if mid == mission.id and hasattr(run, "cancel"):
+                with contextlib.suppress(Exception):
+                    await run.cancel()
+        lifecycle = getattr(self.agents, "lifecycle", None)
+        if lifecycle:
+            with contextlib.suppress(Exception):
+                await lifecycle.cancel_all(mission.id)
+        self.questions.cancel_mission(mission.id)
+        for key in [key for key in self._runs if key[0] == mission.id]:
+            self._runs.pop(key, None)
+        for step in mission.steps.values():
+            if step.status in ACTIVE_STATUSES | {StepStatus.pending, StepStatus.waiting_for_user}:
+                step.status = StepStatus.failed
+                step.error = message
+        if mission.is_terminal and mission.status is not MissionStatus.failed:
+            self._save_mission(mission)
+            return
+        mission.status = MissionStatus.failed
+        mission.error = message
+        mission.finished_at = utcnow()
+        mission.limitations.append(Limitation(code="mission_internal_error", message=message))
+        for type_, payload in (
+            ("mission_outcome", lambda: self.snapshot(mission.id).outcome.model_dump(mode="json")),
+            ("mission_status", lambda: self.snapshot(mission.id).model_dump(mode="json")),
+        ):
+            try:
+                self._emit(mission, type_, payload())
+            except Exception:
+                logger.exception("Could not emit %s for mission %s", type_, mission.id)
+                if type_ == "mission_status":
+                    self._emit(mission, type_, {"mission_id": mission.id, "status": mission.status.value})
+        with contextlib.suppress(Exception):
+            self._publish_state(mission)
+        self._save_mission(mission)
+
+    async def _execute_mission(self, mission: Mission) -> None:
         mission.status = MissionStatus.running
         if self.sweeper is not None and mission.plan.mode is DataMode.live:
             try:
@@ -936,6 +1034,8 @@ class MissionService:
                 return
             finally:
                 self._runs.pop((mission.id, kind), None)
+                self._capture_runs.pop((mission.id, kind), None)
+                self.capture_store.forget(mission.id, kind)
         step = mission.steps[kind] = self._merge_result(step, result)
         if step.status is StepStatus.stopped_before_commitment:
             step.data["headline"] = "Prepared — finish it yourself on the official site"
@@ -991,10 +1091,7 @@ class MissionService:
 
     @staticmethod
     def _set_agent_views(step: StepResult, run: AgentRun) -> None:
-        share_url = getattr(run, "share_url", None)
-        if share_url:
-            step.data["share_url"] = share_url
-        MissionService._set_live_view(step, getattr(run, "live_view_url", None) or (share_url if step.live_view_url is None else None))
+        MissionService._set_live_view(step, getattr(run, "live_view_url", None))
         url = getattr(run, "agent_view_url", None)
         if url and url.startswith(("http://", "https://")):
             step.agent_view_url = HttpUrl(url)

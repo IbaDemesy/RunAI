@@ -25,6 +25,7 @@ from runai.tracing import _MISSION_ID
 
 logger = logging.getLogger(__name__)
 SAVE_INTERVAL_SECONDS = 0.5
+_POSIX = os.name == "posix"
 
 
 class StoredMission(BaseModel):
@@ -99,14 +100,16 @@ class MissionStore:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, self.directory / f"{mission_id}.json")
-            descriptor = os.open(self.directory, os.O_RDONLY)
-            try:
-                os.fsync(descriptor)
-            finally:
-                os.close(descriptor)
+            if _POSIX:
+                descriptor = os.open(self.directory, os.O_RDONLY)
+                try:
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
             self._last_saved[mission_id] = time.monotonic()
-        except (OSError, ValueError):
-            logger.warning("Could not save mission %s", redact_secrets(mission_id))
+        except (OSError, ValueError) as error:
+            logger.warning("Could not save mission %s: %s", redact_secrets(mission_id),
+                           redact_secrets(f"{type(error).__name__}: {error}"))
         finally:
             if temporary is not None:
                 with contextlib.suppress(OSError):

@@ -1,8 +1,10 @@
+# Acceptance: AC-37 (docs/product/ACCEPTANCE.md)
 import asyncio
 import json
 import time
 from datetime import date
 from functools import partial
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,9 +14,47 @@ from runai.app.store import MissionStore
 from runai.app.tasks import TripBrief
 from runai.contracts.framing import FramingSummary, FramingTurn
 from runai.framing.launch import LaunchPlan, StepPlan
-from runai.models import AgentQuestion, Race, StepKind
+from runai.models import AgentQuestion, Race, StepKind, StepStatus
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
+
+
+@pytest.mark.parametrize("status", [StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user])
+@pytest.mark.parametrize("cancel_fails", [False, True])
+def test_rehydrate_cancels_only_active_h_sessions(tmp_path, monkeypatch, status, cancel_fails, caplog):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    original = build_demo_service(delay=0)
+    with TestClient(create_app(original)) as client:
+        start_mission(client, original)
+        document = original.store.load()[0]
+    document.snapshot.status = "running"
+    for index, step in enumerate(document.snapshot.steps):
+        step.status = status if index == 0 else StepStatus.completed
+        step.h_session_id = f"session-{index}"
+    calls = []
+
+    class Sessions:
+        async def cancel_session(self, session_id):
+            calls.append(session_id)
+            if cancel_fails:
+                raise RuntimeError("cancel unavailable")
+
+    restored = build_demo_service(delay=0)
+    monkeypatch.setattr(restored.store, "load", lambda: [document])
+    restored.agents = SimpleNamespace(lifecycle=SimpleNamespace(slots=dict, runner=SimpleNamespace(
+        accounts=[SimpleNamespace(name="default", client=SimpleNamespace(sessions=Sessions()))],
+    )))
+
+    async def scenario():
+        result = restored.rehydrate()
+        if asyncio.iscoroutine(result):
+            await result
+
+    asyncio.run(scenario())
+    assert calls == ["session-0"]
+    assert restored.get(document.snapshot.mission_id).status.value == "failed"
+    if cancel_fails:
+        assert "cancel" in caplog.text.lower()
 
 
 def start_mission(client, service):

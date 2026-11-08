@@ -1,3 +1,4 @@
+# Acceptance: AC-58 (docs/product/ACCEPTANCE.md)
 import json
 import re
 import time
@@ -27,6 +28,23 @@ class ResultRun:
 
     async def wait(self):
         return self.result
+
+
+def test_j1_agent_cannot_self_certify_geometry():
+    summary, inputs = scenario("berlin_train")
+    structured = inputs.model_dump(mode="json")
+    provenance = {"kind": "official_api", "url": "https://example.org/route", "collected_at": AT.isoformat()}
+    structured["race"].update(track=[[13.3, 52.5], [13.4, 52.6]], track_provenance=provenance)
+    structured["outbound"].update(geometry=[[13.3, 52.5], [13.4, 52.6]], geometry_verified=True, provenance=provenance)
+    steps = {kind: StepResult(kind=kind, status="completed") for kind in
+             (StepKind.registration, StepKind.accommodation, StepKind.transport)}
+    steps[StepKind.registration].data = {"journey": {"race": structured["race"]}}
+    steps[StepKind.transport].data = {"journey": {"outbound": structured["outbound"]}}
+    mission = SimpleNamespace(id="untrusted-geometry", framing_summary=summary, limitations=[], steps=steps,
+                              created_at=AT, journey=None, plan=SimpleNamespace(mode=DataMode.demo, steps={
+                                  kind: SimpleNamespace(automation=Automation.automated) for kind in steps}))
+    plan, _ = project_journey(mission)
+    assert {s.geometry_status.value for s in plan.segments if s.id in {"s-race", "s-main-out"}} == {"approximate"}
 
 
 @pytest.mark.parametrize("complete", [True, False])
@@ -64,6 +82,7 @@ def test_projected_budget_warning_uses_final_costs(complete):
 
 @pytest.mark.parametrize("name", ["berlin_train", "tokyo_flight", "nairobi_incomplete"])
 def test_confirmed_journey_revisions_and_shared_exports(tmp_path, monkeypatch, name):
+    """AC-58: HTTP exports retain the requested journey revision."""
     summary, inputs = scenario(name)
     inputs.race.bib_pickup_closes = inputs.race.start_time
     inputs.race.bib_pickup_time = None

@@ -11,6 +11,8 @@ _PRIVATE_KEYS = {
     "first_name", "last_name", "full_name", "email", "phone", "phone_number",
     "birth_date", "date_of_birth", "address", "passport", "password",
 }
+_PRIVATE_URL_KEYS = {"agent_view_url", "live_view_url"}
+_TRAJECTORY_URL = re.compile(r"(?:https?://\S*?)?/api/v1/trajectories/[^\s\"'<>]*", re.IGNORECASE)
 _URL = re.compile(r"(https?://[^\s\"'<>]+)")
 _PHONE = re.compile(r"(?<![\w-])(?!\d{4}-\d{2}-\d{2})\+?\d[\d ().-]{7,}\d(?![\w-])")
 
@@ -20,10 +22,12 @@ def _redact_personal(value: Any) -> Any:
         return {
             key: "[REDACTED]" if key.lower() in _PRIVATE_KEYS else _redact_personal(item)
             for key, item in value.items()
+            if key.lower() not in _PRIVATE_URL_KEYS
         }
     if isinstance(value, list):
         return [_redact_personal(item) for item in value]
     if isinstance(value, str):
+        value = _TRAJECTORY_URL.sub("[REDACTED]", value)
         value = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[REDACTED]", value)
         parts = _URL.split(value)
         return "".join(
