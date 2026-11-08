@@ -203,7 +203,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         if lifecycle:
             await lifecycle.aclose()
 
-    public_without_auth = os.getenv("RUNAI_PUBLIC") == "1" and not os.getenv("RUNAI_BASIC_AUTH")
+    public = os.getenv("RUNAI_PUBLIC") == "1"
+    public_without_auth = public and not os.getenv("RUNAI_BASIC_AUTH")
     if public_without_auth and not selected.simulated:
         raise RuntimeError(
             "RUNAI_PUBLIC=1 in live mode: set RUNAI_BASIC_AUTH or anyone can use your credits"
@@ -211,7 +212,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     app = FastAPI(title="RunAI", lifespan=lifespan)
     if credentials := os.getenv("RUNAI_BASIC_AUTH"):
         app.add_middleware(BasicAuthMiddleware, credentials=credentials)
-    app.add_middleware(SecurityHeadersMiddleware, enforce=os.getenv("RUNAI_CSP_ENFORCE") == "1")
+    app.add_middleware(SecurityHeadersMiddleware, enforce=os.getenv("RUNAI_CSP_ENFORCE") == "1", public=public)
     app.add_middleware(RequestIdMiddleware)
 
     @app.exception_handler(StarletteHTTPException)
@@ -338,7 +339,9 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         return FileResponse(STATIC_DIR / "live.html")
 
     @app.get("/api/health")
-    async def health() -> dict:
+    async def health(request: Request) -> dict:
+        if public and not getattr(request.state, "basic_authenticated", False):
+            return {"ok": True, "version": app_version()}
         service = get_service()
         payload = service.providers.health_payload()
         payload.update(

@@ -31,6 +31,42 @@ def test_health_is_public(client):
     assert client.get("/api/health").status_code == 200
 
 
+@pytest.mark.parametrize("public", [False, True])
+@pytest.mark.parametrize("auth", [None, ("first", "wrong"), ("first", "secret")])
+def test_health_details_require_valid_auth_in_public_mode(monkeypatch, tmp_path, public, auth):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1" if public else "0")
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "first:secret")
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    with TestClient(create_app(build_demo_service(delay=0))) as client:
+        response = client.get("/api/health", auth=auth)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True and isinstance(payload["version"], str)
+    if public and auth != ("first", "secret"):
+        assert set(payload) == {"ok", "version"}
+    else:
+        assert "providers" in payload and "mode" in payload
+
+
+def test_public_demo_health_without_auth_is_minimal(monkeypatch, tmp_path):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    with TestClient(create_app(build_demo_service(delay=0))) as client:
+        assert set(client.get("/api/health").json()) == {"ok", "version"}
+
+
+def test_public_security_headers_with_enforced_csp(monkeypatch, tmp_path):
+    monkeypatch.setenv("RUNAI_PUBLIC", "1")
+    monkeypatch.setenv("RUNAI_CSP_ENFORCE", "1")
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    with TestClient(create_app(build_demo_service(delay=0))) as client:
+        response = client.get("/api/health")
+    assert response.headers["strict-transport-security"] == "max-age=31536000; includeSubDomains"
+    assert "font-src 'self' https://fonts.gstatic.com;" in response.headers["content-security-policy"]
+    assert "content-security-policy-report-only" not in response.headers
+
+
 def test_second_credentials(client):
     assert client.get("/", auth=("second", "other")).status_code == 200
 

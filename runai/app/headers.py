@@ -5,7 +5,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 CSP = (
     "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; "
-    "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; "
+    "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; "
     "connect-src 'self' https://unpkg.com https://*.hcompany.ai wss://api.gladia.io https://api.gladia.io "
     "https://tile.openstreetmap.org https://tiles.mapterhorn.com https://tiles.maps.eox.at; "
     "worker-src 'self' blob:; "
@@ -14,7 +14,7 @@ CSP = (
 
 
 class SecurityHeadersMiddleware:
-    def __init__(self, app: ASGIApp, enforce: bool = False):
+    def __init__(self, app: ASGIApp, enforce: bool = False, public: bool = False):
         self.app = app
         self.headers = [
             (b"x-content-type-options", b"nosniff"),
@@ -23,6 +23,8 @@ class SecurityHeadersMiddleware:
             (b"x-frame-options", b"DENY"),
             (b"content-security-policy" if enforce else b"content-security-policy-report-only", CSP.encode()),
         ]
+        if public:
+            self.headers.append((b"strict-transport-security", b"max-age=31536000; includeSubDomains"))
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":

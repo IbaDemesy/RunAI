@@ -36,6 +36,8 @@ class BasicAuthMiddleware:
         self.username_failures: OrderedDict[str, FailureWindow] = OrderedDict()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http" and scope["path"] in PUBLIC_PATHS:
+            scope.setdefault("state", {})["basic_authenticated"] = self._authorized(self._credentials(scope))
         if (
             scope["type"] not in {"http", "websocket"}
             or (scope["type"] == "http" and scope["path"] in PUBLIC_PATHS)
@@ -54,8 +56,7 @@ class BasicAuthMiddleware:
         attempts = self.failures.get(ip)
         user_attempts = self.username_failures.get(username)
         blocked_until = attempts.expires if attempts and attempts.count >= 5 else 0
-        matches = [secrets.compare_digest(decoded, expected) for expected in self.expected] if decoded is not None else []
-        authorized = any(matches)
+        authorized = self._authorized(decoded)
         if not blocked_until and authorized:
             await self.app(scope, receive, send)
             return
@@ -120,3 +121,7 @@ class BasicAuthMiddleware:
             return base64.b64decode(token, validate=True)
         except (binascii.Error, ValueError):
             return None
+
+    def _authorized(self, decoded: bytes | None) -> bool:
+        matches = [secrets.compare_digest(decoded, expected) for expected in self.expected] if decoded is not None else []
+        return any(matches)
