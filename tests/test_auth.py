@@ -204,3 +204,16 @@ def test_csp_mode_without_auth(monkeypatch, enforce):
     other = "content-security-policy-report-only" if enforce == "1" else "content-security-policy"
     assert expected in response.headers
     assert other not in response.headers
+
+
+def test_csp_allows_live_iframes_but_forbids_foreign_embedding(monkeypatch, tmp_path):
+    monkeypatch.setenv("RUNAI_CSP_ENFORCE", "1")
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    with TestClient(create_app(build_demo_service(delay=0))) as client:
+        index = client.get("/")
+        live = client.get("/demo/live")
+    csp = index.headers["content-security-policy"]
+    assert "frame-src 'self' https://*.hcompany.ai" in csp
+    assert "frame-ancestors 'none'" in csp and index.headers["x-frame-options"] == "DENY"
+    assert "frame-ancestors 'self'" in live.headers["content-security-policy"]
+    assert live.headers["x-frame-options"] == "SAMEORIGIN"

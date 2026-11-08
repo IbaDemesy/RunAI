@@ -40,6 +40,10 @@ jobs:
           cache-suffix: py${{ matrix.python-version }}
       - name: Install dependencies
         run: uv pip install --system -r requirements.txt -r requirements-dev.txt
+      - name: Repository hygiene (no partner PDFs, promo codes or env files)
+        run: python -m scripts.check_repo_hygiene
+      - name: Design token contrast
+        run: python -m scripts.check_design_tokens
       - name: Lint
         run: ruff check .
       - name: Test
