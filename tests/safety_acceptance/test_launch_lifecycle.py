@@ -119,7 +119,7 @@ def test_captcha_fails_without_retry_or_resume():
         runner = SimpleNamespace(start=AsyncMock(return_value=run), accounts=[])
         lifecycle = HLifecycle(runner)
         job = lifecycle.submit(StepKind.registration, "t", mission_id="m1")
-        with pytest.raises(HAntiBotBlocked, match="non contourné"):
+        with pytest.raises(HAntiBotBlocked, match="not bypassed"):
             await job.wait()
         assert job.state is JobState.failed
         runner.start.assert_awaited_once()

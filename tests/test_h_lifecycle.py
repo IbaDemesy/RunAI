@@ -7,14 +7,16 @@ from hai_agents.errors import ForbiddenError
 from runai.h import HAccount, HRunner
 from runai.h.lifecycle import (
     HAntiBotBlocked,
+    HCreditsExhausted,
     HJobCancelled,
     HJobTimeout,
     HKeyMissing,
     HLifecycle,
     HQuotaSaturated,
     JobState,
+    RetryPolicy,
 )
-from runai.models import StepKind, StepStatus
+from runai.models import StepKind, StepResult, StepStatus
 
 
 class SimulatedSessions:
@@ -336,3 +338,200 @@ def test_rejected_key_is_typed_and_frees_slot(tmp_path):
 def test_queue_bound_validation(tmp_path):
     with pytest.raises(ValueError):
         HLifecycle(HRunner(SimpleNamespace(sessions=SimulatedSessions()), traces_dir=tmp_path), max_queue=-1)
+
+
+class RetryRun:
+    def __init__(self, account, *, code=None, outcome=None, progress=False, feedback_error=False):
+        self.account = account
+        self.id = "fake-session"
+        self.error_code = code
+        self.outcome = outcome
+        self.status = "running"
+        self.metrics = {"steps": 0}
+        self.last_url = "https://example.test/search"
+        self.messages = []
+        self.forces = 0
+        self.logs = []
+        self.progress = progress
+        self.feedback_error = feedback_error
+
+    async def wait(self, **kwargs):
+        if self.progress:
+            for step in range(1, 9):
+                self.metrics["steps"] = step
+                await asyncio.sleep(0.005)
+        self.status = "completed"
+        return StepResult(kind=StepKind.search, status=StepStatus.failed if self.error_code else StepStatus.completed,
+                          error=self.error_code)
+
+    async def close(self):
+        pass
+
+    async def send_message(self, message):
+        self.messages.append(message)
+
+    async def force_answer(self):
+        self.forces += 1
+
+    def _log(self, *args):
+        self.logs.append(args)
+
+
+class RetryRunner:
+    def __init__(self, codes, *, accounts=1, outcome=None, progress=False, feedback_error=False):
+        self.feedback = []
+
+        async def submit_session_feedback(id, *, success, message):
+            self.feedback.append((id, success, message))
+            if feedback_error:
+                raise RuntimeError("Feedback unavailable")
+
+        self.accounts = [HAccount(f"K{i}", client=SimpleNamespace(sessions=SimpleNamespace(
+            submit_session_feedback=submit_session_feedback))) for i in range(accounts)]
+        self.codes = iter(codes)
+        self.outcome = outcome
+        self.progress = progress
+        self.calls = []
+        self.runs = []
+
+    async def start(self, kind, task, **params):
+        account = next(a for a in self.accounts if a.has_local_slot)
+        self.calls.append((task, params, account.name))
+        run = RetryRun(account, code=next(self.codes), outcome=self.outcome, progress=self.progress)
+        self.runs.append(run)
+        return run
+
+
+@pytest.mark.parametrize("code", ["environment_error", "internal", "no_answer", "answer_validation"])
+def test_retry_recovery(code):
+    async def scenario():
+        runner = RetryRunner([code, None])
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race", max_steps=60, answer_schema={"type": "object"})
+        result = await job.wait()
+        assert result.status is StepStatus.completed
+        assert job.attempts == result.data["attempts"] == 2
+        assert result.data["retry_reasons"] == [code]
+        assert len(runner.calls) == 2
+        if code == "no_answer":
+            assert runner.calls[1][1]["max_steps"] == 90
+            assert runner.calls[1][0].endswith("Answer now with what you found so far.")
+        elif code == "answer_validation":
+            assert "answer_schema" not in runner.calls[1][1]
+        else:
+            assert runner.calls[0][:2] == runner.calls[1][:2]
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("accounts", [1, 2])
+def test_credit_exhaustion(accounts):
+    async def scenario():
+        runner = RetryRunner(["insufficient_credit", None], accounts=accounts)
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race")
+        if accounts == 1:
+            with pytest.raises(HCreditsExhausted, match="No H account") as exc:
+                await job.wait()
+            assert exc.value.code == "h_insufficient_credit"
+        else:
+            assert (await job.wait()).status is StepStatus.completed
+            assert [call[2] for call in runner.calls] == ["K0", "K1"]
+        assert runner.accounts[0].max_concurrency == 0
+    asyncio.run(scenario())
+
+
+def test_credit_retry_waits_for_busy_healthy_account():
+    async def scenario():
+        runner = RetryRunner(["insufficient_credit", None], accounts=2)
+        healthy = runner.accounts[1]
+        healthy.active = healthy.max_concurrency
+        original_start = runner.start
+        waiting = asyncio.Event()
+
+        async def start(*args, **kwargs):
+            if runner.calls:
+                waiting.set()
+                while not healthy.has_local_slot:
+                    await asyncio.sleep(0.001)
+            return await original_start(*args, **kwargs)
+
+        runner.start = start
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race")
+        await asyncio.wait_for(waiting.wait(), 1)
+        assert not job.done
+        healthy.active = 0
+        assert (await asyncio.wait_for(job.wait(), 1)).status is StepStatus.completed
+        assert [call[2] for call in runner.calls] == ["K0", "K1"]
+    asyncio.run(scenario())
+
+
+def test_new_job_fails_fast_after_all_accounts_exhausted():
+    async def scenario():
+        runner = RetryRunner(["insufficient_credit"])
+        lifecycle = HLifecycle(runner)
+        first = lifecycle.submit(StepKind.search, "Find a race")
+        with pytest.raises(HCreditsExhausted):
+            await asyncio.wait_for(first.wait(), 1)
+
+        async def start(*args, **kwargs):
+            pytest.fail("Exhausted accounts must not reach runner.start")
+
+        runner.start = start
+        follow = lifecycle.submit(StepKind.search, "Find another race")
+        with pytest.raises(HCreditsExhausted, match="All H accounts"):
+            await asyncio.wait_for(follow.wait(), 1)
+        assert follow.attempts == 0
+        assert follow.state is JobState.failed
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("outcome", ["infeasible", "blocked"])
+def test_non_retryable_outcomes(outcome):
+    async def scenario():
+        runner = RetryRunner(["environment_error"], outcome=outcome)
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race")
+        if outcome == "blocked":
+            with pytest.raises(HAntiBotBlocked):
+                await job.wait()
+        else:
+            await job.wait()
+        assert job.attempts == 1
+    asyncio.run(scenario())
+
+
+def test_watchdog_nudges_and_forces_once():
+    async def scenario():
+        runner = RetryRunner([None], progress=True)
+        job = HLifecycle(runner, watchdog_interval_s=0.001).submit(StepKind.search, "Find a race", max_steps=10)
+        result = await job.wait()
+        run = runner.runs[0]
+        assert len(run.messages) == run.forces == 1
+        assert result.data["watchdog"] == ["stall_nudge", "force_answer_near_budget"]
+        assert run.logs == [("control", name) for name in result.data["watchdog"]]
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("feedback_error", [False, True])
+def test_feedback_once_and_best_effort(feedback_error):
+    async def scenario():
+        runner = RetryRunner([None], feedback_error=feedback_error)
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race")
+        result = await job.wait()
+        await asyncio.sleep(0)
+        assert len(runner.feedback) == 1
+        assert runner.feedback[0][1] is True
+        assert result.data["watchdog"] == []
+        assert result.data["retry_reasons"] == []
+    asyncio.run(scenario())
+
+
+def test_retry_policy_environment_and_limit(monkeypatch):
+    monkeypatch.setenv("RUNAI_H_MAX_ATTEMPTS", "1")
+    assert RetryPolicy().max_attempts == 1
+    with pytest.raises(ValueError):
+        RetryPolicy(0)
+
+    async def scenario():
+        runner = RetryRunner(["environment_error"])
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race")
+        assert (await job.wait()).status is StepStatus.failed
+        assert job.attempts == 1
+    asyncio.run(scenario())
