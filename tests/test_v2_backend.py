@@ -341,6 +341,7 @@ def test_message_route_refuses_release_without_forwarding_to_agent(tmp_path, tex
     class Runner:
         def __init__(self):
             self.runs = {}
+            self.accounts = []
 
         async def start(self, kind, *args, **kwargs):
             run = Run(kind)
