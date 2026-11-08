@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunAI · Live agent workspace (static mockup)</title>
+<link rel="icon" href="data:,">
+<style>
+/* Copy of runai/app/static/style.css :root + body.dawn tokens (no import, works from file://). */
+:root {
+  --ink: #0b0b0c; --ink-2: #3a3a3d; --ink-3: #6b6b6b; --paper: #f0eee9; --paper-2: #efece6; --card: #fcfcfd;
+  --line: #dcd8d0; --accent: #ffd84d; --gold: #e0ae0e; --gold-soft: #ffefaa; --ok: #237242; --bad: #c81e2d;
+  --display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --text: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
+  --type-small: .875rem; --type-body: 1rem; --type-title: clamp(1.8rem, 5vw, 3rem);
+  --radius-small: 8px; --radius-card: 14px; --button-bg: var(--ink); --button-text: var(--card);
+  font-family: var(--text); color: var(--ink);
+}
+body.dawn { --night: #0f1b33; --haze: #8fb3e8; --sun: #ffd84d; --chalk: #f5f7fb; --mist: #b9c3d6;
+  color: var(--chalk); background: var(--night); min-height: 100vh; }
+/* Mockup styles */
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+body.dawn { background: linear-gradient(180deg, #0b1428 0%, var(--night) 45%, #1a2e57 100%) fixed; }
+h1, h2, h3, p { margin: 0; }
+a { color: var(--chalk); text-underline-offset: 3px; }
+button { font: inherit; cursor: pointer; border-radius: 999px; padding: 6px 14px; border: 1px solid rgba(245,247,251,.25);
+  background: rgba(245,247,251,.06); color: var(--chalk); font-size: var(--type-small); }
+button:hover { border-color: var(--haze); }
+button[disabled] { opacity: .45; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+main { max-width: 1200px; margin: 0 auto; padding: var(--space-6); display: grid; gap: var(--space-4); }
+.muted { color: var(--mist); font-size: var(--type-small); }
+.mono { font-family: var(--mono); font-size: .8rem; }
+.panel { background: rgba(245,247,251,.05); border: 1px solid rgba(245,247,251,.14); border-radius: var(--radius-card); }
+
+.strip { display: grid; gap: var(--space-3); }
+.strip-top { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.strip-top h1 { font-family: var(--display); font-weight: 600; font-size: 1.5rem; letter-spacing: -.01em; }
+.strip-top .spacer { flex: 1; }
+.badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: .78rem;
+  border: 1px solid rgba(245,247,251,.2); background: rgba(245,247,251,.08); color: var(--mist); white-space: nowrap; }
+.badge.mode { color: var(--night); background: var(--sun); border-color: var(--sun); font-weight: 700; letter-spacing: .06em; }
+.health::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3ecf7a; box-shadow: 0 0 8px #3ecf7a; }
+.partners { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.partner { border-radius: var(--radius-small); padding: 6px 10px; font-size: .82rem; border: 1px solid rgba(245,247,251,.18); background: rgba(245,247,251,.06); }
+.partner b { color: var(--chalk); }
+.partner summary { cursor: pointer; list-style: none; }
+.partner summary::-webkit-details-marker { display: none; }
+.partner ul { margin: 6px 0 2px; padding-left: 18px; color: var(--mist); }
+.partner.linkup { border-color: rgba(143,179,232,.5); }
+
+.question { padding: var(--space-4); border-color: var(--sun); display: grid; gap: var(--space-2); }
+.question .eyebrow { color: var(--sun); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+.question h2 { font-size: 1.1rem; }
+.choices { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.choices input { flex: 1 1 180px; min-width: 0; background: rgba(245,247,251,.06); border: 1px solid rgba(245,247,251,.25);
+  color: var(--chalk); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: var(--type-small); }
+.choices button.primary { background: var(--sun); color: var(--night); border-color: var(--sun); font-weight: 600; }
+
+.lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.lane { padding: var(--space-4); display: grid; gap: 6px; align-content: start; }
+.lane[aria-current="true"] { border-color: var(--haze); box-shadow: 0 0 0 1px var(--haze) inset; }
+.lane-head { display: flex; align-items: center; gap: var(--space-2); justify-content: space-between; }
+.lane-head h3 { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--mist); }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 9px; font-size: .76rem; font-weight: 600; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.running { color: var(--sun); background: rgba(255,216,77,.12); }
+.chip.running::before { animation: pulse 1.4s ease-in-out infinite; }
+.chip.waiting { color: var(--night); background: var(--sun); }
+.chip.stopped { color: #7fe0a6; background: rgba(35,114,66,.35); }
+@keyframes pulse { 50% { opacity: .25; } }
+.headline { font-size: 1.02rem; font-weight: 600; }
+.page { font-size: .82rem; color: var(--mist); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page b { color: var(--chalk); font-weight: 500; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .78rem; color: var(--mist); }
+.provider { font-size: .72rem; justify-self: start; }
+.controls, .links { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 4px; }
+.links a { font-size: .82rem; }
+.hint { font-size: .72rem; color: var(--mist); }
+.result { border-top: 1px solid rgba(245,247,251,.14); padding-top: 8px; display: grid; gap: 4px; }
+.price { font-family: var(--display); font-size: 1.35rem; font-weight: 600; }
+.stop { color: #7fe0a6; font-size: .85rem; }
+
+.pane { padding: var(--space-4); display: grid; gap: var(--space-3); }
+.pane-head { display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; align-items: baseline; }
+.pane-head h2 { font-size: 1rem; }
+.shot { width: 100%; aspect-ratio: 16 / 10; max-height: 62vh; border-radius: var(--radius-small); overflow: hidden;
+  border: 1px solid rgba(245,247,251,.18); background: #fff; display: block; }
+.shot svg { width: 100%; height: 100%; display: block; }
+.thumbs { display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: 2px; }
+.thumb { flex: none; width: 108px; aspect-ratio: 16 / 10; border-radius: 6px; border: 1px solid rgba(245,247,251,.2); background: #e9edf3;
+  padding: 0; overflow: hidden; position: relative; }
+.thumb svg { width: 100%; height: 100%; display: block; }
+.thumb[aria-current="true"] { border: 2px solid var(--sun); }
+.thumb span { position: absolute; left: 4px; bottom: 3px; font-size: .62rem; color: var(--ink); background: rgba(255,255,255,.85); border-radius: 4px; padding: 0 4px; }
+.thumb.sensitive svg { filter: blur(4px); }
+details.history summary { cursor: pointer; color: var(--mist); font-size: .88rem; }
+details.history ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: .85rem; }
+details.history time { font-family: var(--mono); font-size: .75rem; color: var(--mist); margin-right: 8px; }
+.never-pays { text-align: center; color: var(--mist); font-size: .8rem; }
+
+@media (max-width: 900px) { .lanes { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  main { padding: var(--space-4) var(--space-3); gap: var(--space-3); }
+  .strip-top h1 { font-size: 1.2rem; width: 100%; }
+  .shot { max-height: 42vh; }
+  .lane-head { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body class="dawn">
+<main>
+  <!-- A · top strip -->
+  <header class="strip">
+    <div class="strip-top">
+      <h1><span data-field="mission.race.name">Lakeside Half Marathon</span> · <span class="muted" data-field="mission.race.date">Sun 12 Apr</span></h1>
+      <span class="spacer"></span>
+      <span class="badge mode" data-field="mission.mode">LIVE</span>
+      <span class="badge health" data-field="sse.heartbeat" role="status">Connected</span>
+    </div>
+    <div class="partners">
+      <details class="partner linkup" data-field="mission.linkup_call">
+        <summary>Found by <b>Linkup</b> · <span data-field="mission.linkup_call.latency_ms">1.8 s</span> · <span data-field="mission.linkup_call.sources">3 sources</span> ▸</summary>
+        <div class="muted" data-field="mission.linkup_call.query">“Lakeside Half Marathon 2027 official registration page”</div>
+        <ul data-field="mission.linkup_call.sources[]"><li>lakeside-half.example</li><li>in.njuko.example</li><li>runners-calendar.example</li></ul>
+      </details>
+      <span class="partner" data-field="mission.framed_by">Framed by <b>Holo</b></span>
+      <span class="partner" data-field="mission.voice">Voice by <b>Gladia</b></span>
+    </div>
+  </header>
+
+  <!-- B · open question (first after the strip, also on mobile) -->
+  <section class="panel question" aria-label="Open question">
+    <p class="eyebrow">Needs you · <span data-field="mission.questions[].step">Stay</span></p>
+    <h2 data-field="mission.questions[].text">Two rooms are left under your €120 budget. Which one should I prepare?</h2>
+    <div class="choices" data-field="mission.questions[].choices">
+      <button>Hotel du Lac · €118 · 600 m from start</button>
+      <button>Les Pins · €96 · 2.1 km</button>
+      <input aria-label="Your answer" placeholder="Or type your answer…" data-field="questions.answer">
+      <button class="primary">Send</button>
+    </div>
+  </section>
+
+  <h2 class="muted" style="font-size:.85rem;letter-spacing:.08em;text-transform:uppercase">Preparations in progress</h2>
+
+  <!-- C · lanes -->
+  <section class="lanes" aria-label="Agents">
+    <!-- Static mockup: the pane below shows the selected lane (Registration). In the app, click/Enter on a lane re-points the pane. -->
+    <!-- running -->
+    <article class="panel lane" aria-current="true" data-kind="registration">
+      <div class="lane-head">
+        <h3 data-field="step.kind">Registration</h3>
+        <span class="chip running" data-field="step.status">Running</span>
+      </div>
+      <span class="badge provider" data-field="step.data.provider">H web-surfer-pro</span>
+      <p class="headline" data-field="step.data.headline">Filling the runner form: name, birth date, club</p>
+      <p class="page" data-field="step.data.browser_observation.url+title"><b>in.njuko.example</b> · Entry form — Lakeside Half</p>
+      <div class="meta">
+        <span data-field="step.data.browser_observation.at">updated 4 s ago</span>
+        <span data-field="step.data.step_index/max_steps">step 14/40</span>
+        <span data-field="step.data.started_at">3 min 40 s</span>
+      </div>
+      <div class="controls">
+        <button data-field="steps/{kind}/pause">Pause</button>
+        <button data-field="steps/{kind}/cancel">Cancel</button>
+      </div>
+      <div class="links">
+        <a href="#" data-field="step.share_url|live_view_url">Watch live</a>
+        <a href="#" data-field="step.agent_view_url">H replay</a>
+        <a href="#" data-field="step.data.manual_url|step.url">Finish on the official site</a>
+      </div>
+    </article>
+
+    <!-- waiting_for_user -->
+    <article class="panel lane" data-kind="accommodation">
+      <div class="lane-head">
+        <h3 data-field="step.kind">Stay</h3>
+        <span class="chip waiting" data-field="step.status">Needs you</span>
+      </div>
+      <span class="badge provider" data-field="step.data.provider">H web-surfer-pro</span>
+      <p class="headline" data-field="step.data.headline">Waiting for your answer: which room?</p>
+      <p class="page" data-field="step.data.browser_observation.url+title"><b>booking.example</b> · Hotels near the start line</p>
+      <div class="meta">
+        <span data-field="step.data.browser_observation.at">updated 2 min ago</span>
+        <span data-field="step.data.step_index/max_steps">step 22/40</span>
+        <span data-field="step.data.started_at">6 min 03 s</span>
+      </div>
+      <div class="controls">
+        <button data-field="steps/{kind}/pause">Pause</button>
+        <button data-field="steps/{kind}/cancel">Cancel</button>
+      </div>
+      <div class="links">
+        <a href="#" data-field="step.share_url|live_view_url">Watch live</a>
+        <a href="#" data-field="step.agent_view_url">H replay</a>
+      </div>
+      <p class="hint" data-field="hint.agent_view_login">H replay needs an H login.</p>
+    </article>
+
+    <!-- stopped_before_commitment -->
+    <article class="panel lane" data-kind="transport">
+      <div class="lane-head">
+        <h3 data-field="step.kind">Transport</h3>
+        <span class="chip stopped" data-field="step.status">Prepared — not booked</span>
+      </div>
+      <span class="badge provider" data-field="step.data.provider">H web-surfer-pro</span>
+      <div class="result">
+        <p class="headline" data-field="step.summary">Train Sat 07:42 → 10:15, 1 adult, seat reserved</p>
+        <p class="price" data-field="step.price_eur">€64</p>
+        <p class="stop" data-field="step.stop_point">Stopped at: payment page</p>
+      </div>
+      <div class="meta">
+        <span data-field="step.data.step_index/max_steps">step 31/40</span>
+        <span data-field="step.data.started_at">9 min 12 s</span>
+      </div>
+      <div class="links">
+        <a href="#" data-field="step.data.manual_url|step.url">Finish on the official site</a>
+        <a href="#" data-field="step.share_url">H replay</a>
+      </div>
+    </article>
+  </section>
+
+  <!-- D · screenshot pane for the selected lane -->
+  <section class="panel pane" aria-label="Latest observation">
+    <div class="pane-head">
+      <h2>Registration · <span class="muted" data-field="step.data.browser_observation.title">Entry form — Lakeside Half</span></h2>
+      <div class="links">
+        <a href="#" data-field="step.share_url|live_view_url">Watch live</a>
+        <a href="#" data-field="step.agent_view_url">H replay</a>
+      </div>
+    </div>
+    <figure style="margin:0;display:grid;gap:8px">
+      <div class="shot" role="img" aria-label="Latest H browser capture · Registration" data-field="screenshot?v=revision">
+        <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+          <rect width="800" height="500" fill="#f4f6f9"/>
+          <rect width="800" height="34" fill="#e3e7ee"/><circle cx="18" cy="17" r="5" fill="#f26b5b"/><circle cx="36" cy="17" r="5" fill="#f6c04d"/><circle cx="54" cy="17" r="5" fill="#5bc46b"/>
+          <rect x="80" y="8" width="420" height="18" rx="9" fill="#fff"/><text x="94" y="21" font-family="monospace" font-size="11" fill="#556">in.njuko.example/lakeside-half/entry</text>
+          <rect y="34" width="800" height="52" fill="#123a6b"/><text x="32" y="67" font-family="sans-serif" font-size="20" font-weight="700" fill="#fff">Lakeside Half Marathon · Entry</text>
+          <text x="32" y="120" font-family="sans-serif" font-size="14" fill="#123">Step 2 of 4 — Runner details</text>
+          <g font-family="sans-serif" font-size="12" fill="#445">
+            <text x="32" y="152">First name</text><rect x="32" y="160" width="340" height="32" rx="4" fill="#fff" stroke="#c9d1dc"/><text x="42" y="181" fill="#123">Alex</text>
+            <text x="410" y="152">Last name</text><rect x="410" y="160" width="340" height="32" rx="4" fill="#fff" stroke="#c9d1dc"/><text x="420" y="181" fill="#123">Martin</text>
+            <text x="32" y="222">Birth date</text><rect x="32" y="230" width="340" height="32" rx="4" fill="#fff" stroke="#c9d1dc"/><text x="42" y="251" fill="#123">14/05/1991</text>
+            <text x="410" y="222">Club (optional)</text><rect x="410" y="230" width="340" height="32" rx="4" fill="#fff" stroke="#3b82f6" stroke-width="2"/><text x="420" y="251" fill="#123">Lakeside Striders|</text>
+            <text x="32" y="292">Expected finish time</text><rect x="32" y="300" width="340" height="32" rx="4" fill="#fff" stroke="#c9d1dc"/><text x="42" y="321" fill="#99a">hh:mm</text>
+          </g>
+          <circle cx="600" cy="246" r="16" fill="none" stroke="#ffd84d" stroke-width="4"/>
+          <rect x="590" y="420" width="160" height="40" rx="20" fill="#123a6b"/><text x="626" y="445" font-family="sans-serif" font-size="14" fill="#fff">Continue</text>
+        </svg>
+      </div>
+      <figcaption class="muted" data-field="step.data.browser_observation.at">Latest observation · 12:04:31 · not a video stream</figcaption>
+    </figure>
+    <div class="thumbs" aria-label="Previous captures" data-field="screenshot?rev=n">
+      <button class="thumb" aria-label="Capture 11"><svg viewBox="0 0 80 50"><rect width="80" height="50" fill="#f4f6f9"/><rect width="80" height="9" fill="#123a6b"/><rect x="8" y="16" width="64" height="6" fill="#c9d1dc"/><rect x="8" y="27" width="40" height="6" fill="#c9d1dc"/></svg><span>r11</span></button>
+      <button class="thumb sensitive" aria-label="Capture 12, sensitive form hidden" data-field="step.data.browser_observation.sensitive"><svg viewBox="0 0 80 50"><rect width="80" height="50" fill="#f4f6f9"/><rect width="80" height="9" fill="#123a6b"/><rect x="8" y="16" width="30" height="20" fill="#c9d1dc"/><rect x="42" y="16" width="30" height="20" fill="#c9d1dc"/></svg><span>Show capture</span></button>
+      <button class="thumb" aria-label="Capture 13"><svg viewBox="0 0 80 50"><rect width="80" height="50" fill="#f4f6f9"/><rect width="80" height="9" fill="#123a6b"/><rect x="8" y="16" width="30" height="6" fill="#c9d1dc"/><rect x="42" y="16" width="30" height="6" fill="#c9d1dc"/><rect x="8" y="28" width="30" height="6" fill="#c9d1dc"/></svg><span>r13</span></button>
+      <button class="thumb" aria-current="true" aria-label="Capture 14, current"><svg viewBox="0 0 80 50"><rect width="80" height="50" fill="#f4f6f9"/><rect width="80" height="9" fill="#123a6b"/><rect x="8" y="16" width="30" height="6" fill="#c9d1dc"/><rect x="42" y="16" width="30" height="6" fill="#3b82f6"/><rect x="8" y="28" width="30" height="6" fill="#c9d1dc"/><rect x="58" y="40" width="16" height="6" rx="3" fill="#123a6b"/></svg><span>r14</span></button>
+    </div>
+    <details class="history" data-field="step.data.history[]">
+      <summary>History (5 events)</summary>
+      <ol>
+        <li><time datetime="2026-11-07T12:00:51Z">12:00:51</time>Opening the browser…</li>
+        <li><time datetime="2026-11-07T12:01:30Z">12:01:30</time>Opened the official registration page</li>
+        <li><time datetime="2026-11-07T12:02:44Z">12:02:44</time>Chose the half-marathon distance</li>
+        <li><time datetime="2026-11-07T12:03:58Z">12:03:58</time>Accepted the race rules (consent box left for you)</li>
+        <li><time datetime="2026-11-07T12:04:31Z">12:04:31</time>Filling the runner form: name, birth date, club</li>
+      </ol>
+    </details>
+    <details class="muted"><summary>Technical details</summary><span class="mono" data-field="step.h_session_id">H session 3f1c…9a2e</span></details>
+  </section>
+
+  <p class="never-pays">RunAI prepares everything and stops before any payment. You confirm on the official sites.</p>
+</main>
+</body>
+</html>
