@@ -43,6 +43,7 @@ from runai.logistics.models import (
 )
 from runai.logistics.timeline import build_timeline
 
+PARTIAL_BUDGET_WARNING = "Partial budget: unpriced items excluded from the total."
 COVERED_MODES = {"train": SegmentMode.train, "flight": SegmentMode.flight}
 MODE_ALIASES = {"avion": "flight", "plane": "flight", "vol": "flight", "air": "flight", "rail": "train"}
 HUB_KIND = {SegmentMode.train: StopKind.station, SegmentMode.flight: StopKind.airport}
@@ -552,7 +553,7 @@ def build_journey_plan(
         ],
     )
     if not budget.complete:
-        b.warnings.append("Partial budget: unpriced items excluded from the total.")
+        b.warnings.append(PARTIAL_BUDGET_WARNING)
     if mode is DataMode.demo:
         b.warnings.insert(0, "Demo data: fictional race, hotel and times.")
     elif mode is DataMode.replay:

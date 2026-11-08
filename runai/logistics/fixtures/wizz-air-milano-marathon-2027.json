@@ -59,7 +59,7 @@
         "licenses": ["none"],
         "requirements": [
           {"kind": "runcard", "label": "FIDAL Runcard valid on 4 April 2027", "detail": "Buy on www.runcard.com (Italian website): 30 € for residents in Italy, 15 € for residents abroad."},
-          {"kind": "medical_certificate", "label": "Certificate of fitness for competitive athletics issued in Italy", "detail": "Must state fitness for competitive athletics under Italian law (D.M. 18/02/1982); wording referring only to running, road running or marathon is not valid."}
+          {"kind": "medical_certificate", "label": "Certificate of fitness for competitive athletics issued in Italy", "detail": "Must state « idoneità sportiva agonistica alla pratica dell'ATLETICA LEGGERA (D.M. 18/02/1982) »; certificates mentioning only « corsa », « podismo » or « maratona » are not valid."}
         ],
         "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 4, "excerpt": "I cittadini italiani (pur non essendo residenti in Italia), sono tenuti a fornire un certificato medico rilasciato in Italia."}
       },
