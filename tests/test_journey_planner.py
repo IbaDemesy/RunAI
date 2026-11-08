@@ -126,6 +126,15 @@ def test_j7_hotel_nights_use_selected_dates(nights, label):
     assert any("requested 2 nights" in warning for warning in plan.warnings)
 
 
+def test_j7_warn_if_stay_does_not_cover_eve_even_when_night_count_matches():
+    inputs = train_inputs()
+    inputs.hotel.check_in = date(2027, 10, 17)
+    inputs.hotel.check_out = date(2027, 10, 19)
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j7-eve", mode=DataMode.demo)
+    assert any("night before the race" in warning for warning in plan.warnings)
+
+
 def flight_plan():
     lis, par = "Europe/Lisbon", "Europe/Paris"
     out_hub, in_hub = place("ORY", 48.7262, 2.3652, par), place("LIS", 38.7742, -9.1342, lis)

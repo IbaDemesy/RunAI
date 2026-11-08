@@ -543,6 +543,11 @@ def build_journey_plan(
     nights = (inputs.hotel.check_out - inputs.hotel.check_in).days if inputs.hotel else summary.nights
     if inputs.hotel and nights != summary.nights:
         b.warnings.append(f"Selected hotel dates cover {nights} nights; you requested {summary.nights} nights.")
+    if inputs.hotel and summary.race.race_date and not (
+        inputs.hotel.check_in <= summary.race.race_date - timedelta(days=1)
+        and inputs.hotel.check_out >= summary.race.race_date
+    ):
+        b.warnings.append("Selected hotel dates do not cover the night before the race.")
     legs = [inputs.outbound, inputs.return_trip]
     budget = Budget(
         currency=currency,
