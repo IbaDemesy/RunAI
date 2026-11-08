@@ -179,7 +179,7 @@ def _extract_dates(text: str, current: date) -> dict[SlotName, object]:
                     + "|".join(SEASONS)
                     + r")(?:\s+(\d{4})\b|"
                     + HINT_BOUNDARY
-                    + r")",
+                    + r"|\s+(?:marathon|half|semi|race|run|trail|10\s*k|5\s*k)\b)",
                     text,
                     re.IGNORECASE,
                 )
@@ -231,8 +231,11 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
         while words and words[0].casefold() in {"run", "do", "book", "register", "join", "find", "i", "want", "please", "to", "would", "like", "need", "let", "me"}:
             words.pop(0)
         if words:
+            # "<City> marathon" names a place and a distance, not an official event: never fill `race`
             result[SlotName.city] = " ".join(words)
-            result[SlotName.race] = " ".join(words) + english[0][len(english[1]):]
+            tail = english[0][len(english[1]):].strip()
+            if re.match(r"(?:Marathon|Half[ -]Marathon)\b", tail):
+                result[SlotName.race] = " ".join(words) + " " + tail  # capitalised: reads as an event name
     for slot, prefix in (
         (SlotName.origin, r"(?:depuis|au départ de|départ de|leaving\s+from|departing(?:\s+from)?|from)"),
         (SlotName.city, r"(?<!live )(?<!vis )(?<!habite )(?:à|in|(?:marathon|semi|course|race|\d+\s*km?)\s+(?:de|of))"),

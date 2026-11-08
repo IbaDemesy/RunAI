@@ -258,3 +258,17 @@ def test_confirm_replay_after_restart_returns_the_existing_mission(tmp_path):
     result = run(again.confirm(session.id, FramingConfirm(revision=stored.revision, idempotency_key="idem-key-1"),
                                lambda s: None))
     assert result.mission_id == "m1"
+
+
+def test_city_marathon_never_fills_race_and_matches_the_exact_phrasing():
+    from runai.framing.interpret import extract_slots
+    a = extract_slots("Milan marathon in April 2027, from Lyon")
+    b = extract_slots("marathon in Milan in April 2027, from Lyon")
+    assert SlotName.race not in a and a == b
+    assert extract_slots("I want to run the Berlin Marathon in September 2027")[SlotName.race] == "Berlin Marathon"
+
+
+def test_spring_before_the_distance_is_extracted():
+    from runai.framing.interpret import extract_slots
+    got = extract_slots("A spring marathon, leaving from Lyon")
+    assert got[SlotName.origin] == "Lyon" and str(got[SlotName.date_window]).startswith("march-may")
