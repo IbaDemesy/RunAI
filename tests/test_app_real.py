@@ -19,6 +19,7 @@ from runai.app.real import (
     RealBrowserAgents,
     RealRaceSearch,
     RealTranscriber,
+    lookup_official_info_tool,
 )
 from runai.app.server import build_service, create_app
 from runai.h.answers import RegistrationAnswer
@@ -114,6 +115,8 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert params["max_time_s"] == 60
     assert params["answer_schema"] is RegistrationAnswer
     assert params["tools"][0].name == "ask_user"
+    assert [tool.name for tool in params["tools"]] == ["ask_user", "lookup_official_info"]
+    assert "official site" in params["tools"][1].description
     assert answer == "under 3h30"
     assert answers == [("Quel sas ?", ["under 3h30", "plus de 3h30"])]
     assert isinstance(run, LifecycleAgentRun)
@@ -517,3 +520,104 @@ def test_real_browser_refuses_forbidden_start_url_before_any_h_session():
                     lambda event: None, lambda q, o: asyncio.sleep(0), start_url=url,
                 )
             )
+
+
+class FakeAnswerClient:
+    def __init__(self):
+        self.calls = []
+
+    def search(self, query, **kwargs):
+        self.calls.append((query, kwargs))
+        return SimpleNamespace(
+            answer="A PPS or an FFA licence is required.[1]",
+            sources=[
+                SimpleNamespace(
+                    name="Health certificate",
+                    url="https://www.milanomarathon.it/en/information/medical-certificate",
+                    snippet="",
+                )
+            ],
+        )
+
+
+def test_lookup_official_info_tool_answers_from_official_domains_and_emits_event():
+    class FakeRunner:
+        params = None
+
+        async def start(self, kind, task, **params):
+            FakeRunner.params = params
+            return SimpleNamespace(id="h-1", live_view_url=None)
+
+    client = FakeAnswerClient()
+    events = []
+    agents = RealBrowserAgents(
+        runner=FakeRunner(), max_steps=1, max_time_s=1, answer_client=lambda: client
+    )
+    race = Race(
+        name="Wizz Air Milano Marathon",
+        city="Milan",
+        country="IT",
+        registration_url="https://in.njuko.com/milano-marathon",
+        sources=[
+            Source(url="https://www.milanomarathon.it/en/", title="Official"),
+            Source(url="https://www.ahotu.com/event/milano-marathon", title="Aggregator"),
+        ],
+    )
+
+    async def scenario():
+        await agents.start(
+            StepKind.registration, "Prepare the registration.", race, RunnerProfile(),
+            events.append, lambda q, o: asyncio.sleep(0),
+        )
+        await asyncio.sleep(0)
+        lookup = next(t for t in FakeRunner.params["tools"] if t.name == "lookup_official_info")
+        assert set(lookup.input_schema["properties"]) == {"question"}
+        return await lookup.fn(question="Is a medical certificate required?")
+
+    reply = asyncio.run(scenario())
+
+    assert reply.startswith("A PPS or an FFA licence is required.[1]")
+    assert "[1] https://www.milanomarathon.it/en/information/medical-certificate" in reply
+    assert client.calls[0][1]["include_domains"] == ["milanomarathon.it", "in.njuko.com"]
+    assert client.calls[0][1]["output_type"] == "sourcedAnswer"
+    linkup_events = [e for e in events if e.source == "linkup"]
+    assert len(linkup_events) == 1
+    event = linkup_events[0]
+    assert event.type == "linkup_answer"
+    assert event.message == "Is a medical certificate required?"
+    assert event.data["citations"] == [
+        {
+            "index": 1,
+            "url": "https://www.milanomarathon.it/en/information/medical-certificate",
+            "title": "Health certificate",
+        }
+    ]
+    assert event.data["estimated_cost_usd"] > 0 and event.data["latency_s"] >= 0
+
+
+def test_lookup_official_info_without_official_site_defers_to_the_user():
+    events = []
+
+    def no_client():
+        raise AssertionError("Linkup must not be called without an official domain")
+
+    lookup = lookup_official_info_tool(
+        Race(name="Unknown 10K", city="", country=""), events.append, no_client
+    )
+    reply = asyncio.run(lookup.fn(question="Cut-off time?"))
+
+    assert "ask_user" in reply
+    assert events == []
+
+
+def test_lookup_official_info_reports_linkup_failures_as_text():
+    def broken_client():
+        raise RuntimeError("LINKUP_API_KEY missing")
+
+    lookup = lookup_official_info_tool(
+        Race(name="Course", city="", country="", sources=[Source(url="https://race.example.org")]),
+        lambda event: None,
+        broken_client,
+    )
+
+    assert "ask_user" in asyncio.run(lookup.fn(question="Fees?"))
