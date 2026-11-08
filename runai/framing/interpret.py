@@ -354,7 +354,7 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
         elif re.search(r"\bno limit\b|pas de limite|sans limite", text, re.IGNORECASE):
             result[SlotName.budget] = None
     nights = re.search(r"\b(\d+|" + "|".join(NIGHT_NUMBERS) + r")\s*(?:nuits?|nights?)\b", text, re.IGNORECASE)
-    if nights:
+    if nights and (not nights[1].isdigit() or int(nights[1]) <= 30):
         result[SlotName.nights] = int(nights[1]) if nights[1].isdigit() else NIGHT_NUMBERS[nights[1].lower()]
     elif re.search(r"\b(?:un|a|one)\s+week-?\s?end\b", text, re.IGNORECASE):
         result[SlotName.nights] = 2

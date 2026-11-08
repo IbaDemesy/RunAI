@@ -51,8 +51,8 @@ LABELS = {
 }
 
 
-def _valid_place(value: object) -> bool:
-    if not isinstance(value, str) or not 2 <= len(value.strip()) <= 80:
+def _valid_place(value: object, limit: int = 80) -> bool:
+    if not isinstance(value, str) or not 2 <= len(value.strip()) <= limit:
         return False
     normalized = value.strip().casefold().replace("’", "'").strip(".!?")
     return any(c.isalpha() for c in value) and not re.search(
@@ -96,7 +96,7 @@ class FramingEngine:
         for name, value in values.items():
             try:
                 if name in (SlotName.city, SlotName.origin, SlotName.race) and value is not None:
-                    if not _valid_place(value):
+                    if not _valid_place(value, 200 if name == SlotName.race else 80):
                         raise ValueError()
                 elif name == SlotName.race_date and value is not None:
                     if date.fromisoformat(str(value)) < date.today():
@@ -186,6 +186,11 @@ class FramingEngine:
             if (
                 pending and pending.choices and answer and not choice
                 and not reply.corrections
+                and not re.search(
+                    r"https?://|\b(?:marathon|semi|half|run|race|trail|course|corrida|foulées|\d+\s*km?)\b",
+                    answer,
+                    re.IGNORECASE,
+                )
             ):
                 return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
             correction = re.match(
@@ -203,7 +208,8 @@ class FramingEngine:
             if (
                 pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
                 and answer and not choice and not reply.corrections
-                and not corrected_city and not _valid_place(answer)
+                and not corrected_city
+                and not _valid_place(answer, 200 if pending.slots[0] == SlotName.race else 80)
             ):
                 return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
             values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
