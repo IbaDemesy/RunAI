@@ -575,7 +575,7 @@ async def test_fake_summary_omits_empty_answers_and_instructions(kind):
     run = await agents.start(kind, "test", DEMO_RACES["milan"], RunnerProfile(), lambda event: None, answer)
     result = await run.wait()
 
-    assert ("User answers:" in result.summary) == (kind is StepKind.registration)
+    assert ("Your answers:" in result.summary) == (kind is StepKind.registration)
     assert "Instructions applied:" not in result.summary
     assert " : ." not in result.summary
     assert ": ." not in result.summary
