@@ -195,7 +195,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app):
-        selected.rehydrate()
+        await selected.rehydrate()
         yield
         for mission in list(selected.missions.values()):
             if not mission.is_terminal:

@@ -123,3 +123,22 @@ def test_phone_numbers_after_separators_are_redacted():
     })
     note = export_replay(mission).steps[StepKind.registration].result.data["note"]
     assert "33612345678" not in note
+
+
+def test_s5_private_h_urls_are_not_exported():
+    mission = Mission(id="priv", query="Demo", status=MissionStatus.completed, steps={
+        StepKind.registration: StepResult(
+            kind=StepKind.registration,
+            live_view_url="https://platform.hcompany.ai/live/abc",
+            data={
+                "agent_view_url": "https://platform.hcompany.ai/agent/abc",
+                "live_view_url": "https://platform.hcompany.ai/live/abc",
+                "share_url": "https://hub.hcompany.ai/share/public-1",
+                "trace": "see https://agp.hcompany.ai/api/v1/trajectories/xyz/frames",
+            },
+        ),
+    })
+    dumped = export_replay(mission).model_dump_json()
+    assert "live_view_url\":\"http" not in dumped
+    assert "platform.hcompany.ai" not in dumped
+    assert "/api/v1/trajectories/" not in dumped

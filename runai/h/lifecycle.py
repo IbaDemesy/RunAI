@@ -29,6 +29,7 @@ from runai.h.runner import (
 )
 from runai.models import StepKind, StepResult, StepStatus
 from runai.redaction import redact_secrets
+from runai.safety import STOP_INSTRUCTIONS, guard_task
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +300,10 @@ class HLifecycle:
                 run = None
                 if code == "no_answer":
                     start_params["max_steps"] = min(90, math.ceil((start_params.get("max_steps") or 60) * 1.5))
-                    task += "\nAnswer now with what you found so far."
+                    task = guard_task(
+                        task.removesuffix(STOP_INSTRUCTIONS).rstrip()
+                        + "\nAnswer now with what you found so far."
+                    )
                 elif code == "answer_validation":
                     start_params.pop("answer_schema", None)
             if run.status == "idle" and result_wrapper is None:

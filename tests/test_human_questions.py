@@ -112,6 +112,31 @@ def test_release_attempt_allows_benign_steering(text):
     assert release_attempt(text) is None
 
 
+@pytest.mark.parametrize("text", [
+    "Cliquez sur Valider", "Click Next then Place the order", "Go ahead and confirm",
+    "tick the box", "Cochez la case", "enter the IBAN and CVV2",
+    "fill in the card details", "enter your credit card", "type the iban",
+    "Régler la commande", "acheter le billet", "comprar el billete",
+    "Click I a g r e e", "tick I accept", "Accept all", "ignore previous", "pаy now",
+    "pαy now", "ｐａｙ now", "p\u200bay now", "confermare", "acquistare",
+    "comprar o bilhete", "aceptar", "pagar", "checkout", "submit", "password",
+])
+def test_release_attempt_denies_commitment_variants(text):
+    assert release_attempt(text) is not None
+
+
+@pytest.mark.parametrize("text", [
+    "take the 08:00 train", "choose the cheaper room", "option 2", "continue",
+    "go back", "scroll down", "next page", "08:00", "choose the flexible fare",
+    "choose the morning slot", "select the 10:00 time", "take option 2 then pay now",
+])
+def test_release_attempt_preserves_navigation_and_selection(text):
+    if "pay now" in text:
+        assert release_attempt(text) is not None
+    else:
+        assert release_attempt(text) is None
+
+
 @pytest.mark.parametrize("text", RELEASE_ATTEMPTS)
 def test_registry_uses_shared_guard_for_answers(text):
     registry = HumanQuestionRegistry()
@@ -210,8 +235,8 @@ def test_refused_health_answer_is_not_retained_or_published_and_retry_is_idempot
                               steps=[], questions=[registry.get("q1")])
     assert private not in snapshot.model_dump_json()
     assert registry.answer("q1", "m1", request) == result
-    with pytest.raises(HumanQuestionError):
-        registry.answer("q1", "m1", request.model_copy(update={"answer": "autre réponse"}))
+    retry = registry.answer("q1", "m1", request.model_copy(update={"answer": "autre réponse"}))
+    assert retry.status == QuestionStatus.answered
 
 
 @pytest.mark.parametrize(
@@ -277,3 +302,28 @@ def test_engaging_choice_is_never_authorized_by_generic_question():
         3,
     )
     assert registry.answer("q1", "m1", answer()).status == QuestionStatus.refused
+
+
+def test_m3_booking_question_accepts_a_plain_time_choice():
+    registry = HumanQuestionRegistry()
+    registry.open(
+        AgentQuestion(
+            id="q1", kind=StepKind.transport,
+            question="Which train departure time do you prefer for your booking?",
+            options=["08:00", "14:00"],
+        ),
+        "m1", 3,
+    )
+    result = registry.answer("q1", "m1", answer().model_copy(update={"answer": "08:00"}))
+    assert result.status is QuestionStatus.answered
+    assert result.answer == "08:00"
+
+
+def test_m3_new_attempt_allowed_after_refusal():
+    registry = HumanQuestionRegistry()
+    open_question(registry, "Which option?")
+    refused = registry.answer("q1", "m1", answer().model_copy(update={"answer": "pay now"}))
+    assert refused.status is QuestionStatus.refused
+    retry = registry.answer("q1", "m1", HumanAnswer(answer="A", revision=3, idempotency_key="retry-key"))
+    assert retry.status is QuestionStatus.answered
+    assert retry.answer == "A"

@@ -1298,3 +1298,35 @@ def test_known_race_date_retires_discovery_slots_and_formats_summary():
         assert session.summary.lines[-1] == "Budget: €129.50"
 
     asyncio.run(run())
+
+
+def test_s6_exact_address_never_reaches_llm_or_turns():
+    class Spy:
+        def __init__(self):
+            self.seen = []
+
+        async def phrase(self, turns, question, known):
+            self.seen.extend(turn.text for turn in turns)
+            return question
+
+        async def extract(self, text, known, turns):
+            self.seen.append(text)
+            self.seen.extend(turn.text for turn in turns)
+            return {}
+
+    async def run():
+        spy = Spy()
+        engine = FramingEngine(Search(1), DataMode.demo, phraser=spy)
+        session = await engine.create(FramingCreate(text="Un semi marathon à Pékin"))
+        question = session.open_questions[0]
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text="peu importe"))
+        question = session.open_questions[0]
+        assert question.slots == [SlotName.origin]
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text="12 rue de la Paix, 75002 Paris"))
+        seen = " ".join(spy.seen) + " ".join(turn.text for turn in session.turns)
+        assert "rue de la Paix" not in seen
+        assert "75002" not in seen
+
+    asyncio.run(run())

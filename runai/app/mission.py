@@ -277,7 +277,7 @@ class MissionService:
             user_id=mission.user_id, journey=mission.journey,
         ), terminal=mission.is_terminal)
 
-    def rehydrate(self) -> None:
+    async def rehydrate(self) -> None:
         for document in self.store.load():
             snapshot = document.snapshot
             if snapshot.mission_id in self.missions:
@@ -307,12 +307,29 @@ class MissionService:
                         question.status = QuestionStatus.cancelled
                         self._emit(mission, "question_resolved", question.model_dump(mode="json"))
                 for step in mission.steps.values():
+                    if step.h_session_id and step.status in {
+                        StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user,
+                    }:
+                        await self._cancel_restored_session(step)
                     if step.status in {StepStatus.pending, StepStatus.running, StepStatus.paused, StepStatus.waiting_for_user}:
                         step.status = StepStatus.failed
                         step.error = message
                 self._emit(mission, "error", {"code": "server_restarted", "message": message})
                 self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
                 self._publish_state(mission)
+
+    async def _cancel_restored_session(self, step: StepResult) -> None:
+        lifecycle = getattr(self.agents, "lifecycle", None)
+        runner = getattr(lifecycle, "runner", None)
+        key = step.data.get("h_key_name") or step.data.get("h_key") or step.data.get("agent_step", {}).get("h_key_name")
+        for account in getattr(runner, "accounts", ()):
+            if key and account.name != key:
+                continue
+            try:
+                await account.client.sessions.cancel_session(step.h_session_id)
+                return
+            except Exception:  # noqa: BLE001 - recovery must continue after cancellation errors
+                logger.warning("Could not cancel restored H session %s", step.h_session_id)
 
     def _writable(self, mission_id: str) -> Mission:
         mission = self.get(mission_id)
