@@ -3,7 +3,7 @@
 Compatibles avec `AgentQuestion`/`StepResult` de la V1 : ce sont des vues additives.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import Any, Literal
 
@@ -15,9 +15,17 @@ from pydantic import (
     model_serializer,
 )
 
-from runai.contracts.common import DataMode, Limitation
+from runai.contracts.common import Automation, DataMode, Limitation
 from runai.contracts.journey import Budget
-from runai.models import AgentQuestion, Race, StepKind, StepResult, utcnow
+from runai.models import (
+    AgentQuestion,
+    Race,
+    StepKind,
+    StepResult,
+    StepStatus,
+    StopPoint,
+    utcnow,
+)
 from runai.redaction import redact_secrets
 from runai.search.logistics_sweep import LogisticsSweep
 
@@ -156,3 +164,48 @@ class MissionSnapshot(BaseModel):
     @field_serializer("error")
     def serialize_error(self, value: str | None) -> str | None:
         return redact_secrets(value)
+
+
+MISSION_SUMMARY_SCHEMA_VERSION = "mission_summary.v1"
+
+
+class MissionSummaryRace(BaseModel):
+    name: str
+    city: str
+    country: str
+    race_date: date | None = None
+    distance_km: float | None = None
+
+
+class MissionSummaryStep(BaseModel):
+    kind: StepKind
+    status: StepStatus
+    automation: Automation | None = None
+    stop_point: StopPoint | None = None
+    price_eur: float | None = None
+    url: str | None = None
+
+
+class MissionSummary(BaseModel):
+    """Compact, redacted view of a past or running mission for the request history."""
+
+    schema_version: Literal["mission_summary.v1"] = MISSION_SUMMARY_SCHEMA_VERSION
+    mission_id: str
+    framing_id: str | None = None
+    user_id: str | None = None
+    mode: DataMode | None = None
+    status: MissionStatusV2
+    created_at: datetime
+    finished_at: datetime | None = None
+    race: MissionSummaryRace | None = None
+    origin: str | None = None
+    date_range: tuple[date, date] | None = None
+    budget_eur: float | None = None
+    total_price_eur: float | None = None
+    steps: list[MissionSummaryStep] = Field(default_factory=list)
+    headline: str
+    replay_available: bool = False
+
+    @model_serializer(mode="wrap")
+    def serialize_summary(self, handler):
+        return redact_secrets(handler(self))

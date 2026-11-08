@@ -43,11 +43,28 @@ Couper le service après le hackathon.
 | --- | --- | --- |
 | `POST` | `/api/missions` `{"query": "..."}` | Crée et lance une mission |
 | `GET` | `/api/missions/{id}` | État complet (avec la trace) |
+| `GET` | `/api/missions?user_id=&limit=20&status=` | Request history (newest first, redacted `MissionSummary` list, `[]` when empty) |
+| `GET` | `/api/missions/{id}/summary` | `MissionSummary` of one mission (404 if unknown) |
 | `GET` | `/api/missions/{id}/events` | Flux SSE : `snapshot`, puis `trace` et `mission` à chaque changement, `end` à la fin |
 | `POST` | `/api/missions/{id}/pause` · `/resume` | Pause / reprise de tous les agents |
 | `POST` | `/api/missions/{id}/steps/{kind}/pause` · `/resume` · `/message` `{"text": "..."}` | Contrôle d'un agent (`kind` : `registration`, `accommodation`, `transport`) |
 | `POST` | `/api/transcribe` (corps : audio brut) | Transcription d'un enregistrement court |
 | `GET` | `/api/live/{session_id}` | Données de la vue live simulée |
+
+## Request history (`user_id` contract)
+
+There are no accounts: the frontend generates an opaque runner id once (e.g. `crypto.randomUUID()` stored in `localStorage`) and sends it when a framing starts:
+
+```json
+POST /api/framings
+{"text": "...", "channel": "text", "user_id": "3f2b9c1e-...-a7"}
+```
+
+- `user_id` is optional, 1-64 chars, `[A-Za-z0-9_-]` only (otherwise 422). Never put an email or a name in it.
+- It is copied to the `FramingSession` and to the mission created on confirm; `GET /api/framings/{id}` echoes it.
+- `GET /api/missions?user_id=<id>` lists that runner's missions, newest first. `user_id` is required (422 otherwise), so a caller cannot enumerate other runners' trips. Other query params: `limit` (1-100, default 20), `status` (`searching`, `running`, `awaiting_human`, `completed`, `failed`, `cancelled`).
+- Each item is a `MissionSummary` (`mission_summary.v1`): `mission_id`, `framing_id`, `user_id`, `mode`, `status`, `created_at`, `finished_at`, `race` (`name`, `city`, `country`, `race_date`, `distance_km`), `origin`, `date_range` (`[arrival, departure]`), `budget_eur`, `total_price_eur` (sum of step `price_eur`, `null` if no price yet), `steps` (`kind`, `status`, `automation` (`automated` or `manual`; manual steps show `completed` but were not run by an agent), `stop_point`, `price_eur`, `url`), `headline` (English, e.g. `Prepared up to payment on 3 of 3 steps`, or `... up to your final confirmation ...` when a step stopped at consent, health declaration, account creation or submission) and `replay_available`.
+- Missions live in memory: the history covers what the instance holds (including missions restored at startup, if enabled).
 
 ## Brancher une vraie brique
 

@@ -68,7 +68,7 @@ class FramingEngine:
         return self.sessions[framing_id].model_copy(deep=True)
 
     async def create(self, request: FramingCreate) -> FramingSession:
-        session = FramingSession(id=uuid4().hex, mode=self.mode)
+        session = FramingSession(id=uuid4().hex, mode=self.mode, user_id=request.user_id)
         self.sessions[session.id] = session
         self._locks[session.id] = asyncio.Lock()
         return await self.reply(
