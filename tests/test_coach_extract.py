@@ -187,3 +187,10 @@ def test_ambiguous_distance_units_leave_run_empty(unit):
     p = extract_rule_based(f"My longest run was 14 10 {unit} in 1h20.")
     assert p.longest_recent_run is None
     assert "longest_recent_run" in p.missing_fields
+
+
+def test_colon_time_is_read_by_plausible_pace():
+    p = extract_rule_based("My longest run was 80 km in 10:30.")
+    assert p.longest_recent_run.duration_min == 630
+    assert plausibility_issues(p) == []
+    assert extract_rule_based("I ran a 5K in 24:30.").recent_race.time_s == 1470

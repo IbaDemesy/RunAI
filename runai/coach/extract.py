@@ -105,11 +105,17 @@ def _num(s: str) -> float:
     return float(s.replace(",", "."))
 
 
-def _duration_s(text: str) -> float | None:
+def _duration_s(text: str, distance_km: float | None = None) -> float | None:
     m = re.search(r"\b(\d+):([0-5]\d)(?::([0-5]\d))?\b", text)
     if m:
-        if m[3] is None and int(m[1]) >= 10:
-            return int(m[1]) * 60 + int(m[2])
+        if m[3] is None:
+            as_min_s = int(m[1]) * 60 + int(m[2])
+            if distance_km:
+                hours_pace = as_min_s / distance_km  # min/km if read as h:mm
+                if hours_pace > 15:
+                    return as_min_s
+            elif int(m[1]) >= 10:
+                return as_min_s
         return int(m[1]) * 3600 + int(m[2]) * 60 + (int(m[3]) if m[3] else 0)
     m = re.search(rf"{_NUM}\s*h(?:eures?)?\s*(?:(\d{{1,2}})(?:\s*(?:min\w*|'))?)?", text)
     if m:
@@ -154,7 +160,7 @@ def extract_rule_based(transcript: str) -> CoachProfile:
         if "plus longue" in s or "sortie longue" in s or "longest run" in s or "long run" in s:
             dist = _distance_km(s)
             if dist is not None:
-                duration_s = _duration_s(after)
+                duration_s = _duration_s(after, dist)
                 dplus = re.search(r"(\d+)\s*(?:m(?:ètres?|etres?|eters?)?\s*(?:de\s*|of\s*)?(?:d\+|dénivelé|denivele|elevation gain))", s)
                 data["longest_recent_run"] = RecentRun(
                     distance_km=dist,
@@ -164,7 +170,7 @@ def extract_rule_based(transcript: str) -> CoachProfile:
             continue
         if re.search(_CHRONO_HINT, s) and after and not re.search(r"semaine|week", s):
             dist = _distance_km(s)
-            dur = _duration_s(after)
+            dur = _duration_s(after, dist)
             if dist is not None and dur:
                 months = 0.0
                 ago = re.search(rf"(?:il y a|ça fait|ca fait)\s*{_NUM}\s*(mois|ans?|semaines?)", s)
