@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from runai.app.candidates import FixtureCandidateSearch
 from runai.app.fakes import (
     DEMO_RACES,
+    QUESTIONS,
     FakeBrowserAgents,
     FakeRaceSearch,
     FakeTranscriber,
@@ -51,7 +52,7 @@ async def running_mission(service):
                     answer=question.options[0], revision=wrapped.revision,
                     idempotency_key=f"answer-{question.id}",
                 ))
-        if len(mission.questions) >= 3 and all(q.answer is not None for q in mission.questions) and all(
+        if len(mission.questions) >= sum(map(len, QUESTIONS.values())) and all(q.answer is not None for q in mission.questions) and all(
             mission.steps[kind].status is StepStatus.running for kind in AGENT_STEPS
         ):
             return mission
@@ -111,13 +112,13 @@ async def test_correction_reaches_only_the_matching_agent(tmp_path):
     controller = VoiceMissionController(service)
     mission = await running_mission(service)
 
-    result = await controller.handle(mission.id, said("Actually a cheaper hotel", "u1"))
+    result = await controller.handle(mission.id, said("Actually a hotel closer to the start", "u1"))
     assert result.applied == ["correction:accommodation"]
     runs = {run.kind: run for run in service.agents.runs}
     assert len(runs[StepKind.accommodation].received) == 1
-    assert runs[StepKind.accommodation].received[0].startswith("Actually a cheaper hotel")
+    assert runs[StepKind.accommodation].received[0].startswith("Actually a hotel closer to the start")
     assert runs[StepKind.registration].received == runs[StepKind.transport].received == []
-    assert mission.steps[StepKind.accommodation].data["messages"] == ["Actually a cheaper hotel"]
+    assert mission.steps[StepKind.accommodation].data["messages"] == ["Actually a hotel closer to the start"]
 
     budget = await controller.handle(mission.id, said("Actually change the budget", "u2"))
     assert budget.applied == [] and "Framing is closed" in budget.ignored_reason
