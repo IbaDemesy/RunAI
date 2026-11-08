@@ -899,15 +899,14 @@ def test_french_conjunction_car_is_not_a_transport_mode():
         "je viens car je veux courir à Tokyo"
     )
     assert extract_slots("j'y vais en voiture")[SlotName.transport_mode] == "car"
-<<<<<<< HEAD
 
 
 @pytest.mark.parametrize(
     "budget,nights,budget_line,stay",
     [(800.0, 2, "Budget: €800", "2 nights"),
-     (800.5, 1, "Budget: €800.5", "1 night"),
+     (800.5, 1, "Budget: €800.50", "1 night"),
      (1000000.0, 2, "Budget: €1000000", "2 nights"),
-     (None, 0, "Budget: No budget cap", "0 nights")],
+     (None, 0, "Budget: no cap", "0 nights")],
 )
 def test_summary_formats_human_values_without_changing_numbers(budget, nights, budget_line, stay):
     async def run():
@@ -924,8 +923,8 @@ def test_summary_formats_human_values_without_changing_numbers(budget, nights, b
         )
         summary = session.summary
         assert summary.lines == [
-            "City Marathon, Tokyo, 2028-06-12, 42.2 km",
-            f"Departure: Lyon; {stay}; train", budget_line,
+            "City Marathon, Tokyo, Monday 12 June 2028, 42.2 km",
+            f"From Lyon · {stay} · train", budget_line,
         ]
         assert summary.race.distance_km == 42.195
         assert summary.budget_eur == budget
@@ -997,8 +996,6 @@ def test_clearing_race_date_clears_derived_period():
         assert any(q.slots == [SlotName.date_window] for q in session.open_questions)
 
     asyncio.run(run())
-||||||| parent of 2aa15ef (Polish English framing summaries and preserve discovery answers)
-=======
 
 
 @pytest.mark.parametrize("city", ["Lyon", "Berlin"])
@@ -1036,7 +1033,8 @@ def test_known_race_date_retires_discovery_slots_and_formats_summary():
                 SlotName.nights: 2, SlotName.transport_mode: "train",
             }),
         )
-        assert all(session.slots[name].status.value == "not_needed" for name in (SlotName.date_window, SlotName.edition))
+        assert session.slots[SlotName.date_window].is_known
+        assert not any(SlotName.date_window in q.slots for q in session.open_questions)
         assert session.summary.lines == [
             "Milano Marathon, Milan, Sunday 11 April 2027, 42.2 km",
             "From Lyon · 2 nights · train", "Budget: €800",
@@ -1047,4 +1045,3 @@ def test_known_race_date_retires_discovery_slots_and_formats_summary():
         assert session.summary.lines[-1] == "Budget: €129.50"
 
     asyncio.run(run())
->>>>>>> 2aa15ef (Polish English framing summaries and preserve discovery answers)

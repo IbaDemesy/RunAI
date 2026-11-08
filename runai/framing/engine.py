@@ -325,9 +325,6 @@ class FramingEngine:
             elif choice:
                 session.candidates = []
                 self._manual.add(framing_id)
-            if session.slots[SlotName.race_date].is_known:
-                for name in (SlotName.date_window, SlotName.edition):
-                    session.slots[name].status = SlotStatus.not_needed
             session.turns.append(
                 FramingTurn(
                     role="user",
@@ -626,11 +623,6 @@ class FramingEngine:
                 )
             )
         nights = int(value(SlotName.nights))
-        budget = value(SlotName.budget)
-        budget_label = "No budget cap"
-        if budget is not None:
-            amount = float(budget)
-            budget_label = f"€{int(amount) if amount.is_integer() else amount}"
         dates = (
             (
                 race.race_date - timedelta(days=nights - 1),
