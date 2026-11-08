@@ -5,7 +5,9 @@ import json
 import logging
 import os
 import re
+import time
 from contextlib import asynccontextmanager, suppress
+from datetime import UTC, datetime
 from pathlib import Path
 
 import anyio
@@ -44,6 +46,7 @@ from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
 from runai.framing.holo import HoloPhraser, Phraser, TemplatePhraser
 from runai.h.human_questions import HumanQuestionError
+from runai.logging_setup import RequestIdMiddleware, configure_logging, request_id
 from runai.models import RunnerProfile, StepKind
 from runai.planning import recap_adapter
 from runai.redaction import redact_secrets
@@ -55,7 +58,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 ROOT_DIR = Path(__file__).resolve().parents[2]
 KEEPALIVE_SECONDS = 15
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("runai.app")
 
 
 class MissionRequest(BaseModel):
@@ -133,7 +136,14 @@ def framing_phraser(providers: ProviderSet) -> Phraser:
     return TemplatePhraser()
 
 
+def app_version() -> str:
+    return (os.getenv("RENDER_GIT_COMMIT") or "")[:7] or "dev"
+
+
 def create_app(service: MissionService | None = None) -> FastAPI:
+    configure_logging()
+    started = time.monotonic()
+    started_at = datetime.now(UTC).isoformat(timespec="seconds")
     selected = service or build_service()
     if selected.providers is None:
         selected.providers = ProviderSet(
@@ -163,6 +173,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     if credentials := os.getenv("RUNAI_BASIC_AUTH"):
         app.add_middleware(BasicAuthMiddleware, credentials=credentials)
     app.add_middleware(SecurityHeadersMiddleware, enforce=os.getenv("RUNAI_CSP_ENFORCE") == "1")
+    app.add_middleware(RequestIdMiddleware)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, error):
@@ -244,7 +255,15 @@ def create_app(service: MissionService | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> dict:
-        return redact_secrets(get_service().providers.health_payload())
+        service = get_service()
+        payload = service.providers.health_payload()
+        payload.update(
+            uptime_s=round(time.monotonic() - started, 1),
+            version=app_version(),
+            started_at=started_at,
+            active_missions=sum(1 for mission in service.missions.values() if not mission.is_terminal),
+        )
+        return redact_secrets(payload)
 
     @app.post("/api/missions", status_code=410)
     async def create_mission(body: MissionRequest) -> dict:
@@ -302,7 +321,14 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         except MissionError as error:
             raise handle(error) from None
 
+        rid = request_id()
+
         async def stream():
+            opened = time.monotonic()
+            events_sent = 0
+            last_event_id = request.headers.get("last-event-id")
+            log_extra = {"request_id": rid, "mission_id": mission_id}
+            logger.info("sse_open", extra={**log_extra, "last_event_id": last_event_id})
             messages = service.subscribe_events(mission_id, request.headers.get("last-event-id"))
             pending = asyncio.ensure_future(anext(messages))
             try:
@@ -318,6 +344,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                     except StopAsyncIteration:
                         break
                     yield event.to_sse()
+                    events_sent += 1
+                    last_event_id = event.event_id
                     pending = asyncio.ensure_future(anext(messages))
             finally:
                 pending.cancel()
@@ -325,6 +353,10 @@ def create_app(service: MissionService | None = None) -> FastAPI:
                     with suppress(asyncio.CancelledError, StopAsyncIteration):
                         await pending
                     await messages.aclose()
+                logger.info("sse_close", extra={
+                    **log_extra, "duration_s": round(time.monotonic() - opened, 1),
+                    "events_sent": events_sent, "last_event_id": last_event_id,
+                })
 
         return StreamingResponse(
             stream(),

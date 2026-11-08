@@ -240,6 +240,11 @@ class LabeledBrowserAgents:
         return LabeledRun(run, self.mode, self.kind, self.label)
 
 
+def agents_lifecycle(agents: Any):
+    """H lifecycle behind the agents (also through a `LabeledBrowserAgents` wrapper)."""
+    return getattr(agents, "lifecycle", None) or getattr(getattr(agents, "agents", None), "lifecycle", None)
+
+
 @dataclass
 class ProviderSet:
     mode: DataMode
@@ -254,7 +259,7 @@ class ProviderSet:
 
     def health_payload(self) -> dict[str, Any]:
         """Response body for GET /api/health (G1 contract)."""
-        return {
+        payload = {
             "ok": True,
             "version": (os.getenv("RENDER_GIT_COMMIT") or os.getenv("RUNAI_GIT_COMMIT") or "dev")[:7],
             "service": os.getenv("RENDER_SERVICE_NAME"),
@@ -263,6 +268,10 @@ class ProviderSet:
             "providers": {name: h.status.value for name, h in self.health.items()},
             "details": {name: h.detail for name, h in self.health.items()},
         }
+        if lifecycle := agents_lifecycle(self.agents):
+            payload["h_slots"] = sorted(lifecycle.slots())
+            payload["h_queued"] = len(lifecycle.queued())
+        return payload
 
 
 def build_providers(

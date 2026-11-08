@@ -11,4 +11,5 @@ if __name__ == "__main__":
         create_app(),
         host=os.getenv("RUNAI_APP_HOST", "127.0.0.1"),
         port=int(os.getenv("RUNAI_APP_PORT", "8000")),
+        log_config=None,
     )
