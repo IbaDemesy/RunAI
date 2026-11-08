@@ -31,7 +31,7 @@ test("tous les états de cadrage sont conservés sans lancement implicite", () =
   }
   assert.equal(core.framingState({ status: "confirmed", mission_id: "serveur" }), "launched");
 });
-test("budget partiel, vide, nul et complet : aucun prix manquant inventé", async () => {
+test("AC-56: budget partiel, vide, nul et complet : aucun prix manquant inventé", async () => {
   const { budget } = await fixture("mission_snapshot");
   const text = core.budgetText(budget);
   assert.match(text.total, /250/);

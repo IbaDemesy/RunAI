@@ -14,8 +14,8 @@ Owning teams are in [BACKLOG.md](BACKLOG.md). `runai/app/static/*` changes ship 
 
 | Id | Criterion | Journeys | Verification |
 | --- | --- | --- | --- |
-| AC-01 | No French anywhere user-visible: UI strings, Holo messages, framing questions, agent headlines, errors, exports, README. | J1 J2 J3 | pytest: new `tests/test_english_only.py` scanning `runai/**/*.py` string literals, static `.js/.html` and API fixtures for French markers (`é`, `è`, `à `, "Quel", "Combien", "Vérifiez", " le ", " la ", " des "); manual: read every screen of J1. |
-| AC-02 | Money is always formatted `€800` (integers) or `€118.50` (cents), never `800.0`, `800 €` or `EUR 800`. | J1 J2 J3 | node: format helper test; API: backend-provided display strings (e.g. `summary.lines`) match `^€\d+(\.\d{2})?$` for amounts. |
+| AC-01 | No French anywhere user-visible: UI strings, Holo messages, framing questions, agent headlines, errors, exports, README. | J1 J2 J3 | Partial pytest guard: `tests/test_english_only.py` covers known French UI phrases in Explore and its shell fallback; broader backend/fixture coverage and manual screen checks remain pending (PB-04). |
+| AC-02 | Money is always formatted `€800` (integers) or `€118.50` (cents), never `800.0`, `800 €` or `EUR 800`. | J1 J2 J3 | Export checks: `tests/test_recap_adapter.py::test_j8_integral_budget_is_formatted_without_decimal_suffix`, `test_j8_cents_keep_two_decimal_places`; shell: `runai/app/static/tests/shell.test.js`. Other display paths still require verification. |
 | AC-03 | Dates are human-readable `Sun 12 Apr 2026`; ranges `Sat 11 → Mon 13 Apr 2026`; never ISO `2026-04-12` in UI text. | J1 J2 J3 | node: date helper test; manual. |
 | AC-04 | No empty joins: no `, ,`, `· ·`, leading/trailing separators, `None`, `null`, `undefined`, `NaN` in any rendered text. | J1 J2 J3 | node: render fixtures with missing fields and assert regex `(, ,|· ·|^[,·]|[,·]$|None|null|undefined|NaN)` never matches. |
 | AC-05 | Nothing is ever paid: no agent clicks a pay/confirm-payment control; every automated step ends `stopped_before_commitment`, `completed` (read-only), `failed` or `cancelled`. | J1 J2 J3 | pytest: existing safety tests (`runai/safety.py` `detect_stop_point`) + e2e demo mission asserts no step reaches a payment action. |
@@ -26,7 +26,7 @@ Owning teams are in [BACKLOG.md](BACKLOG.md). `runai/app/static/*` changes ship 
 | Id | Criterion | Journeys | Verification |
 | --- | --- | --- | --- |
 | AC-10 | Home shows title, one-line value proposition, input with English placeholder, 3 suggestion chips, mode badge (`Demo data` / `Replay` / `Live`). | J1 J2 J3 | manual; API: `GET /api/health` → `mode`. |
-| AC-11 | No dead end in demo mode: every suggestion chip, followed by plausible answers to each Holo question (first answer chip each time), reaches `status == ready_to_confirm` within 6 turns. | J1 J2 | pytest: new `tests/test_demo_no_dead_end.py` iterating all chips against `RUNAI_MODE=demo`; API: `GET /api/framings/{id}` → `status`. |
+| AC-11 | No dead end in demo mode: every suggestion chip, followed by plausible answers to each Holo question (first answer chip each time), reaches `status == ready_to_confirm` within 6 turns. | J1 J2 | Existing one-reply probes: `tests/test_product_journeys.py::test_ac02_idea_with_one_reply` (strict xfail); the complete six-turn sweep is not implemented. API: `GET /api/framings/{id}` → `status`. |
 | AC-12 | When no race is found, Holo says so in one sentence and re-offers the chips; the session stays `collecting`, never an empty candidate list without text. | J1 J3 | pytest: framing engine with empty `CandidateSearch` result → assistant turn text non-empty, `open_questions` non-empty. |
 | AC-13 | Holo asks for one missing slot at a time and each question offers 2–4 answer chips (`FramingQuestion.choices`), except free-text-only slots (race name). | J1 J2 | API: `open_questions[0].choices` length; pytest on engine. |
 | AC-14 | Filled slots are displayed as chips with formatted values (`Lyon`, `2 nights`, `€800`, `train`). | J1 J2 | node: slot chip rendering; manual. |
@@ -90,7 +90,7 @@ Owning teams are in [BACKLOG.md](BACKLOG.md). `runai/app/static/*` changes ship 
 | AC-55 | "Your trip" shows race (name, date, entry fee), stay (name, nights, price), transport (outbound, return, price). | J1 J2 J3 | API: `GET /api/missions/{id}/journey`; node. |
 | AC-56 | Total vs budget: "Total €<x> of €<budget> budget" with status colour; if no budget: "Total €<x>". | J1 J2 J3 | API: `MissionSnapshot.budget`; node. |
 | AC-57 | 3 CTAs "Finish registration / hotel booking / transport booking on official site", each a working external link. | J1 J2 J3 | API: links from `steps[].url`; manual click. |
-| AC-58 | Exports PDF / .ics / HTML use the same journey revision as the screen. | J1 J3 | pytest: existing recap export tests (`?revision=N`). |
+| AC-58 | Exports PDF / .ics / HTML use the same journey revision as the screen. | J1 J3 | pytest: `tests/test_journey_backend.py::test_confirmed_journey_revisions_and_shared_exports` (`?revision=N`); `tests/test_recap_adapter.py::test_j9_calendar_uids_survive_event_insertion_and_revision` checks stable calendar identity and SEQUENCE. |
 | AC-59 | Footer attribution: "Searched by Linkup · Driven by H agents · Voice by Gladia · Built with Devin". | J1 J2 J3 | manual; node. |
 
 ## Modes and resilience
