@@ -129,7 +129,7 @@ def test_controls_messages_and_cancel(demo):
     stream = client.get(base + "/events").text
     events = [json.loads(line[6:]) for line in stream.splitlines() if line.startswith("data: ")]
     assert any(text in e["payload"].get("message", "") for e in events)
-    assert '\\n' in stream and '\\"pay now with card\\"' in stream
+    assert '\\n' in stream and '\\"prefer the 10 km distance\\"' in stream
 
 
 def test_competing_valid_answers_have_one_effect(demo):
