@@ -99,7 +99,8 @@ class HumanQuestionRegistry:
             question.reason = refusal
         self._keys[question_id] = answer.idempotency_key
         self._answer_digests[question_id] = digest
-        self._events[question_id].set()
+        if not refusal:
+            self._events[question_id].set()
         return self.get(question_id)
 
     def cancel(self, question_id: str) -> HumanQuestion:

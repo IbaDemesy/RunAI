@@ -327,3 +327,18 @@ def test_m3_new_attempt_allowed_after_refusal():
     retry = registry.answer("q1", "m1", HumanAnswer(answer="A", revision=3, idempotency_key="retry-key"))
     assert retry.status is QuestionStatus.answered
     assert retry.answer == "A"
+
+
+def test_m3_refusal_keeps_agent_waiting_for_the_accepted_retry():
+    async def run():
+        registry = HumanQuestionRegistry()
+        open_question(registry, "Which option?")
+        waiter = asyncio.create_task(registry.wait_answer("q1", timeout=5))
+        await asyncio.sleep(0)
+        registry.answer("q1", "m1", answer().model_copy(update={"answer": "pay now"}))
+        await asyncio.sleep(0)
+        assert not waiter.done()
+        registry.answer("q1", "m1", HumanAnswer(answer="A", revision=3, idempotency_key="retry-key"))
+        assert await waiter == "A"
+
+    asyncio.run(run())
