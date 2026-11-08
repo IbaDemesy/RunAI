@@ -145,14 +145,14 @@ def test_confirmed_demo_mission_is_idempotent_and_sse_resumes(tmp_path, city, ch
         assert final["race"]["city"] == city
         assert final["mode"] == "demo" and final["status"] == "awaiting_human"
         runs = service.agents.agents.runs
-        assert len(runs) == (3 if city == "Milan" else 2)
+        assert len(runs) == 3  # registration, hotel and the route comparison, in every country
         assert all(run.brief.city == city and run.brief.origin == "Lyon" for run in runs)
         assert all(step["data"].get("provenance", {}).get("mode") == "demo"
                    for step in final["steps"] if step["data"]["automation"] == "automated")
         if city == "Tokyo":
             transport = next(s for s in final["steps"] if s["kind"] == "transport")
-            assert transport["data"]["automation"] == "manual"
-            assert any(l["code"] == "transport_not_covered" for l in final["limitations"])
+            assert transport["data"]["automation"] == "automated"  # compared on the route site, nothing booked
+            assert not any(l["code"] == "transport_not_covered" for l in final["limitations"])
         stream = client.get(f"/api/missions/{mid}/events")
         envelopes = [json.loads(line[6:]) for line in stream.text.splitlines() if line.startswith("data: ")]
         assert all(e["schema_version"] == "events.v1" for e in envelopes)
@@ -292,7 +292,7 @@ def test_live_queued_controls_and_cancellation_keep_cancelled_status(tmp_path):
             if len(service._runs) == 2:
                 break
             time.sleep(.005)
-        assert len(service.agents.lifecycle.active(mid)) == 2
+        assert len(service.agents.lifecycle.active(mid)) == 3
         route = f"/api/missions/{mid}"
         assert client.post(f"{route}/steps/registration/message", json={"text": "Attendez"}).status_code == 409
         assert client.post(f"{route}/pause").status_code == 200

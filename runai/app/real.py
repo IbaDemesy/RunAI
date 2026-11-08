@@ -280,12 +280,12 @@ class RealBrowserAgents:
         if start_url and (reason := forbidden_reason(start_url)):
             raise RuntimeError(f"Start URL rejected: {reason}.")
         if kind is StepKind.registration:
-            if not race.registration_url or not _njuko_url(str(race.registration_url)):
-                raise RuntimeError(
-                    "Njuko registration link missing; Klikego and other platforms are forbidden."
-                )
+            if not race.registration_url:
+                raise RuntimeError("Official registration link missing: use the organiser's site.")
             start_url = str(race.registration_url)
-            allowed_hosts = platform("njuko").hosts
+            if reason := forbidden_reason(start_url):
+                raise RuntimeError(f"Registration link rejected: {reason}.")
+            allowed_hosts = platform("njuko").hosts if _njuko_url(start_url) else ()
         else:
             platform_url = getattr(brief, f"{kind.value}_url", None) or start_url
             allowed_hosts = next(

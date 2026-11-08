@@ -34,6 +34,7 @@ from runai.contracts.common import (
     Provenance,
     ProvenanceKind,
 )
+from runai.journey import public_origin
 from runai.models import Race, RunnerProfile, StepKind, StepResult
 
 if TYPE_CHECKING:
@@ -386,6 +387,15 @@ PLATFORMS: tuple[Platform, ...] = (
         transport_modes=frozenset({"train"}),
         countries=frozenset({"IT"}),
     ),
+    Platform(
+        "rome2rio",
+        "Rome2rio (route comparison)",
+        StepKind.transport,
+        ("rome2rio.com",),
+        "https://www.rome2rio.com",
+        transport_modes=frozenset({"train", "flight", "bus"}),
+        countries=frozenset({"*"}),
+    ),
 )
 FORBIDDEN_HOSTS: dict[str, str] = {
     "klikego.com": "Klikego is forbidden (the guest flow creates a runner account)",
@@ -560,6 +570,13 @@ def trenitalia_search_url(
     return None
 
 
+def rome2rio_url(origin: str | None, destination: str | None) -> str | None:
+    """Route comparison deep link (`/map/<from>/<to>`), only when both ends are known."""
+    if not origin or not destination or public_origin(origin) == public_origin(""):
+        return None
+    return f"https://www.rome2rio.com/map/{quote(origin.strip(), safe='')}/{quote(destination.strip(), safe='')}"
+
+
 @dataclass
 class StepCoverage:
     kind: StepKind
@@ -595,14 +612,22 @@ def registration_coverage(race: Race, official_url: str | None = None) -> StepCo
         )
     if url:
         host = _host(url)
-        message = f"Registration platform {host} not automated: register manually via the official link."
+        site = Platform(
+            "official-site", f"the organiser's official site ({host})", StepKind.registration,
+            (host.removeprefix("www."),),
+        )
         return StepCoverage(
             StepKind.registration,
-            Automation.manual,
+            Automation.automated,
+            site,
+            url,
             limitations=[
                 Limitation(
-                    code="registration_platform_unsupported",
-                    message=message,
+                    code="registration_platform_generic",
+                    message=(
+                        f"{host} is not a platform we have tested: the agent will try, "
+                        "and you finish the registration yourself if it cannot."
+                    ),
                     step="registration",
                     manual_url=url,
                 )
@@ -671,13 +696,15 @@ def transport_coverage(
         if (
             candidate.kind is StepKind.transport
             and mode in candidate.transport_modes
-            and countries & candidate.countries
+            and (countries & candidate.countries or "*" in candidate.countries)
         ):
             deep_link = (
                 trenitalia_search_url(
                     brief.origin, brief.city, brief.arrival, brief.departure
                 )
                 if brief and candidate.id == "trenitalia"
+                else rome2rio_url(brief.origin, brief.city)
+                if brief and candidate.id == "rome2rio"
                 else None
             )
             if deep_link and host_matches(deep_link, candidate.hosts):

@@ -282,6 +282,13 @@ def _transport_task(brief: TripBrief) -> str:
     site = brief.transport_site
     if brief.transport_url and brief.transport_url.split("//")[-1] not in site:
         site = f"{site} ({brief.transport_url})"
+    if "rome2rio" in (brief.transport_url or "").lower():
+        return (
+            f"Compare round trip{mode_text} options {origin} → {brief.city} on {site} for 1 adult: {dates}. "
+            "This site only compares routes: read the best two or three options with their duration and price, "
+            "and report them. Do not click any booking, partner or ticket button, and never use TAP. "
+            f"If several options fit, ask the user to choose; do not guess. {ASK_USER_RULES} {STOP_RULES}"
+        )
     return (
         f"Find a round trip{mode_text} {origin} → {brief.city} on {site} for "
         f"1 adult: {dates}. Use no other vendor and never TAP. If several times "

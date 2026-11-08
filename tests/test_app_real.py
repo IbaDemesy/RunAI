@@ -273,7 +273,7 @@ def test_real_typed_stop_cannot_mask_operational_failure(data):
     assert result.data["answer_typed"]["stop_screen"] == "none"
 
 
-def test_real_browser_rejects_non_njuko_registration_link():
+def test_real_browser_rejects_a_forbidden_registration_link():
     agents = RealBrowserAgents(runner=SimpleNamespace(), max_steps=1, max_time_s=1)
     race = Race(
         name="Wizz Air Milano Marathon",
@@ -282,7 +282,7 @@ def test_real_browser_rejects_non_njuko_registration_link():
         registration_url="https://www.klikego.com/milano",
     )
 
-    with pytest.raises(RuntimeError, match="Njuko"):
+    with pytest.raises(RuntimeError, match="Klikego is forbidden"):
         asyncio.run(
             agents.start(
                 StepKind.registration,

@@ -106,8 +106,8 @@ def test_tokyo_out_of_europe_plan_comes_from_confirmed_summary():
     assert registration.limitations[0].code == "registration_link_missing"
     assert str(registration.limitations[0].manual_url) == "https://example.org/tokyo-b"
     transport = plan.steps[StepKind.transport]
-    assert transport.automation is Automation.manual and transport.task is None
-    assert "TAP forbidden" in transport.limitations[0].message
+    assert transport.automation is Automation.automated and transport.platform == "rome2rio"
+    assert "Do not click any booking" in transport.task
     accommodation = plan.steps[StepKind.accommodation]
     assert accommodation.automation is Automation.automated
     task = accommodation.task
@@ -116,7 +116,7 @@ def test_tokyo_out_of_europe_plan_comes_from_confirmed_summary():
     assert "1800 EUR for everything" in task
     assert task.endswith(STOP_INSTRUCTIONS)
     assert not any(word in task for word in ("Milan", "Paris", "Corso", "42,195", "42.195"))
-    assert plan.automated_steps() == [StepKind.accommodation]
+    assert set(plan.automated_steps()) == {StepKind.accommodation, StepKind.transport}
 
 
 def test_milan_train_with_njuko_automates_three_steps_without_v1_strings():
@@ -148,7 +148,7 @@ def test_confirmed_no_budget_is_preserved_as_open_budget():
     assert plan.brief.budget_open is True
 
 
-def test_lisbon_klikego_link_is_manual_and_train_has_no_validated_vendor():
+def test_lisbon_klikego_link_is_manual_and_train_is_compared_on_the_route_site():
     plan = plan_launch(lisbon_klikego())
 
     registration = plan.steps[StepKind.registration]
@@ -156,8 +156,7 @@ def test_lisbon_klikego_link_is_manual_and_train_has_no_validated_vendor():
     assert "Klikego is forbidden" in registration.limitations[0].message
     assert "klikego.com" in str(registration.limitations[0].manual_url)
     transport = plan.steps[StepKind.transport]
-    assert transport.automation is Automation.manual
-    assert "PT" in transport.limitations[0].message
+    assert transport.automation is Automation.automated and transport.platform == "rome2rio"
     task = plan.steps[StepKind.accommodation].task
     assert (
         "Lisbonne (PT)" in task

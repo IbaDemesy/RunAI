@@ -164,8 +164,8 @@ def test_replay_defaults_to_committed_trace():
         ),
         (
             "https://www.ahotu.com/race",
-            Automation.manual,
-            "registration_platform_unsupported",
+            Automation.automated,
+            "registration_platform_generic",
         ),
         (None, Automation.not_covered, "registration_link_missing"),
     ],
@@ -182,8 +182,8 @@ def test_registration_coverage(url, automation, code):
     ("mode", "country", "automation"),
     [
         ("train", "Italia", Automation.automated),
-        ("train", "JP", Automation.manual),
-        ("avion", "IT", Automation.manual),
+        ("train", "JP", Automation.automated),  # route comparison covers any country
+        ("avion", "IT", Automation.automated),
         ("aucun", "US", Automation.not_covered),
         ("téléportation", "US", Automation.manual),
     ],
@@ -285,3 +285,18 @@ def test_accommodation_coverage_falls_back_to_home():
     ):
         assert coverage.start_url == "https://all.accor.com"
         assert coverage.start_url_kind == "home"
+
+
+def test_flights_and_trains_outside_italy_use_the_route_comparison_site():
+    coverage = transport_coverage("flight", "PT", "FR")
+    assert coverage.platform.id == "rome2rio" and coverage.automation is Automation.automated
+    assert transport_coverage("train", "IT").platform.id == "trenitalia"
+
+
+def test_a_generic_organiser_site_keeps_only_its_own_host_and_klikego_stays_forbidden():
+    coverage = registration_coverage(
+        Race(name="R", city="Lisbon", country="PT", registration_url="https://www.organiser.example/signup"))
+    assert coverage.platform.hosts == ("organiser.example",)
+    forbidden = registration_coverage(
+        Race(name="R", city="Lisbon", country="PT", registration_url="https://www.klikego.com/x"))
+    assert forbidden.automation is Automation.manual

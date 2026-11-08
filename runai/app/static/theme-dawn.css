@@ -240,3 +240,6 @@ button.ghost:hover:not(:disabled), button.secondary:hover:not(:disabled) { borde
 .question-answer, .source-agent { color: var(--text-success); }
 .step[data-status="running"] { border-color: var(--sun); }
 .question-history { border-left-color: var(--border-strong); }
+
+/* Empty helper lines on the agent cards take no room */
+.agent-capture-status:empty, .agent-page:empty, .agent-page-url:empty, .last-action:empty { display: none; }

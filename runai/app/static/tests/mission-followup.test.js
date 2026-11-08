@@ -98,7 +98,7 @@ test("suivi H : dernière action lisible, historique horodaté repliable et lien
   assert.equal(!!history.open, false);
   assert.equal(history.querySelector("time").attributes.datetime, "2026-11-08T10:20:30Z");
   assert.match(history.textContent, /<script>Action H<\/script>/);
-  const replay = screen.querySelectorAll("a").find(node => node.textContent === "Replay H");
+  const replay = screen.querySelectorAll("a").find(node => node.textContent === "Replay");
   assert.equal(replay.href, "https://platform.hcompany.ai/agent-view/test");
   assert.equal(replay.target, "_blank");
   const live = screen.querySelectorAll("a").find(node => node.textContent === "Watch the agent live");
@@ -165,8 +165,8 @@ test("sans LiveViewURL, les observations H affichent une capture proxifiée rév
   assert.equal(image.src, "/api/missions/mission-test/steps/accommodation/screenshot?v=2");
   assert.match(panel.textContent, /Tarifs/);
   image.onerror();
-  assert.match(panel.textContent, /Capture unavailable/);
-  assert.equal(screen.querySelectorAll("a").some(node => node.textContent === "Replay H"), true);
+  assert.match(panel.textContent, /Preview unavailable/);
+  assert.equal(screen.querySelectorAll("a").some(node => node.textContent === "Replay"), true);
 });
 
 test("la première capture apparaît aussi quand la fenêtre live est déjà ouverte", async () => {

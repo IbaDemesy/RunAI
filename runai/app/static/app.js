@@ -440,13 +440,12 @@
       const content = block.querySelector(".agent-content");
       const active = ["running", "paused", "waiting_for_user"].includes(step.status);
       content.replaceChildren(el("h3", label(step.kind)), el("p", label(step.status), "status"), el("p", step.summary || "Waiting"));
-      content.append(el("p", step.data?.last_action || "No H action received for this step.", "last-action"));
+      if (step.data?.last_action) content.append(el("p", step.data.last_action, "last-action"));
       if (step.stop_point) content.append(el("p", "Stop point: " + label(step.stop_point)));
       if (step.error) content.append(el("p", step.error));
       link(content, step.data?.manual_url || step.url, "Continue manually on the official site");
       if (active) link(content, step.live_view_url, "Watch the agent live");
-      link(content, step.agent_view_url, "Replay H");
-      if (step.agent_view_url) content.append(el("p", "Replay requires signing in to your H organization."));
+      link(content, step.agent_view_url, "Replay");
       let history = block.querySelector(".agent-history");
       if (!history) {
         history = el("details", null, "agent-history");
@@ -461,7 +460,6 @@
         item.append(el("span", event.message || event.type)); list.append(item);
       }
       history.querySelector(".agent-events").replaceChildren(list.children.length ? list : el("p", "No events received for this step."));
-      const details = el("details"); details.append(el("summary", "Technical details"), el("p", step.h_session_id || "Session unavailable")); content.append(details);
       let liveUrl;
       try { const url = new URL(step.live_view_url, location.href); if (url.protocol === "https:" || url.origin === location.origin) liveUrl = url.href; } catch (_) { /* No embedded view without an HTTPS or same-origin URL. */ }
       const observation = step.data?.browser_observation;
@@ -478,14 +476,13 @@
         });
         panel.append(enlarge, el("p", "", "agent-page"), el("div", null, "agent-page-url"), el("p", "", "agent-capture-status"));
         if (active && liveUrl) {
-          panel.append(el("p", "If the view does not appear, open it in a tab. It expires when the run ends."));
           link(panel, liveUrl, "Open in a tab");
         }
         panel.ontoggle = () => {
           if (!panel.open) return;
           if (panel.dataset.screenshot && !panel.querySelector("img")) {
             const image = el("img"); image.alt = "Latest H browser capture · " + label(step.kind);
-            image.onerror = () => { image.hidden = true; panel.querySelector(".agent-capture-status").textContent = "Capture unavailable. Wait for the next observation or open H Replay."; };
+            image.onerror = () => { image.hidden = true; panel.querySelector(".agent-capture-status").textContent = "Preview unavailable for now."; };
             image.onload = () => { image.hidden = false; };
             image.src = panel.dataset.screenshot; panel.append(image);
           }
@@ -503,11 +500,11 @@
         const source = "/api/missions/" + encodeURIComponent(mission.mission_id) + "/steps/" + encodeURIComponent(step.kind) + "/screenshot?v=" + observation.revision;
         if (panel.dataset.screenshot !== source) {
           panel.dataset.screenshot = source;
-          panel.querySelector(".agent-capture-status").textContent = active ? "H captures update with observations; this is not a video stream." : "Latest H capture · step finished.";
+          panel.querySelector(".agent-capture-status").textContent = "";
           const image = panel.querySelector("img"); if (image) { image.hidden = false; image.src = source; }
           if (panel.open) panel.ontoggle();
         }
-        if (!active && !panel.querySelector("img")?.hidden) panel.querySelector(".agent-capture-status").textContent = "Latest H capture · step finished.";
+        if (!active && !panel.querySelector("img")?.hidden) panel.querySelector(".agent-capture-status").textContent = "";
       }
     }
   }
