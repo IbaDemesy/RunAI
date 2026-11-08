@@ -337,7 +337,7 @@
     for (const [name, slot] of Object.entries(framing.slots)) {
       const known = ["answered", "sourced", "not_needed"].includes(slot.status);
       const row = el("div", null, "slot-row");
-      row.append(el("p", label(name) + " : " + (known ? (slot.value == null ? "Not applicable" : typeof slot.value === "object" ? JSON.stringify(slot.value) : label(slot.value)) : "unknown")));
+      row.append(el("p", label(name) + " : " + (known ? (slot.value == null ? "Not applicable" : typeof slot.value === "object" ? JSON.stringify(slot.value) : typeof slot.value === "number" ? String(slot.value) : label(slot.value)) : "unknown")));
       row.append(button("Correct · " + label(name), () => {
         const editor = el("div"); row.append(editor);
         form(editor, "New value: " + label(name), (text) => submitReply(text, { corrections: { [name]: text } }), "slot:" + name);

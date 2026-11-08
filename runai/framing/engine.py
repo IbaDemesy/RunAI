@@ -34,6 +34,7 @@ from runai.contracts.framing import (
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.holo import TRANSPORTS, Phraser, _mask_address, clean_extraction
 from runai.framing.interpret import extract_slots, normalize_date_window
+from runai.framing.store import FramingStore
 from runai.journey import public_origin
 from runai.models import Race
 from runai.redaction import mask_address, redact_secrets
@@ -99,6 +100,7 @@ class FramingEngine:
         search: CandidateSearch,
         mode: DataMode = DataMode.live,
         phraser: Phraser | None = None,
+        store: FramingStore | None = None,
     ):
         self.search = search
         self.mode = mode
@@ -109,6 +111,10 @@ class FramingEngine:
         self._manual: set[str] = set()
         self._search_keys: dict[str, tuple] = {}
         self._origin_misses: dict[str, int] = {}
+        self.store = store
+        for restored in store.load() if store else []:
+            self.sessions[restored.id] = restored
+            self._locks[restored.id] = asyncio.Lock()
 
     def get(self, framing_id: str) -> FramingSession:
         return self.sessions[framing_id].model_copy(deep=True)
@@ -224,7 +230,7 @@ class FramingEngine:
                 if not decision["values"] and decision.get("origin_rejected"):
                     retry = self._origin_retry(framing_id)
                     if retry:
-                        return self._clarify(session, reply, retry)
+                        return self._clarify(session, reply, self._with_question(session, retry, "answer"))
                     decision["values"] = {SlotName.origin: public_origin("")}
                 if not decision["values"]:
                     return self._clarify(
@@ -332,7 +338,9 @@ class FramingEngine:
                     if public == public_origin(""):
                         retry = self._origin_retry(framing_id)
                         if retry:
-                            return self._clarify(session, reply, retry)
+                            # clear the origin (it is asked again) and say why, instead of looping silently
+                            llm_ack = retry
+                            public = None
                     else:
                         self._origin_misses.pop(framing_id, None)
                     values[SlotName.origin] = public
@@ -389,6 +397,7 @@ class FramingEngine:
                 )
             )
             if discovery_changed:
+                self._drop_candidate_limitations(session)
                 session.search_stats = None
                 self._manual.discard(framing_id)
                 self._search_keys.pop(framing_id, None)
@@ -462,6 +471,7 @@ class FramingEngine:
                             provenance=candidate.provenance,
                             revision=session.revision,
                         )
+                self._drop_candidate_limitations(session)
                 session.limitations.extend(candidate.limitations)
             elif choice:
                 session.candidates = []
@@ -484,6 +494,7 @@ class FramingEngine:
             else:
                 await self._phrase_next_question(session)
             self.sessions[framing_id] = session
+            self._persist(session)
             return self.get(framing_id)
 
     async def _decide(self, session: FramingSession, text: str, pending) -> dict | None:
@@ -551,6 +562,15 @@ class FramingEngine:
         return {"intent": intent, "values": values, "origin_rejected": origin_rejected,
                 "message": _sanitize_ack(raw.get("message"), allow_question=intent == "unclear")}
 
+    @staticmethod
+    def _drop_candidate_limitations(session: FramingSession) -> None:
+        stale = {(x.code, x.message) for c in session.candidates for x in c.limitations}
+        session.limitations = [x for x in session.limitations if (x.code, x.message) not in stale]
+
+    def _persist(self, session: FramingSession) -> None:
+        if self.store:
+            self.store.save(session)
+
     def _origin_retry(self, framing_id: str) -> str | None:
         """Ask for a city when the origin was only a street address; give up after two tries."""
         misses = self._origin_misses.get(framing_id, 0) + 1
@@ -558,7 +578,7 @@ class FramingEngine:
             self._origin_misses.pop(framing_id, None)
             return None
         self._origin_misses[framing_id] = misses
-        return "I only need the city or neighbourhood you leave from, not a street address. Which city is that?"
+        return "I only need the city or neighbourhood you leave from, not a street address."
 
     @staticmethod
     def _next_question_text(session: FramingSession) -> str:
@@ -592,6 +612,7 @@ class FramingEngine:
             FramingTurn(role="assistant", text=message, revision=session.revision),
         ])
         self.sessions[session.id] = session
+        self._persist(session)
         return self.get(session.id)
 
     async def _holo_fill(
@@ -911,6 +932,8 @@ class FramingEngine:
             session = self.sessions[framing_id]
             mission_id = assert_launchable(session, request)
             if mission_id:
+                if mission_id not in self._missions:
+                    raise FramingError("Mission already launched: open it from your trip page")
                 return self._missions[mission_id].model_copy(deep=True)
             session.status = FramingStatus.confirmed
             session.confirmed_revision = session.revision
@@ -924,6 +947,7 @@ class FramingEngine:
             session.status = FramingStatus.launched
             session.mission_id = mission.mission_id
             self._missions[mission.mission_id] = mission.model_copy(deep=True)
+            self._persist(session)
             return mission
 
     async def cancel(self, framing_id: str) -> FramingSession:
@@ -934,4 +958,5 @@ class FramingEngine:
             session.status = FramingStatus.cancelled
             session.summary = None
             session.open_questions = []
+            self._persist(session)
             return self.get(framing_id)

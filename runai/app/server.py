@@ -60,6 +60,7 @@ from runai.contracts.mission import HumanAnswer, MissionStatusV2
 from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
 from runai.framing.holo import HoloPhraser, Phraser, TemplatePhraser
+from runai.framing.store import FramingStore
 from runai.h.human_questions import HumanQuestionError
 from runai.logging_setup import RequestIdMiddleware, configure_logging, request_id
 from runai.models import RunnerProfile, StepKind, utcnow
@@ -230,6 +231,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     engine = FramingEngine(
         search=candidate_search(selected.providers), mode=selected.providers.mode,
         phraser=selected.phraser,
+        store=FramingStore(get_settings().traces_dir / "framings"),
     )
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
