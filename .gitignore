@@ -14,3 +14,4 @@ reports/
 
 # Partner credit PDFs carry promo codes: keep them outside the repo.
 Infos/*.pdf
+.test-history/

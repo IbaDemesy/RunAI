@@ -1,1 +1,1 @@
-"""Standalone test history reporting tools."""
+"""Test history tools: versioned run records, reporting and CI publication."""

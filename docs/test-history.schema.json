@@ -1,0 +1,311 @@
+{
+  "$defs": {
+    "CI": {
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Run Id"
+        },
+        "run_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Run Url"
+        }
+      },
+      "required": [
+        "provider",
+        "run_id",
+        "run_url"
+      ],
+      "title": "CI",
+      "type": "object"
+    },
+    "Counts": {
+      "additionalProperties": false,
+      "properties": {
+        "passed": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Passed",
+          "type": "integer"
+        },
+        "failed": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "skipped": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Skipped",
+          "type": "integer"
+        },
+        "xfailed": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Xfailed",
+          "type": "integer"
+        },
+        "xpassed": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Xpassed",
+          "type": "integer"
+        },
+        "errors": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Errors",
+          "type": "integer"
+        }
+      },
+      "title": "Counts",
+      "type": "object"
+    },
+    "Failure": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "message"
+      ],
+      "title": "Failure",
+      "type": "object"
+    },
+    "Git": {
+      "additionalProperties": false,
+      "properties": {
+        "sha": {
+          "title": "Sha",
+          "type": "string"
+        },
+        "branch": {
+          "title": "Branch",
+          "type": "string"
+        },
+        "dirty": {
+          "title": "Dirty",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sha",
+        "branch",
+        "dirty"
+      ],
+      "title": "Git",
+      "type": "object"
+    },
+    "Suite": {
+      "additionalProperties": false,
+      "properties": {
+        "verdict": {
+          "enum": [
+            "pass",
+            "fail",
+            "skip",
+            "error"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "duration_s": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Duration S",
+          "type": "number"
+        },
+        "counts": {
+          "$ref": "#/$defs/Counts"
+        },
+        "failures": {
+          "items": {
+            "$ref": "#/$defs/Failure"
+          },
+          "title": "Failures",
+          "type": "array"
+        },
+        "tests": {
+          "items": {
+            "$ref": "#/$defs/TestResult"
+          },
+          "title": "Tests",
+          "type": "array"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "verdict"
+      ],
+      "title": "Suite",
+      "type": "object"
+    },
+    "Suites": {
+      "additionalProperties": false,
+      "properties": {
+        "ruff": {
+          "$ref": "#/$defs/Suite"
+        },
+        "pytest": {
+          "$ref": "#/$defs/Suite"
+        },
+        "node": {
+          "$ref": "#/$defs/Suite"
+        }
+      },
+      "required": [
+        "ruff",
+        "pytest",
+        "node"
+      ],
+      "title": "Suites",
+      "type": "object"
+    },
+    "TestResult": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "passed",
+            "failed",
+            "skipped",
+            "xfailed",
+            "xpassed",
+            "error"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "duration_s": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Duration S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "outcome"
+      ],
+      "title": "TestResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "test-history.v1",
+      "default": "test-history.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "started_at": {
+      "title": "Started At",
+      "type": "string"
+    },
+    "finished_at": {
+      "title": "Finished At",
+      "type": "string"
+    },
+    "duration_s": {
+      "minimum": 0,
+      "title": "Duration S",
+      "type": "number"
+    },
+    "git": {
+      "$ref": "#/$defs/Git"
+    },
+    "wave": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Wave"
+    },
+    "ci": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CI"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "verdict": {
+      "enum": [
+        "pass",
+        "fail"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "suites": {
+      "$ref": "#/$defs/Suites"
+    }
+  },
+  "required": [
+    "run_id",
+    "started_at",
+    "finished_at",
+    "duration_s",
+    "git",
+    "wave",
+    "ci",
+    "verdict",
+    "suites"
+  ],
+  "title": "RunRecord",
+  "type": "object"
+}
