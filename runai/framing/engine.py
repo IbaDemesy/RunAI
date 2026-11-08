@@ -115,6 +115,21 @@ class FramingEngine:
             )
             if reply.question_id and question is None:
                 raise FramingError("Question périmée ou inconnue")
+            answer = (reply.text or "").strip()
+            guidance = (
+                "Please enter a city, race name, or an explicit correction; "
+                "answer the next question or type 'none' to reject the suggested races."
+            )
+            if (
+                reply.text is not None
+                and not reply.choice_id
+                and not reply.corrections
+                and (
+                    (bool(session.turns) and len(answer) > 500)
+                    or not any(c.isalnum() for c in answer)
+                )
+            ):
+                raise FramingError(guidance)
             choice = None
             if reply.choice_id:
                 choice = next(
@@ -129,8 +144,25 @@ class FramingEngine:
                 )
                 if choice is None:
                     raise FramingError("Choix inconnu")
+            elif answer.casefold() in {
+                "none", "aucune", "no", "other", "autre", "not this one"
+            }:
+                choice = next(
+                    (
+                        c
+                        for q in session.open_questions
+                        for c in q.choices
+                        if c.id == "none" and (question is None or q.id == question.id)
+                    ),
+                    None,
+                )
             values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
-            if question and len(question.slots) == 1 and reply.text and not question.choices:
+            if not values and not choice and not reply.question_id:
+                question = next(
+                    (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
+                    None,
+                )
+            if question and len(question.slots) == 1 and answer and not question.choices and not choice:
                 slot = question.slots[0]
                 if slot == SlotName.date_window and slot not in values:
                     answer = reply.text.strip()
@@ -148,23 +180,31 @@ class FramingEngine:
                         values[slot] = (
                             extract_slots(reply.text).get(slot) or answer
                         )
-                elif not values and slot in (SlotName.city, SlotName.origin, SlotName.race):
-                    values[slot] = reply.text.strip()
+                elif (
+                    slot in (SlotName.city, SlotName.origin, SlotName.race)
+                    and slot not in values
+                    and (reply.question_id or not values)
+                ):
+                    if reply.question_id or (
+                        len(answer) <= 60 and not any(c.isdigit() for c in answer)
+                    ):
+                        values[slot] = answer
                 elif not values and slot in (
                     SlotName.distance_km,
                     SlotName.budget,
                     SlotName.nights,
                 ):
                     try:
-                        values[slot] = float(reply.text.replace(",", "."))
-                    except ValueError as exc:
+                        values[slot] = float(answer.replace(",", "."))
+                        self._validate(values)
+                    except (ValueError, FramingError) as exc:
                         raise FramingError(
-                            "Une valeur numérique est nécessaire"
+                            f"Please enter a valid number for {slot.value}."
                         ) from exc
             if not choice and reply.text:
                 values = await self._holo_fill(session, reply.text, values) | values
             if not values and choice is None and session.turns:
-                raise FramingError("Précisez une réponse ou une correction explicite")
+                raise FramingError(guidance)
             self._validate(values)
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
