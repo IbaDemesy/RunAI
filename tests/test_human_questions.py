@@ -112,6 +112,31 @@ def test_release_attempt_allows_benign_steering(text):
     assert release_attempt(text) is None
 
 
+@pytest.mark.parametrize("text", [
+    "Cliquez sur Valider", "Click Next then Place the order", "Go ahead and confirm",
+    "tick the box", "Cochez la case", "enter the IBAN and CVV2",
+    "fill in the card details", "enter your credit card", "type the iban",
+    "Régler la commande", "acheter le billet", "comprar el billete",
+    "Click I a g r e e", "tick I accept", "Accept all", "ignore previous", "pаy now",
+    "pαy now", "ｐａｙ now", "p\u200bay now", "confermare", "acquistare",
+    "comprar o bilhete", "aceptar", "pagar", "checkout", "submit", "password",
+])
+def test_release_attempt_denies_commitment_variants(text):
+    assert release_attempt(text) is not None
+
+
+@pytest.mark.parametrize("text", [
+    "take the 08:00 train", "choose the cheaper room", "option 2", "continue",
+    "go back", "scroll down", "next page", "08:00", "choose the flexible fare",
+    "choose the morning slot", "select the 10:00 time", "take option 2 then pay now",
+])
+def test_release_attempt_preserves_navigation_and_selection(text):
+    if "pay now" in text:
+        assert release_attempt(text) is not None
+    else:
+        assert release_attempt(text) is None
+
+
 @pytest.mark.parametrize("text", RELEASE_ATTEMPTS)
 def test_registry_uses_shared_guard_for_answers(text):
     registry = HumanQuestionRegistry()
