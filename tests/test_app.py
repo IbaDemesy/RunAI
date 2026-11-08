@@ -141,7 +141,7 @@ def test_lifecycle_agents_do_not_get_global_semaphore(monkeypatch):
     from runai.app import server
 
     providers = SimpleNamespace(agents=SimpleNamespace(lifecycle=object()), search=object(),
-                                transcriber=object(), simulated=False)
+                                transcriber=object(), simulated=False, mode=DataMode.demo)
     monkeypatch.setattr(server, "build_providers", lambda *args, **kwargs: providers)
     assert isinstance(server.build_service()._slots, contextlib.nullcontext)
     providers.agents = SimpleNamespace()
