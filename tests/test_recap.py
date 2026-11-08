@@ -122,7 +122,7 @@ def test_html_content_and_vocabulary():
     assert "€0 paid by RunAI" in html
     assert "What you still need to do" in html and "Sources and traceability" in html
     assert "https://in.njuko.com/wizz-air-milano-marathon-20271776152378557" in html
-    assert "114.00 €" in html and "≈ 492 €" in html
+    assert "€114" in html and "≈ €492" in html and "114.00 €" not in html
     lower = html.lower()
     assert 'lang="en"' in html and "prepared ≠ booked" in lower
     assert "sunday 4 april 2027" in lower
@@ -288,4 +288,6 @@ def test_english_key_fact_date_and_distance():
     facts = {fact.label: fact.value for fact in default_key_facts(_race())}
     assert facts["Start"] == "Sun 4 Apr 2027 · 09:00"
     assert facts["Distance"] == "42.195 km"
-    assert render_mod.eur(1234.5) == "1,234.50 €"
+    assert render_mod.eur(1234.5) == "€1,234.50"
+    assert render_mod.eur(800) == "€800" and render_mod.eur(800.0) == "€800"
+    assert all(render_mod.status_label(status, True) for status in StepStatus)

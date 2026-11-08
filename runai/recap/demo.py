@@ -96,7 +96,7 @@ def demo_recap() -> Recap:
         key_facts=[
             KeyFact(label="Start", value="Sun. 4 April 2027 · 08:00", detail="Corso Venezia (example)", source=1),
             KeyFact(label="Distance", value="42.195 km", detail="marathon, city course", source=1),
-            KeyFact(label="Registration", value="114 € on Njuko", detail="price valid until 31 Dec. 2026, read on 7 Nov. 2026", source=1),
+            KeyFact(label="Registration", value="€114 on Njuko", detail="price valid until 31 Dec. 2026, read on 7 Nov. 2026", source=1),
             KeyFact(label="Competitive status", value="World Athletics license (FFA) or RUNCARD",
                     detail="otherwise non-competitive category; Italian medical certificate for RUNCARD (2026 rules)",
                     source=2),
