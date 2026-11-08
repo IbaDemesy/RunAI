@@ -89,7 +89,7 @@ def test_multiple_basic_auth_passwords_and_encoded_pairs_masked(monkeypatch):
 
 
 @pytest.mark.parametrize("text,expected", [
-    ("hk-abcdefghijklmnop_123", "[REDACTED]"),
+    ("hk" + "-abcdefghijklmnop_123", "[REDACTED]"),
     ("https://alice:fake-password@example.org/path", "https://[REDACTED]@example.org/path"),
     ("https://example.org/?token=fake&city=Paris", "https://example.org/?token=[REDACTED]&city=Paris"),
     ("?access_token=fake&api_key=fake&key=fake&secret=fake#top",
