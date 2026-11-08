@@ -5,7 +5,7 @@ from runai.models import StopPoint
 
 STOP_INSTRUCTIONS = """\
 Absolute safety rules:
-- Never make a payment, confirm a booking, or submit a final form.
+- Never make a payment, place or confirm a booking or reservation, or submit a final form.
 - Never create an account or enter a password.
 - Never tick a consent, terms and conditions, or health declaration checkbox.
 - Stop as soon as the next step would require any of these actions and describe the exact screen reached.
