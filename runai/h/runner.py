@@ -7,6 +7,7 @@ import re
 import time
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any, Self
 from urllib.parse import unquote, urlsplit
 from uuid import uuid4
@@ -223,7 +224,13 @@ class HRun:
         interactive: bool = False,
         session_handle: Any | None = None,
         allowed_hosts: tuple[str, ...] | None = None,
+        max_steps: int | None = None,
+        start_url: str | None = None,
     ):
+        self.started_at = datetime.now(UTC).isoformat()
+        self.max_steps = max_steps
+        self.start_url = start_url
+        self._pending_metrics: list[dict[str, Any]] = []
         self._runner = runner
         self.account = account
         # Une session one-shot passe brièvement par `idle` avant `completed` : on attend l'état terminal.
@@ -264,14 +271,36 @@ class HRun:
         await self.close()
 
     def _log(self, type_: str, message: str | None = None, **data: Any) -> None:
-        self.trace.write(
-            TraceEvent(
-                source="h",
-                type=type_,
-                message=message,
-                data={"h_session_id": self.id, "step": self.kind.value, **data},
-            )
+        event = TraceEvent(
+            source="h",
+            type=type_,
+            message=message,
+            data={"h_session_id": self.id, "step": self.kind.value, **data},
         )
+        self.trace.write(event)
+        if type_ == "metrics":
+            self._pending_metrics.append(event.model_dump(mode="json"))
+
+    def _update_metrics(self, metrics: dict[str, Any]) -> None:
+        previous = (self.metrics.get("steps"), self.metrics.get("total_cost"))
+        self.metrics.update({key: value for key, value in metrics.items() if value is not None})
+        if previous != (self.metrics.get("steps"), self.metrics.get("total_cost")):
+            steps = self.metrics.get("steps")
+            cost = self.metrics.get("total_cost")
+            self._log(
+                "metrics", f"step {steps}/{self.max_steps} · ${cost or 0:.3f}",
+                steps=steps, total_cost=cost,
+                elapsed_s=round(time.monotonic() - self._created_at, 1),
+            )
+
+    async def _notify_metrics(self, on_event: EventCallback | None) -> None:
+        pending, self._pending_metrics = self._pending_metrics, []
+        if on_event is None:
+            return
+        for event in pending:
+            outcome = on_event(event)
+            if inspect.isawaitable(outcome):
+                await outcome
 
     def _absorb(self, event: dict[str, Any]) -> None:
         self.event_count += 1
@@ -282,7 +311,7 @@ class HRun:
         if event_type == "LiveViewUrlEvent" and data.get("live_view_url"):
             self.live_view_url = data["live_view_url"]
         elif event_type == "MetricsUpdateEvent" and isinstance(data.get("metrics"), dict):
-            self.metrics.update({key: value for key, value in data["metrics"].items() if value is not None})
+            self._update_metrics(data["metrics"])
         elif event_type == "AgentRunStatusChangeEvent" and data.get("status"):
             self.status = data["status"]
             self.error_code = data.get("error_code") or self.error_code
@@ -357,7 +386,7 @@ class HRun:
         self.error_code = getattr(status, "error_code", None) or self.error_code
         self.metrics["elapsed_s"] = time.monotonic() - self._created_at
         if getattr(status, "steps", None) is not None:
-            self.metrics["steps"] = status.steps
+            self._update_metrics({"steps": status.steps})
         return self.status
 
     async def wait_for_status(self, statuses: Iterable[str], timeout_s: float = 60.0, poll_s: float = 1.0) -> float:
@@ -402,6 +431,7 @@ class HRun:
             ):
                 event = as_dict(raw)
                 self._absorb(event)
+                await self._notify_metrics(on_event)
                 self.trace.write(to_trace_event(event, self.id, self.kind.value))
                 if on_event is not None:
                     outcome = on_event(event)
@@ -409,6 +439,7 @@ class HRun:
                         await outcome
                 self._cursor += 1
             await self.refresh_status()
+            await self._notify_metrics(on_event)
             return
 
         caught_up = True
@@ -423,6 +454,7 @@ class HRun:
             for raw in batch:
                 event = as_dict(raw)
                 self._absorb(event)
+                await self._notify_metrics(on_event)
                 self.trace.write(to_trace_event(event, self.id, self.kind.value))
                 if on_event is not None:
                     outcome = on_event(event)
@@ -434,7 +466,9 @@ class HRun:
                 if getattr(changes, "answer", None) is not None:
                     self.answer = changes.answer
             caught_up = not batch
-            if await self.refresh_status() in self._settled and not batch:
+            await self.refresh_status()
+            await self._notify_metrics(on_event)
+            if self.status in self._settled and not batch:
                 return
 
     async def _finalize(self) -> StepResult:
@@ -471,6 +505,12 @@ class HRun:
                 "steps": self.metrics.get("steps"),
                 "total_cost": self.metrics.get("total_cost"),
                 "elapsed_s": self.metrics["elapsed_s"],
+                "started_at": self.started_at,
+                "ended_at": datetime.now(UTC).isoformat(),
+                "duration_s": round(self.metrics["elapsed_s"], 1),
+                "max_steps": self.max_steps,
+                "start_url": self.start_url,
+                "agent": self._runner.agent,
                 "events": self.event_count,
             },
         )
@@ -731,6 +771,8 @@ class HRunner:
                 interactive=bool(params.get("idle_timeout_s")),
                 session_handle=session_handle,
                 allowed_hosts=allowed_hosts,
+                max_steps=max_steps,
+                start_url=start_url,
             )
             try:
                 share = await account.client.sessions.share_session(session.id)
