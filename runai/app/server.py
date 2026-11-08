@@ -30,6 +30,7 @@ from runai.app.providers import (
 )
 from runai.app.screenshots import build_screenshot_router
 from runai.app.tasks import STEP_LABELS
+from runai.app.telemetry import router as telemetry_router
 from runai.config import get_settings
 from runai.contracts.common import DataMode
 from runai.contracts.mission import HumanAnswer
@@ -167,6 +168,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     app.state.framing = engine
     app.include_router(build_framing_router(engine, selected.confirm))
     app.include_router(build_screenshot_router(selected))
+    app.include_router(telemetry_router)
     app.mount("/static/contract-fixtures", StaticFiles(directory=ROOT_DIR / "runai/contracts/fixtures"), name="contract-fixtures")
     app.mount("/static/flyover", StaticFiles(directory=ROOT_DIR / "web/flyover"), name="flyover")
     app.mount("/static/voice", StaticFiles(directory=ROOT_DIR / "web/voice"), name="voice")
