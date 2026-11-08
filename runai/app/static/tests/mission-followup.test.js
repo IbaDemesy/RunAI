@@ -57,8 +57,8 @@ async function setup(status = "running", questions = [], step = {}) {
 
 test("arrêt hôtel avant paiement sans question : action manuelle et lien officiel, aucun suivi terminal rouvert", async () => {
   const { screen, sources } = await setup("awaiting_human");
-  assert.doesNotMatch(screen.textContent, /À vous de répondre/);
-  assert.match(screen.textContent, /finaliser manuellement/i);
+  assert.doesNotMatch(screen.textContent, /Your turn to answer/);
+  assert.match(screen.textContent, /finish manually/i);
   assert.ok(screen.querySelectorAll().some(node => node.tagName === "A" && node.href === "https://all.accor.com/"));
   assert.equal(sources.length, 0);
 });
@@ -66,7 +66,7 @@ test("arrêt hôtel avant paiement sans question : action manuelle et lien offic
 test("une vraie question ouverte conserve le formulaire et la demande de réponse", async () => {
   const { screen, sources } = await setup("running", [{ question_id: "q1", step: "accommodation", status: "open",
     text: "Quelle chambre ?", choices: ["Standard"], revision: 1 }]);
-  assert.match(screen.textContent, /À vous de répondre/);
+  assert.match(screen.textContent, /Your turn to answer/);
   assert.ok(screen.querySelectorAll().some(node => node.tagName === "FORM"));
   assert.equal(sources.length, 1);
   assert.equal(sources[0].closed, false);
@@ -77,13 +77,13 @@ for (const status of ["awaiting_human", "completed", "failed", "cancelled"]) {
     const { feedback, sources, update, requests } = await setup();
     const source = sources[0];
     source.onerror();
-    assert.match(feedback.textContent, /Reconnexion/);
+    assert.match(feedback.textContent, /Reconnecting/);
     update({ status });
     await source.handlers.get("mission_status")();
     assert.equal(source.closed, true);
-    assert.doesNotMatch(feedback.textContent, /Reconnexion/);
+    assert.doesNotMatch(feedback.textContent, /Reconnecting/);
     if (source.onerror) source.onerror();
-    assert.doesNotMatch(feedback.textContent, /Reconnexion/);
+    assert.doesNotMatch(feedback.textContent, /Reconnecting/);
     assert.equal(sources.length, 1);
     assert.ok(requests.every(request => !request.options?.method));
   });
@@ -101,7 +101,7 @@ test("suivi H : dernière action lisible, historique horodaté repliable et lien
   const replay = screen.querySelectorAll("a").find(node => node.textContent === "Replay H");
   assert.equal(replay.href, "https://platform.hcompany.ai/agent-view/test");
   assert.equal(replay.target, "_blank");
-  const live = screen.querySelectorAll("a").find(node => node.textContent === "Voir l’agent en direct");
+  const live = screen.querySelectorAll("a").find(node => node.textContent === "Watch the agent live");
   assert.equal(live.href, "https://live.example.org/browser");
 });
 
@@ -116,10 +116,10 @@ test("fenêtre live HTTPS repliable, agrandissable, conservée au rafraîchissem
   const frame = screen.querySelector("iframe");
   assert.equal(frame.src, "https://live.example.org/browser");
   assert.equal(frame.attributes.sandbox, "allow-scripts allow-same-origin");
-  const enlarge = panel.querySelectorAll("button").find(node => node.textContent === "Agrandir");
+  const enlarge = panel.querySelectorAll("button").find(node => node.textContent === "Enlarge");
   enlarge.onclick();
   assert.equal(screen.querySelector(".step").dataset.expanded, "true");
-  const fallback = panel.querySelectorAll("a").find(node => node.textContent === "Ouvrir dans un onglet");
+  const fallback = panel.querySelectorAll("a").find(node => node.textContent === "Open in a tab");
   assert.equal(fallback.href, frame.src);
   update({ steps: [{ ...step, data: { last_action: "Navigation suivante" } }] });
   await sources[0].handlers.get("trace")();
@@ -128,7 +128,7 @@ test("fenêtre live HTTPS repliable, agrandissable, conservée au rafraîchissem
   update({ status: "awaiting_human", steps: [{ ...step, status: "stopped_before_commitment", url: "https://all.accor.com/" }] });
   await sources[0].handlers.get("mission_status")();
   assert.equal(screen.querySelector("iframe"), null);
-  assert.match(screen.textContent, /À finaliser vous-même/);
+  assert.match(screen.textContent, /Finish it yourself/);
 });
 
 for (const url of [null, "http://live.example.org/browser", "javascript:alert(1)"]) {
@@ -136,7 +136,7 @@ for (const url of [null, "http://live.example.org/browser", "javascript:alert(1)
     const { screen } = await setup("running", [], { status: "running", live_view_url: url, agent_view_url: "javascript:alert(2)" });
     assert.equal(screen.querySelector(".agent-live"), null);
     assert.equal(screen.querySelector("iframe"), null);
-    assert.match(screen.textContent, /Aucun événement reçu/);
+    assert.match(screen.textContent, /No events received/);
     assert.equal(screen.querySelectorAll("a").some(node => node.href.startsWith("javascript:")), false);
   });
 }
@@ -144,7 +144,7 @@ for (const url of [null, "http://live.example.org/browser", "javascript:alert(1)
 test("commande vocale avec fenêtre live ouverte : les boutons restent utilisables après la mutation", async () => {
   const { screen, voiceOptions } = await setup("running", [], { status: "running", live_view_url: "https://live.example.org/browser" });
   const panel = screen.querySelector(".agent-live"); panel.open = true; panel.ontoggle();
-  screen.querySelectorAll("button").find(node => node.textContent === "Parler").onclick();
+  screen.querySelectorAll("button").find(node => node.textContent === "Speak").onclick();
   await voiceOptions.onAgentsCommand("pause");
   assert.ok(screen.querySelectorAll("button").every(node => !node.disabled));
   assert.equal(screen.querySelector(".agent-live"), panel);
@@ -167,7 +167,7 @@ test("sans LiveViewURL, les observations H affichent une capture proxifiée rév
   assert.equal(image.src, "/api/missions/mission-test/steps/accommodation/screenshot?v=2");
   assert.match(panel.textContent, /Tarifs/);
   image.onerror();
-  assert.match(panel.textContent, /Capture indisponible/);
+  assert.match(panel.textContent, /Capture unavailable/);
   assert.equal(screen.querySelectorAll("a").some(node => node.textContent === "Replay H"), true);
 });
 

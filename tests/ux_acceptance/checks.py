@@ -14,11 +14,11 @@ class Tags(HTMLParser):
         self.tags.append((tag, dict(attrs)))
 
 
-def html_basics(source, feedback=True):
+def html_basics(source, feedback=True, lang="en"):
     tags = Tags(source).tags
     errors = []
-    if not any(t == "html" and a.get("lang") == "fr" for t, a in tags):
-        errors.append("lang=fr absent")
+    if not any(t == "html" and a.get("lang") == lang for t, a in tags):
+        errors.append(f"lang={lang} absent")
     if not any(t == "meta" and a.get("name") == "viewport" and "width=device-width" in a.get("content", "") for t, a in tags):
         errors.append("viewport absent")
     if feedback and not any(a.get("id") == "feedback" and a.get("role") == "status" and a.get("aria-live") == "polite" for _, a in tags):
@@ -88,18 +88,22 @@ def contrasts(source):
     return errors
 
 
-def defect(source, identifier):
+def defect(source, identifier, legacy=False):
     patterns = {
         "UX-01": [r'pendingFocus', r'input, textarea, button', r'heading\.tabIndex = -1', r'heading\.focus\(\)'],
         "UX-02": [r'if \(page === id\).*setAttribute\("aria-current", "page"\)'],
-        "UX-03": [r'Choisir cette course.*candidate\.name', r'Votre réponse.*question\.text', r'Envoyer.*title'],
+        "UX-03": [r'Choose this race.*candidate\.name', r'Your answer.*question\.text', r'Send.*title'],
         "UX-04": [r'previousStatus = mission.status', r'previousStatus !== mission.status.*announce\('],
         "UX-05": [r'container.setAttribute\("role", "region"\)'],
-        "UX-06": [r'screen.append\(el\("h1", "Mon séjour"\)\)', r'priority.append\(el\("h2"', r'block.append\(el\("h2", question.text\)'],
-        "UX-07": [r'node.setAttribute\("aria-label",.*nouvel onglet'],
-        "UX-08": [r'if \(!matchMedia\("\(prefers-reduced-motion: reduce\)"\).matches\).*button\("Lecture"'],
+        "UX-06": [r'screen.append\(el\("h1", "My trip"\)\)', r'priority.append\(el\("h2"', r'block.append\(el\("h2", question.text\)'],
+        "UX-07": [r'node.setAttribute\("aria-label",.*new tab'],
+        "UX-08": [r'if \(!matchMedia\("\(prefers-reduced-motion: reduce\)"\).matches\).*button\("Play"'],
         "UX-09": [r'name="viewport"', r'id="status" role="status" aria-live="polite"'],
     }
+    if legacy:
+        translations = {"Choose this race": "Choisir cette course", "Your answer": "Votre réponse", "Send": "Envoyer", "My trip": "Mon séjour", "new tab": "nouvel onglet", "Play": "Lecture"}
+        for english, french in translations.items():
+            patterns[identifier] = [pattern.replace(english, french) for pattern in patterns[identifier]]
     return [f"{identifier}: contrat absent {pattern}" for pattern in patterns[identifier] if not re.search(pattern, source)]
 
 

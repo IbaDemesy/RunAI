@@ -35,13 +35,13 @@ test("budget partiel, vide, nul et complet : aucun prix manquant inventé", asyn
   const { budget } = await fixture("mission_snapshot");
   const text = core.budgetText(budget);
   assert.match(text.total, /250/);
-  assert.match(text.total, /partiel/);
-  assert.match(text.lines[1], /Prix inconnu/);
-  assert.equal(text.cap, "plafond non évaluable");
-  assert.equal(core.budgetText(null).total, "Budget en attente");
+  assert.match(text.total, /partial/);
+  assert.match(text.lines[1], /Price unknown/);
+  assert.equal(text.cap, "cap not assessable");
+  assert.equal(core.budgetText(null).total, "Budget pending");
   assert.deepEqual(core.budgetText({ ...budget, lines: [] }).lines, []);
-  assert.match(core.budgetText({ ...budget, complete: true, over_cap: true }).cap, /dépassé/);
-  assert.match(core.budgetText({ ...budget, complete: true, over_cap: false }).cap, /Dans le plafond/);
+  assert.match(core.budgetText({ ...budget, complete: true, over_cap: true }).cap, /Over cap/);
+  assert.match(core.budgetText({ ...budget, complete: true, over_cap: false }).cap, /Within cap/);
 });
 async function ready(api) {
   let f = await api.request("/api/framings", { text: "Ma demande", channel: "text" });

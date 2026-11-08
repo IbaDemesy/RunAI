@@ -47,7 +47,7 @@ async function setup(withMission = false, question = null) {
   };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../app.js"), "utf8"), context);
   await new Promise(resolve => setImmediate(resolve));
-  const speak = () => screen.querySelectorAll().find(node => node.textContent === "Parler").onclick();
+  const speak = () => screen.querySelectorAll().find(node => node.textContent === "Speak").onclick();
   return { options, calls, speak, listeners, conflict: () => { conflict = true; } };
 }
 
@@ -59,10 +59,10 @@ test("voix initiale et multi-tours utilisent framing, aucune mission directe ; v
   speak(); await options.onFramingReply({ text: "précision", revision: 1 });
   assert.equal(options.getRevision(), 2);
   const count = calls.filter(call => call.url.endsWith("/replies")).length;
-  await assert.rejects(options.onFramingReply({ text: "ancienne réponse", revision: 1 }), /périmée/);
+  await assert.rejects(options.onFramingReply({ text: "ancienne réponse", revision: 1 }), /expired/);
   assert.equal(calls.filter(call => call.url.endsWith("/replies")).length, count);
   speak(); conflict();
-  await assert.rejects(options.onFramingReply({ text: "réponse en conflit", revision: 2 }), /non appliquée/);
+  await assert.rejects(options.onFramingReply({ text: "réponse en conflit", revision: 2 }), /not applied/);
   assert.equal(calls.some(call => call.url === "/api/missions"), false);
 });
 
@@ -73,10 +73,10 @@ test("pause/reprise vocales appellent les agents, pas la caméra ; page quittée
   assert.ok(calls.some(call => call.url === "/api/missions/m-test/pause"));
   assert.ok(calls.some(call => call.url === "/api/missions/m-test/resume"));
   const count = calls.length;
-  assert.throws(() => options.view.pause(), /Explorer/);
+  assert.throws(() => options.view.pause(), /Explore/);
   assert.equal(calls.length, count);
   listeners.pagehide();
-  await assert.rejects(options.onAgentsCommand("pause"), /plus active/);
+  await assert.rejects(options.onAgentsCommand("pause"), /no longer active/);
   assert.equal(calls.length, count);
 });
 

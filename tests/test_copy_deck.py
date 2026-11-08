@@ -64,12 +64,12 @@ def test_html_inventory(tmp_path):
 
 def test_missing_copy_fails_and_only_current_column_counts(tmp_path):
     deck = tmp_path / "deck.md"
-    deck.write_text("| example | Different source | Où voulez-vous courir ? | Hero | 80 | — |\n")
+    deck.write_text("| example | Different source | Where do you want to run? | Hero | 80 | — |\n")
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--deck", str(deck)],
         check=False, capture_output=True, text=True,
     )
     assert result.returncode == 1
-    assert "Missing: Où voulez-vous courir ?" in result.stdout
+    assert "Missing: Where do you want to run?" in result.stdout
     assert coverage.current_copy(deck.read_text()) == {"Different source"}
     assert coverage.current_copy("") == set()
