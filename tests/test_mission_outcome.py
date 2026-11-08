@@ -36,22 +36,20 @@ def test_demo_trip_outcome_and_sse(tmp_path):
         assert next(e for e in envelopes if e["type"] == "mission_status")["payload"]["outcome"] == outcome
 
 
-def test_cancelling_after_completion_emits_new_outcome_once(tmp_path):
+def test_cancelling_after_completion_is_a_noop(tmp_path):
+    """M2: a prepared (terminal) mission stays prepared; cancel emits nothing."""
     service = build_demo_service(delay=0)
     service.traces_dir = tmp_path
     with TestClient(create_app(service)) as client:
         mid = confirm(client, prepare(client, "Milan")).json()["mission_id"]
         finish(client, mid)
+        status = service.get(mid).status
         before = len(service.get(mid).envelopes)
         client.portal.call(service.cancel, mid)
         client.portal.call(service.cancel, mid)
-        events = service.get(mid).envelopes[before:]
-        outcomes = [event for event in events if event.type == "mission_outcome"]
-        assert len(outcomes) == 1
-        assert outcomes[0].payload["state"] == "cancelled"
-        status = next(event for event in events if event.type == "mission_status")
-        assert status.payload["outcome"] == outcomes[0].payload
-        assert outcomes[0].sequence < status.sequence
+        assert service.get(mid).envelopes[before:] == []
+        assert service.get(mid).status is status
+        assert client.get(f"/api/missions/{mid}").json()["outcome"]["state"] != "cancelled"
 
 
 def test_cancelled_mission_emits_outcome(tmp_path):

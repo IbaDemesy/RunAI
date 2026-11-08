@@ -5,18 +5,21 @@ import json
 import time
 from datetime import date
 from functools import partial
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
+from runai.app.mission import MissionStatus
 from runai.app.server import build_demo_service, create_app
 from runai.app.tasks import TripBrief
 from runai.contracts.framing import FramingSummary, FramingTurn
+from runai.contracts.mission import HumanAnswer, QuestionStatus
 from runai.framing.launch import LaunchPlan, StepPlan
 from runai.h import HAccount, HQuotaTimeout, HRunner
 from runai.h.lifecycle import HCreditsExhausted, HLifecycle, RetryPolicy
-from runai.models import Race, StepKind
+from runai.models import Race, StepKind, StepStatus
 from tests.test_h_lifecycle import RetryRunner
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
@@ -136,3 +139,124 @@ def test_m4_credit_block_expires_after_ttl():
         assert (await asyncio.wait_for(second.wait(), 1)).status.value == "completed"
         assert runner.accounts[0].max_concurrency == 3
     asyncio.run(scenario())
+
+
+# --- M6 ------------------------------------------------------------------------------------------
+
+async def _drive_until_terminal(service, mission, timeout=5.0):
+    deadline = asyncio.get_running_loop().time() + timeout
+    while not mission.is_terminal and asyncio.get_running_loop().time() < deadline:
+        for question in [q for q in service.questions.questions.values()
+                         if q.mission_id == mission.id and q.status is QuestionStatus.open]:
+            service.answer_question(mission.id, question.question_id, HumanAnswer(
+                answer=question.choices[0], revision=question.revision,
+                idempotency_key=f"w4-{question.question_id}"))
+        await asyncio.sleep(0.005)
+    return await asyncio.wait_for(service.wait(mission.id), 1)
+
+
+def test_m6_closure_error_fails_the_mission_and_closes_the_stream(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+
+    async def scenario():
+        service = build_demo_service(delay=0)
+
+        def broken(step, result):
+            raise RuntimeError("merge exploded")
+
+        monkeypatch.setattr(service, "_merge_result", broken)
+        plan, summary = _plan()
+        mission = await service.create(plan, summary=summary)
+        events = []
+
+        async def consume():
+            async for event in service.subscribe_events(mission.id):
+                events.append(event)
+
+        consumer = asyncio.create_task(consume())
+        await _drive_until_terminal(service, mission)
+        await asyncio.wait_for(consumer, 2)
+        assert mission.status is MissionStatus.failed
+        assert mission.error and "merge exploded" not in mission.error
+        assert all(step.status not in {StepStatus.running, StepStatus.paused, StepStatus.pending,
+                                       StepStatus.waiting_for_user} for step in mission.steps.values())
+        assert [event.payload["status"] for event in events if event.type == "mission_status"][-1] == "failed"
+        assert any(event.type == "mission_outcome" for event in events)
+        assert not service._runs
+        stored = json.loads((tmp_path / "missions" / f"{mission.id}.json").read_text())
+        assert stored["snapshot"]["status"] == "failed"
+
+    asyncio.run(scenario())
+
+
+# --- M2 ------------------------------------------------------------------------------------------
+
+def test_m2_cancel_on_terminal_mission_is_a_noop(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+
+    async def scenario():
+        service = build_demo_service(delay=0)
+        plan, summary = _plan()
+        mission = await service.create(plan, summary=summary)
+        await _drive_until_terminal(service, mission)
+        assert mission.status is MissionStatus.awaiting_human
+        statuses = sum(event.type == "mission_status" for event in mission.envelopes)
+        await service.cancel(mission.id)
+        assert mission.status is MissionStatus.awaiting_human
+        assert service.snapshot(mission.id).outcome.state == "prepared"
+        assert sum(event.type == "mission_status" for event in mission.envelopes) == statuses
+
+    asyncio.run(scenario())
+
+
+def test_m2_cancel_running_mission_leaves_no_active_step(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+
+    async def scenario():
+        service = build_demo_service(delay=0)
+        plan, summary = _plan()
+        mission = await service.create(plan, summary=summary)
+        for _ in range(200):
+            if any(step.status is StepStatus.waiting_for_user for step in mission.steps.values()):
+                break
+            await asyncio.sleep(0.005)
+        await service.cancel(mission.id)
+        assert mission.status is MissionStatus.cancelled
+        assert all(step.status not in {StepStatus.running, StepStatus.paused, StepStatus.pending,
+                                       StepStatus.waiting_for_user} for step in mission.steps.values())
+
+    asyncio.run(scenario())
+
+
+# --- M9 ------------------------------------------------------------------------------------------
+
+def test_m9_directory_fsync_is_posix_only_and_failures_are_explained(tmp_path, monkeypatch, caplog):
+    import runai.app.store as store_module
+
+    real_open = store_module.os.open
+
+    def no_directory_open(path, flags, *args, **kwargs):
+        if Path(path).is_dir():
+            raise PermissionError("directories cannot be opened on this platform")
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    monkeypatch.setattr(store_module.os, "open", no_directory_open)
+    monkeypatch.setattr(store_module, "_POSIX", False)
+
+    async def scenario():
+        service = build_demo_service(delay=0)
+        plan, summary = _plan()
+        mission = await service.create(plan, summary=summary)
+        await service.cancel(mission.id)
+        return mission
+
+    mission = asyncio.run(scenario())
+    stored = json.loads((tmp_path / "missions" / f"{mission.id}.json").read_text())
+    assert stored["snapshot"]["status"] == "cancelled"
+
+    monkeypatch.setattr(store_module, "_POSIX", True)
+    caplog.clear()
+    with caplog.at_level("WARNING", logger="runai.app.store"):
+        mission = asyncio.run(scenario())
+    assert any("PermissionError" in record.getMessage() for record in caplog.records)

@@ -487,7 +487,7 @@ class MissionService:
 
     async def cancel(self, mission_id: str) -> None:
         mission = self._writable(mission_id)
-        if mission.status is MissionStatus.cancelled:
+        if mission.is_terminal:
             return
         mission.status = MissionStatus.cancelled
         mission.finished_at = utcnow()
@@ -505,6 +505,11 @@ class MissionService:
                 await task
             except asyncio.CancelledError:
                 pass
+        for step in mission.steps.values():
+            if step.status in ACTIVE_STATUSES | {StepStatus.pending, StepStatus.waiting_for_user}:
+                step.status = StepStatus.failed
+                step.error = "Cancelled by the user."
+                step.summary = "Cancelled"
         mission.limitations.append(Limitation(code="h_cancelled", message="Mission cancelled; no new launches."))
         mission.finished_at = utcnow()
         self._emit(mission, "mission_outcome", self.snapshot(mission.id).outcome.model_dump(mode="json"))
@@ -822,6 +827,53 @@ class MissionService:
             self._publish_state(mission)
 
     async def _run_mission(self, mission: Mission) -> None:
+        try:
+            await self._execute_mission(mission)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Mission %s crashed", mission.id)
+            await self._fail_mission(mission)
+
+    async def _fail_mission(self, mission: Mission) -> None:
+        message = "Internal error while preparing the trip; nothing has been paid."
+        for (mid, _), run in list(self._runs.items()):
+            if mid == mission.id and hasattr(run, "cancel"):
+                with contextlib.suppress(Exception):
+                    await run.cancel()
+        lifecycle = getattr(self.agents, "lifecycle", None)
+        if lifecycle:
+            with contextlib.suppress(Exception):
+                await lifecycle.cancel_all(mission.id)
+        self.questions.cancel_mission(mission.id)
+        for key in [key for key in self._runs if key[0] == mission.id]:
+            self._runs.pop(key, None)
+        for step in mission.steps.values():
+            if step.status in ACTIVE_STATUSES | {StepStatus.pending, StepStatus.waiting_for_user}:
+                step.status = StepStatus.failed
+                step.error = message
+        if mission.is_terminal and mission.status is not MissionStatus.failed:
+            self._save_mission(mission)
+            return
+        mission.status = MissionStatus.failed
+        mission.error = message
+        mission.finished_at = utcnow()
+        mission.limitations.append(Limitation(code="mission_internal_error", message=message))
+        for type_, payload in (
+            ("mission_outcome", lambda: self.snapshot(mission.id).outcome.model_dump(mode="json")),
+            ("mission_status", lambda: self.snapshot(mission.id).model_dump(mode="json")),
+        ):
+            try:
+                self._emit(mission, type_, payload())
+            except Exception:
+                logger.exception("Could not emit %s for mission %s", type_, mission.id)
+                if type_ == "mission_status":
+                    self._emit(mission, type_, {"mission_id": mission.id, "status": mission.status.value})
+        with contextlib.suppress(Exception):
+            self._publish_state(mission)
+        self._save_mission(mission)
+
+    async def _execute_mission(self, mission: Mission) -> None:
         mission.status = MissionStatus.running
         if self.sweeper is not None and mission.plan.mode is DataMode.live:
             try:
