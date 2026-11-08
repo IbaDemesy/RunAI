@@ -6,7 +6,7 @@ import pytest
 from runai.app.replay import ReplayTrace
 from runai.contracts.mission import EventEnvelope
 from runai.models import StepKind, StepResult
-from runai.redaction import redact_secrets
+from runai.redaction import mask_address, redact_secrets
 
 
 @pytest.mark.parametrize("name", ["HAI_API_KEY", "GLADIA_API_KEY_2", "LINKUP_API_KEY_17"])
@@ -112,3 +112,18 @@ def test_short_bearer_and_non_utf8_basic_masked(monkeypatch):
 def test_bearer_prose_is_preserved():
     text = "The bearer presents identification."
     assert redact_secrets(text) == text
+
+
+@pytest.mark.parametrize("text,leak", [
+    ("12 rue de la Paix, 75002 Paris", "rue de la Paix"),
+    ("Place Bellecour 69002 Lyon", "69002"),
+    ("I live at 221 Baker Street, London", "Baker"),
+    ("12 rue Victor Hugo 69002 Lyon", "Victor Hugo"),
+])
+def test_s6_mask_address_removes_street_and_postcode(text, leak):
+    assert leak not in mask_address(text)
+
+
+@pytest.mark.parametrize("text", ["Paris 15", "I run the 10 km race", "3 nights in Lisbon", "the 2027 marathon"])
+def test_s6_mask_address_keeps_plain_text(text):
+    assert mask_address(text) == text

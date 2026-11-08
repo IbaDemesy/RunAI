@@ -34,6 +34,7 @@ from runai.framing.holo import Phraser
 from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
+from runai.redaction import mask_address
 from runai.search.candidates import CandidateSearchError, location_hint
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
@@ -219,8 +220,9 @@ class FramingEngine:
                             f"Please enter a valid number for {slot.value}."
                         ) from exc
             holo_values = {}
-            if not choice and reply.text:
-                holo_values = await self._holo_fill(session, reply.text, values)
+            asks_origin = bool(question and question.slots == [SlotName.origin])
+            if not choice and reply.text and not asks_origin:
+                holo_values = await self._holo_fill(session, mask_address(reply.text), values)
                 values = holo_values | values
             if isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
@@ -233,6 +235,7 @@ class FramingEngine:
             turn_text = reply.text or reply.choice_id or str(values)
             if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
+            turn_text = mask_address(turn_text)
             session.revision += 1
             session.summary = None
             session.confirm_key = session.confirmed_revision = None
