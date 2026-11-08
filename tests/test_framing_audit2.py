@@ -316,3 +316,19 @@ def test_official_lookup_is_capped_and_deduplicated():
     replies = asyncio.run(go())
     assert Client.calls == MAX_OFFICIAL_LOOKUPS
     assert "limit reached" in replies[-1]
+
+
+def test_control_characters_and_ansi_are_stripped_from_a_reply():
+    eng = FramingEngine(Search(), DataMode.demo, TemplatePhraser())
+    session = start(eng)
+    origin = next(q for q in session.open_questions if q.slots == [SlotName.origin])
+    dirty = "Paris " + chr(0) + chr(27) + "[31m" + chr(0x202E)
+    after = run(eng.reply(session.id, FramingReply(revision=session.revision, text=dirty, question_id=origin.id)))
+    assert after.slots[SlotName.origin].value == "Paris"
+    assert all(chr(0) not in t.text and chr(27) not in t.text for t in after.turns)
+
+
+def test_labelled_nights_are_understood():
+    from runai.framing.interpret import extract_slots
+    assert extract_slots("nights: 2")[SlotName.nights] == 2
+    assert SlotName.nights not in extract_slots("nights: 99")

@@ -75,6 +75,20 @@ LLM_SLOTS = {
 }
 
 
+_CONTROL = re.compile("[" + chr(0) + "-" + chr(8) + chr(11) + "-" + chr(31) + chr(127) + "-" + chr(159)
+                      + chr(0x200B) + "-" + chr(0x200F) + chr(0x2028) + "-" + chr(0x202E) + chr(0x2066) + "-" + chr(0x2069) + "]")
+
+
+_ANSI = re.compile(chr(27) + r"\[[0-9;?]*[A-Za-z]")
+
+
+def _clean_text(value):
+    """Strip control, zero-width and bidi override characters from what the runner typed."""
+    if not isinstance(value, str):
+        return value
+    return _CONTROL.sub(" ", _ANSI.sub("", value)).strip() if isinstance(value, str) else value
+
+
 def _norm(text: str) -> str:
     """Case, accent and whitespace-insensitive form used to check quoted evidence."""
     folded = unicodedata.normalize("NFKD", text).casefold()
@@ -226,6 +240,10 @@ class FramingEngine:
     async def reply(self, framing_id: str, reply: FramingReply) -> FramingSession:
         async with self._locks[framing_id]:
             session = self.get(framing_id)
+            reply = reply.model_copy(update={
+                "text": _clean_text(reply.text),
+                "corrections": {name: _clean_text(value) for name, value in reply.corrections.items()},
+            })
             if reply.client_message_id and reply.client_message_id in self._seen.get(framing_id, ()):
                 return session  # duplicate delivery of a message already processed
             if self._stale_but_compatible(session, reply):

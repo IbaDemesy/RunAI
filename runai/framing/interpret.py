@@ -367,6 +367,8 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
     nights = re.search(r"\b(\d+|" + "|".join(NIGHT_NUMBERS) + r")\s*(?:nuits?|nights?)\b", text, re.IGNORECASE)
     if nights and (not nights[1].isdigit() or int(nights[1]) <= 30):
         result[SlotName.nights] = int(nights[1]) if nights[1].isdigit() else NIGHT_NUMBERS[nights[1].lower()]
+    elif (labelled := re.search(r"\b(?:nights?|nuits?)\s*[:=]\s*(\d{1,2})\b", text, re.IGNORECASE)) and int(labelled[1]) <= 30:
+        result[SlotName.nights] = int(labelled[1])
     elif re.search(r"\b(?:un|a|one)\s+week-?\s?end\b", text, re.IGNORECASE):
         result[SlotName.nights] = 2
     elif re.search(r"\b(?:une|a|one)\s+(?:semaine|week)\b", text, re.IGNORECASE):
