@@ -552,7 +552,7 @@ def test_live_lifecycle_preserves_guards_errors_and_closes_idle(tmp_path, monkey
             assert mission["questions"][0]["session_id"] == "stub-registration"
             assert runner.params[0]["start_url"] == str(DEMO_RACES["tokyo"].registration_url)
             assert all(s["h_session_id"].startswith("stub-") for s in mission["steps"] if s["data"]["automation"] == "automated")
-        if outcome == "no_stop":
-            assert all(s["status"] == StepStatus.failed.value for s in mission["steps"] if s["data"]["automation"] == "automated")
+        if outcome == "no_stop":  # no explicit stop screen, but each agent reported what it prepared
+            assert all(s["status"] != StepStatus.failed.value for s in mission["steps"] if s["data"]["automation"] == "automated")
         assert all(run.closed for run in runner.runs)
         assert not service.agents.lifecycle.active(mid)

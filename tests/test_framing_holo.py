@@ -147,7 +147,7 @@ async def test_holo_phraser_calls_h_models_and_returns_reply():
     assert reply == "Great! Which city?"
     assert seen["url"] == "https://api.hcompany.ai/v1/chat/completions"
     assert seen["auth"] == "Bearer hk-test"
-    assert seen["body"]["model"] == "holo4-35b-a3b"
+    assert seen["body"]["model"] == "holo4-27b"
     assert seen["body"]["reasoning_effort"] == "none"
     assert "Which city?" in seen["body"]["messages"][1]["content"]
     assert "Runner: " in seen["body"]["messages"][1]["content"]

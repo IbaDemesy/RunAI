@@ -129,6 +129,6 @@ def test_framing_to_launch_plan_any_city(text, cand, country):
     assert "Paris" not in plan.brief.origin
     if "depuis" in text:
         assert "origin" not in asked and plan.brief.nights == 3
-    assert plan.steps[StepKind.transport].automation is Automation.manual
+    assert plan.steps[StepKind.transport].automation is Automation.automated  # route comparison, any country
     for step in plan.steps.values():
         assert (step.task is None) is (step.automation is not Automation.automated)

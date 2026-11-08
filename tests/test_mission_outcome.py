@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from runai.app.mission import MissionStatus
 from runai.app.server import build_demo_service, create_app
+from runai.contracts.common import Automation
 from runai.contracts.journey import CostLine
 from runai.models import StepKind, StepStatus
 from tests.test_v2_backend import confirm, finish, prepare
@@ -135,6 +136,9 @@ def test_manual_steps_do_not_count_as_prepared(tmp_path):
         mid = confirm(client, prepare(client, "Tokyo")).json()["mission_id"]
         finish(client, mid)
         mission = service.get(mid)
+        mission.plan.steps[StepKind.transport].automation = Automation.manual  # a step nobody automates
+        mission.steps[StepKind.transport].status = StepStatus.completed
+        mission.steps[StepKind.transport].summary = "Not automated: prepare manually."
         for kind in mission.plan.automated_steps():
             mission.steps[kind].status = StepStatus.failed
         outcome = service.snapshot(mid).outcome

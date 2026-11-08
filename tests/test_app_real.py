@@ -295,7 +295,7 @@ def test_real_browser_rejects_a_forbidden_registration_link():
         )
 
 
-def test_real_agent_run_fails_without_a_detected_stop_point():
+def test_real_agent_run_without_stop_point_is_prepared_only_if_it_reports_something():
     class CompletedHRun:
         id = "h-session-2"
         agent_view_url = None
@@ -312,8 +312,14 @@ def test_real_agent_run_fails_without_a_detected_stop_point():
         CompletedHRun(), StepKind.transport, lambda event: None, timeout_s=10
     )
     result = asyncio.run(run.wait())
-    assert result.status is StepStatus.failed
-    assert "explicit stop" in result.error
+    assert result.status is StepStatus.completed  # it reported what it prepared: the runner finishes on the site
+
+    class SilentHRun(CompletedHRun):
+        async def wait(self, **kwargs):
+            return StepResult(kind=StepKind.transport, status=StepStatus.completed, summary="")
+
+    silent = asyncio.run(RealAgentRun(SilentHRun(), StepKind.transport, lambda event: None, timeout_s=10).wait())
+    assert silent.status is StepStatus.failed and "without reporting" in silent.error
 
 
 @pytest.mark.parametrize("screen,expected", [

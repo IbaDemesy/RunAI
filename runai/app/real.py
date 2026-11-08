@@ -187,12 +187,11 @@ class RealAgentRun:
                     result.error
                     or "The exact total accommodation price cannot be verified."
                 )
-        if result.status is StepStatus.completed:
+        if result.status is StepStatus.completed and not (result.summary or "").strip():
+            # a finished run that reports nothing is a failure; one that reports what it prepared
+            # (and, for the hotel, a verified total price) is "Prepared": the runner finishes on the site
             result.status = StepStatus.failed
-            result.error = (
-                result.error
-                or "The agent finished without an explicit stop before commitment."
-            )
+            result.error = result.error or "The agent finished without reporting what it prepared."
         result.data = {
             **result.data,
             "provenance": provenance_data(
