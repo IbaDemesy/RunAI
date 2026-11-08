@@ -306,6 +306,15 @@ def test_train_after_bib_pickup_closes_is_blocking(milan):
     assert not any(e.kind == "bib_pickup" for e in timeline.events)
 
 
+@pytest.mark.parametrize("goal,level", [(None, AlertLevel.warning), (RunnerGoal.parse("4h", MARATHON), AlertLevel.blocking)])
+def test_j6_return_using_assumed_pace_is_not_blocking(milan, goal, level):
+    timeline = build_timeline(MILAN, milan, goal=goal,
+                              departure=_train(date(2027, 4, 4), time(13, 0), time(20, 0)))
+    alert = next(a for a in timeline.alerts if a.code == "return_too_early")
+    assert alert.level is level
+    assert ("assumed 6:00/km pace" in alert.message) is (goal is None)
+
+
 def test_tight_arrival_moves_pickup_and_hotel_alerts(milan):
     timeline = build_timeline(
         MILAN,

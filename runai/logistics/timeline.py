@@ -201,11 +201,13 @@ def build_timeline(
         if leaves < finish + AFTER_FINISH:
             alerts.append(
                 Alert(
-                    level=AlertLevel.blocking,
+                    level=AlertLevel.warning if expected_assumed else AlertLevel.blocking,
                     code="return_too_early",
                     message=(
                         f"Return at {leaves:%d/%m %H:%M}: less than {format_duration(AFTER_FINISH)} after "
-                        f"the estimated finish ({finish:%H:%M}). Take a later service."
+                        f"the estimated finish ({finish:%H:%M})"
+                        + (" at an assumed 6:00/km pace" if expected_assumed else "")
+                        + ". Check a later service."
                     ),
                 )
             )
