@@ -7,7 +7,7 @@ from typing import Any
 
 _KEY_NAME = re.compile(r"[A-Z0-9_]*_API_KEY(?:_\d+)?\Z")
 _BASIC_AUTH = "RUNAI_BASIC_AUTH"
-_BEARER = re.compile(r"\b(Bearer)\s+[A-Za-z0-9._~+/=-]{16,}", re.IGNORECASE)
+_BEARER = re.compile(r"\b(Bearer)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE)
 _BASIC = re.compile(r"\b(Basic)\s+([A-Za-z0-9+/]{4,}={0,2})(?![A-Za-z0-9+/=])", re.IGNORECASE)
 _AUTH_KEY = re.compile(r"(?:proxy-)?authorization\Z", re.IGNORECASE)
 _MASK = "[REDACTED]"
@@ -25,8 +25,8 @@ def _configured_secrets() -> list[str]:
 
 def _is_basic_credential(token: str) -> bool:
     try:
-        return ":" in base64.b64decode(token, validate=True).decode()
-    except (ValueError, UnicodeDecodeError):
+        return b":" in base64.b64decode(token, validate=True)
+    except ValueError:
         return False
 
 
