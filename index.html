@@ -22,8 +22,9 @@
 <tr><td>2026-11-08T12:20:44.475547+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/08eaa889befa6168e3278be540608a013f304754">08eaa88</a></td><td><span class="badge">pass</span></td><td>143.93s</td><td>ruff: 0 / 0 / 0; pytest: 2495 / 0 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42479786893">CI</a></td></tr>
 <tr><td>2026-11-08T12:30:28.551713+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/c41d681a7ba44d3fdd031a0906e24d9bf60202d8">c41d681</a></td><td><span class="badge">pass</span></td><td>167.04s</td><td>ruff: 0 / 0 / 0; pytest: 2496 / 0 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42480554051">CI</a></td></tr>
 <tr><td>2026-11-08T12:50:56.465698+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/de6d90a9f46aaadf081d9580deada8495dda7e4e">de6d90a</a></td><td><span class="badge">fail</span></td><td>183.29s</td><td>ruff: 0 / 0 / 0; pytest: 2490 / 8 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42482133066">CI</a></td></tr>
+<tr><td>2026-11-08T12:58:17.707404+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/b5c652f1c94d95d1838dfbb9b7ee70ee37c5888b">b5c652f</a></td><td><span class="badge">fail</span></td><td>170.83s</td><td>ruff: 0 / 0 / 0; pytest: 2489 / 9 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42482681986">CI</a></td></tr>
 </table><h2>Per-wave rollup</h2><table><tr><th>Wave</th><th>Runs</th><th>Pass rate</th><th>Median duration</th><th>Regressions</th></tr>
-<tr><td></td><td>21</td><td>90%</td><td>78.93s</td><td>9</td></tr>
+<tr><td></td><td>22</td><td>86%</td><td>79.08s</td><td>10</td></tr>
 </table><h2>Regressions and fixes</h2><ul>
 <li>20261108T095350Z-e4d56a2 — Regressions: None; Fixes: None</li>
 <li>20261108T095516Z-f2f8f97 — Regressions: None; Fixes: None</li>
@@ -46,20 +47,21 @@
 <li>20261108T122044Z-08eaa88 — Regressions: None; Fixes: None</li>
 <li>20261108T123028Z-c41d681 — Regressions: None; Fixes: None</li>
 <li>20261108T125056Z-de6d90a — Regressions: tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[JP], tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[KE], tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[PT], tests.safety_acceptance.test_human_stops::test_unknown_platform_is_explicitly_manual[https://race.example.org/register], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[un marathon \xe0 Tokyo-cand1-JP], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[un semi \xe0 Chicago depuis Montr\xe9al en avion 3 nuits 800 euros-cand2-US], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[une course \xe0 Nairobi-cand0-KE], tests.test_mission_outcome::test_manual_steps_do_not_count_as_prepared; Fixes: None</li>
+<li>20261108T125817Z-b5c652f — Regressions: tests.test_framing_holo::test_holo_phraser_calls_h_models_and_returns_reply[asyncio]; Fixes: None</li>
 </ul><h2>Flaky tests (last 10 runs)</h2><p>tests.test_static_shell::test_static_shell_has_no_fixed_city_or_distance_defaults</p>
 <h2>Slowest tests of latest run</h2><ol>
-<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 10.05s</li>
-<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 4.74s</li>
-<li>pytest: tests.test_mission_store::test_completed_demo_survives_restart_with_journey_exports_and_event_replay — 2.40s</li>
-<li>pytest: tests.test_v2_backend::test_live_queued_controls_and_cancellation_keep_cancelled_status — 1.42s</li>
+<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 4.32s</li>
+<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 2.92s</li>
+<li>pytest: tests.test_mission_store::test_completed_demo_survives_restart_with_journey_exports_and_event_replay — 1.66s</li>
+<li>pytest: tests.test_mission_store::test_interrupted_mission_fails_on_restart_without_resuming_agents — 1.44s</li>
 <li>pytest: tests.test_audit2_missions::test_store_background_flush_writes_latest_document_off_loop[asyncio] — 1.41s</li>
-<li>pytest: tests.test_boot::test_replay_mode_boots_from_trace — 1.31s</li>
-<li>pytest: tests.test_recap::test_render_pdf_real_chrome — 1.27s</li>
-<li>pytest: tests.test_voice_ws::test_missing_replay_transcript_reports_error — 1.24s</li>
-<li>pytest: tests.test_v2_backend::test_linkup_snapshot_and_stream[False-True] — 1.21s</li>
-<li>pytest: tests.test_recap_adapter::test_pdf — 1.17s</li>
+<li>pytest: tests.test_v2_backend::test_live_queued_controls_and_cancellation_keep_cancelled_status — 1.31s</li>
+<li>pytest: tests.test_recap::test_render_pdf_real_chrome — 1.13s</li>
+<li>pytest: tests.test_boot::test_demo_mode_boots_and_serves_pages — 1.09s</li>
+<li>pytest: tests.test_boot::test_basic_auth_guards_pages_but_not_health — 1.05s</li>
+<li>pytest: tests.test_boot::test_replay_mode_boots_from_trace — 1.05s</li>
 </ol><h2>Suite duration trends</h2>
-<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,10.60 14.50,10.11 24.00,15.39 33.50,23.88 43.00,8.28 52.50,11.84 62.00,9.91 71.50,9.06 81.00,9.20 90.50,10.14 100.00,18.86 109.50,23.27 119.00,24.19 128.50,10.52 138.00,10.63 147.50,17.69 157.00,18.37 166.50,5.00 176.00,21.05 185.50,8.64 195.00,5.32"/></svg></p>
-<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,29.70 14.50,31.71 24.00,32.04 33.50,33.75 43.00,29.85 52.50,27.90 62.00,27.82 71.50,27.07 81.00,27.67 90.50,28.39 100.00,33.24 109.50,32.58 119.00,33.78 128.50,27.67 138.00,27.85 147.50,32.49 157.00,10.05 166.50,6.26 176.00,13.54 185.50,8.55 195.00,5.00"/></svg></p>
-<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,14.22 14.50,15.37 24.00,17.52 33.50,26.31 43.00,13.28 52.50,13.32 62.00,11.93 71.50,11.50 81.00,12.66 90.50,12.55 100.00,19.36 109.50,24.65 119.00,5.00 128.50,11.81 138.00,9.74 147.50,15.20 157.00,17.20 166.50,7.28 176.00,19.00 185.50,9.73 195.00,7.70"/></svg></p>
+<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,10.60 14.05,10.11 23.10,15.39 32.14,23.88 41.19,8.28 50.24,11.84 59.29,9.91 68.33,9.06 77.38,9.20 86.43,10.14 95.48,18.86 104.52,23.27 113.57,24.19 122.62,10.52 131.67,10.63 140.71,17.69 149.76,18.37 158.81,5.00 167.86,21.05 176.90,8.64 185.95,5.32 195.00,7.37"/></svg></p>
+<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,29.70 14.05,31.71 23.10,32.04 32.14,33.75 41.19,29.85 50.24,27.90 59.29,27.82 68.33,27.07 77.38,27.67 86.43,28.39 95.48,33.24 104.52,32.58 113.57,33.78 122.62,27.67 131.67,27.85 140.71,32.49 149.76,10.05 158.81,6.26 167.86,13.54 176.90,8.55 185.95,5.00 195.00,7.73"/></svg></p>
+<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,14.22 14.05,15.37 23.10,17.52 32.14,26.31 41.19,13.28 50.24,13.32 59.29,11.93 68.33,11.50 77.38,12.66 86.43,12.55 95.48,19.36 104.52,24.65 113.57,5.00 122.62,11.81 131.67,9.74 140.71,15.20 149.76,17.20 158.81,7.28 167.86,19.00 176.90,9.73 185.95,7.70 195.00,8.18"/></svg></p>
 </body></html>
