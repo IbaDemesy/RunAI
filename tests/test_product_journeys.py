@@ -110,18 +110,30 @@ def test_ac01_sourced_milan_happy_path(client, completed):
 IDEAS = ["My first half marathon in October", "A spring marathon, leaving from Lyon", "A mountain trail this summer"]
 
 
+IDEA_REPLIES = {
+    IDEAS[0]: "Milan, avril 2027, depuis Lyon, 900 euros, 2 nuits, train",
+    IDEAS[1]: "Milan, avril 2027, depuis Lyon, 900 euros, 2 nuits, train",
+    # a trail has no default distance: the user must give one, we never invent it
+    IDEAS[2]: "Milan, avril 2027, 25 km, depuis Lyon, 900 euros, 2 nuits, train",
+}
+
+
 @pytest.mark.parametrize("idea", IDEAS)
-@pytest.mark.xfail(strict=True, reason="AC-02, unit U3")
 def test_ac02_idea_with_one_reply(client, idea):
-    source = Path("runai/app/static/app.js").read_text()
+    source = Path("runai/app/static/app.js").read_text(encoding="utf-8")
     assert idea in source
     session = start(client, idea)
     response = client.post(f"/api/framings/{session['id']}/replies", json={
         "revision": session["revision"],
-        "text": "Milan, avril 2027, depuis Lyon, 900 euros, 2 nuits, train",
+        "text": IDEA_REPLIES[idea],
     })
     assert response.status_code == 200, response.text
-    assert response.json()["status"] == "ready_to_confirm"
+    session = response.json()
+    assert session["slots"]["city"]["value"] == "Milan", session
+    # the only remaining step is the user's own choice of the sourced event
+    assert session["status"] in {"ready_to_confirm", "choosing_candidate"}, session
+    session = drive_framing(client, session, {})
+    assert session["status"] == "ready_to_confirm", session
 
 
 @pytest.mark.parametrize(("prompt", "city", "distance"), [
