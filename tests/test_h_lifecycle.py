@@ -91,7 +91,7 @@ async def until(predicate, timeout=2.0):
 
 
 def total_active(lifecycle):
-    return sum(slot["active"] for slot in lifecycle.slots().values())
+    return lifecycle.slots()["total"]["active"]
 
 
 def test_lifecycle_retains_host_boundary_until_result(tmp_path):
@@ -275,7 +275,10 @@ def test_global_and_mission_controls(tmp_path):
         lc, fakes = make(tmp_path, accounts=2, max_concurrency=2)
         jobs = [lc.submit(StepKind.search, f"t{i}", mission_id=f"m{i % 2}") for i in range(4)]
         await until(lambda: all(j.state is JobState.running for j in jobs))
-        assert lc.slots() == {"K0": {"active": 2, "max": 2}, "K1": {"active": 2, "max": 2}}
+        assert lc.slots() == {
+            "K0": {"active": 2, "max": 2}, "K1": {"active": 2, "max": 2},
+            "total": {"active": 4, "max": 4},
+        }
 
         await lc.pause_all("m0")
         assert [j.state for j in jobs] == [JobState.paused, JobState.running] * 2
@@ -418,7 +421,9 @@ def test_retry_recovery(code):
         elif code == "answer_validation":
             assert "answer_schema" not in runner.calls[1][1]
         else:
-            assert runner.calls[0][:2] == runner.calls[1][:2]
+            first, second = ((task, {k: v for k, v in params.items() if k != "idempotency_key"})
+                             for task, params, _ in runner.calls)
+            assert first == second
     asyncio.run(scenario())
 
 
@@ -535,3 +540,42 @@ def test_retry_policy_environment_and_limit(monkeypatch):
         assert (await job.wait()).status is StepStatus.failed
         assert job.attempts == 1
     asyncio.run(scenario())
+
+
+def test_retry_uses_a_new_idempotency_key_per_attempt():
+    async def scenario():
+        runner = RetryRunner(["internal", None])
+        job = HLifecycle(runner).submit(StepKind.search, "Find a race", mission_id="mission")
+        await job.wait()
+        first, second = (call[1]["idempotency_key"] for call in runner.calls)
+        assert first.startswith(f"mission:search:{job.job_id}:")
+        assert first.endswith(":1") and second.endswith(":2")
+        assert first.rsplit(":", 1)[0] == second.rsplit(":", 1)[0]
+    asyncio.run(scenario())
+
+
+def test_caller_idempotency_key_is_kept_across_retries():
+    async def scenario():
+        runner = RetryRunner(["internal", None])
+        await HLifecycle(runner).submit(StepKind.search, "Find a race", idempotency_key="caller-key").wait()
+        assert [call[1]["idempotency_key"] for call in runner.calls] == ["caller-key", "caller-key"]
+    asyncio.run(scenario())
+
+
+def test_idempotency_keys_are_unique_across_lifecycle_instances():
+    async def scenario():
+        keys = []
+        for _ in range(2):
+            runner = RetryRunner([None])
+            job = HLifecycle(runner).submit(StepKind.search, "Find a race", mission_id="mission")
+            await job.wait()
+            assert job.job_id == "hjob-1"
+            keys.append(runner.calls[0][1]["idempotency_key"])
+        assert keys[0] != keys[1]
+        assert all(key.startswith("mission:search:hjob-1:") and key.endswith(":1") for key in keys)
+    asyncio.run(scenario())
+
+
+def test_empty_slots_total(tmp_path):
+    lc, _ = make(tmp_path, accounts=2)
+    assert lc.slots()["total"] == {"active": 0, "max": 2}

@@ -166,7 +166,7 @@ def test_cancel_running_mission_leaves_other_running_mission_untouched():
                 resume=AsyncMock(),
             )
 
-        async def start(kind, task, *, mission_id):
+        async def start(kind, task, *, mission_id, **create_params):
             return runs[mission_id]
 
         runner = SimpleNamespace(start=AsyncMock(side_effect=start), accounts=[])

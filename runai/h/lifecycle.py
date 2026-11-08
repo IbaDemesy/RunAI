@@ -14,6 +14,7 @@ import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Self
+from uuid import uuid4
 
 from hai_agents.core.api_error import ApiError
 
@@ -77,6 +78,9 @@ class HJobTimeout(HLifecycleError):
 
 class HCreditsExhausted(HLifecycleError):
     code = "h_insufficient_credit"
+
+
+HInsufficientCredit = HCreditsExhausted
 
 
 class JobState(str, Enum):
@@ -160,6 +164,7 @@ class HLifecycle:
             runner.quota_timeout_s = queue_timeout_s
         self.jobs: dict[str, HJob] = {}
         self._ids = itertools.count(1)
+        self._idempotency_namespace = uuid4().hex
         self._paused_all = asyncio.Event()
         self._paused_all.set()  # Set means globally resumed.
 
@@ -181,8 +186,10 @@ class HLifecycle:
         return [job for job in self._select(mission_id) if not job.done]
 
     def slots(self) -> dict[str, dict[str, int]]:
-        """Local slots per H key (key names only)."""
-        return {a.name: {"active": a.active, "max": a.max_concurrency} for a in self.runner.accounts}
+        """Local slots per H key (key names only) plus a `total` entry."""
+        slots = {a.name: {"active": a.active, "max": a.max_concurrency} for a in self.runner.accounts}
+        slots["total"] = {key: sum(slot[key] for slot in slots.values()) for key in ("active", "max")}
+        return slots
 
     def get(self, job_id: str) -> HJob:
         try:
@@ -231,8 +238,10 @@ class HLifecycle:
                 accounts = getattr(self.runner, "accounts", [])
                 if accounts and all(a.max_concurrency == 0 for a in accounts):
                     raise HCreditsExhausted("All H accounts have exhausted their credits.")
+                params = dict(start_params)
+                params.setdefault("idempotency_key", self._idempotency_key(job, attempt + 1))
                 try:
-                    run = await self.runner.start(job.kind, task, mission_id=job.mission_id, **start_params)
+                    run = await self.runner.start(job.kind, task, mission_id=job.mission_id, **params)
                 except HQuotaTimeout as exc:
                     raise HQuotaSaturated(str(exc), job_id=job.job_id) from exc
                 job.attempts += 1
@@ -305,6 +314,11 @@ class HLifecycle:
                 self._feedback_tasks.add(feedback)
                 feedback.add_done_callback(self._feedback_tasks.discard)
             job._done.set()
+
+    def _idempotency_key(self, job: HJob, attempt: int) -> str:
+        """Stable per job attempt, unique across lifecycle instances, so a create retry never duplicates."""
+        return (f"{job.mission_id or 'nomission'}:{job.kind.value}:{job.job_id}:"
+                f"{self._idempotency_namespace}:{attempt}")
 
     async def _feedback(self, job: HJob, run: HRun) -> None:
         try:
