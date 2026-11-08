@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RunAI · Plan my race</title>
+  <title>Demo agent view</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -11,13 +11,13 @@
   <div class="browser">
     <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><code id="url">about:blank</code></div>
     <div class="browser-body">
-      <p class="muted">Simulated live view · <span id="label"></span> · <span id="status" role="status" aria-live="polite"></span></p>
+      <p class="muted">Demo agent view · <span id="label"></span> · <span id="status" role="status" aria-live="polite"></span></p>
       <h2 id="action">Waiting for the agent…</h2>
       <ol id="history"></ol>
     </div>
   </div>
   <script>
-    const STATUS = { pending: "waiting", running: "running", paused: "paused", stopped_before_commitment: "stopped before commitment", completed: "done", failed: "failed" };
+    const STATUS = { pending: "waiting", running: "in progress", paused: "paused", stopped_before_commitment: "stopped before commitment", completed: "prepared", failed: "could not finish" };
     const session = new URLSearchParams(location.search).get("session");
     async function refresh() {
       const response = await fetch(`/api/live/${encodeURIComponent(session)}`);

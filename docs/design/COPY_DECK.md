@@ -95,166 +95,166 @@ Keep race names and official place names as supplied by their source. Preserve p
 
 | key | current FR | proposed EN | context/screen | max length | notes |
 | --- | --- | --- | --- | --- | --- |
-| app.001 |  Ouvrir le site officiel | Open the official website | Request / trip | 80 | Preserve source spacing; join fragments naturally. |
-| app.002 |  Rechargez pour réessayer, sans nouveau lancement. | Reload to try again. Your agents will not restart. | Request / trip | 80 | Preserve source spacing; join fragments naturally. |
+| app.001 |  Open the official site | Open the official website | Request / trip | 80 | Preserve source spacing; join fragments naturally. |
+| app.002 |  Reload to try again without starting again. | Reload to try again. Your agents will not restart. | Request / trip | 80 | Preserve source spacing; join fragments naturally. |
 | app.003 |  nuit | night | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
 | app.004 |  nuits | nights | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.005 | ). Réessayez. | ). Try again. | Request / trip | 32 | — |
-| app.006 | Actualisation impossible. Rechargez la page pour reprendre sans relancer. | We could not refresh your progress. Reload to reconnect without restarting. | Request / trip | 200 | — |
-| app.007 | Agent en direct ·  | Agent live · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.008 | Agrandir | Expand | Request / trip | 32 | — |
-| app.009 | Annuler la demande | Cancel request | Request / trip | 32 | — |
-| app.010 | Annuler les préparatifs | Cancel preparation | Request / trip | 32 | — |
-| app.011 | Annulé | Cancelled | Request / trip | 32 | — |
-| app.012 | Aucun agent lancé. | Preparation has not started. Confirm your plan first. | Request / trip | 80 | — |
-| app.013 | Aucun événement reçu pour cette étape. | No updates yet for this step. | Request / trip | 80 | — |
-| app.014 | Aucune action H reçue pour cette étape. | Waiting for the first update from H. | Request / trip | 80 | — |
-| app.015 | Autocar | Coach | Request / trip | 32 | — |
-| app.016 | Avion | Flight | Request / trip | 32 | — |
+| app.005 | ). Try again. | ). Try again. | Request / trip | 32 | — |
+| app.006 | Unable to refresh. Reload the page to resume without starting again. | We could not refresh your progress. Reload to reconnect without restarting. | Request / trip | 200 | — |
+| app.007 | Live agent ·  | Agent live · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.008 | Enlarge | Expand | Request / trip | 32 | — |
+| app.009 | Cancel request | Cancel request | Request / trip | 32 | — |
+| app.010 | Cancel preparation | Cancel preparation | Request / trip | 32 | — |
+| app.011 | Cancelled | Cancelled | Request / trip | 32 | — |
+| app.012 | No agents started. | Preparation has not started. Confirm your plan first. | Request / trip | 80 | — |
+| app.013 | No events received for this step. | No updates yet for this step. | Request / trip | 80 | — |
+| app.014 | No H action received for this step. | Waiting for the first update from H. | Request / trip | 80 | — |
+| app.015 | Bus | Coach | Request / trip | 32 | — |
+| app.016 | Flight | Flight | Request / trip | 32 | — |
 | app.017 | Budget | Budget | Request / trip | 32 | — |
-| app.018 | Capture indisponible. Attendez la prochaine observation ou ouvrez Replay H. | Screenshot unavailable. Wait for the next update or open H replay. | Request / trip | 200 | — |
-| app.019 | Captures H actualisées au fil des observations, pas un flux vidéo. | H screenshots update as the agent works. This is not a video stream. | Request / trip | 200 | — |
-| app.020 | Carte du séjour | Trip map | Request / trip | 32 | — |
-| app.021 | Carte indisponible. Le parcours reste disponible dans la timeline. | Map unavailable. Follow your route in the trip timeline. | Request / trip | 80 | — |
-| app.022 | Ce que RunAI a compris | Your plan so far | Request / trip | 32 | — |
-| app.023 | Cette commande vocale n’est plus active. | This voice command has expired. Speak again. | Request / trip | 80 | — |
-| app.024 | Cette demande vocale n’est plus active. | This voice request has expired. Speak again. | Request / trip | 80 | — |
-| app.025 | Choisir cette course ·  | Choose this race · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.026 | Commande des agents non appliquée. Vérifiez leur état. | Your voice command was not applied. Check the agents before trying again. | Request / trip | 200 | — |
-| app.027 | Compléter ou corriger votre demande | Add to or change your request | Request / trip | 80 | — |
-| app.028 | Connexion indisponible. Réessayez. | Connection unavailable. Check your connection and try again. | Request / trip | 80 | — |
-| app.029 | Consentement | Consent | Request / trip | 32 | — |
-| app.030 | Continuer manuellement sur le site officiel | Continue on the official website | Request / trip | 80 | — |
-| app.031 | Conversation mise à jour. | Conversation updated. | Request / trip | 32 | — |
-| app.032 | Corriger ·  | Change · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.033 | Course | Race | Request / trip | 32 | — |
-| app.034 | Course en préparation | Preparing your race | Request / trip | 32 | — |
-| app.035 | Création de compte | Account creation | Request / trip | 32 | — |
-| app.036 | Date de course | Race date | Request / trip | 32 | — |
-| app.037 | Date de course :  | Race date: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.038 | Date inconnue | Date not available | Request / trip | 32 | — |
-| app.039 | Demande acceptée. | Request received. | Request / trip | 32 | — |
-| app.040 | Demande annulée. Aucun agent lancé. | Request cancelled. No agents were started. | Request / trip | 80 | — |
-| app.041 | Depuis  | From | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.042 | Dernière capture H · étape terminée. | Last H screenshot · step finished. | Request / trip | 80 | — |
-| app.043 | Dernière capture du navigateur H ·  | Latest H browser screenshot · | Request / trip | 80 | Preserve source spacing; join fragments naturally. |
+| app.018 | Capture unavailable. Wait for the next observation or open H Replay. | Screenshot unavailable. Wait for the next update or open H replay. | Request / trip | 200 | — |
+| app.019 | H captures update with observations; this is not a video stream. | H screenshots update as the agent works. This is not a video stream. | Request / trip | 200 | — |
+| app.020 | Trip map | Trip map | Request / trip | 32 | — |
+| app.021 | Map unavailable. The route is still available in the timeline. | Map unavailable. Follow your route in the trip timeline. | Request / trip | 80 | — |
+| app.022 | What RunAI understood | Your plan so far | Request / trip | 32 | — |
+| app.023 | This voice command is no longer active. | This voice command has expired. Speak again. | Request / trip | 80 | — |
+| app.024 | This voice request is no longer active. | This voice request has expired. Speak again. | Request / trip | 80 | — |
+| app.025 | Choose this race ·  | Choose this race · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.026 | Agent command not applied. Check their status. | Your voice command was not applied. Check the agents before trying again. | Request / trip | 200 | — |
+| app.027 | Add to or correct your request | Add to or change your request | Request / trip | 80 | — |
+| app.028 | Connection unavailable. Try again. | Connection unavailable. Check your connection and try again. | Request / trip | 80 | — |
+| app.029 | Consent | Consent | Request / trip | 32 | — |
+| app.030 | Continue manually on the official site | Continue on the official website | Request / trip | 80 | — |
+| app.031 | Conversation updated. | Conversation updated. | Request / trip | 32 | — |
+| app.032 | Correct ·  | Change · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.033 | Race | Race | Request / trip | 32 | — |
+| app.034 | Race being prepared | Preparing your race | Request / trip | 32 | — |
+| app.035 | Account creation | Account creation | Request / trip | 32 | — |
+| app.036 | Race date | Race date | Request / trip | 32 | — |
+| app.037 | Race date :  | Race date: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.038 | Date unknown | Date not available | Request / trip | 32 | — |
+| app.039 | Request accepted. | Request received. | Request / trip | 32 | — |
+| app.040 | Request cancelled. No agents started. | Request cancelled. No agents were started. | Request / trip | 80 | — |
+| app.041 | From  | From | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.042 | Latest H capture · step finished. | Last H screenshot · step finished. | Request / trip | 80 | — |
+| app.043 | Latest H browser capture ·  | Latest H browser screenshot · | Request / trip | 80 | Preserve source spacing; join fragments naturally. |
 | app.044 | Distance (km) | Distance (km) | Request / trip | 32 | — |
-| app.045 | Dites-moi votre prochain objectif. Je trouve la course, le dossard, l’hôtel et le trajet, et je m’arrête avant de payer. | Tell me your next running goal. I will find your race, entry, stay and transport, and stop before payment. | Request / trip | 200 | — |
-| app.046 | Démonstration | Demo | Request / trip | 32 | — |
-| app.047 | Démonstration · demo | Demo · sample data | Request / trip | 32 | — |
-| app.048 | Départ | Start | Request / trip | 32 | — |
-| app.049 | Détails techniques | Technical details | Request / trip | 32 | — |
-| app.050 | En attente | Waiting | Request / trip | 32 | — |
-| app.051 | En cours | In progress | Request / trip | 32 | — |
-| app.052 | En pause | Paused | Request / trip | 32 | — |
-| app.053 | Envoi en cours… | Sending… | Request / trip | 32 | — |
-| app.054 | Envoyer | Send | Request / trip | 32 | — |
-| app.055 | Envoyer ·  | Send · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.056 | Estimé | Estimated | Request / trip | 32 | — |
-| app.057 | Expirée | Expired | Request / trip | 32 | — |
-| app.058 | Explorer | Explore | Request / trip | 32 | — |
-| app.059 | Exporter ce séjour | Export this trip | Request / trip | 32 | — |
-| app.060 | Historique de l’agent | Agent history | Request / trip | 32 | — |
-| app.061 | Hôtel | Stay | Request / trip | 32 | — |
-| app.062 | Illustratif | Illustrative | Request / trip | 32 | — |
-| app.063 | Inconnu | Unknown | Request / trip | 32 | — |
-| app.064 | Inscription | Registration | Request / trip | 32 | — |
-| app.065 | La demande a échoué ( | We could not send your request ( | Request / trip | 80 | — |
-| app.066 | Lancer la recherche | Start preparing | Request / trip | 32 | — |
-| app.067 | Le parcours reçu est invalide. Réessayez après actualisation. | We could not load your route. Refresh and try again. | Request / trip | 80 | — |
-| app.068 | Le replay nécessite une connexion à votre organisation H. | Sign in to your H organization to view the replay. | Request / trip | 80 | — |
-| app.069 | Lecture | Play | Request / trip | 32 | — |
-| app.070 | Microphone actif. | Microphone on. | Request / trip | 32 | — |
-| app.071 | Microphone arrêté. | Microphone off. | Request / trip | 32 | — |
-| app.072 | Mode de transport | Transport type | Request / trip | 32 | — |
-| app.073 | Mode indisponible. Vérifiez la connexion avant de préparer votre demande. | We could not check the mode. Check your connection before starting. | Request / trip | 200 | — |
-| app.074 | Mode non vérifié | Mode not verified | Request / trip | 32 | — |
-| app.075 | Modifier quelque chose | Change something | Request / trip | 32 | — |
-| app.076 | Mon premier semi en octobre | My first half marathon in October | Request / trip | 80 | — |
-| app.077 | Mon séjour | My trip | Request / trip | 32 | — |
-| app.078 | Nouvelle demande | Start a new request | Request / trip | 32 | — |
-| app.079 | Nouvelle valeur :  | New value: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.080 | Nuits | Nights | Request / trip | 32 | — |
-| app.081 | Ouverte | Open | Request / trip | 32 | — |
-| app.082 | Ouvrez Explorer pour commander la caméra. | Open Explore to control the camera. | Request / trip | 80 | — |
-| app.083 | Ouvrir dans un onglet | Open in a new tab | Request / trip | 32 | — |
-| hero.title | Où voulez-vous courir ? | Where do you want to run? | Request / trip | 80 | — |
-| app.085 | Paiement | Payment | Request / trip | 32 | — |
-| app.086 | Parler | Speak | Request / trip | 32 | — |
+| app.045 | Tell me your next goal. I find the race, the bib, the hotel and the trip, and I stop before paying. | Tell me your next running goal. I will find your race, entry, stay and transport, and stop before payment. | Request / trip | 200 | — |
+| app.046 | Demo | Demo | Request / trip | 32 | — |
+| app.047 | Demo · demo | Demo · sample data | Request / trip | 32 | — |
+| app.048 | Origin | Start | Request / trip | 32 | — |
+| app.049 | Technical details | Technical details | Request / trip | 32 | — |
+| app.050 | Waiting | Waiting | Request / trip | 32 | — |
+| app.051 | Running | In progress | Request / trip | 32 | — |
+| app.052 | Paused | Paused | Request / trip | 32 | — |
+| app.053 | Sending… | Sending… | Request / trip | 32 | — |
+| app.054 | Send | Send | Request / trip | 32 | — |
+| app.055 | Send ·  | Send · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.056 | Estimated | Estimated | Request / trip | 32 | — |
+| app.057 | Expired | Expired | Request / trip | 32 | — |
+| app.058 | Explore | Explore | Request / trip | 32 | — |
+| app.059 | Export this trip | Export this trip | Request / trip | 32 | — |
+| app.060 | Agent history | Agent history | Request / trip | 32 | — |
+| app.061 | Hotel | Stay | Request / trip | 32 | — |
+| app.062 | Illustrative | Illustrative | Request / trip | 32 | — |
+| app.063 | Unknown | Unknown | Request / trip | 32 | — |
+| app.064 | Registration | Registration | Request / trip | 32 | — |
+| app.065 | The request failed ( | We could not send your request ( | Request / trip | 80 | — |
+| app.066 | Start the search | Start preparing | Request / trip | 32 | — |
+| app.067 | The route received is invalid. Refresh and try again. | We could not load your route. Refresh and try again. | Request / trip | 80 | — |
+| app.068 | Replay requires signing in to your H organization. | Sign in to your H organization to view the replay. | Request / trip | 80 | — |
+| app.069 | Play | Play | Request / trip | 32 | — |
+| app.070 | Microphone on. | Microphone on. | Request / trip | 32 | — |
+| app.071 | Microphone off. | Microphone off. | Request / trip | 32 | — |
+| app.072 | Transport mode | Transport type | Request / trip | 32 | — |
+| app.073 | Mode unavailable. Check your connection before preparing your request. | We could not check the mode. Check your connection before starting. | Request / trip | 200 | — |
+| app.074 | Mode not verified | Mode not verified | Request / trip | 32 | — |
+| app.075 | Change something | Change something | Request / trip | 32 | — |
+| app.076 | My first half marathon in October | My first half marathon in October | Request / trip | 80 | — |
+| app.077 | My trip | My trip | Request / trip | 32 | — |
+| app.078 | New request | Start a new request | Request / trip | 32 | — |
+| app.079 | New value:  | New value: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.080 | Nights | Nights | Request / trip | 32 | — |
+| app.081 | Open | Open | Request / trip | 32 | — |
+| app.082 | Open Explore to control the camera. | Open Explore to control the camera. | Request / trip | 80 | — |
+| app.083 | Open in a tab | Open in a new tab | Request / trip | 32 | — |
+| hero.title | Where do you want to run? | Where do you want to run? | Request / trip | 80 | — |
+| app.085 | Payment | Payment | Request / trip | 32 | — |
+| app.086 | Speak | Speak | Request / trip | 32 | — |
 | app.087 | Pause | Pause | Request / trip | 32 | — |
-| app.088 | Point d’arrêt :  | Stopped before: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.089 | Poste manquant : Prix inconnu | Missing item: price unknown | Request / trip | 80 | — |
-| app.090 | Préférences | Preferences | Request / trip | 32 | — |
-| app.091 | Préparatifs en cours | Preparing your trip | Request / trip | 32 | — |
-| app.092 | Préparatifs terminés · à finaliser manuellement sur le site officiel | Prepared · finish on the official website | Request / trip | 80 | — |
-| app.093 | Préparé | Prepared | Request / trip | 32 | — |
-| app.094 | Période | Date range | Request / trip | 32 | — |
-| app.095 | Recherche en cours | Finding your race | Request / trip | 32 | — |
-| app.096 | Reconnexion au suivi en cours… | Reconnecting to progress updates… | Request / trip | 80 | — |
-| app.097 | Refusée | Declined | Request / trip | 32 | — |
-| app.098 | Relecture · replay | Replay · recorded session | Request / trip | 80 | — |
+| app.088 | Stop point:  | Stopped before: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.089 | Missing item: Price unknown | Missing item: price unknown | Request / trip | 80 | — |
+| app.090 | Preferences | Preferences | Request / trip | 32 | — |
+| app.091 | Preparation in progress | Preparing your trip | Request / trip | 32 | — |
+| app.092 | Preparation done · finish manually on the official site | Prepared · finish on the official website | Request / trip | 80 | — |
+| app.093 | Prepared | Prepared | Request / trip | 32 | — |
+| app.094 | Period | Date range | Request / trip | 32 | — |
+| app.095 | Searching | Finding your race | Request / trip | 32 | — |
+| app.096 | Reconnecting to updates… | Reconnecting to progress updates… | Request / trip | 80 | — |
+| app.097 | Refused | Declined | Request / trip | 32 | — |
+| app.098 | Replay · replay | Replay · recorded session | Request / trip | 80 | — |
 | app.099 | Replay | Replay | Request / trip | 32 | — |
 | app.100 | Replay H | H replay | Request / trip | 32 | — |
-| app.101 | Reprise indisponible :  | We could not resume: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.102 | RunAI réfléchit | RunAI is thinking | Request / trip | 32 | — |
-| app.103 | Réduire | Collapse | Request / trip | 32 | — |
-| app.104 | Réel | Live | Request / trip | 32 | — |
-| app.105 | Réel · live | Live · current data | Request / trip | 32 | — |
-| app.106 | Réessayer | Try again | Request / trip | 32 | — |
-| app.107 | Répondez ou parlez… | Type or speak your answer… | Request / trip | 80 | — |
-| app.108 | Réponse acceptée | Answer received | Request / trip | 32 | — |
-| app.109 | Réponse vocale non appliquée. Vérifiez la version actuelle du cadrage. | Your voice answer was not applied. Check your updated plan before answering again. | Request / trip | 200 | — |
-| app.110 | Révision vocale périmée. Vérifiez le cadrage actualisé avant de répondre. | Your plan changed while you were speaking. Review it before answering again. | Request / trip | 200 | — |
-| app.111 | Sans objet | Not needed | Request / trip | 32 | — |
-| app.112 | Session non disponible | Session unavailable | Request / trip | 32 | — |
-| app.113 | Si la vue ne s’affiche pas, ouvrez-la dans un onglet. Elle expire à la fin de l’exécution. | If the live view does not appear, open it in a new tab. It expires when the agent finishes. | Request / trip | 200 | — |
+| app.101 | Unable to resume:  | We could not resume: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.102 | RunAI is thinking | RunAI is thinking | Request / trip | 32 | — |
+| app.103 | Shrink | Collapse | Request / trip | 32 | — |
+| app.104 | Live | Live | Request / trip | 32 | — |
+| app.105 | Live · live | Live · current data | Request / trip | 32 | — |
+| app.106 | Try again | Try again | Request / trip | 32 | — |
+| app.107 | Type or speak your answer… | Type or speak your answer… | Request / trip | 80 | — |
+| app.108 | Answer accepted | Answer received | Request / trip | 32 | — |
+| app.109 | Voice answer not applied. Check the current request. | Your voice answer was not applied. Check your updated plan before answering again. | Request / trip | 200 | — |
+| app.110 | Voice revision expired. Check the updated request before answering. | Your plan changed while you were speaking. Review it before answering again. | Request / trip | 200 | — |
+| app.111 | Not applicable | Not needed | Request / trip | 32 | — |
+| app.112 | Session unavailable | Session unavailable | Request / trip | 32 | — |
+| app.113 | If the view does not appear, open it in a tab. It expires when the run ends. | If the live view does not appear, open it in a new tab. It expires when the agent finishes. | Request / trip | 200 | — |
 | app.114 | Source | Source | Request / trip | 32 | — |
-| app.115 | Source officielle | Official source | Request / trip | 32 | — |
-| app.116 | Statut de la mission :  | Trip preparation: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.117 | Suivi interrompu. La reconnexion ne relance pas les agents. | Progress updates interrupted. Reconnecting will not restart the agents. | Request / trip | 200 | — |
-| app.118 | Séjour préparé · aucun engagement automatique. | Trip prepared · nothing committed automatically. | Request / trip | 80 | — |
-| app.119 | Terminer l’enregistrement | Stop recording | Request / trip | 32 | — |
-| app.120 | Titre de page non renseigné | Page title unavailable | Request / trip | 32 | — |
-| app.121 | Tout est prêt. Vérifiez le récapitulatif avant de lancer la recherche. | Your plan is ready. Review the summary before starting preparation. | Request / trip | 200 | — |
+| app.115 | Official source | Official source | Request / trip | 32 | — |
+| app.116 | Mission status:  | Trip preparation: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.117 | Updates interrupted. Reconnecting does not restart the agents. | Progress updates interrupted. Reconnecting will not restart the agents. | Request / trip | 200 | — |
+| app.118 | Trip prepared · nothing committed automatically | Trip prepared · nothing committed automatically. | Request / trip | 80 | — |
+| app.119 | Finish recording | Stop recording | Request / trip | 32 | — |
+| app.120 | Page title unavailable | Page title unavailable | Request / trip | 32 | — |
+| app.121 | Everything is ready. Check the summary before starting the search. | Your plan is ready. Review the summary before starting preparation. | Request / trip | 200 | — |
 | app.122 | Train | Train | Request / trip | 32 | — |
-| app.123 | Transcription en cours… | Turning your speech into text… | Request / trip | 80 | — |
+| app.123 | Transcribing… | Turning your speech into text… | Request / trip | 80 | — |
 | app.124 | Transport | Transport | Request / trip | 32 | — |
-| app.125 | Transport local | Local transport | Request / trip | 32 | — |
-| app.126 | Trois agents vont naviguer pour vous. Ils s’arrêtent avant tout paiement ou envoi définitif. | Three agents will prepare your trip. They stop before any payment or final submission. | Request / trip | 200 | — |
-| app.127 | Un marathon au printemps, depuis Lyon | A spring marathon, travelling from Lyon | Request / trip | 80 | — |
-| app.128 | Un marathon au printemps, une ville, une envie… | A spring marathon, a city, a goal… | Request / trip | 80 | — |
-| app.129 | Un trail en montagne cet été | A mountain trail race this summer | Request / trip | 80 | — |
-| app.130 | Une précision ? Écrivez-la ici… | Anything to add? Type it here… | Request / trip | 80 | — |
-| app.131 | Ville | City | Request / trip | 32 | — |
-| app.132 | Voir l’agent en direct | Watch the agent live | Request / trip | 32 | — |
-| app.133 | Voiture | Car | Request / trip | 32 | — |
-| app.134 | Votre course, en discutant | Your race starts with a conversation | Request / trip | 80 | — |
-| app.135 | Votre demande, avant lancement | Review your plan before starting | Request / trip | 80 | — |
-| app.136 | Votre objectif de course | Your running goal | Request / trip | 32 | — |
-| app.137 | Votre réponse ·  | Your turn · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.138 | Vue en direct de l’agent ·  | Agent live view · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
-| app.139 | Vérifié | Verified | Request / trip | 32 | — |
+| app.125 | Local transport | Local transport | Request / trip | 32 | — |
+| app.126 | Three agents will browse for you. They stop before any payment or final submission. | Three agents will prepare your trip. They stop before any payment or final submission. | Request / trip | 200 | — |
+| app.127 | A spring marathon, leaving from Lyon | A spring marathon, travelling from Lyon | Request / trip | 80 | — |
+| app.128 | A spring marathon, a city, an idea… | A spring marathon, a city, a goal… | Request / trip | 80 | — |
+| app.129 | A mountain trail this summer | A mountain trail race this summer | Request / trip | 80 | — |
+| app.130 | Anything to add? Write it here… | Anything to add? Type it here… | Request / trip | 80 | — |
+| app.131 | City | City | Request / trip | 32 | — |
+| app.132 | Watch the agent live | Watch the agent live | Request / trip | 32 | — |
+| app.133 | Car | Car | Request / trip | 32 | — |
+| app.134 | Plan your race through conversation | Your race starts with a conversation | Request / trip | 80 | — |
+| app.135 | Your request, before starting | Review your plan before starting | Request / trip | 80 | — |
+| app.136 | Your running goal | Your running goal | Request / trip | 32 | — |
+| app.137 | Your answer ·  | Your turn · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.138 | Live agent view ·  | Agent live view · | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
+| app.139 | Verified | Verified | Request / trip | 32 | — |
 | app.140 | inconnu | unknown | Request / trip | 32 | — |
 | app.141 | inconnue | unknown | Request / trip | 32 | — |
-| app.142 | À finaliser vous-même | Ready for you to finish | Request / trip | 32 | — |
-| app.143 | À vous de répondre | Your turn | Request / trip | 32 | — |
-| app.144 | Échec | Could not finish | Request / trip | 32 | — |
-| app.145 | Écrans du séjour | Trip views | Request / trip | 32 | — |
-| app.146 | Édition | Edition | Request / trip | 32 | — |
+| app.142 | Finish it yourself | Ready for you to finish | Request / trip | 32 | — |
+| app.143 | Your turn to answer | Your turn | Request / trip | 32 | — |
+| app.144 | Failed | Could not finish | Request / trip | 32 | — |
+| app.145 | Trip screens | Trip views | Request / trip | 32 | — |
+| app.146 | Edition | Edition | Request / trip | 32 | — |
 
 ### runai/app/static/live.html
 
 | key | current FR | proposed EN | context/screen | max length | notes |
 | --- | --- | --- | --- | --- | --- |
-| live.001 | En attente de l'agent… | Waiting for the agent… | Agent live | 32 | — |
-| live.002 | Vue live simulée | Demo agent view | Agent live | 32 | — |
-| live.003 | Vue live simulée · | Demo agent view · | Agent live | 32 | — |
-| live.004 | arrêté avant engagement | stopped before commitment | Agent live | 80 | — |
-| live.005 | en attente | waiting | Agent live | 32 | — |
-| live.006 | en cours | in progress | Agent live | 32 | — |
-| live.007 | en pause | paused | Agent live | 32 | — |
-| live.008 | terminé | prepared | Agent live | 32 | — |
-| live.009 | échec | could not finish | Agent live | 32 | — |
+| live.001 | Waiting for the agent… | Waiting for the agent… | Agent live | 32 | — |
+| live.002 | Demo agent view | Demo agent view | Agent live | 32 | — |
+| live.003 | Demo agent view · | Demo agent view · | Agent live | 32 | — |
+| live.004 | stopped before commitment | stopped before commitment | Agent live | 80 | — |
+| live.005 | waiting | waiting | Agent live | 32 | — |
+| live.006 | in progress | in progress | Agent live | 32 | — |
+| live.007 | paused | paused | Agent live | 32 | — |
+| live.008 | prepared | prepared | Agent live | 32 | — |
+| live.009 | could not finish | could not finish | Agent live | 32 | — |
 
 ### runai/app/static/index.html
 
@@ -270,24 +270,24 @@ Keep race names and official place names as supplied by their source. Preserve p
 | key | current FR | proposed EN | context/screen | max length | notes |
 | --- | --- | --- | --- | --- | --- |
 | mock_api.001 | Action inconnue. | That action is unavailable. Refresh and choose an available action. | Demo feedback | 200 | — |
-| mock_api.002 | Avion | Flight | Demo feedback | 32 | — |
+| mock_api.002 | Flight | Flight | Demo feedback | 32 | — |
 | mock_api.003 | Budget | Budget | Demo feedback | 32 | — |
 | mock_api.004 | Choisissez une course proposée. | Choose one of the suggested races. | Demo feedback | 80 | — |
 | mock_api.005 | Choix inconnu. | That choice is unavailable. Choose one of the current options. | Demo feedback | 80 | — |
 | mock_api.006 | Clé de confirmation invalide. | We could not confirm your plan. Refresh and confirm again. | Demo feedback | 80 | — |
-| mock_api.007 | Course | Race | Demo feedback | 32 | — |
-| mock_api.008 | Date de course | Race date | Demo feedback | 32 | — |
+| mock_api.007 | Race | Race | Demo feedback | 32 | — |
+| mock_api.008 | Race date | Race date | Demo feedback | 32 | — |
 | mock_api.009 | Demande introuvable. | We could not find your request. Start a new request. | Demo feedback | 80 | — |
 | mock_api.010 | Distance en km | Distance in km | Demo feedback | 32 | — |
-| mock_api.011 | Départ | Start | Demo feedback | 32 | — |
+| mock_api.011 | Origin | Start | Demo feedback | 32 | — |
 | mock_api.012 | Fixtures de démonstration indisponibles. Vérifiez leur montage. | Demo race not available — try one of the suggestions. | Demo feedback | 80 | — |
 | mock_api.013 | Information inconnue. | That detail is unavailable. Check your plan and try again. | Demo feedback | 80 | — |
 | mock_api.014 | Mission déjà lancée. | Preparation has already started. Open your progress to continue. | Demo feedback | 80 | — |
 | mock_api.015 | Mission introuvable. | We could not find this trip. Open your latest request or start a new one. | Demo feedback | 200 | — |
-| mock_api.016 | Nuits | Nights | Demo feedback | 32 | — |
-| mock_api.017 | Préférences | Preferences | Demo feedback | 32 | — |
+| mock_api.016 | Nights | Nights | Demo feedback | 32 | — |
+| mock_api.017 | Preferences | Preferences | Demo feedback | 32 | — |
 | mock_api.018 | Préparé, à valider sur le site officiel. | Prepared · review on the official website. | Demo feedback | 80 | — |
-| mock_api.019 | Période | Date range | Demo feedback | 32 | — |
+| mock_api.019 | Period | Date range | Demo feedback | 32 | — |
 | mock_api.020 | Question expirée ou déjà traitée. | This question has expired or was already answered. Check for a new question. | Demo feedback | 200 | — |
 | mock_api.021 | Question obsolète. | This question has changed. Answer the latest question. | Demo feedback | 80 | — |
 | mock_api.022 | Route de démonstration inconnue. | This demo is unavailable. Try one of the suggested races. | Demo feedback | 80 | — |
@@ -296,8 +296,8 @@ Keep race names and official place names as supplied by their source. Preserve p
 | mock_api.025 | Révision obsolète. | Your plan has changed. Refresh before continuing. | Demo feedback | 80 | — |
 | mock_api.026 | Transport | Transport | Demo feedback | 32 | — |
 | mock_api.027 | Une demande existe déjà. | You already have a request. Open it to continue. | Demo feedback | 80 | — |
-| mock_api.028 | Ville | City | Demo feedback | 32 | — |
-| mock_api.029 | Édition | Edition | Demo feedback | 32 | — |
+| mock_api.028 | City | City | Demo feedback | 32 | — |
+| mock_api.029 | Edition | Edition | Demo feedback | 32 | — |
 
 ### runai/app/static/journey-view.js
 
@@ -335,7 +335,7 @@ Keep race names and official place names as supplied by their source. Preserve p
 | flyover.006 | (Contains modified Copernicus Sentinel data 2020), CC BY-NC-SA 4.0 | (Contains modified Copernicus Sentinel data 2020), CC BY-NC-SA 4.0 | Explore | 200 | — |
 | flyover.007 | <a href='https://s2maps.eu' target='_blank'>Sentinel-2 cloudless 2020</a> by EOX IT Services GmbH  | <a href='https://s2maps.eu' target='_blank'>Sentinel-2 cloudless 2020</a> by EOX IT Services GmbH | Explore | 200 | Preserve source spacing; join fragments naturally. |
 | flyover.008 | Arrivée | Finish | Explore | 32 | — |
-| flyover.009 | Départ | Start | Explore | 32 | — |
+| flyover.009 | Origin | Start | Explore | 32 | — |
 | flyover.010 | Départ / Arrivée | Start / Finish | Explore | 32 | — |
 | flyover.011 | Fichier illisible : ${error.message} | We could not read this route file. Choose another GPX or KML file. | Explore | 200 | Dynamic slot; preserve data, not implementation. |
 | flyover.012 | Impossible de charger ${url} : ${error.message}.${hint} | We could not load the route. Check your connection or choose a route file. | Explore | 200 | Dynamic slot; preserve data, not implementation. |
@@ -377,7 +377,7 @@ No user-facing literals found; contract identifiers are not UI copy.
 | journey_fallback.015 | Charger journey-contract.js avant le repli du séjour. | We could not open your trip. Reload to try again. | Explore | 80 | — |
 | journey_fallback.016 | Choisissez un séjour pour afficher sa timeline. | Choose a trip to see its timeline. | Explore | 80 | — |
 | journey_fallback.017 | Consulter le site manuellement | Open the website yourself | Explore | 80 | — |
-| journey_fallback.018 | Course | Race | Explore | 32 | — |
+| journey_fallback.018 | Race | Race | Explore | 32 | — |
 | journey_fallback.019 | Course : km ${value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}. ${GEOMETRY[segment.geometry_status]} | Race: km {distance}. {route_confidence} | Explore | 80 | Dynamic slot; preserve data, not implementation. |
 | journey_fallback.020 | Depuis ${plan.origin_public} — ${plan.date_range ? plan.date_range.join(" au ") : "Dates à préciser"} — fuseau du séjour : ${plan.timezone} | From {origin} — {date_range} — trip timezone: {timezone}. Use Dates needed when missing. | Explore | 200 | Dynamic slot; preserve data, not implementation. |
 | journey_fallback.021 | Distance invalide | That distance is unavailable. Choose a distance on the route. | Explore | 80 | — |
@@ -414,7 +414,7 @@ No user-facing literals found; contract identifiers are not UI copy.
 | journey_fallback.052 | Séjour sans carte | Trip without a map | Explore | 32 | — |
 | journey_fallback.053 | Tracé indisponible : aucun itinéraire inventé. | Route unavailable. We will not invent one. | Explore | 80 | — |
 | journey_fallback.054 | Train | Train | Explore | 32 | — |
-| journey_fallback.055 | Transport local | Local transport | Explore | 32 | — |
+| journey_fallback.055 | Local transport | Local transport | Explore | 32 | — |
 | journey_fallback.056 | Vue sans fond de carte : aucune tuile chargée. Les crédits de la carte, si utilisée, restent à afficher dans sa vue. | Map-free view. Map credits appear in the map view when available. | Explore | 200 | — |
 | journey_fallback.057 | Vérifié : géométrie sourcée, pas une réservation. | Verified route source · not a booking. | Explore | 80 | — |
 | journey_fallback.058 | estimé | estimated | Explore | 32 | — |
@@ -499,11 +499,11 @@ No user-facing literals found; contract identifiers are not UI copy.
 
 | key | current FR | proposed EN | context/screen | max length | notes |
 | --- | --- | --- | --- | --- | --- |
-| app.link_new_tab |  (nouvel onglet) |  (new tab) | Request / trip | 80 | Preserve dynamic data and source spacing. |
-| app.thinking | RunAI cherche pour vous… | RunAI is searching for you… | Request / trip | 80 | Preserve dynamic data and source spacing. |
+| app.link_new_tab |  (new tab) |  (new tab) | Request / trip | 80 | Preserve dynamic data and source spacing. |
+| app.thinking | RunAI is searching for you… | RunAI is searching for you… | Request / trip | 80 | Preserve dynamic data and source spacing. |
 | app.budget_suffix |  € max |  maximum | Request / trip | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.walk | Marche | Walk | Explore | 80 | Preserve dynamic data and source spacing. |
-| journey_fallback.flight | Vol | Flight | Explore | 80 | Preserve dynamic data and source spacing. |
+| journey_fallback.flight | Flight | Flight | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.partial | Partiel | Partial | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.illustrative | illustratif | illustrative | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.new_tab | ${label} (nouvel onglet) | {label} (new tab) | Explore | 80 | Preserve dynamic data and source spacing. |
@@ -513,6 +513,6 @@ No user-facing literals found; contract identifiers are not UI copy.
 | fakes.over_time | plus de 4h | over 4 h | Demo preparation | 80 | Preserve dynamic data and source spacing. |
 | narrate.website | Sur  | On {host} | Agent progress | 80 | Show only the public hostname and page title; preserve source spacing. |
 | flyover.file_source | fichier (GPX/KML) | Route file (GPX/KML) | Explore | 32 | Source label. |
-| framing.more_details | Dites-m’en un peu plus sur votre projet. | Tell me a little more about your running goal. | Request framing | 80 | Prompt when more details are needed. |
-| stay.export_action | Exporter  | Export  | Trip export | 32 | Append the format name; preserve trailing space. |
-| framing.not_needed |  : sans objet | : not needed | Request framing | 32 | Append to the detail label. |
+| framing.more_details | Tell me a little more about your plans. | Tell me a little more about your running goal. | Request framing | 80 | Prompt when more details are needed. |
+| stay.export_action | Export  | Export  | Trip export | 32 | Append the format name; preserve trailing space. |
+| framing.not_needed |  : not applicable | : not needed | Request framing | 32 | Append to the detail label. |
