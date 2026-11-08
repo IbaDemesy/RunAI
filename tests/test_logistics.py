@@ -95,6 +95,14 @@ def test_milan_fixture_is_sourced_and_used_without_network(milan):
     assert "post-exercise" in certificate.detail and "Elettrocardiogramma" in certificate.source.excerpt
 
 
+def test_italian_runcard_certificate_preserves_required_wording(milan):
+    path = next(path for path in milan.entry_paths if path.id == "runcard_italian_citizen")
+    certificate = next(requirement for requirement in path.requirements
+                       if requirement.kind is RequirementKind.medical_certificate)
+    assert "idoneità sportiva agonistica alla pratica dell'ATLETICA LEGGERA (D.M. 18/02/1982)" in certificate.detail
+    assert "certificates mentioning only « corsa », « podismo » or « maratona » are not valid" in certificate.detail
+
+
 def test_fixture_matching_respects_year_and_aliases():
     assert find_fixture("Marathon de Milan", 2027)
     assert find_fixture("Milano Marathon 2026") is None
