@@ -7,8 +7,9 @@
 <tr><td>2026-11-08T09:57:53.174044+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/956f35b1e2566fe45497b669969fc836b5f03a4e">956f35b</a></td><td><span class="badge">pass</span></td><td>51.87s</td><td>ruff: 0 / 0 / 0; pytest: 1673 / 0 / 3; node: 120 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42469277957">CI</a></td></tr>
 <tr><td>2026-11-08T09:59:03.041073+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/ffa199a1973a951415fa6255a4d5d9790d4275bd">ffa199a</a></td><td><span class="badge">pass</span></td><td>70.14s</td><td>ruff: 0 / 0 / 0; pytest: 1690 / 0 / 3; node: 120 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42469424359">CI</a></td></tr>
 <tr><td>2026-11-08T10:00:31.487960+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/d54a12c168d1a20d0b85eebfb7e2fb4edafeef69">d54a12c</a></td><td><span class="badge">pass</span></td><td>78.93s</td><td>ruff: 0 / 0 / 0; pytest: 1730 / 0 / 3; node: 120 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42469526677">CI</a></td></tr>
+<tr><td>2026-11-08T10:02:07.433335+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/71b13a7c5983dceb757b70357b778807a27e91ec">71b13a7</a></td><td><span class="badge">pass</span></td><td>79.32s</td><td>ruff: 0 / 0 / 0; pytest: 1739 / 0 / 3; node: 120 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42469637506">CI</a></td></tr>
 </table><h2>Per-wave rollup</h2><table><tr><th>Wave</th><th>Runs</th><th>Pass rate</th><th>Median duration</th><th>Regressions</th></tr>
-<tr><td></td><td>6</td><td>100%</td><td>65.89s</td><td>0</td></tr>
+<tr><td></td><td>7</td><td>100%</td><td>70.14s</td><td>0</td></tr>
 </table><h2>Regressions and fixes</h2><ul>
 <li>20261108T095350Z-e4d56a2 — Regressions: None; Fixes: None</li>
 <li>20261108T095516Z-f2f8f97 — Regressions: None; Fixes: None</li>
@@ -16,20 +17,21 @@
 <li>20261108T095753Z-956f35b — Regressions: None; Fixes: None</li>
 <li>20261108T095903Z-ffa199a — Regressions: None; Fixes: None</li>
 <li>20261108T100031Z-d54a12c — Regressions: None; Fixes: None</li>
+<li>20261108T100207Z-71b13a7 — Regressions: None; Fixes: None</li>
 </ul><h2>Flaky tests (last 10 runs)</h2><p>None</p>
 <h2>Slowest tests of latest run</h2><ol>
-<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 15.35s</li>
-<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 2.79s</li>
+<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 11.25s</li>
+<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 3.07s</li>
 <li>pytest: tests.test_mission_store::test_completed_demo_survives_restart_with_journey_exports_and_event_replay — 1.59s</li>
-<li>pytest: tests.test_recap_adapter::test_pdf — 1.15s</li>
-<li>pytest: tests.test_recap::test_render_pdf_real_chrome — 1.11s</li>
+<li>pytest: tests.test_recap::test_render_pdf_real_chrome — 1.20s</li>
 <li>pytest: tests.test_boot::test_demo_mode_boots_and_serves_pages — 1.09s</li>
-<li>pytest: tests.test_logistics_sweep::test_success — 1.00s</li>
-<li>pytest: tests.test_logistics_sweep::test_filtering — 1.00s</li>
-<li>pytest: tests.test_logistics_sweep::test_real_sdk_task_shapes_and_partial_failure[The query did not yield any result] — 1.00s</li>
+<li>pytest: tests.test_recap_adapter::test_pdf — 1.07s</li>
+<li>pytest: tests.test_boot::test_basic_auth_guards_pages_but_not_health — 1.06s</li>
+<li>pytest: tests.test_boot::test_replay_mode_boots_from_trace — 1.05s</li>
 <li>pytest: tests.test_logistics_sweep::test_real_sdk_task_shapes_and_partial_failure[Provider unavailable] — 1.00s</li>
+<li>pytest: tests.test_logistics_sweep::test_filtering — 1.00s</li>
 </ol><h2>Suite duration trends</h2>
-<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,7.53 43.00,6.99 81.00,12.74 119.00,21.99 157.00,5.00 195.00,8.88"/></svg></p>
-<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,9.23 43.00,13.91 81.00,14.68 119.00,18.70 157.00,9.58 195.00,5.00"/></svg></p>
-<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,6.19 43.00,7.64 81.00,10.34 119.00,21.44 157.00,5.00 195.00,5.06"/></svg></p>
+<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,7.53 36.67,6.99 68.33,12.74 100.00,21.99 131.67,5.00 163.33,8.88 195.00,6.78"/></svg></p>
+<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,9.37 36.67,14.04 68.33,14.81 100.00,18.81 131.67,9.72 163.33,5.17 195.00,5.00"/></svg></p>
+<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,7.77 36.67,9.16 68.33,11.76 100.00,22.40 131.67,6.63 163.33,6.69 195.00,5.00"/></svg></p>
 </body></html>
