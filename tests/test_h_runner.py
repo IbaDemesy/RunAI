@@ -763,3 +763,103 @@ def test_429_retry_waits_poll_interval(tmp_path):
         return asyncio.get_running_loop().time() - started
 
     assert asyncio.run(scenario()) >= 0.2
+
+
+class RecordingSessions(FakeSessions):
+    def __init__(self, *args, network_failures=0, cancel_failures=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.create_attempts = []
+        self.network_failures = network_failures
+        self.cancel_failures = cancel_failures
+
+    async def create_session(self, **params):
+        self.create_attempts.append(params)
+        if self.network_failures:
+            self.network_failures -= 1
+            raise ConnectionError("network down")
+        if self.cancel_failures:
+            self.cancel_failures -= 1
+            raise asyncio.CancelledError
+        return await super().create_session(**params)
+
+
+@pytest.mark.parametrize("screen,stop", [
+    ("payment", StopPoint.payment), ("account", StopPoint.account_creation),
+    ("health", StopPoint.health_declaration), ("consent", StopPoint.consent),
+    ("submission", StopPoint.submission), ("none", None),
+])
+def test_typed_answer_precedes_regex(screen, stop):
+    result = build_step_result(
+        StepKind.registration, "completed",
+        answer={"stop_screen": screen, "total_price": 129.0, "final_url": "https://example.org/final"},
+        last_url="https://example.org/old",
+    )
+    assert result.stop_point is stop
+    assert result.status is (StepStatus.stopped_before_commitment if stop else StepStatus.completed)
+    assert result.price_eur == result.data["price_eur"] == 129.0
+    assert str(result.url) == "https://example.org/final"
+
+
+def test_idempotency_key_is_stable_across_retry_and_increments_per_start(tmp_path):
+    sessions = RecordingSessions(create_errors=1)
+    runner = make_runner(tmp_path, sessions)
+
+    async def scenario():
+        await runner.run(StepKind.search, "x", mission_id="mission")
+        await runner.run(StepKind.search, "x", mission_id="mission")
+        await runner.run(StepKind.registration, "x", mission_id="mission")
+        await runner.run(StepKind.search, "x")
+        await runner.run(StepKind.search, "x")
+        await runner.run(StepKind.search, "x", mission_id="mission", idempotency_key="caller-key")
+
+    asyncio.run(scenario())
+    keys = [p["idempotency_key"] for p in sessions.create_attempts]
+    assert keys[:4] == ["mission:search:1", "mission:search:1", "mission:search:2", "mission:registration:1"]
+    assert keys[4] != keys[5]
+    assert keys[6] == "caller-key"
+
+
+@pytest.mark.parametrize("failure", ["network_failures", "cancel_failures"])
+def test_failed_create_keeps_idempotency_key_for_retry(tmp_path, failure):
+    sessions = RecordingSessions(**{failure: 1})
+    runner = make_runner(tmp_path, sessions)
+
+    async def scenario():
+        with pytest.raises((ConnectionError, asyncio.CancelledError)):
+            await runner.start(StepKind.search, "x", mission_id="m")
+        await runner.run(StepKind.search, "x", mission_id="m")
+        await runner.run(StepKind.search, "x", mission_id="m")
+
+    asyncio.run(scenario())
+    assert [p["idempotency_key"] for p in sessions.create_attempts] == ["m:search:1", "m:search:1", "m:search:2"]
+
+
+@pytest.mark.parametrize("event_type,data", [
+    ("AgentRunStatusChangeEvent", {"status": "failed", "error_code": "timeout"}),
+    ("AgentErrorEvent", {"error": "failed", "error_code": "timeout"}),
+    ("AgentErrorEvent", {"error": "failed", "info": {"error_code": "timeout"}}),
+])
+def test_event_error_code_and_metrics_are_preserved(tmp_path, event_type, data):
+    async def scenario():
+        run = await make_runner(tmp_path, FakeSessions()).start(StepKind.search, "x")
+        run._absorb({"type": event_type, "data": data})
+        run._absorb({"type": "MetricsUpdateEvent", "data": {"metrics": {"steps": 4}}})
+        run._absorb({"type": "MetricsUpdateEvent", "data": {"metrics": {"steps": None, "total_cost": 0.2}}})
+        assert run.error_code == "timeout"
+        assert run.metrics["steps"] == 4 and run.metrics["total_cost"] == 0.2
+        await run.close()
+
+    asyncio.run(scenario())
+
+
+def test_result_reports_elapsed_seconds(tmp_path):
+    result = asyncio.run(make_runner(tmp_path, FakeSessions()).run(StepKind.search, "x"))
+    assert result.data["elapsed_s"] >= 0
+
+
+def test_run_many_forwards_mission_id_to_idempotency_keys(tmp_path):
+    sessions = RecordingSessions()
+    runner = make_runner(tmp_path, sessions)
+    asyncio.run(runner.run_many([HStep(StepKind.search, "x"), HStep(StepKind.registration, "y")], mission_id="batch"))
+    keys = sorted(p["idempotency_key"] for p in sessions.create_attempts)
+    assert keys == ["batch:registration:1", "batch:search:1"]
