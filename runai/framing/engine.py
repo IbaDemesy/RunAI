@@ -112,7 +112,7 @@ class FramingEngine:
                     ):
                         raise ValueError()
                     if name == SlotName.nights and not number.is_integer():
-                        raise ValueError()
+                        raise FramingError("Please enter a whole number for nights.")
                 elif value is None and name != SlotName.budget:
                     continue
                 elif name not in (
@@ -283,6 +283,10 @@ class FramingEngine:
                     return self._clarify(session, reply, guidance)
                 raise FramingError(guidance)
             self._validate(values)
+            for name in (SlotName.budget, SlotName.nights, SlotName.distance_km):
+                if values.get(name) is not None:
+                    number = float(values[name])
+                    values[name] = int(number) if name == SlotName.nights else number
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
                 values[SlotName.origin] = None if public == public_origin("") else public

@@ -82,6 +82,45 @@ async def ready(engine):
 
 
 @pytest.mark.anyio
+async def test_summary_budget_string_correction_is_typed():
+    engine = FramingEngine(Search(1), DataMode.demo)
+    session = await ready(engine)
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={SlotName.budget: "800"},
+    ))
+    assert type(session.slots[SlotName.budget].value) is float
+    assert session.slots[SlotName.budget].value == 800.0
+    assert session.summary.budget_eur == 800.0
+    assert session.summary.lines[-1] == "Budget: €800"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("slot,raw,expected", [
+    (SlotName.nights, "2.0", 2), (SlotName.nights, "3", 3),
+    (SlotName.distance_km, "10", 10.0),
+])
+async def test_numeric_corrections_are_stored_as_numbers(slot, raw, expected):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={slot: raw},
+    ))
+    assert session.slots[slot].value == expected
+    assert type(session.slots[slot].value) is type(expected)
+
+
+@pytest.mark.anyio
+async def test_fractional_nights_correction_is_rejected_with_message():
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    with pytest.raises(FramingError, match="nights"):
+        await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.nights: "2.5"},
+        ))
+    assert engine.get(session.id) == session
+
+
+@pytest.mark.anyio
 @pytest.mark.parametrize("text", ["en fait plutôt Porto", "actually Porto", "rather Porto", "instead Porto"])
 async def test_place_correction_does_not_answer_origin(text):
     engine = FramingEngine(Search(), DataMode.demo)
