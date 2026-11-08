@@ -108,6 +108,7 @@ class FramingEngine:
         self._missions: dict[str, MissionSnapshot] = {}
         self._manual: set[str] = set()
         self._search_keys: dict[str, tuple] = {}
+        self._origin_misses: dict[str, int] = {}
 
     def get(self, framing_id: str) -> FramingSession:
         return self.sessions[framing_id].model_copy(deep=True)
@@ -220,6 +221,11 @@ class FramingEngine:
             if answer and reply.text and not choice and not reply.corrections:
                 decision = await self._decide(session, answer, pending)
             if decision is not None:
+                if not decision["values"] and decision.get("origin_rejected"):
+                    retry = self._origin_retry(framing_id)
+                    if retry:
+                        return self._clarify(session, reply, retry)
+                    decision["values"] = {SlotName.origin: public_origin("")}
                 if not decision["values"]:
                     return self._clarify(
                         session, reply,
@@ -323,7 +329,13 @@ class FramingEngine:
                 holo_values = {}
                 if isinstance(origin := values.get(SlotName.origin), str):
                     public = public_origin(origin)
-                    values[SlotName.origin] = None if public == public_origin("") else public
+                    if public == public_origin(""):
+                        retry = self._origin_retry(framing_id)
+                        if retry:
+                            return self._clarify(session, reply, retry)
+                    else:
+                        self._origin_misses.pop(framing_id, None)
+                    values[SlotName.origin] = public
                 values = {
                     name: _mask_address(value)
                     if name in (SlotName.origin, SlotName.preferences) and isinstance(value, str)
@@ -347,7 +359,7 @@ class FramingEngine:
                     values[name] = int(number) if name == SlotName.nights else number
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
-                values[SlotName.origin] = None if public == public_origin("") else public
+                values[SlotName.origin] = public
             turn_text = reply.text or reply.choice_id or "; ".join(
                 f"{name.value}: {value}" for name, value in values.items()
             )
@@ -495,6 +507,7 @@ class FramingEngine:
             return None
         intent = raw.get("intent") if raw.get("intent") in LLM_INTENTS else "answer"
         values: dict[SlotName, object] = {}
+        origin_rejected = False
         haystack = _norm(_mask_address(text))
         updates = raw.get("updates")
         for update in updates if isinstance(updates, list) else []:
@@ -519,6 +532,7 @@ class FramingEngine:
                     continue
                 value = _mask_address(public_origin(value))
                 if value == public_origin("") or not _valid_place(value):
+                    origin_rejected = True
                     continue
             elif name in (SlotName.city, SlotName.race):
                 if not isinstance(value, str) or not _valid_place(value, 200 if name == SlotName.race else 80):
@@ -534,8 +548,17 @@ class FramingEngine:
             if current.is_known and current.value is not None and not update.get("replaces_previous"):
                 continue
             values[name] = value
-        return {"intent": intent, "values": values,
+        return {"intent": intent, "values": values, "origin_rejected": origin_rejected,
                 "message": _sanitize_ack(raw.get("message"), allow_question=intent == "unclear")}
+
+    def _origin_retry(self, framing_id: str) -> str | None:
+        """Ask for a city when the origin was only a street address; give up after two tries."""
+        misses = self._origin_misses.get(framing_id, 0) + 1
+        if misses > 2:
+            self._origin_misses.pop(framing_id, None)
+            return None
+        self._origin_misses[framing_id] = misses
+        return "I only need the city or neighbourhood you leave from, not a street address. Which city is that?"
 
     @staticmethod
     def _next_question_text(session: FramingSession) -> str:
