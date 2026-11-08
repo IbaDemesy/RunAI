@@ -1,13 +1,9 @@
-"""Reformulation conversationnelle des questions de cadrage.
-
-Le moteur reste maître des slots et de la confirmation : le phraser ne fait
-que transformer la prochaine question en une réplique naturelle. Toute erreur
-retombe sur une formulation locale, jamais sur un blocage du cadrage.
-"""
+"""Conversational phrasing and extraction, with a local fallback on failure."""
 
 import json
 import os
 import re
+from calendar import month_name
 from collections.abc import Mapping, Sequence
 from datetime import date
 from typing import Protocol
@@ -22,28 +18,34 @@ H_MODELS_URL = "https://api.hcompany.ai/v1/chat/completions"
 MAX_REPLY_CHARS = 420
 HISTORY_TURNS = 30
 
-SYSTEM_PROMPT = """Tu es RunAI, un assistant chaleureux qui aide un coureur à préparer sa course (inscription, hôtel, transport).
-On te donne la conversation, ce qui est déjà compris et la prochaine question à poser.
-Réponds en français en vouvoyant le coureur, en une ou deux phrases courtes, comme dans une vraie discussion :
-- rebondis brièvement sur le dernier message du coureur ;
-- termine par la prochaine question, reformulée naturellement, et ne pose que celle-là ;
-- n'invente aucun nom de course, date, prix, horaire ou disponibilité qui ne figure pas dans le contexte ;
-- ne demande jamais de paiement, de mot de passe ni de donnée médicale.
-Réponds uniquement par la réplique, sans guillemets ni préambule."""
+SYSTEM_PROMPT = """You are Holo, RunAI's friendly assistant helping a runner plan race registration, hotels and transport.
+You receive optional conversation history, known context and a question to ask.
+The question may be a framing question or an agent follow-up; no framing question or history is required.
+Understand both French and English input, but always reply in English in one or two short sentences:
+- briefly acknowledge the runner's last message when available;
+- end with exactly one question: the given question, phrased naturally;
+- when the given question already contains options, keep those options verbatim and never add new ones;
+- never invent race names, dates, prices, times or availability absent from the context;
+- never ask for payment, passwords or health data.
+Return only the reply, without quotation marks or a preamble."""
 
 
-EXTRACT_PROMPT = """Tu extrais des informations de voyage d'un message de coureur, en français ou en anglais.
-Réponds uniquement par un objet JSON avec, seulement si le message les donne clairement, ces clés :
-- "city" : ville de la course (une seule ville ; si plusieurs sont citées avec une préférence, la préférée) ;
-- "origin" : ville de départ du coureur ;
-- "race" : nom officiel de l'événement s'il est cité ;
-- "date_window" : mois et année visés, au format « décembre 2026 » (déduis l'année à partir de la date du jour : le prochain mois correspondant) ;
-- "budget" : budget total en euros (nombre) ;
-- "nights" : nombre de nuits (entier) ;
-- "transport_mode" : "train", "flight", "car" ou "bus".
-N'invente rien. Si rien n'est donné, réponds {}."""
+EXTRACT_PROMPT = """Extract travel information from a runner's French or English message.
+Return only a JSON object containing these keys only when clearly given:
+- "city": race city (one city; use the preferred one if several are mentioned);
+- "origin": runner's departure city;
+- "race": official event name, only if stated (never a generic distance label such as "10K" or "half marathon");
+- "distance_km": a number in kilometers (half marathon=21.0975, marathon=42.195, 10K=10), greater than 0 and at most 400;
+- "race_date": ISO yyyy-mm-dd, only when a full date including year is given;
+- "edition": edition year (yyyy), within three years of today;
+- "date_window": English month name and year, e.g. "April 2027". If year is missing, infer it from today: a month already passed means next year, otherwise this year;
+- "budget": total budget in euros (number);
+- "nights": number of nights (integer);
+- "transport_mode": "train", "flight", "car" or "bus".
+Dates must be valid and years within three years of today. Never invent information. Return {} if nothing is given."""
 
-EXTRACTABLE = {"city", "origin", "race", "date_window", "budget", "nights", "transport_mode"}
+EXTRACTABLE = {"city", "origin", "race", "date_window", "budget", "nights", "transport_mode",
+               "distance_km", "race_date", "edition"}
 TRANSPORTS = {"train", "flight", "car", "bus"}
 
 
@@ -58,16 +60,43 @@ class Phraser(Protocol):
 
 
 def clean_extraction(raw: object) -> dict[str, object]:
-    """Garde seulement des valeurs plausibles et typées ; le moteur revalide ensuite."""
+    """Keep plausible, typed values; the engine validates them again."""
     if not isinstance(raw, dict):
         return {}
     values: dict[str, object] = {}
     for name in EXTRACTABLE & raw.keys():
         value = raw[name]
-        if name in {"city", "origin", "race", "date_window"}:
+        if name == "date_window":
+            if not isinstance(value, str):
+                continue
+            match = re.fullmatch(r"([A-Za-z]+)(?: (\d{4}))?", value.strip())
+            if not match or match[1] not in month_name:
+                continue
+            today = date.today()
+            month = list(month_name).index(match[1])
+            year = int(match[2]) if match[2] else today.year + (month < today.month)
+            if abs(year - today.year) <= 3:
+                values[name] = f"{month_name[month]} {year}"
+        elif name in {"city", "origin", "race"}:
             place = name in {"city", "origin"}
             if isinstance(value, str) and 1 < len(value.strip()) <= 80 and not (place and re.search(r"\d", value)):
                 values[name] = value.strip()
+        elif name == "race_date":
+            if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+                try:
+                    parsed = date.fromisoformat(value)
+                except ValueError:
+                    continue
+                if abs(parsed.year - date.today().year) <= 3:
+                    values[name] = value
+        elif name == "edition":
+            if isinstance(value, str) and re.fullmatch(r"\d{4}", value):
+                value = int(value)
+            if isinstance(value, int) and not isinstance(value, bool) and abs(value - date.today().year) <= 3:
+                values[name] = str(value)
+        elif name == "distance_km":
+            if isinstance(value, int | float) and not isinstance(value, bool) and 0 < value <= 400:
+                values[name] = float(value)
         elif name == "budget":
             if isinstance(value, int | float) and not isinstance(value, bool) and 0 < value < 100_000:
                 values[name] = float(value)
@@ -85,21 +114,21 @@ def _user_turns(turns: Sequence[FramingTurn]) -> int:
 
 def _history(turns: Sequence[FramingTurn]) -> str:
     return "\n".join(
-        ("Coureur : " if turn.role == "user" else "RunAI : ") + turn.text
+        ("Runner: " if turn.role == "user" else "Holo: ") + turn.text
         for turn in list(turns)[-HISTORY_TURNS:]
-    ) or "(début de conversation)"
+    ) or "(start of conversation)"
 
 
 class TemplatePhraser:
-    """Formulation locale, sans réseau : démo et repli de Holo."""
+    """Local, network-free wording for demos and fallback."""
 
     async def phrase(
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> str:
         if _user_turns(turns) <= 1:
-            opener = "Avec plaisir, on prépare ça ensemble."
+            opener = "Let's plan this together."
         else:
-            opener = "C'est noté."
+            opener = "Got it."
         return f"{opener} {question}"
 
     async def extract(
@@ -109,7 +138,7 @@ class TemplatePhraser:
 
 
 class HoloPhraser:
-    """Modèle de chat de H (API Models, compatible OpenAI), avec la clé des agents."""
+    """H chat model (OpenAI-compatible Models API), using the agents key."""
 
     def __init__(
         self,
@@ -157,13 +186,13 @@ class HoloPhraser:
     async def extract(
         self, text: str, known: Mapping[str, str], turns: Sequence[FramingTurn] = ()
     ) -> dict[str, object]:
-        context = "\n".join(f"- {name} : {value}" for name, value in known.items()) or "- rien encore"
+        context = "\n".join(f"- {name}: {value}" for name, value in known.items()) or "- nothing yet"
         content = await self._complete([
             {"role": "system", "content": EXTRACT_PROMPT},
             {"role": "user", "content": (
-                f"Date du jour : {date.today().isoformat()}\n"
-                f"Conversation récente :\n{_history(turns)}\n\nDéjà compris :\n{context}\n\n"
-                f"Nouveau message à analyser : {text}"
+                f"Today: {date.today().isoformat()}\n"
+                f"Recent conversation:\n{_history(turns)}\n\nKnown context:\n{context}\n\n"
+                f"New message to analyze: {text}"
             )},
         ], 200, operation="chat.extract")
         match = re.search(r"\{.*\}", content, re.DOTALL)
@@ -176,12 +205,12 @@ class HoloPhraser:
         self, turns: Sequence[FramingTurn], question: str, known: Mapping[str, str]
     ) -> list[dict[str, str]]:
         history = _history(turns)
-        context = "\n".join(f"- {name} : {value}" for name, value in known.items()) or "- rien encore"
+        context = "\n".join(f"- {name}: {value}" for name, value in known.items()) or "- nothing yet"
         return [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "user",
-                "content": f"Conversation :\n{history}\n\nDéjà compris :\n{context}\n\nProchaine question : {question}",
+                "content": f"Conversation:\n{history}\n\nKnown context:\n{context}\n\nQuestion to ask: {question}",
             },
         ]
 
@@ -190,6 +219,6 @@ class HoloPhraser:
     ) -> str:
         content = await self._complete(self._messages(turns, question, known), 200, operation="chat.phrase")
         content = redact_secrets(content.strip().strip('"«» ').strip())
-        if not content or len(content) > MAX_REPLY_CHARS or "?" not in content:
+        if not content or len(content) > MAX_REPLY_CHARS or content.count("?") != 1 or not content.endswith("?"):
             return await self._fallback.phrase(turns, question, known)
         return content
