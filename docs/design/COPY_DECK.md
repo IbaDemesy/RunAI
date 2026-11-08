@@ -213,7 +213,7 @@ Keep race names and official place names as supplied by their source. Preserve p
 | app.116 | Mission status:  | Trip preparation: | Request / trip | 32 | Preserve source spacing; join fragments naturally. |
 | app.117 | Updates interrupted. Reconnecting does not restart the agents. | Progress updates interrupted. Reconnecting will not restart the agents. | Request / trip | 200 | — |
 | app.118 | Trip prepared · nothing committed automatically | Trip prepared · nothing committed automatically. | Request / trip | 80 | — |
-| app.119 | Finish recording | Stop recording | Request / trip | 32 | — |
+| app.119 | Stop recording | Stop recording | Request / trip | 32 | — |
 | app.120 | Page title unavailable | Page title unavailable | Request / trip | 32 | — |
 | app.121 | Everything is ready. Check the summary before starting the search. | Your plan is ready. Review the summary before starting preparation. | Request / trip | 200 | — |
 | app.122 | Train | Train | Request / trip | 32 | — |
@@ -502,6 +502,7 @@ No user-facing literals found; contract identifiers are not UI copy.
 | app.link_new_tab |  (new tab) |  (new tab) | Request / trip | 80 | Preserve dynamic data and source spacing. |
 | app.thinking | RunAI is searching for you… | RunAI is searching for you… | Request / trip | 80 | Preserve dynamic data and source spacing. |
 | app.budget_suffix |  € max |  maximum | Request / trip | 80 | Preserve dynamic data and source spacing. |
+| app.partner_gladia | Voice by Gladia solaria-1 · live | Voice by Gladia solaria-1 · live | Request / trip | 48 | Partner attribution; keep product names. |
 | journey_fallback.walk | Marche | Walk | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.flight | Flight | Flight | Explore | 80 | Preserve dynamic data and source spacing. |
 | journey_fallback.partial | Partiel | Partial | Explore | 80 | Preserve dynamic data and source spacing. |
