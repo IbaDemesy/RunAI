@@ -243,8 +243,10 @@
     if (state.state === "listening" && state.partial) {
       const partial = el("p", state.partial, "voice-partial"); partial.setAttribute("aria-live", "polite"); controls.append(partial);
     }
-    const badge = el("p", "Voice by Gladia solaria-1 · live", "partner-badge");
-    badge.setAttribute("data-partner", "gladia"); controls.append(badge);
+    const voiceMode = mission?.mode || framing?.mode;
+    const voiceLabel = voiceMode === "demo" ? "Demo voice" : voiceMode === "replay" ? "Recorded voice" : "Voice input";
+    const badge = el("p", voiceLabel, "partner-badge");
+    badge.setAttribute("data-partner", "voice"); controls.append(badge);
     (screen.querySelector(".ask") || screen).append(controls);
   }
   function slotText(name, slot) {
