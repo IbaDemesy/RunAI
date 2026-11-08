@@ -289,7 +289,7 @@ async def test_holo_extract_empty_or_malformed_output(content):
 
 @pytest.mark.anyio
 async def test_engine_fills_new_slots_from_mocked_holo_transport():
-    year = date.today().year
+    year = date.today().year + 1
     details = {"distance_km": 21.0975, "race_date": f"{year}-04-18", "edition": str(year)}
     seen = []
 
