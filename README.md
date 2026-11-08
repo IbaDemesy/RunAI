@@ -19,11 +19,11 @@ RunAI en utilise **4** : Devin, H Company, Gladia et Linkup.
 
 | Partenaire | Rôle | Utilisé ? | Documentation |
 | --- | --- | --- | --- |
-| Devin | Développement, exploration multi-agents, CI | Utilisé : PR, CI, workflow de 16 agents | [Guide du hackathon](Infos/devin_hackathon_guide.pdf) |
+| Devin | Développement, exploration multi-agents, CI | Utilisé : PR, CI, workflow de 16 agents | [Devin docs](https://docs.devin.ai) |
 | H Company | Agents de navigation et d’automatisation | Câblé en V2 via lifecycle ; recette intégrée live restant à faire | [API Agents](https://hub.hcompany.ai/agents-api/overview) |
 | Gladia | Transcription audio, sans TTS | Câblé au shell vocal ; smoke tests conditionnels | [Documentation](https://docs.gladia.io) |
 | Linkup | Recherche de candidats et fiche course sourcée | Câblé au cadrage V2 ; smoke tests conditionnels | [Documentation](https://docs.linkup.so/pages/documentation/get-started/introduction), [notes RunAI](docs/LINKUP.md) |
-| Stripe | Paiements | Non prévu pour le moment | [Ressource du hackathon](Infos/stripe_credits.pdf) |
+| Stripe | Paiements | Non prévu pour le moment | [Hackathon offer](https://stripe.com/startup-benefits/computer-use-agents-hackathon) |
 
 Les liens utiles, documents et crédits sont regroupés dans [Infos/README.md](Infos/README.md).
 
@@ -101,7 +101,7 @@ holo mcp install vscode
 ### Installation de Gladia
 
 1. Créez un compte et une clé API sur [app.gladia.io](https://app.gladia.io/apikeys).
-2. Sur la [page de facturation](https://app.gladia.io/billing), appliquez le code promo indiqué dans [le PDF des crédits](Infos/gladia_hackathon_credits.pdf) pour obtenir les 1 000 crédits du hackathon.
+2. Sur la [page de facturation](https://app.gladia.io/billing), apply the hackathon promo code (kept privately by the team) to get the 1,000 hackathon credits.
 3. Renseignez `GLADIA_API_KEY` dans `.env`.
 
 Le SDK Python `gladiaio-sdk` est installé via `requirements.txt` et lit automatiquement `GLADIA_API_KEY`.
@@ -174,7 +174,7 @@ Le déploiement continu vers Render sera ajouté avec le backend.
 ```text
 RunAI/
 ├── .github/workflows/  # CI (ci.yml) et smoke tests (smoke.yml)
-├── Infos/              # Guides partenaires et récapitulatif des crédits
+├── Infos/              # Public partner documentation links
 ├── docs/               # Notation, démo, recherches, notes partenaires
 ├── scripts/
 │   ├── test_gladia.py  # Test de l’API Gladia
