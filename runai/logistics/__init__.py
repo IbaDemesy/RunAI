@@ -1,10 +1,7 @@
-"""Logistique du week-end : règlement sourcé, « feu vert règlement » et timeline exportable en .ics.
+"""Weekend logistics: sourced rules, eligibility and an .ics-exportable timeline.
 
-    rules = extract_rules(race)                      # fixture Milan, cache, sinon Linkup
-    verdict = eligibility(rules, profile, situation, RunnerGoal.parse("3h45-3h55", 42.195))
-    timeline = build_timeline(race, rules, arrival=train, hotel=hotel, departure=train_back)
-    ics = to_ics(timeline)
-"""
+Use `extract_rules(race)`, `eligibility(rules, profile, situation, goal)`,
+`build_timeline(rules, ...)` and `timeline_to_ics(timeline)`."""
 
 from runai.logistics.durations import (
     format_duration,

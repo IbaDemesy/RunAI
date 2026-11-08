@@ -36,7 +36,7 @@ class JourneyRecap:
 
 
 def _money(value: Money | None) -> str:
-    return f"{value.amount} {value.currency}" if value else "non chiffré (not priced)"
+    return f"{value.amount} {value.currency}" if value else "not priced"
 
 
 def _local(value: datetime, timezone: str | None) -> datetime:
@@ -54,21 +54,21 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     """
     plan = JourneyPlan.model_validate(redact_secrets(plan.model_dump(mode="json")))
     identity = f"{plan.schema_version} · {plan.mission_id} · revision {plan.revision} · {plan.mode.value}"
-    prepared = "Préparé ≠ réservé : aucun élément réservé, payé ou confirmé."
-    mode = {"demo": "DEMO — données de démonstration, pas des données live.",
-            "replay": "REPLAY — rejeu enregistré, pas des données live.",
-            "live": "Mode live — préparation uniquement."}[plan.mode.value]
+    prepared = "Prepared ≠ booked: nothing booked, paid or confirmed."
+    mode = {"demo": "DEMO — demonstration data, not live data.",
+            "replay": "REPLAY — recorded replay, not live data.",
+            "live": "Live mode — preparation only."}[plan.mode.value]
     notice = f"{identity} · {mode} {prepared}"
     facts = [KeyFact(label="Snapshot", value=identity),
-             KeyFact(label="Origine publique", value=public_origin(plan.origin_public))]
+             KeyFact(label="Public origin", value=public_origin(plan.origin_public))]
     if plan.date_range:
         facts.append(KeyFact(label="Dates", value=" → ".join(d.isoformat() for d in plan.date_range)))
     budget = plan.budget
     facts.extend([
-        KeyFact(label="Total connu" + (" partiel" if not budget.complete else ""),
+        KeyFact(label="Known total" + (" (partial)" if not budget.complete else ""),
                 value=f"{budget.known_total} {budget.currency}"),
-        KeyFact(label="Plafond", value=str(budget.cap) + " " + budget.currency if budget.cap is not None else "inconnu"),
-        KeyFact(label="Dépassement du plafond", value="unknown" if budget.over_cap is None else str(budget.over_cap).lower()),
+        KeyFact(label="Budget cap", value=str(budget.cap) + " " + budget.currency if budget.cap is not None else "unknown"),
+        KeyFact(label="Over budget cap", value="unknown" if budget.over_cap is None else str(budget.over_cap).lower()),
     ])
     for line in budget.lines:
         facts.append(KeyFact(label=line.label, value=_money(line.money), detail=line.note))
@@ -79,10 +79,10 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
 
     def point(title: str, value: datetime | None, timezone: str | None, detail: str) -> None:
         if value is None:
-            facts.append(KeyFact(label=title, value="Horaire inconnu", detail=detail))
+            facts.append(KeyFact(label=title, value="Time not provided", detail=detail))
             return
         local = _local(value, timezone)
-        text = f"{local.isoformat()} ({timezone or 'fuseau inconnu'}) · {detail}"
+        text = f"{local.isoformat()} ({timezone or 'unknown timezone'}) · {detail}"
         if local.utcoffset() is None:
             facts.append(KeyFact(label=title, value=text))
             return
@@ -92,23 +92,23 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     labels = {s.id: public_origin(plan.origin_public) if s.kind is StopKind.home else s.label for s in plan.stops}
     stops = {s.id: s for s in plan.stops}
     for stop in plan.stops:
-        point(labels[stop.id], stop.local_time, stop.timezone, f"Étape {stop.id}")
+        point(labels[stop.id], stop.local_time, stop.timezone, f"Stop {stop.id}")
     for segment in plan.segments:
         label = f"{labels[segment.from_stop_id]} → {labels[segment.to_stop_id]} ({segment.mode.value})"
-        state = ("non automatisé" if segment.automation.value != "automated" else "automatisation prévue, non engagée")
+        state = ("not automated" if segment.automation.value != "automated" else "automation planned, not committed")
         detail = f"{segment.id} · {state} ({segment.automation.value}) · {_money(segment.cost)}"
         url = segment.manual_url or (str(segment.limitation.manual_url) if segment.limitation and segment.limitation.manual_url else None)
         if url:
-            manual_source = RecapSource(label=f"Lien officiel manuel : {label}", url=url,
+            manual_source = RecapSource(label=f"Manual official link: {label}", url=url,
                                        found_by="JourneyPlan", used_for=state)
             manual_sources.append(manual_source)
-            detail += f" · Lien officiel manuel : {url}"
-        elif state == "non automatisé":
-            detail += " · lien officiel inconnu"
+            detail += f" · Manual official link: {url}"
+        elif state == "not automated":
+            detail += " · official link unknown"
         facts.append(KeyFact(label=label, value=detail))
-        point(f"Départ : {label}", segment.departure,
+        point(f"Departure: {label}", segment.departure,
               stops[segment.from_stop_id].timezone or segment.timezone, detail)
-        point(f"Arrivée : {label}", segment.arrival,
+        point(f"Arrival: {label}", segment.arrival,
               stops[segment.to_stop_id].timezone or segment.timezone, detail)
         if segment.limitation:
             checklist.append(segment.limitation.message)
@@ -116,13 +116,13 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
         checklist.append(f"{limitation.code} : {limitation.message}")
         if limitation.manual_url:
             manual_sources.append(RecapSource(label=limitation.code, url=str(limitation.manual_url),
-                                             found_by="JourneyPlan", used_for="Alternative manuelle"))
+                                             found_by="JourneyPlan", used_for="Manual alternative"))
     sources = [RecapSource(label=p.label or p.kind.value, url=str(p.url) if p.url else None,
                            found_by=p.kind.value) for p in plan.sources]
     # A fixed serialization epoch is metadata, not a claimed journey time.
     generated = min(stamps).astimezone(UTC) if stamps else datetime(1970, 1, 1, tzinfo=UTC)
     recap = Recap(id=f"{plan.mission_id}-r{plan.revision}-{plan.mode.value}", generated_at=generated,
-                  race_name=f"Séjour · {plan.mission_id}", race_city="", runner_name="toi",
+                  race_name=f"Trip · {plan.mission_id}", race_city="", runner_name="you",
                   runner_fictive=False, notice=notice, key_facts=facts,
                   timeline=sorted(timeline, key=lambda item: item.start), checklist=checklist,
                   sources=sources + manual_sources, calendar_timezone="UTC")
@@ -133,10 +133,10 @@ def render_html(snapshot: JourneyRecap) -> str:
     """Reuse the recap HTML, excluding its mission-only EUR/payment summary."""
     html = legacy_html(snapshot.recap)
     html = re.sub(r'<div class="kpis">.*?<div class="fine">.*?</div>', '', html, count=1, flags=re.DOTALL)
-    html = re.sub(r" · généré le .*?</div>", "</div>", html, count=1)
-    return html.replace("Ton week-end de course est prêt", "Ton séjour est préparé, pas réservé").replace(
-        "Les liens ci-dessus te ramènent à la page où l'agent s'est arrêté.",
-        "Les liens officiels manuels sont à vérifier par toi.")
+    html = re.sub(r" · generated on .*?</div>", "</div>", html, count=1)
+    return html.replace("Your race weekend is ready", "Your trip is prepared, not booked").replace(
+        "The links above take you back to the page where the agent stopped.",
+        "You must check the manual official links yourself.")
 
 
 def render_pdf(snapshot: JourneyRecap, chrome: str | None = None) -> bytes:

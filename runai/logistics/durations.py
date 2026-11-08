@@ -1,4 +1,4 @@
-"""Lecture et écriture de durées de course (« 2h10 », « 3h15' », « 2:10:30 », « 130 min »)."""
+"""Parse and format race durations ('2h10', '3h15', '2:10:30', '130 min')."""
 
 import re
 from datetime import timedelta
@@ -19,16 +19,16 @@ def parse_duration(text: str) -> timedelta:
         return timedelta(hours=int(match.group(1)), minutes=int(match.group(2) or 0))
     if match := _MIN.match(value):
         return timedelta(minutes=int(match.group(1)))
-    raise ValueError(f"durée non reconnue : {text!r}")
+    raise ValueError(f"Unrecognized duration: {text!r}")
 
 
 def parse_duration_range(text: str) -> tuple[timedelta, timedelta]:
-    """`2h10-2h15` -> (2h10, 2h15) ; une seule valeur -> (v, v). Les bornes sont remises dans l'ordre."""
+    """`2h10-2h15` -> (2h10, 2h15); a single value -> (v, v). Sort bounds in ascending order."""
     parts = [part for part in _RANGE.split(text.strip()) if part]
     if len(parts) == 2 and re.fullmatch(r"\d{1,2}", parts[1]) and "h" in parts[0]:
         parts[1] = parts[0].split("h")[0] + "h" + parts[1]
     if len(parts) not in (1, 2):
-        raise ValueError(f"objectif non reconnu : {text!r}")
+        raise ValueError(f"Unrecognized goal: {text!r}")
     values = sorted(parse_duration(part) for part in parts)
     return values[0], values[-1]
 

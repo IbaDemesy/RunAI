@@ -92,7 +92,7 @@ def test_milan_fixture_is_sourced_and_used_without_network(milan):
         assert milan.source_url(field), field
     abroad = next(p for p in milan.entry_paths if p.id == "runcard_foreign_resident_abroad")
     certificate = next(r for r in abroad.requirements if r.kind is RequirementKind.medical_certificate)
-    assert "après effort" in certificate.detail and "Elettrocardiogramma" in certificate.source.excerpt
+    assert "post-exercise" in certificate.detail and "Elettrocardiogramma" in certificate.source.excerpt
 
 
 def test_fixture_matching_respects_year_and_aliases():
@@ -173,7 +173,7 @@ def test_milan_french_runner_without_licence_is_orange_with_human_todo(milan):
     assert verdict.entry_path_id == "runcard_foreign_resident_abroad"
     assert verdict.alternative_path_id == "sport_tourism"
     certificate = next(r for r in verdict.reasons if r.code == "medical_certificate")
-    assert "électrocardiogramme au repos ET après effort" in certificate.message
+    assert "resting AND post-exercise ECG" in certificate.message
     assert certificate.source_url.startswith("https://indd.adobe.com/")
     assert [todo.kind for todo in verdict.human_todo] == [RequirementKind.runcard, RequirementKind.medical_certificate]
     assert all(not hasattr(todo, "done") for todo in verdict.human_todo)
@@ -280,13 +280,13 @@ def test_milan_timeline_is_dated_in_race_timezone(milan):
     assert timeline.ok and not timeline.alerts
     assert timeline.events == sorted(timeline.events, key=lambda e: e.start)
     by_title = {event.title: event for event in timeline.events}
-    pickup = by_title["Retrait du dossard"]
+    pickup = by_title["Bib pick-up"]
     assert pickup.start.isoformat() == "2027-04-03T14:10:00+02:00" and not pickup.assumption
-    start = by_title["Départ Wizz Air Milano Marathon 2027"]
+    start = by_title["Start Wizz Air Milano Marathon 2027"]
     assert start.start.isoformat() == "2027-04-04T08:15:00+02:00" and start.source_url
-    assert by_title["Fermeture du sas (1re vague)"].start.time() == time(7, 55)
-    assert by_title["Arrivée estimée"].start.time() == time(12, 10)
-    assert "Barrière km 21,1 : 3h15 de course" in by_title
+    assert by_title["Corral closes (first wave)"].start.time() == time(7, 55)
+    assert by_title["Estimated finish"].start.time() == time(12, 10)
+    assert "Cut-off km 21.1: 3h15 elapsed race time" in by_title
     assert start.in_timezone("UTC").start.isoformat() == "2027-04-04T06:15:00+00:00"
 
 
@@ -294,7 +294,7 @@ def test_train_after_bib_pickup_closes_is_blocking(milan):
     timeline = build_timeline(MILAN, milan, arrival=_train(date(2027, 4, 3), time(13, 30), time(20, 40)))
     alert = next(a for a in timeline.alerts if a.code == "bib_pickup_missed")
     assert alert.level is AlertLevel.blocking and not timeline.ok
-    assert "19:00" in alert.message and "tiers" in alert.message and "matin de la course" in alert.message
+    assert "19:00" in alert.message and "someone else" in alert.message and "race morning" in alert.message
     assert not any(e.kind == "bib_pickup" for e in timeline.events)
 
 
@@ -346,7 +346,7 @@ def test_ics_export(milan):
     assert ics.count("BEGIN:VEVENT") == len(timeline.events)
     assert "DTSTART:20270404T061500Z" in lines
     assert all(len(line.encode()) <= 75 for line in lines)
-    assert "SUMMARY:Retrait du dossard (estimé)" in lines
+    assert "SUMMARY:Bib pick-up (estimated)" in lines
     assert ics == to_ics(timeline, now=datetime(2026, 11, 7, 12, 0))
 
 

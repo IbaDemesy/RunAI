@@ -1,9 +1,8 @@
-"""Planificateur porte à porte : FramingSummary + résultats d'étapes → JourneyPlan v1.
+"""Door-to-door planner: FramingSummary and step results to JourneyPlan v1.
 
-Aucune donnée inventée : coordonnée ou horaire inconnu = None, liaison sans géométrie sourcée =
-`illustrative` (segment droit entre deux points connus) ou `unavailable`. La cohérence horaire réutilise
-`logistics.build_timeline` ; ses alertes deviennent avertissements et limitations du plan.
-"""
+Unknown coordinates and times remain None. Links without sourced geometry are
+`illustrative` (straight lines between known points) or `unavailable`. Timing checks
+reuse `logistics.build_timeline`; its alerts become plan warnings and limitations."""
 
 import re
 from datetime import UTC, date, datetime, time, timedelta
@@ -47,13 +46,13 @@ from runai.logistics.timeline import build_timeline
 COVERED_MODES = {"train": SegmentMode.train, "flight": SegmentMode.flight}
 MODE_ALIASES = {"avion": "flight", "plane": "flight", "vol": "flight", "air": "flight", "rail": "train"}
 HUB_KIND = {SegmentMode.train: StopKind.station, SegmentMode.flight: StopKind.airport}
-HUB_LABEL = {SegmentMode.train: ("Gare", "Train"), SegmentMode.flight: ("Aéroport", "Vol")}
+HUB_LABEL = {SegmentMode.train: ("Station", "Train"), SegmentMode.flight: ("Airport", "Flight")}
 CHAPTER_LABELS = {
-    ChapterId.home: "Chez moi",
-    ChapterId.arrival_hotel: "Arrivée et hôtel",
-    ChapterId.bib_pickup: "Dossard",
-    ChapterId.race: "Départ et course",
-    ChapterId.return_trip: "Retour",
+    ChapterId.home: "Home",
+    ChapterId.arrival_hotel: "Arrival and hotel",
+    ChapterId.bib_pickup: "Bib pick-up",
+    ChapterId.race: "Start and race",
+    ChapterId.return_trip: "Return",
 }
 HOTEL_FAR_MIN = 60
 DEFAULT_TRANSFER = timedelta(minutes=45)
@@ -64,7 +63,7 @@ _STREET_WORD = re.compile(r"\b(rue|avenue|ave|boulevard|street|road|lane|strasse
 
 
 class Place(BaseModel):
-    """Lieu fourni par une étape ou l'humain. Le domicile doit être public (ville ou quartier)."""
+    """Place provided by a step or a human. Home must be public (city or neighborhood)."""
 
     label: str
     coords: Coords | None = None
@@ -79,13 +78,13 @@ class Place(BaseModel):
             try:
                 ZoneInfo(value)
             except (ZoneInfoNotFoundError, ValueError) as exc:
-                raise ValueError(f"fuseau IANA inconnu : {value}") from exc
+                raise ValueError(f"Unknown IANA timezone: {value}") from exc
         return value
 
 
 def _aware(value: datetime | None) -> datetime | None:
     if value is not None and value.utcoffset() is None:
-        raise ValueError("horaire sans fuseau : fournir un datetime avec offset")
+        raise ValueError("time without timezone: provide a datetime with an offset")
     return value
 
 
@@ -151,7 +150,7 @@ class JourneyInputs(BaseModel):
 
 
 def public_origin(text: str) -> str:
-    """Ville ou quartier seulement : retire numéro de rue et code postal d'une adresse."""
+    """City or neighborhood only: remove street numbers and postcodes from an address."""
     parts = re.split(r"[,;\n]", text)
     cleaned = []
     for part in parts:
@@ -161,7 +160,7 @@ def public_origin(text: str) -> str:
         if re.search(r"\d", value) and not re.fullmatch(r"[^\d]+\d{1,2}(?:e|er|ème|th|st|nd|rd)", value):
             continue
         cleaned.append(value)
-    return cleaned[0] if cleaned else "Origine non précisée"
+    return cleaned[0] if cleaned else "Origin not specified"
 
 
 def normalize_mode(mode: str | None) -> str | None:
@@ -184,7 +183,7 @@ def race_timezone(summary: FramingSummary, inputs: JourneyInputs) -> str | None:
 
 
 def journey_timeline(summary: FramingSummary, inputs: JourneyInputs) -> Timeline | None:
-    """Timeline métier (logistics) du séjour ; None si date ou fuseau de course inconnus."""
+    """Trip logistics timeline; None if the race date or timezone is unknown."""
     tz = race_timezone(summary, inputs)
     race = summary.race
     rules = inputs.race.rules
@@ -233,8 +232,8 @@ def _leg(choice: TransportChoice | None) -> TransportLeg | None:
     mode = normalize_mode(choice.mode)
     return TransportLeg(
         mode=mode if mode in {"train", "flight", "bus", "car"} else "other",
-        origin=choice.from_hub.label if choice.from_hub else "Départ",
-        destination=choice.to_hub.label if choice.to_hub else "Arrivée",
+        origin=choice.from_hub.label if choice.from_hub else "Start",
+        destination=choice.to_hub.label if choice.to_hub else "Arrival",
         depart=choice.depart,
         arrive=choice.arrive,
         reference=choice.reference,
@@ -316,7 +315,7 @@ def _public_home(home: Place, label: str) -> Place:
     if home.coords:
         coords = Coords(lat=round(home.coords.lat, PUBLIC_COORD_DECIMALS), lon=round(home.coords.lon, PUBLIC_COORD_DECIMALS))
     confidence = home.confidence if home.confidence is not Confidence.verified else Confidence.estimated
-    provenance = home.provenance.model_copy(update={"label": "Origine publique", "url": None}) if home.provenance else None
+    provenance = home.provenance.model_copy(update={"label": "Public origin", "url": None}) if home.provenance else None
     return home.model_copy(update={"label": label, "coords": coords, "confidence": confidence, "provenance": provenance})
 
 
@@ -329,7 +328,7 @@ def _line(lid: str, category: CostCategory, label: str, money: Money | None, cur
     usable = _same_currency(money, currency)
     note = None
     if money and usable is None:
-        note = f"Montant en {money.currency} non converti"
+        note = f"Amount in {money.currency} not converted"
     elif usable is None:
         note = missing_note
     return CostLine(id=lid, category=category, label=label, money=usable, note=note)
@@ -344,7 +343,7 @@ def _transport_cost(legs: list[TransportChoice | None], currency: str) -> Money 
         currency=currency,
         collected_at=max(c.collected_at for c in costs),
         confidence=Confidence.estimated,
-        provenance=Provenance(kind=ProvenanceKind.derived, label="Somme des trajets",
+        provenance=Provenance(kind=ProvenanceKind.derived, label="Sum of legs",
                               collected_at=max(c.collected_at for c in costs)),
     )
 
@@ -352,11 +351,11 @@ def _transport_cost(legs: list[TransportChoice | None], currency: str) -> Money 
 def _transport_lines(legs: list[TransportChoice | None], currency: str, covered: bool) -> list[CostLine]:
     total = _transport_cost(legs, currency)
     if total or not any(leg and _same_currency(leg.cost, currency) for leg in legs):
-        return [_line("c-transport", CostCategory.transport, "Transport aller-retour", total, currency,
-                      "Prix d'un trajet inconnu" if covered else "Non couvert")]
+        return [_line("c-transport", CostCategory.transport, "Transport", total, currency,
+                      "Leg price unknown" if covered else "Not covered")]
     return [_line(f"c-transport-{name}", CostCategory.transport, f"Transport {label}", leg.cost if leg else None,
-                  currency, "Prix du trajet inconnu")
-            for name, label, leg in zip(("out", "back"), ("aller", "retour"), legs, strict=True)]
+                  currency, "Leg price unknown")
+            for name, label, leg in zip(("out", "back"), ("outbound", "return"), legs, strict=True)]
 
 
 def _chapter(cid: ChapterId, label: str, stops: list[str | None], segments: list[str | None],
@@ -389,9 +388,9 @@ def _provenances(plan: JourneyPlan) -> list[Provenance]:
 def _check_mode(mode: DataMode, sources: list[Provenance]) -> None:
     kinds = {p.kind for p in sources}
     if mode is DataMode.live and kinds & {ProvenanceKind.fixture, ProvenanceKind.replay}:
-        raise ValueError("plan live contenant des données fixture/replay")
+        raise ValueError("live plan contains fixture/replay data")
     if mode is DataMode.replay and ProvenanceKind.fixture in kinds:
-        raise ValueError("plan replay contenant des données fixture")
+        raise ValueError("replay plan contains fixture data")
 
 
 def build_journey_plan(
@@ -403,14 +402,14 @@ def build_journey_plan(
     previous: JourneyPlan | None = None,
     currency: str = "EUR",
 ) -> JourneyPlan:
-    """Construit le JourneyPlan ; révision = previous.revision + 1 si un choix a changé, sinon inchangée."""
+    """Build JourneyPlan; increment previous.revision only if a choice changed."""
     if mode is not DataMode.demo and inputs.race.rules and inputs.race.rules.origin == "fixture":
-        raise ValueError(f"plan {mode.value} contenant un règlement fixture")
+        raise ValueError(f"{mode.value} plan contains fixture rules")
     tz = race_timezone(summary, inputs)
     b = _Builder(tz or "UTC")
     if tz is None:
         b.limitations.append(Limitation(code="race_timezone_unknown",
-                                        message="Fuseau de la course inconnu : horaires affichés sans conversion locale."))
+                                        message="Race timezone unknown: times shown without local conversion."))
     origin = public_origin(summary.origin_public)
     home = b.stop("home", StopKind.home, _public_home(inputs.home, origin), origin)
     mode_name = normalize_mode(inputs.outbound.mode if inputs.outbound else summary.transport_mode)
@@ -418,11 +417,11 @@ def build_journey_plan(
     race_in = inputs.race
 
     hotel_place = inputs.hotel.place if inputs.hotel else None
-    hotel = b.stop("hotel", StopKind.hotel, hotel_place, "Hôtel non choisi", tz=tz)
+    hotel = b.stop("hotel", StopKind.hotel, hotel_place, "Hotel not selected", tz=tz)
     if hotel_place is None:
-        b.warnings.append("Hôtel non choisi.")
+        b.warnings.append("Hotel not selected.")
     elif inputs.hotel.minutes_to_start and inputs.hotel.minutes_to_start > HOTEL_FAR_MIN:
-        b.warnings.append(f"Hôtel à {inputs.hotel.minutes_to_start} min du départ : vérifier le trajet du matin.")
+        b.warnings.append(f"Hotel {inputs.hotel.minutes_to_start} min from the start: check your morning journey.")
 
     hub_out = hub_in = out_seg = back_seg = arrival_seg = home_seg = None
     return_stops: list[str | None] = []
@@ -432,9 +431,9 @@ def build_journey_plan(
         hub_label, main_label = HUB_LABEL[main_mode]
         kind = HUB_KIND[main_mode]
         out = inputs.outbound
-        hub_out = b.stop("hub-out", kind, out.from_hub if out else None, f"{hub_label} de départ à choisir",
+        hub_out = b.stop("hub-out", kind, out.from_hub if out else None, f"Departure {hub_label} to select",
                          out.depart if out else None, tz=inputs.home.timezone)
-        hub_in = b.stop("hub-in", kind, out.to_hub if out else None, f"{hub_label} d'arrivée à choisir",
+        hub_in = b.stop("hub-in", kind, out.to_hub if out else None, f"Arrival {hub_label} to select",
                         out.arrive if out else None, tz=tz)
         home_seg = b.segment("s-home-hub", home, hub_out, SegmentMode.local)
         limitation = None
@@ -442,8 +441,8 @@ def build_journey_plan(
             url = out.manual_url if out else None
             limitation = Limitation(
                 code="transport_manual" if out else "transport_not_covered",
-                message=(f"{main_label} non automatisé : vérifier et réserver soi-même via le lien officiel."
-                         if out else f"{main_label} non trouvé : à rechercher et réserver soi-même."),
+                message=(f"{main_label} not automated: check and book yourself via the official link."
+                         if out else f"{main_label} not found: search and book yourself."),
                 step="transport",
                 manual_url=url,
             )
@@ -451,14 +450,14 @@ def build_journey_plan(
                             limitation=limitation)
         arrival_seg = b.segment("s-hub-hotel", hub_in, hotel, SegmentMode.local)
     else:
-        label = summary.transport_mode or "inconnu"
+        label = summary.transport_mode or "unknown"
         out = inputs.outbound
         url = out.manual_url if out else None
         home_seg = b.segment(
             "s-home-hotel", home, hotel, SegmentMode.local, choice=out,
             limitation=Limitation(
                 code="transport_not_covered",
-                message=f"Transport « {label} » non couvert : organiser le trajet soi-même.",
+                message=f"Transport '{label}' not covered: arrange your journey yourself.",
                 step="transport",
                 manual_url=url,
             ),
@@ -470,13 +469,13 @@ def build_journey_plan(
     if back_mode:
         kind = HUB_KIND[back_mode]
         back_from = b.stop("hub-back-from", kind, back.from_hub if back else None,
-                           "Départ retour à choisir", back.depart if back else None, tz=tz)
+                           "Return departure to select", back.depart if back else None, tz=tz)
         back_to = b.stop("hub-back-to", kind, back.to_hub if back else None,
-                         "Arrivée retour à choisir", back.arrive if back else None, tz=inputs.home.timezone)
+                         "Return arrival to select", back.arrive if back else None, tz=inputs.home.timezone)
         back_limitation = None
         if back is None or back.automation is not Automation.automated:
             back_limitation = Limitation(code="return_not_found" if back is None else "transport_manual",
-                                         message="Retour non trouvé." if back is None else "Retour non automatisé : vérifier le lien officiel.",
+                                         message="Return not found." if back is None else "Return not automated: check the official link.",
                                          step="transport", manual_url=back.manual_url if back else None)
         back_seg = b.segment("s-main-back", back_from, back_to, back_mode, choice=back,
                              cost=back.cost if back else None, limitation=back_limitation)
@@ -487,7 +486,7 @@ def build_journey_plan(
         back_seg = b.segment("s-main-back", hotel, home, SegmentMode.local, choice=back,
                              cost=back.cost if back else None, limitation=Limitation(
                                  code="transport_not_covered", step="transport",
-                                 message=f"Transport retour « {back.mode if back else 'inconnu'} » non couvert : organiser soi-même.",
+                                 message=f"Return transport '{back.mode if back else 'unknown'}' not covered: arrange it yourself.",
                                  manual_url=back.manual_url if back else None))
         b.segments[back_seg].automation = Automation.manual if back and back.manual_url else Automation.not_covered
         return_segments, return_stops = [back_seg], [home]
@@ -495,33 +494,33 @@ def build_journey_plan(
     timeline = journey_timeline(summary, inputs)
     bib_when = race_in.bib_pickup_time
     if race_in.bib_pickup_closes:
-        b.warnings.append(f"Fermeture du retrait : {race_in.bib_pickup_closes.isoformat()} (pas un rendez-vous).")
+        b.warnings.append(f"Bib pick-up closes: {race_in.bib_pickup_closes.isoformat()} (not an appointment).")
     start_when = race_in.start_time
     if timeline:
         for event in timeline.events:
-            if event.kind == "race" and event.title.startswith("Départ") and not event.assumption and start_when is None:
+            if event.kind == "race" and event.title.startswith("Start") and not event.assumption and start_when is None:
                 start_when = event.start
 
     bib = None
     bib_seg = None
     if race_in.bib_pickup or bib_when or race_in.bib_pickup_closes:
-        bib = b.stop("bib", StopKind.bib_pickup, race_in.bib_pickup, "Retrait des dossards", bib_when, tz=tz)
+        bib = b.stop("bib", StopKind.bib_pickup, race_in.bib_pickup, "Bib pick-up", bib_when, tz=tz)
         bib_seg = b.segment("s-hotel-bib", hotel, bib, SegmentMode.local,
                             duration_min=inputs.hotel.minutes_to_bib_pickup if inputs.hotel else None)
         if bib_when is None:
-            b.warnings.append("Heure de visite au retrait des dossards à choisir ; la fermeture n'est pas un rendez-vous.")
+            b.warnings.append("Choose your bib pick-up time; closing time is not an appointment.")
     else:
-        b.warnings.append("Retrait des dossards inconnu.")
-    start = b.stop("start", StopKind.race_start, race_in.start, "Départ à confirmer", start_when, tz=tz)
+        b.warnings.append("Bib pick-up unknown.")
+    start = b.stop("start", StopKind.race_start, race_in.start, "Start to confirm", start_when, tz=tz)
     start_seg = b.segment("s-hotel-start", hotel, start, SegmentMode.local,
                           duration_min=inputs.hotel.minutes_to_start if inputs.hotel else None)
     finish = race_seg = None
     if race_in.finish or race_in.track:
-        finish = b.stop("finish", StopKind.race_finish, race_in.finish, "Arrivée à confirmer", tz=tz)
+        finish = b.stop("finish", StopKind.race_finish, race_in.finish, "Finish to confirm", tz=tz)
         track_limitation = None
         if not race_in.track:
             track_limitation = Limitation(code="race_track_unavailable",
-                                          message="Tracé officiel non fourni : pas de survol de course.")
+                                          message="Official route not provided: no race flyover.")
         race_seg = b.segment("s-race", start, finish, SegmentMode.race, geometry=race_in.track,
                              provenance=race_in.track_provenance, verified=race_in.track_provenance is not None,
                              limitation=track_limitation)
@@ -545,19 +544,19 @@ def build_journey_plan(
         currency=currency,
         cap=summary.budget_eur if currency == "EUR" else None,
         lines=[
-            _line("c-reg", CostCategory.registration, "Inscription", race_in.registration_cost, currency, "Tarif inconnu"),
-            _line("c-hotel", CostCategory.accommodation, f"Hôtel {nights} nuit{'s' if nights > 1 else ''}",
-                  inputs.hotel.cost if inputs.hotel else None, currency, "Prix inconnu"),
+            _line("c-reg", CostCategory.registration, "Registration", race_in.registration_cost, currency, "Fare unknown"),
+            _line("c-hotel", CostCategory.accommodation, f"Hotel {nights} night{'s' if nights > 1 else ''}",
+                  inputs.hotel.cost if inputs.hotel else None, currency, "Price unknown"),
             *_transport_lines(legs, currency, main_mode is not None),
-            _line("c-local", CostCategory.local, "Transports locaux", inputs.local_cost, currency, "Non estimé"),
+            _line("c-local", CostCategory.local, "Local transport", inputs.local_cost, currency, "Not estimated"),
         ],
     )
     if not budget.complete:
-        b.warnings.append("Budget partiel : postes non chiffrés exclus du total.")
+        b.warnings.append("Partial budget: unpriced items excluded from the total.")
     if mode is DataMode.demo:
-        b.warnings.insert(0, "Données de démonstration : course, hôtel et horaires fictifs.")
+        b.warnings.insert(0, "Demo data: fictional race, hotel and times.")
     elif mode is DataMode.replay:
-        b.warnings.insert(0, "Rejeu d'une trace enregistrée : pas des données live.")
+        b.warnings.insert(0, "Replay of a recorded trace: not live data.")
 
     limitations = list(summary.limitations)
     for item in b.limitations:
@@ -585,22 +584,22 @@ def build_journey_plan(
 
 
 def _consistency(b: _Builder, inputs: JourneyInputs, timeline: Timeline | None, tz: str | None) -> None:
-    for name, choice in (("aller", inputs.outbound), ("retour", inputs.return_trip)):
+    for name, choice in (("outbound", inputs.outbound), ("return", inputs.return_trip)):
         if choice and choice.depart and choice.arrive and choice.arrive.astimezone(UTC) <= choice.depart.astimezone(UTC):
             b.limitations.append(Limitation(code="transport_times_inverted", step="transport",
-                                            message=f"Trajet {name} : arrivée avant le départ, horaires à vérifier."))
+                                            message=f"Leg {name}: arrival before departure, check the times."))
     out, race = inputs.outbound, inputs.race
     if out and out.arrive and race.bib_pickup_closes:
         transfer = timedelta(minutes=inputs.hotel.minutes_to_bib_pickup) if inputs.hotel and \
             inputs.hotel.minutes_to_bib_pickup else DEFAULT_TRANSFER
         if out.arrive + transfer > race.bib_pickup_closes:
             b.limitations.append(Limitation(code="bib_pickup_unreachable", step="transport",
-                                            message="Arrivée trop tardive pour retirer le dossard avant la fermeture."))
+                                            message="Arrival too late to collect your bib before closing."))
     if timeline is None:
         if out and out.arrive and race.start_time and out.arrive >= race.start_time:
             b.limitations.append(Limitation(code="arrival_after_start", step="transport",
-                                            message="Arrivée après le départ de la course."))
-        b.warnings.append("Date ou fuseau de course inconnus : cohérence horaire non vérifiée.")
+                                            message="Arrival after the race start."))
+        b.warnings.append("Race date or timezone unknown: timing consistency not checked.")
         return
     for alert in timeline.alerts:
         if not (race.start_time or (race.rules and race.rules.start_time)) and alert.code in {

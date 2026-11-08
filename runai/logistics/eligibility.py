@@ -1,4 +1,4 @@
-"""« Feu vert règlement » : éligibilité (documents, âge, clôture) et réalisme de l'objectif face aux barrières."""
+"""Rules eligibility (documents, age, deadline) and goal feasibility against cut-offs."""
 
 from datetime import date, timedelta
 
@@ -32,12 +32,11 @@ def eligibility(
     *,
     today: date | None = None,
 ) -> Eligibility:
-    """Feu vert / orange / rouge, avec raisons sourcées et pièces que l'humain doit fournir lui-même.
+    """Green / orange / red, with sourced reasons and documents you must provide yourself.
 
-    - rouge : inscription impossible (clos, trop jeune, aucune voie) ou objectif plus lent que la barrière ;
-    - orange : faisable mais à préparer (certificat avec examens, marge < 10 %, règle introuvable) ;
-    - vert : rien de bloquant. Les marges sont des estimations (allure régulière, formule de Riegel).
-    """
+    Red: registration impossible (closed, too young, no entry path) or goal beyond cut-off.
+    Orange: feasible with preparation (certificate exams, margin under 10%, missing rule).
+    Green: no blockers. Margins are estimates (steady pace, Riegel formula)."""
     profile = profile or RunnerProfile()
     situation = situation or RunnerSituation(residence_country=profile.nationality)
     today = today or date.today()
@@ -48,7 +47,7 @@ def eligibility(
             Reason(
                 level=Light.red,
                 code="registration_closed",
-                message=f"Inscriptions closes depuis le {rules.registration_deadline:%d/%m/%Y}.",
+                message=f"Registration closed since {rules.registration_deadline:%d/%m/%Y}.",
                 source_url=rules.source_url("registration_deadline"),
             )
         )
@@ -57,7 +56,7 @@ def eligibility(
             Reason(
                 level=Light.red,
                 code="too_young",
-                message=f"Âge minimum {rules.min_age} ans dans l'année de la course.",
+                message=f"Minimum age {rules.min_age} in the year of the race.",
                 source_url=rules.source_url("min_age"),
             )
         )
@@ -69,7 +68,7 @@ def eligibility(
         todos.append(
             HumanTodo(
                 kind=RequirementKind.other,
-                label="Vérifier dans le règlement les documents exigés (licence, certificat, PPS)",
+                label="Check the rules for required documents (license, certificate, PPS)",
                 source_url=str(rules.regulation_url) if rules.regulation_url else None,
             )
         )
@@ -81,7 +80,7 @@ def eligibility(
             Reason(
                 level=Light.orange,
                 code="rules_incomplete",
-                message="Non trouvé dans le règlement : " + ", ".join(unknown) + ". À confirmer avant de s'inscrire.",
+                message="Not found in the rules: " + ", ".join(unknown) + ". Confirm before registering.",
                 source_url=str(rules.regulation_url) if rules.regulation_url else None,
             )
         )
@@ -99,7 +98,7 @@ def eligibility(
 def choose_entry_path(
     rules: RaceRules, profile: RunnerProfile, situation: RunnerSituation
 ) -> tuple[EntryPath | None, EntryPath | None]:
-    """Voie d'inscription qui correspond au coureur, et voie non compétitive de repli si elle existe."""
+    """Entry path matching the runner and a non-competitive fallback, if available."""
     host = (rules.country_code or "").upper()
     citizen = profile.nationality.upper() == host if host else None
     resident = situation.residence_country.upper() == host if host else None
@@ -121,7 +120,7 @@ def choose_entry_path(
 
 
 def riegel(distance_km: float, time: timedelta, target_km: float) -> timedelta:
-    """Temps prédit sur `target_km` à partir d'un résultat récent (Riegel, exposant 1,06) : une estimation."""
+    """Estimated time over `target_km` from a recent result (Riegel exponent 1.06)."""
     return time * (target_km / distance_km) ** RIEGEL_EXPONENT
 
 
@@ -134,7 +133,7 @@ def _document_reasons(
             Reason(
                 level=Light.orange,
                 code="entry_rules_unknown",
-                message="Conditions de participation non trouvées dans le règlement : à vérifier avant de s'inscrire.",
+                message="Entry conditions not found in the rules: check before registering.",
                 source_url=source,
             )
         ]
@@ -143,7 +142,7 @@ def _document_reasons(
             Reason(
                 level=Light.red,
                 code="no_entry_path",
-                message="Aucune voie d'inscription du règlement ne correspond à votre situation.",
+                message="No entry path in the rules matches your situation.",
                 source_url=source,
             )
         ]
@@ -154,23 +153,23 @@ def _document_reasons(
             Reason(
                 level=Light.orange,
                 code="entry_path_unconfirmed",
-                message=f"Voie « {path.label} » : {path.to_confirm}.",
+                message=f"Entry path '{path.label}': {path.to_confirm}.",
                 source_url=path_source,
             )
         )
     certificate = next((r for r in path.requirements if r.kind is RequirementKind.medical_certificate), None)
     if certificate and not situation.has_valid_medical_certificate:
-        message = f"Voie « {path.label} » : {certificate.label}."
+        message = f"Entry path '{path.label}': {certificate.label}."
         if certificate.detail:
             message += f" {certificate.detail}"
         if alternative:
             limits = " ; ".join(alternative.limitations)
-            message += f" Repli possible sans certificat : « {alternative.label} »" + (f" ({limits})." if limits else ".")
+            message += f" Alternative without a certificate: '{alternative.label}'" + (f" ({limits})." if limits else ".")
         cert_source = str(certificate.source.url) if certificate.source else path_source
         return [*reasons, Reason(level=Light.orange, code="medical_certificate", message=message, source_url=cert_source)]
     if reasons:
         return reasons
-    message = f"Voie « {path.label} » : pièces à fournir par vous, rien de bloquant."
+    message = f"Entry path '{path.label}': documents for you to provide, no blockers."
     if path.limitations:
         message += " " + " ; ".join(path.limitations) + "."
     return [Reason(level=Light.green, code="documents", message=message, source_url=path_source)]
@@ -198,7 +197,7 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
             Reason(
                 level=Light.orange,
                 code="goal_distance_mismatch",
-                message=f"Objectif donné pour {goal.distance_km:g} km, course de {distance:g} km : réalisme non évalué.",
+                message=f"Goal given for {goal.distance_km:g} km, race of {distance:g} km: feasibility not assessed.",
             )
         ]
     distance = distance or goal.distance_km
@@ -212,7 +211,7 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
             Reason(
                 level=Light.orange,
                 code="time_limit_unknown",
-                message="Temps limite non trouvé dans le règlement : réalisme à confirmer.",
+                message="Time limit not found in the rules: feasibility to confirm.",
                 source_url=str(rules.regulation_url) if rules.regulation_url else None,
             )
         )
@@ -220,10 +219,10 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
             return reasons
     limit_source = rules.source_url("time_limit")
     gates_source = rules.source_url("time_gates") or limit_source
-    for label, expected in (("Objectif", target), ("Temps prédit (Riegel)", predicted)):
+    for label, expected in (("Goal", target), ("Predicted time (Riegel)", predicted)):
         if expected is None:
             continue
-        code = "goal" if label == "Objectif" else "prediction"
+        code = "goal" if label == "Goal" else "prediction"
         if rules.time_limit is not None:
             reasons.append(
                 _compare(f"{label} {format_duration(expected)}", expected, rules.time_limit, code, limit_source)
@@ -232,7 +231,7 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
             at_gate = expected * (gate.km / distance)
             reasons.append(
                 _compare(
-                    f"{label} au km {_km(gate.km)} ≈ {format_duration(at_gate)} (allure régulière)",
+                    f"{label} at km {_km(gate.km)} ≈ {format_duration(at_gate)} (steady pace)",
                     at_gate,
                     gate.max_elapsed,
                     f"{code}_gate_{gate.km:g}",
@@ -245,8 +244,8 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
                 level=Light.orange,
                 code="ambitious_goal",
                 message=(
-                    f"Objectif {format_duration(target)} plus de {AMBITIOUS_MARGIN:.0%} plus rapide que le temps "
-                    f"prédit d'après votre résultat récent ({format_duration(predicted)})."
+                    f"Goal {format_duration(target)} more than {AMBITIOUS_MARGIN:.0%} faster than the time "
+                    f"predicted from your recent result ({format_duration(predicted)})."
                 ),
             )
         )
@@ -256,13 +255,13 @@ def _realism_reasons(rules: RaceRules, goal: RunnerGoal) -> list[Reason]:
 def _compare(label: str, expected: timedelta, limit: timedelta, code: str, source: str | None) -> Reason:
     margin = limit - expected
     if margin < timedelta(0):
-        level, verdict = Light.red, f"au-delà de la barrière de {format_duration(limit)}"
+        level, verdict = Light.red, f"beyond the cut-off of {format_duration(limit)}"
     elif margin < limit * GREEN_MARGIN:
-        level, verdict = Light.orange, f"marge de {format_duration(margin)} seulement sur la barrière de {format_duration(limit)}"
+        level, verdict = Light.orange, f"margin of only {format_duration(margin)} against the cut-off of {format_duration(limit)}"
     else:
-        level, verdict = Light.green, f"marge de {format_duration(margin)} sur la barrière de {format_duration(limit)}"
+        level, verdict = Light.green, f"margin of {format_duration(margin)} against the cut-off of {format_duration(limit)}"
     return Reason(level=level, code=code, message=f"{label} : {verdict}.", source_url=source)
 
 
 def _km(value: float) -> str:
-    return f"{value:g}".replace(".", ",")
+    return f"{value:g}"

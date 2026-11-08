@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <title>RunAI · {{ r.race_name }}</title>
 <style>
 @page { size: A4; margin: 14mm 13mm; }
@@ -64,63 +64,63 @@ a { color: #4f46e5; }
 <div class="head">
   <div>
     <div class="brand">Run<span>AI</span></div>
-    <h1>Ton week-end de course est prêt</h1>
+    <h1>Your race weekend is ready</h1>
     <div class="sub">{{ r.race_name }} · {{ r.race_city }}{% if r.race_date %} · {{ r.race_date | date_long }}{% endif %}<br>
-    Préparé pour <b>{{ r.runner_name }}</b>{% if r.runner_fictive %} (profil fictif){% endif %}{% if r.goal %} · objectif <b>{{ r.goal }}</b>{% endif %} · généré le {{ generated | dt_short }}</div>
+    Prepared for <b>{{ r.runner_name }}</b>{% if r.runner_fictive %} (fictional profile){% endif %}{% if r.goal %} · goal <b>{{ r.goal }}</b>{% endif %} · generated on {{ generated | dt_short }}</div>
   </div>
-  <div class="dossier">Dossier {{ r.id | upper }}{% if r.voice_request %}<br>Demande vocale :<i>« {{ r.voice_request }} »</i>{% endif %}</div>
+  <div class="dossier">Summary {{ r.id | upper }}{% if r.voice_request %}<br>Voice request:<i>« {{ r.voice_request }} »</i>{% endif %}</div>
 </div>
 <div class="kpis">
-  <div class="kpi"><b class="green">{{ r.ready_count }} / {{ r.missions | length }}</b><small>missions prêtes</small></div>
-  <div class="kpi"><b class="orange">{{ r.payments_to_do }}</b><small>paiements à faire par toi</small></div>
-  <div class="kpi"><b>≈ {{ r.total_eur | eur0 }}</b><small>total estimé, à payer par toi</small></div>
-  <div class="kpi zero"><b class="green">0 € payé par RunAI</b><small>les agents se sont arrêtés avant chaque paiement</small></div>
+  <div class="kpi"><b class="green">{{ r.ready_count }} / {{ r.missions | length }}</b><small>missions ready</small></div>
+  <div class="kpi"><b class="orange">{{ r.payments_to_do }}</b><small>payments for you to make</small></div>
+  <div class="kpi"><b>≈ {{ r.total_eur | eur0 }}</b><small>estimated total, for you to pay</small></div>
+  <div class="kpi zero"><b class="green">0 € paid by RunAI</b><small>agents stopped before every payment</small></div>
 </div>
-<div class="fine">Rien n'est acquis tant que tu n'as pas payé toi-même. Les prix et disponibilités peuvent évoluer.</div>
+<div class="fine">Prepared ≠ booked. Nothing is secured until you pay yourself. Prices and availability may change.</div>
 
-<h2 class="first">Ce qui reste à faire par toi <small>RunAI ne paie, ne coche et ne signe rien à ta place</small></h2>
+<h2 class="first">What you still need to do <small>RunAI does not pay, tick boxes or sign anything for you</small></h2>
 <ol class="todo">
-{% for m in r.missions %}<li>{% if m.price_eur is not none %}<span class="p">{{ m.price_eur | eur }}</span>{% endif %}<b>{{ m.title }}</b> : {{ m.human_action }}{% if m.finalize_url %} <a href="{{ m.finalize_url }}">Lien</a>{% endif %}</li>{% endfor %}
+{% for m in r.missions %}<li>{% if m.price_eur is not none %}<span class="p">{{ m.price_eur | eur }}</span>{% endif %}<b>{{ m.title }}</b> : {{ m.human_action }}{% if m.finalize_url %} <a href="{{ m.finalize_url }}">Link</a>{% endif %}</li>{% endfor %}
 {% for c in r.checklist %}<li>{{ c }}</li>{% endfor %}
 </ol>
 
-{% if r.key_facts %}<h2>L'essentiel de la course <small>infos trouvées par Linkup, sources en fin de document</small></h2>
+{% if r.key_facts %}<h2>Race essentials <small>information found by Linkup, sources at the end</small></h2>
 <div class="facts">
 {% for f in r.key_facts %}<div class="fact"><div class="l">{{ f.label }}</div><div class="v">{{ f.value }}{% if f.source and not f.detail %} <sup class="src">[{{ f.source }}]</sup>{% endif %}</div>{% if f.detail %}<div>{{ f.detail }}{% if f.source %} <sup class="src">[{{ f.source }}]</sup>{% endif %}</div>{% endif %}</div>{% endfor %}
 </div>{% endif %}
 
-{% if days %}<h2>Ta timeline du week-end <small>heures locales du lieu</small></h2>
+{% if days %}<h2>Your weekend timeline <small>local times at the destination</small></h2>
 {% for day, items in days %}<div class="day">{{ day }}</div>
 {% for it in items %}<div class="tl"><span class="t">{{ it.start | hm if it.time_known else "–" }}</span><span class="dot {{ it.tag }}"></span><span class="x"><b>{{ it.title }}</b>{% if it.detail %} · {{ it.detail }}{% endif %}{% if it.location %} · <span class="fine">{{ it.location }}</span>{% endif %}</span><span class="tag {{ it.tag }}">{{ tag_labels[it.tag] }}</span></div>{% endfor %}
 {% endfor %}
-<div class="fine" style="margin-top:6px">Le fichier <b>week-end.ics</b> joint ajoute {{ n_calendar }} étape{{ "s" if n_calendar > 1 }} à ton agenda.</div>{% endif %}
+<div class="fine" style="margin-top:6px">The attached <b>week-end.ics</b> file adds {{ n_calendar }} event{{ "s" if n_calendar > 1 }} to your calendar.</div>{% endif %}
 
 {% if r.missions %}<div class="page"></div>
-<h2>Les missions des agents <small>chaque agent s'est arrêté avant de s'engager</small></h2>
+<h2>Agent missions <small>each agent stopped before committing</small></h2>
 {% for m in r.missions %}<div class="mission">
   <div class="left">
     <div class="mt"><span>{{ loop.index }} · {{ m.title }}</span><span class="pill {{ m.status.value }}">{{ status_label(m.status, m.price_eur is not none) }}</span></div>
     <table class="kv">
       {% for f in m.fields %}<tr><td>{{ f.label }}</td><td>{{ f.value }}</td></tr>{% endfor %}
-      {% if m.price_eur is not none %}<tr><td>Prix affiché</td><td><b>{{ m.price_label or (m.price_eur | eur) }}</b> · à payer par toi</td></tr>{% endif %}
+      {% if m.price_eur is not none %}<tr><td>Displayed price</td><td><b>{{ m.price_label or (m.price_eur | eur) }}</b> · for you to pay</td></tr>{% endif %}
       {% if m.h_session_id %}<tr><td>Session H</td><td>{% if m.live_view_url %}<a href="{{ m.live_view_url }}">{{ m.h_session_id }}</a>{% else %}{{ m.h_session_id }}{% endif %}</td></tr>{% endif %}
     </table>
-    {% if m.stop_point and not m.capture_data_uri %}<span class="stopline">AGENT ARRÊTÉ ICI</span>{% endif %}
-    {% if m.finalize_url %}<a class="btn" href="{{ m.finalize_url }}">Ouvrir la page où l'agent s'est arrêté →</a>{% endif %}
+    {% if m.stop_point and not m.capture_data_uri %}<span class="stopline">AGENT STOPPED HERE</span>{% endif %}
+    {% if m.finalize_url %}<a class="btn" href="{{ m.finalize_url }}">Open the page where the agent stopped →</a>{% endif %}
   </div>
   {% if m.capture_data_uri %}<div class="right">
     <div class="browser"><div class="bar">● ● ● &nbsp; {{ m.finalize_url or "" }}</div>
-      <div class="shot"><img src="{{ m.capture_data_uri }}" alt="Dernière vue de l'agent">
-      {% if m.stop_point %}<span class="stop">AGENT ARRÊTÉ ICI</span>{% endif %}</div>
+      <div class="shot"><img src="{{ m.capture_data_uri }}" alt="Last agent view">
+      {% if m.stop_point %}<span class="stop">AGENT STOPPED HERE</span>{% endif %}</div>
     </div>
-    <div class="fine">Dernière page vue par l'agent, juste avant l'étape que tu dois faire toi-même.</div>
+    <div class="fine">Last page seen by the agent, just before the step you must complete yourself.</div>
   </div>{% endif %}
 </div>{% endfor %}{% endif %}
 
-<h2>Sources et traçabilité <small>d'où vient chaque information</small></h2>
-{% if r.sources %}<table class="grid"><tr><th>#</th><th>source</th><th>trouvée par</th><th>utilisée pour</th></tr>
+<h2>Sources and traceability <small>where each piece of information comes from</small></h2>
+{% if r.sources %}<table class="grid"><tr><th>#</th><th>source</th><th>found by</th><th>used for</th></tr>
 {% for s in r.sources %}<tr><td>[{{ loop.index }}]</td><td>{% if s.url %}<a href="{{ s.url }}">{{ s.label }}</a><br><span class="fine">{{ s.url }}</span>{% else %}{{ s.label }}{% endif %}</td><td>{{ s.found_by }}</td><td>{{ s.used_for }}</td></tr>{% endfor %}</table>
-{% else %}<div class="fine">Aucune source enregistrée : vérifie chaque information sur le site officiel.</div>{% endif %}
-<div class="never"><b>Ce que RunAI n'a pas fait, volontairement</b><br>Aucun paiement (0 € payé par RunAI). Aucune case santé, règlement ou consentement cochée à ta place. Aucun compte créé, aucun mot de passe saisi. Aucune soumission définitive. Les liens ci-dessus te ramènent à la page où l'agent s'est arrêté.</div>
-<div class="foot"><span>RunAI · Gladia (voix), Linkup (recherche), H Company (agents web)</span><span>Dossier {{ r.id | upper }}</span></div>
+{% else %}<div class="fine">No sources recorded: check every detail on the official website.</div>{% endif %}
+<div class="never"><b>What RunAI deliberately did not do</b><br>No payment (0 € paid by RunAI). No health, rules or consent boxes ticked for you. No accounts created, no passwords entered. No final submission. The links above take you back to the page where the agent stopped.</div>
+<div class="foot"><span>RunAI · Gladia (voice), Linkup (search), H Company (web agents)</span><span>Summary {{ r.id | upper }}</span></div>
 </body></html>

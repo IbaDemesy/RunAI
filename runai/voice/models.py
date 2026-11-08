@@ -31,7 +31,7 @@ class CommandSource(str, Enum):
 
 
 class RaceQuery(BaseModel):
-    """Course telle que dite par le coureur : indices à confirmer par la recherche Linkup."""
+    """Race as spoken by the runner: hints to confirm through Linkup search."""
 
     name: str | None = None
     city: str | None = None
@@ -42,7 +42,7 @@ class RaceQuery(BaseModel):
 
 
 class VoiceCommand(BaseModel):
-    """Commande typée, identique qu'elle vienne de la voix ou du clavier."""
+    """Typed command, identical whether from voice or keyboard."""
 
     kind: CommandKind
     race: RaceQuery | None = None
@@ -116,7 +116,7 @@ class WarningEvent(_GladiaEvent):
 
 
 class CommandEvent(BaseModel):
-    """Événement publié vers l'app web ; `early` = déclenché sur une transcription partielle."""
+    """Event published to the web app; `early` means triggered by a partial transcript."""
 
     type: Literal["command"] = "command"
     at: datetime = Field(default_factory=utcnow)

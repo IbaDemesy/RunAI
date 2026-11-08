@@ -1,4 +1,4 @@
-"""Timeline déterministe du week-end de course (aucun appel réseau), avec alertes d'incompatibilité."""
+"""Deterministic race weekend timeline (no network calls), with incompatibility alerts."""
 
 from datetime import date, datetime, time, timedelta
 
@@ -36,15 +36,15 @@ def build_timeline(
     departure: TransportLeg | None = None,
     goal: RunnerGoal | None = None,
 ) -> Timeline:
-    """Événements datés du week-end (fuseau de la course) et alertes.
+    """Dated weekend events (race timezone) and alerts.
 
-    Alertes `bloquant` : train arrivé après la fermeture du retrait, hôtel qui ne couvre pas la veille,
-    retour avant l'arrivée estimée + 1h30… Tout horaire déduit d'une hypothèse a `assumption=True`.
-    """
+    Blocking alerts include arrival after bib pick-up closes, a hotel not covering
+    the previous night, and return before estimated finish plus 90 minutes.
+    All times inferred from assumptions carry `assumption=True`."""
     tz = rules.tz
     race_day = rules.race_date or (race.race_date if race else None)
     if race_day is None:
-        raise ValueError("date de course inconnue : impossible de construire la timeline")
+        raise ValueError("race date unknown: cannot build the timeline")
     name = rules.race_name or (race.name if race else "Course")
     events: list[TimelineEvent] = []
     alerts: list[Alert] = []
@@ -78,7 +78,7 @@ def build_timeline(
                 Alert(
                     level=AlertLevel.blocking,
                     code="arrival_after_start",
-                    message=f"Arrivée {arrive:%d/%m %H:%M} après le départ de la course ({start:%d/%m %H:%M}).",
+                    message=f"Arrival {arrive:%d/%m %H:%M} after the race start ({start:%d/%m %H:%M}).",
                 )
             )
 
@@ -97,7 +97,7 @@ def build_timeline(
                 Alert(
                     level=AlertLevel.blocking,
                     code="hotel_nights",
-                    message=f"L'hôtel ({hotel.check_in:%d/%m} → {hotel.check_out:%d/%m}) ne couvre pas la nuit du {eve:%d/%m}.",
+                    message=f"The hotel ({hotel.check_in:%d/%m} → {hotel.check_out:%d/%m}) does not cover the night of {eve:%d/%m}.",
                 )
             )
         check_out = at(hotel.check_out, hotel.check_out_until)
@@ -108,19 +108,19 @@ def build_timeline(
                     level=AlertLevel.warning,
                     code="late_checkout",
                     message=(
-                        f"Arrivée estimée {finish:%H:%M}, check-out à {hotel.check_out_until:%H:%M} : "
-                        "demander un late check-out ou laisser les bagages à la réception."
+                        f"Estimated finish {finish:%H:%M}, check-out at {hotel.check_out_until:%H:%M}: "
+                        "ask for late check-out or leave your luggage at reception."
                     ),
                 )
             )
 
     corral_close = start - (rules.corrals_close_before_wave or DEFAULT_CORRAL_CLOSE)
     leave = corral_close - to_start - MARGIN_BEFORE_CORRAL
-    add(start - WAKE_BEFORE_START, title="Réveil, petit-déjeuner", kind="prep", assumption=True)
+    add(start - WAKE_BEFORE_START, title="Wake up, breakfast", kind="prep", assumption=True)
     add(
         leave,
         leave + to_start,
-        title="Trajet hôtel → zone de départ",
+        title="Hotel → start area journey",
         kind="prep",
         detail=rules.bag_drop,
         assumption=True,
@@ -128,45 +128,45 @@ def build_timeline(
     if rules.corrals_open:
         add(
             at(race_day, rules.corrals_open),
-            title="Ouverture des sas",
+            title="Corrals open",
             kind="race",
             detail=rules.start_waves,
             source_url=rules.source_url("corrals_open"),
         )
     add(
         corral_close,
-        title="Fermeture du sas (1re vague)",
+        title="Corral closes (first wave)",
         kind="race",
-        detail="Votre vague peut partir plus tard : heure exacte sur le dossard.",
+        detail="Your wave may start later: check your bib for the exact time.",
         assumption=rules.corrals_close_before_wave is None,
         source_url=rules.source_url("corrals_close_before_wave"),
     )
     start_place = rules.start_location or (race.start_location if race else None)
     add(
         start,
-        title=f"Départ {name}",
+        title=f"Start {name}",
         kind="race",
-        location=start_place or "Lieu de départ à confirmer",
+        location=start_place or "Start location to confirm",
         assumption=rules.start_time is None,
         source_url=rules.source_url("start_time"),
     )
     for gate in rules.time_gates:
         moment = start + gate.max_elapsed
-        published = f" (heure publiée ≈ {gate.clock_time:%H:%M})" if gate.clock_time else ""
+        published = f" (published time ≈ {gate.clock_time:%H:%M})" if gate.clock_time else ""
         add(
             moment,
-            title=f"Barrière km {gate.km:g}".replace(".", ",") + " :"
-            + f" {format_duration(gate.max_elapsed)} de course",
+            title=f"Cut-off km {gate.km:g}:"
+            + f" {format_duration(gate.max_elapsed)} elapsed race time",
             kind="info",
-            detail=f"Au plus tard {moment:%H:%M} pour la 1re vague{published}.",
+            detail=f"No later than {moment:%H:%M} for the first wave{published}.",
             source_url=rules.source_url("time_gates"),
         )
     add(
         finish,
-        title="Arrivée estimée",
+        title="Estimated finish",
         kind="race",
-        detail=f"Temps visé {format_duration(expected)}"
-        + (f", temps limite {format_duration(rules.time_limit)}" if rules.time_limit else ""),
+        detail=f"Target time {format_duration(expected)}"
+        + (f", time limit {format_duration(rules.time_limit)}" if rules.time_limit else ""),
         assumption=True,
     )
     if rules.time_limit and finish > start + rules.time_limit:
@@ -174,7 +174,7 @@ def build_timeline(
             Alert(
                 level=AlertLevel.warning,
                 code="finish_after_limit",
-                message=f"Arrivée estimée {finish:%H:%M} après le temps limite ({format_duration(rules.time_limit)}).",
+                message=f"Estimated finish {finish:%H:%M} after the time limit ({format_duration(rules.time_limit)}).",
                 source_url=rules.source_url("time_limit"),
             )
         )
@@ -183,7 +183,7 @@ def build_timeline(
             Alert(
                 level=AlertLevel.info,
                 code="pace_assumed",
-                message=f"Sans objectif, arrivée estimée à {format_duration(DEFAULT_PACE_PER_KM)}/km.",
+                message=f"Without a goal, finish estimated at {format_duration(DEFAULT_PACE_PER_KM)}/km.",
             )
         )
 
@@ -202,14 +202,14 @@ def build_timeline(
                     level=AlertLevel.blocking,
                     code="return_too_early",
                     message=(
-                        f"Retour à {leaves:%d/%m %H:%M} : moins de {format_duration(AFTER_FINISH)} après "
-                        f"l'arrivée estimée ({finish:%H:%M}). Prendre un trajet plus tard."
+                        f"Return at {leaves:%d/%m %H:%M}: less than {format_duration(AFTER_FINISH)} after "
+                        f"the estimated finish ({finish:%H:%M}). Take a later service."
                     ),
                 )
             )
 
     if not rules.start_time:
-        alerts.append(Alert(level=AlertLevel.warning, code="start_time_unknown", message="Heure de départ à confirmer."))
+        alerts.append(Alert(level=AlertLevel.warning, code="start_time_unknown", message="Start time to confirm."))
     events.sort(key=lambda event: event.start)
     return Timeline(race_name=name, timezone=rules.timezone, events=events, alerts=alerts)
 
@@ -231,11 +231,11 @@ def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest) -> 
         if window.day < race_day
         or (window.day == race_day and rules.bib_pickup_race_day)
     ]
-    detail = "Pièce d'identité + e-mail de confirmation ; documents d'inscription téléversés avant le retrait."
+    detail = "ID + confirmation email; registration documents uploaded before pick-up."
     if not windows:
         add(
             at(race_day - timedelta(days=1), time(10, 0)),
-            title="Retrait du dossard (créneau à confirmer)",
+            title="Bib pick-up (time slot to confirm)",
             kind="bib_pickup",
             location=location,
             detail=detail,
@@ -245,7 +245,7 @@ def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest) -> 
             Alert(
                 level=AlertLevel.warning,
                 code="bib_pickup_unknown",
-                message="Jours et horaires de retrait du dossard non trouvés : à confirmer.",
+                message="Bib pick-up days and times not found: to confirm.",
             )
         )
         return
@@ -256,18 +256,18 @@ def _add_bib_pickup(rules, race_day, arrive, hotel, at, add, alerts, latest) -> 
             closes = min(closes, latest)
         begin = max(opens, ready) if ready else opens
         if begin + MIN_PICKUP_SLOT <= closes:
-            add(begin, min(begin + PICKUP_DURATION, closes), title="Retrait du dossard", kind="bib_pickup",
-                location=location, detail=f"Ouvert {window.opens:%H:%M}-{window.closes:%H:%M}. {detail}",
+            add(begin, min(begin + PICKUP_DURATION, closes), title="Bib pick-up", kind="bib_pickup",
+                location=location, detail=f"Open {window.opens:%H:%M}-{window.closes:%H:%M}. {detail}",
                 assumption=arrive is None, source_url=source)
             return
     last = windows[-1]
-    when = f"Arrivée {arrive:%a %d/%m %H:%M} : trop tard" if arrive else "Aucun créneau possible"
+    when = f"Arrival {arrive:%a %d/%m %H:%M}: too late" if arrive else "No possible time slot"
     message = (
-        f"{when} pour le retrait du dossard avant la fermeture des sas "
-        f"(dernier créneau le {last.day:%d/%m} jusqu'à {last.closes:%H:%M}). Prendre un trajet plus tôt"
+        f"{when} for bib pick-up before corrals close "
+        f"(last slot on {last.day:%d/%m} until {last.closes:%H:%M}). Take an earlier service"
     )
     if rules.bib_pickup_proxy_allowed:
-        message += " ou faire retirer le dossard par un tiers (délégation signée prévue par le règlement)"
+        message += " or have someone else collect your bib (signed authorization allowed by the rules)"
     if rules.bib_pickup_race_day is False:
-        message += " ; pas de retrait le matin de la course"
+        message += "; no pick-up on race morning"
     alerts.append(Alert(level=AlertLevel.blocking, code="bib_pickup_missed", message=message + ".", source_url=source))

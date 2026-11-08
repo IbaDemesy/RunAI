@@ -25,7 +25,7 @@
       "provenance": {
         "kind": "fixture",
         "url": null,
-        "label": "Origine publique",
+        "label": "Public origin",
         "collected_at": "2028-01-01T00:00:00Z"
       },
       "confidence": "unknown"
@@ -33,7 +33,7 @@
     {
       "id": "hotel",
       "kind": "hotel",
-      "label": "Hôtel non choisi",
+      "label": "Hotel not selected",
       "coords": null,
       "local_time": null,
       "timezone": "Africa/Nairobi",
@@ -77,7 +77,7 @@
       "provenance": null,
       "limitation": {
         "code": "transport_not_covered",
-        "message": "Transport « bus » non couvert : organiser le trajet soi-même.",
+        "message": "Transport 'bus' not covered: arrange your journey yourself.",
         "step": "transport",
         "manual_url": null
       }
@@ -99,7 +99,7 @@
       "provenance": null,
       "limitation": {
         "code": "transport_not_covered",
-        "message": "Transport retour « inconnu » non couvert : organiser soi-même.",
+        "message": "Return transport 'unknown' not covered: arrange it yourself.",
         "step": "transport",
         "manual_url": null
       }
@@ -125,7 +125,7 @@
   "chapters": [
     {
       "id": "home",
-      "label": "Chez moi",
+      "label": "Home",
       "stop_ids": [
         "home"
       ],
@@ -150,7 +150,7 @@
     },
     {
       "id": "arrival_hotel",
-      "label": "Arrivée et hôtel",
+      "label": "Arrival and hotel",
       "stop_ids": [
         "hotel"
       ],
@@ -159,14 +159,14 @@
     },
     {
       "id": "bib_pickup",
-      "label": "Dossard",
+      "label": "Bib pick-up",
       "stop_ids": [],
       "segment_ids": [],
       "status": "unavailable"
     },
     {
       "id": "race",
-      "label": "Départ et course",
+      "label": "Start and race",
       "stop_ids": [
         "start"
       ],
@@ -177,7 +177,7 @@
     },
     {
       "id": "return_trip",
-      "label": "Retour",
+      "label": "Return",
       "stop_ids": [
         "home"
       ],
@@ -194,7 +194,7 @@
       {
         "id": "c-reg",
         "category": "registration",
-        "label": "Inscription",
+        "label": "Registration",
         "money": {
           "amount": 50.0,
           "currency": "EUR",
@@ -212,23 +212,23 @@
       {
         "id": "c-hotel",
         "category": "accommodation",
-        "label": "Hôtel 2 nuits",
+        "label": "Hotel 2 nights",
         "money": null,
-        "note": "Prix inconnu"
+        "note": "Price unknown"
       },
       {
         "id": "c-transport",
         "category": "transport",
-        "label": "Transport aller-retour",
+        "label": "Transport",
         "money": null,
-        "note": "Non couvert"
+        "note": "Not covered"
       },
       {
         "id": "c-local",
         "category": "local",
-        "label": "Transports locaux",
+        "label": "Local transport",
         "money": null,
-        "note": "Non estimé"
+        "note": "Not estimated"
       }
     ],
     "known_total": 50.0,
@@ -241,22 +241,22 @@
     "over_cap": null
   },
   "warnings": [
-    "Données de démonstration : course, hôtel et horaires fictifs.",
-    "Hôtel non choisi.",
-    "Retrait des dossards inconnu.",
-    "Jours et horaires de retrait du dossard non trouvés : à confirmer.",
-    "Budget partiel : postes non chiffrés exclus du total."
+    "Demo data: fictional race, hotel and times.",
+    "Hotel not selected.",
+    "Bib pick-up unknown.",
+    "Bib pick-up days and times not found: to confirm.",
+    "Partial budget: unpriced items excluded from the total."
   ],
   "limitations": [
     {
       "code": "transport_not_covered",
-      "message": "Transport « bus » non couvert : organiser le trajet soi-même.",
+      "message": "Transport 'bus' not covered: arrange your journey yourself.",
       "step": "transport",
       "manual_url": null
     },
     {
       "code": "transport_not_covered",
-      "message": "Transport retour « inconnu » non couvert : organiser soi-même.",
+      "message": "Return transport 'unknown' not covered: arrange it yourself.",
       "step": "transport",
       "manual_url": null
     }
@@ -265,7 +265,7 @@
     {
       "kind": "fixture",
       "url": null,
-      "label": "Origine publique",
+      "label": "Public origin",
       "collected_at": "2028-01-01T00:00:00Z"
     },
     {

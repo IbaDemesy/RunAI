@@ -1,4 +1,4 @@
-"""Récap d'exemple : Wizz Air Milano Marathon 2027, profil et réservations fictifs."""
+"""Example recap: Wizz Air Milano Marathon 2027, fictional profile and bookings."""
 
 from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo
@@ -32,29 +32,29 @@ DEMO_RACE = Race(
     start_time="08:00",
     distance_km=42.195,
     registration_url=NJUKO_URL,
-    bib_pickup="Village marathon, sam. 3 avril (horaires d'exemple)",
-    start_location="Corso Venezia (exemple)",
-    sources=[Source(url=NJUKO_URL, title="Page d'inscription Njuko")],
+    bib_pickup="Marathon village, Sat. 3 April (example times)",
+    start_location="Corso Venezia (example)",
+    sources=[Source(url=NJUKO_URL, title="Njuko registration page")],
 )
 
 DEMO_STEPS = [
-    StepResult(kind=StepKind.search, status=StepStatus.completed, summary="Course trouvée par Linkup."),
+    StepResult(kind=StepKind.search, status=StepStatus.completed, summary="Course found by Linkup."),
     StepResult(
         kind=StepKind.registration, status=StepStatus.stopped_before_commitment,
         stop_point=StopPoint.health_declaration, url=NJUKO_URL, price_eur=114.0,
-        summary="Formulaire Njuko pré-rempli avec le profil fictif, arrêt à l'étape licence / certificat médical.",
+        summary="Njuko form pre-filled with the fictional profile, stopped at the license / medical certificate step.",
         h_session_id="demo-registration",
     ),
     StepResult(
         kind=StepKind.accommodation, status=StepStatus.stopped_before_commitment,
         stop_point=StopPoint.payment, url="https://example.org/hotel-milano/paiement", price_eur=238.0,
-        summary="Hôtel d'exemple à 900 m du départ, 2 nuits (3 au 5 avril), 1 adulte.",
+        summary="Example hotel 900 m from the start, 2 nights (3 to 5 April), 1 adult.",
         h_session_id="demo-accommodation",
     ),
     StepResult(
         kind=StepKind.transport, status=StepStatus.stopped_before_commitment,
         stop_point=StopPoint.payment, url="https://example.org/train-paris-milano/paiement", price_eur=139.8,
-        summary="Train direct Paris Gare de Lyon ⇄ Milano Centrale, aller sam. 3 avril, retour lun. 5 avril.",
+        summary="Direct train Paris Gare de Lyon ⇄ Milano Centrale, outbound Sat. 3 April, return Mon. 5 April.",
         h_session_id="demo-transport",
     ),
 ]
@@ -64,18 +64,18 @@ def _timeline() -> list[TimelineItem]:
     race_items = [t for t in default_timeline(DEMO_RACE) if t.tag == "course"]
     return race_items + [
         TimelineItem(start=_t(3, 6, 28), end=_t(3, 13, 35), title="Train Paris Gare de Lyon → Milano Centrale",
-                     detail="direct, arrivée 13:35", location="Gare de Lyon, Paris", tag="a_payer"),
-        TimelineItem(start=_t(3, 15, 0), end=_t(3, 15, 30), title="Check-in hôtel",
-                     detail="900 m du départ", location="Hôtel d'exemple, Milan", tag="a_payer"),
-        TimelineItem(start=_t(3, 16, 0), end=_t(3, 17, 0), title="Retrait du dossard au village",
-                     detail="pièce d'identité + documents médicaux", location="Village marathon (exemple)",
+                     detail="direct, arrival 13:35", location="Gare de Lyon, Paris", tag="a_payer"),
+        TimelineItem(start=_t(3, 15, 0), end=_t(3, 15, 30), title="Hotel check-in",
+                     detail="900 m from the start", location="Example hotel, Milan", tag="a_payer"),
+        TimelineItem(start=_t(3, 16, 0), end=_t(3, 17, 0), title="Bib pick-up at the village",
+                     detail="ID + medical documents", location="Marathon village (example)",
                      tag="info", alarm_minutes=120),
-        TimelineItem(start=_t(3, 19, 30), title="Dîner, préparation des affaires", detail="dossard, épingles, gels",
+        TimelineItem(start=_t(3, 19, 30), title="Dinner, prepare your kit", detail="bib, pins, gels",
                      tag="conseil", in_calendar=False),
-        TimelineItem(start=_t(4, 5, 15), title="Lever conseillé", detail="petit-déjeuner 2 h 30 avant le départ",
+        TimelineItem(start=_t(4, 5, 15), title="Suggested wake-up time", detail="breakfast 2 h 30 before the start",
                      tag="conseil", in_calendar=False),
         TimelineItem(start=_t(5, 9, 10), end=_t(5, 16, 20), title="Train Milano Centrale → Paris Gare de Lyon",
-                     detail="direct, arrivée 16:20", location="Milano Centrale", tag="a_payer"),
+                     detail="direct, arrival 16:20", location="Milano Centrale", tag="a_payer"),
     ]
 
 
@@ -85,32 +85,32 @@ def demo_recap() -> Recap:
         RunnerProfile(),
         DEMO_STEPS,
         recap_id="demo-milan",
-        voice_request="Je veux courir le marathon de Milan en avril, je pars de Paris, objectif 3 h 45.",
+        voice_request="I want to run the Milan marathon in April, leaving from Paris, goal 3 h 45.",
         goal="3 h 45",
         options={
-            StepKind.registration: ["Catégorie compétitive (licence FFA ou RUNCARD)"],
-            StepKind.accommodation: ["Petit-déjeuner inclus", "Annulation gratuite jusqu'au 1er avril"],
-            StepKind.transport: ["2e classe, places assises côte fenêtre", "Billets échangeables"],
+            StepKind.registration: ["Competitive category (FFA license or RUNCARD)"],
+            StepKind.accommodation: ["Breakfast included", "Free cancellation until 1 April"],
+            StepKind.transport: ["Second class, window seats", "Exchangeable tickets"],
         },
         timeline=_timeline(),
         key_facts=[
-            KeyFact(label="Départ", value="Dim. 4 avril 2027 · 08:00", detail="Corso Venezia (exemple)", source=1),
-            KeyFact(label="Distance", value="42,195 km", detail="marathon, parcours urbain", source=1),
-            KeyFact(label="Inscription", value="114 € sur Njuko", detail="tarif valable jusqu'au 31 déc. 2026, lu le 7 nov. 2026", source=1),
-            KeyFact(label="Statut compétitif", value="Licence World Athletics (FFA) ou RUNCARD",
-                    detail="sinon catégorie non compétitive ; certificat médical italien pour la RUNCARD (règles 2026)",
+            KeyFact(label="Start", value="Sun. 4 April 2027 · 08:00", detail="Corso Venezia (example)", source=1),
+            KeyFact(label="Distance", value="42.195 km", detail="marathon, city course", source=1),
+            KeyFact(label="Registration", value="114 € on Njuko", detail="price valid until 31 Dec. 2026, read on 7 Nov. 2026", source=1),
+            KeyFact(label="Competitive status", value="World Athletics license (FFA) or RUNCARD",
+                    detail="otherwise non-competitive category; Italian medical certificate for RUNCARD (2026 rules)",
                     source=2),
-            KeyFact(label="Retrait du dossard", value="Sam. 3 avril", detail="village marathon (exemple)", source=1),
-            KeyFact(label="Objectif", value="3 h 45", detail="allure moyenne 5:20 /km"),
+            KeyFact(label="Bib pick-up", value="Sat. 3 April", detail="marathon village (example)", source=1),
+            KeyFact(label="Goal", value="3 h 45", detail="average pace 5:20 /km"),
         ],
         checklist=[
-            "Joindre ta licence FFA, ou obtenir la RUNCARD et le certificat médical italien, ou choisir la catégorie non compétitive.",
-            "Emporter une pièce d'identité pour le retrait du dossard.",
-            "Importer week-end.ics dans ton agenda.",
+            "Attach your FFA license, or obtain the RUNCARD and Italian medical certificate, or choose the non-competitive category.",
+            "Bring ID to collect your bib.",
+            "Import week-end.ics into your calendar.",
         ],
-        extra_sources=[RecapSource(label="Site officiel Milano Marathon (règlement 2026)", url="https://www.milanomarathon.it/",
-                                   found_by="Linkup", used_for="règles pour les coureurs étrangers")],
-        notice="Exemple de démonstration : profil coureur, hôtel, trains, horaires et liens d'agents sont fictifs. "
-               "Rien n'a été payé ni soumis.",
+        extra_sources=[RecapSource(label="Official Milano Marathon website (2026 rules)", url="https://www.milanomarathon.it/",
+                                   found_by="Linkup", used_for="rules for foreign runners")],
+        notice="Demo example: runner profile, hotel, trains, times and agent links are fictional. "
+               "Nothing has been paid or submitted.",
         generated_at=datetime(2026, 11, 7, 15, 42, tzinfo=UTC),
     )

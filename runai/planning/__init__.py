@@ -1,4 +1,4 @@
-"""Preuves de coût et questions humaines pour la planification."""
+"""Cost evidence and human questions for planning."""
 
 from runai.planning.evidence import (
     EligibilityQuestion,

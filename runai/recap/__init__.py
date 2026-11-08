@@ -1,13 +1,11 @@
-"""Récap du week-end de course : PDF + .ics à partir d'une mission RunAI.
+"""Race weekend recap: PDF and .ics from a RunAI mission.
 
-API :
-
+API:
 - `recap_from_mission(race, profile, steps, ...) -> Recap`
-- `render_html(recap) -> str`, `render_pdf(recap) -> bytes` (Chrome headless), `render_ics(recap) -> bytes`
-- `demo_recap()` : exemple fictif (Wizz Air Milano Marathon 2027)
+- `render_html(recap) -> str`, `render_pdf(recap) -> bytes` (headless Chrome), `render_ics(recap) -> bytes`
+- `demo_recap()`: fictional example (Wizz Air Milano Marathon 2027)
 
-Voir docs/RECAP.md.
-"""
+See docs/RECAP.md."""
 
 from .build import default_timeline, recap_from_mission
 from .demo import demo_recap

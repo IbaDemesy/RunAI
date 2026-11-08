@@ -1,4 +1,4 @@
-"""Phrases (voix ou clavier) → commandes typées. Règles simples FR/EN/PT, sans LLM ni réseau."""
+"""Phrases (voice or keyboard) to typed commands. Simple FR/EN/PT rules, no LLM or network."""
 
 import re
 import unicodedata
@@ -16,7 +16,7 @@ from runai.voice.vocabulary import CITIES, HALF_MARATHON_KM, MARATHON_KM, RACES
 
 
 def normalize(text: str) -> str:
-    """Minuscules, sans accents ni ponctuation ; même longueur que `text` pour garder les positions."""
+    """Lowercase without accents or punctuation; preserve `text` length for positional matching."""
     chars = []
     for i, char in enumerate(text):
         base = unicodedata.normalize("NFD", char)[0].lower()
@@ -170,7 +170,7 @@ def _affirmed(pattern: re.Pattern[str], norm: str) -> re.Match[str] | None:
 
 
 def _is_pause(norm: str) -> bool:
-    """Mot d'arrêt en tête d'énoncé (« stop, … », « non attends ») : évite « I don't stop » en pleine phrase."""
+    """Stop keyword at the beginning of an utterance; avoid matching 'I do not stop' mid-sentence."""
     return bool(_affirmed(_PAUSE, " ".join(norm.split()[:_PAUSE_WINDOW_WORDS])))
 
 
@@ -229,12 +229,12 @@ def parse_command(text: str) -> VoiceCommand | None:
 
 
 def is_pause_request(text: str) -> bool:
-    """Barge-in : mot d'arrêt dans une transcription partielle, avant la fin de la phrase."""
+    """Barge-in: stop keyword in a partial transcript before the sentence ends."""
     return _is_pause(" ".join(normalize(text).split()))
 
 
 def command_from_text(text: str, source: CommandSource = CommandSource.keyboard) -> CommandEvent | None:
-    """Repli clavier : même parseur, donc même `VoiceCommand` que la phrase dite à voix haute."""
+    """Keyboard fallback: same parser and `VoiceCommand` as a spoken phrase."""
     command = parse_command(text)
     if command is None:
         return None
@@ -242,11 +242,10 @@ def command_from_text(text: str, source: CommandSource = CommandSource.keyboard)
 
 
 class CommandDetector:
-    """Transforme le flux de transcriptions en commandes.
+    """Convert a transcript stream to commands.
 
-    Partiel contenant un mot d'arrêt → `pause` immédiate (`early=True`), une seule fois par énoncé.
-    Final → commande complète ; la `pause` finale est ignorée si elle a déjà été émise en avance.
-    """
+    Partial stop keyword: immediate `pause` (`early=True`), once per utterance.
+    Final: full command; skip a final pause already emitted early."""
 
     def __init__(self, early_pause: bool = True):
         self.early_pause = early_pause

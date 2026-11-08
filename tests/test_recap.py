@@ -26,7 +26,12 @@ from runai.recap import (
     render_pdf,
 )
 from runai.recap import render as render_mod
-from runai.recap.build import parse_start_time, race_start
+from runai.recap.build import (
+    default_key_facts,
+    human_action,
+    parse_start_time,
+    race_start,
+)
 from runai.recap.ics import eu_dst_offsets, fold
 
 PNG_1PX = bytes.fromhex(
@@ -64,11 +69,11 @@ def test_recap_from_mission_defaults():
     assert [m.kind for m in r.missions] == [StepKind.registration, StepKind.accommodation, StepKind.transport]
     assert r.total_eur == 255.0 and r.paid_by_runai_eur == 0 and r.payments_to_do == 2 and r.ready_count == 2
     assert r.runner_fictive and r.runner_name == "Camille Test"
-    assert "cochez" not in r.missions[0].human_action and "règlement" in r.missions[0].human_action
-    assert "bloqué" in r.missions[2].human_action
+    assert "rules" in r.missions[0].human_action and "yourself" in r.missions[0].human_action
+    assert "blocked" in r.missions[2].human_action
     assert [s.found_by for s in r.sources] == ["Linkup", "Agent H", "Agent H"]
     titles = [t.title for t in r.timeline]
-    assert titles == ["Retrait du dossard (jour à confirmer)", "Départ : Milano Marathon"]
+    assert titles == ["Bib pick-up (day to confirm)", "Start: Milano Marathon"]
     start = r.timeline[1].start
     assert start == datetime(2027, 4, 4, 9, tzinfo=ZoneInfo("Europe/Rome")) and r.timeline[1].alarm_minutes
     assert r.timeline[0].time_known is False
@@ -114,12 +119,13 @@ def test_race_without_time_gives_all_day_event():
 
 def test_html_content_and_vocabulary():
     html = render_html(demo_recap())
-    assert "0 € payé par RunAI" in html
-    assert "Ce qui reste à faire par toi" in html and "Sources et traçabilité" in html
+    assert "0 € paid by RunAI" in html
+    assert "What you still need to do" in html and "Sources and traceability" in html
     assert "https://in.njuko.com/wizz-air-milano-marathon-20271776152378557" in html
-    assert "114,00 €" in html and "≈ 492 €" in html
+    assert "114.00 €" in html and "≈ 492 €" in html
     lower = html.lower()
-    assert "réservé" not in lower and "confirmé" not in lower
+    assert 'lang="en"' in html and "prepared ≠ booked" in lower
+    assert "sunday 4 april 2027" in lower
 
 
 def test_html_escapes_agent_text():
@@ -132,7 +138,7 @@ def test_html_escapes_agent_text():
 def test_html_embeds_capture():
     r = recap_from_mission(_race(), RunnerProfile(), _steps(), captures={StepKind.registration: PNG_1PX})
     html = render_html(r)
-    assert 'src="data:image/png;base64,' in html and "AGENT ARRÊTÉ ICI" in html
+    assert 'src="data:image/png;base64,' in html and "AGENT STOPPED HERE" in html
 
 
 def test_ics_rfc5545_structure():
@@ -149,7 +155,8 @@ def test_ics_rfc5545_structure():
     assert all(d.startswith("DTSTART;TZID=Europe/Paris:") for d in dtstarts)
     assert "DTSTART;TZID=Europe/Paris:20270404T080000" in dtstarts
     assert "TRIGGER:-PT720M" in lines and "TRIGGER:-PT120M" in lines
-    assert any("0 € payé par RunAI" in line for line in lines if line.startswith("DESCRIPTION:"))
+    assert "CATEGORIES:RunAI,race" in lines and "CATEGORIES:RunAI,to pay" in lines
+    assert any("0 € paid by RunAI" in line for line in lines if line.startswith("DESCRIPTION:"))
 
 
 def test_ics_converts_other_timezones_and_escapes():
@@ -161,7 +168,7 @@ def test_ics_converts_other_timezones_and_escapes():
     assert "DTSTART;TZID=Europe/Paris:20270307T103000" in lines
     assert "SUMMARY:Départ\\, semi\\; Lisbonne" in lines
     desc = next(line for line in lines if line.startswith("DESCRIPTION:"))
-    assert "ligne 1\\nligne 2" in desc and "Heure locale : 09:30 (Europe/Lisbon)" in desc
+    assert "ligne 1\\nligne 2" in desc and "Local time: 09:30 (Europe/Lisbon)" in desc
 
 
 def test_ics_lisbon_calendar_vtimezone():
@@ -246,10 +253,39 @@ def test_invalid_minutes_and_unknown_country_keep_time_as_text():
 def test_default_notice_depends_on_profile():
     fake = recap_from_mission(_race(), RunnerProfile(), [])
     real = recap_from_mission(_race(), RunnerProfile(email="vrai@coureur.fr"), [])
-    assert "fictif" in fake.notice and "fictif" not in real.notice
-    assert "Rien n'a été payé" in real.notice
+    assert "Fictional" in fake.notice and "Fictional" not in real.notice
+    assert "Nothing has been paid" in real.notice
 
 
 def test_invalid_start_time_not_shown_as_departure():
     course = next(t for t in default_timeline(_race(start_time="09:75")) if t.tag == "course")
-    assert course.detail == "heure de départ à confirmer"
+    assert course.detail == "start time to confirm"
+
+
+@pytest.mark.parametrize(("point", "expected"), [
+    (StopPoint.payment, "Check the summary and price, then pay yourself on the official website."),
+    (StopPoint.account_creation, "Create your account yourself: the agent never enters a password."),
+    (StopPoint.health_declaration, "Provide your medical certificate yourself: no health data passes through the agent."),
+    (StopPoint.consent, "Read and accept the rules, terms or consent yourself."),
+    (StopPoint.submission, "Review the pre-filled fields and confirm the final submission yourself."),
+    (None, "Nothing has been committed: check the page reached and finish yourself."),
+])
+def test_english_handoff_advice(point, expected):
+    step = StepResult(kind=StepKind.registration, status=StepStatus.stopped_before_commitment, stop_point=point)
+    assert human_action(step) == expected
+
+
+def test_english_empty_and_failed_missions():
+    empty = recap_from_mission(_race(race_date=None), RunnerProfile(), [])
+    assert empty.timeline == [] and empty.missions == []
+    assert "No sources recorded" in render_html(empty.model_copy(update={"sources": []}))
+    failed = StepResult(kind=StepKind.transport, status=StepStatus.failed)
+    assert human_action(failed) == "Agent blocked: take over from the live view or relaunch the mission."
+    assert render_mod.status_label(failed.status, False) == "blocked"
+
+
+def test_english_key_fact_date_and_distance():
+    facts = {fact.label: fact.value for fact in default_key_facts(_race())}
+    assert facts["Start"] == "Sun 4 Apr 2027 · 09:00"
+    assert facts["Distance"] == "42.195 km"
+    assert render_mod.eur(1234.5) == "1,234.50 €"

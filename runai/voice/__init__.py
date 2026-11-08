@@ -1,4 +1,4 @@
-"""Voix Gladia : transcription en direct et commandes vocales (avec repli clavier)."""
+"""Gladia voice: live transcription and voice commands (with keyboard fallback)."""
 
 from runai.voice.commands import (
     CommandDetector,

@@ -1,4 +1,4 @@
-"""Modèles du règlement d'une course, du feu vert et de la timeline du week-end."""
+"""Models for race rules, eligibility and the weekend timeline."""
 
 from datetime import date, datetime, time, timedelta
 from enum import Enum
@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
 class FieldSource(BaseModel):
-    """D'où vient une valeur : URL lue, page du document et extrait (langue d'origine)."""
+    """Value provenance: source URL, document page and excerpt (original language)."""
 
     url: HttpUrl
     page: int | None = None
@@ -17,7 +17,7 @@ class FieldSource(BaseModel):
 
 
 class PickupWindow(BaseModel):
-    """Créneau de retrait des dossards, heure locale de la course."""
+    """Bib pick-up slot in the race's local time."""
 
     day: date
     opens: time
@@ -25,11 +25,11 @@ class PickupWindow(BaseModel):
 
 
 class TimeGate(BaseModel):
-    """Barrière horaire intermédiaire : temps de course maximal au km `km`."""
+    """Intermediate cut-off: maximum elapsed race time at kilometer `km`."""
 
     km: float
     max_elapsed: timedelta
-    clock_time: time | None = Field(None, description="Heure locale publiée par l'organisateur, si elle l'est")
+    clock_time: time | None = Field(None, description="Local time published by the organizer, if available")
 
 
 class RequirementKind(str, Enum):
@@ -43,7 +43,7 @@ class RequirementKind(str, Enum):
 
 
 class Requirement(BaseModel):
-    """Pièce ou démarche exigée par le règlement. C'est toujours l'humain qui la fournit."""
+    """Document or action required by the rules. Always provided by the human."""
 
     kind: RequirementKind
     label: str
@@ -60,11 +60,10 @@ class LicenseKind(str, Enum):
 
 
 class EntryPath(BaseModel):
-    """Une voie d'inscription du règlement (ex. Runcard + certificat pour un étranger résidant à l'étranger).
+    """An entry path in the rules (e.g. Runcard and certificate for a foreign resident abroad).
 
-    `None` sur un critère = indifférent ; `licenses` = types de licence acceptés sur cette voie ;
-    `to_confirm` = voie déduite mais non confirmée par le règlement (jamais verte).
-    """
+    None means no constraint; `licenses` lists accepted license types.
+    `to_confirm` marks an inferred path not confirmed by the rules (never green)."""
 
     id: str
     label: str
@@ -79,11 +78,10 @@ class EntryPath(BaseModel):
 
 
 class RaceRules(BaseModel):
-    """Règlement utile d'une course. Chaque champ renseigné a sa source dans `field_sources` (même nom de clé).
+    """Relevant race rules. Each populated field has a source in `field_sources` under the same key.
 
-    Les champs introuvables restent vides et sont listés dans `missing_fields` : jamais de valeur devinée.
-    Les heures sont locales (`timezone`).
-    """
+    Unfound fields stay empty and are listed in `missing_fields`: never guess.
+    Times are local (`timezone`)."""
 
     race_name: str
     race_date: date | None = None
@@ -143,8 +141,9 @@ class Reason(BaseModel):
 
 
 class HumanTodo(BaseModel):
-    """À faire par l'humain lui-même (document, certificat, signature). L'agent ne le coche jamais :
-    il n'y a volontairement pas de champ « fait »."""
+    """For the human to complete personally (document, certificate, signature).
+
+    The agent never checks it off: there is deliberately no done field."""
 
     kind: RequirementKind
     label: str
@@ -155,7 +154,7 @@ class HumanTodo(BaseModel):
 
 
 class RunnerSituation(BaseModel):
-    """Ce que RunAI sait du coureur en plus de `RunnerProfile` (données fictives en démo)."""
+    """What RunAI knows about the runner beyond `RunnerProfile` (fictional in demo mode)."""
 
     residence_country: str = "FR"
     license: LicenseKind = LicenseKind.none
@@ -171,7 +170,7 @@ class RecentResult(BaseModel):
 
 
 class RunnerGoal(BaseModel):
-    """Objectif du coureur, ex. `RunnerGoal.parse("2h10-2h15", 21.0975)`."""
+    """Runner goal, e.g. `RunnerGoal.parse("2h10-2h15", 21.0975)`."""
 
     distance_km: float
     target_low: timedelta | None = None
@@ -195,7 +194,7 @@ class Eligibility(BaseModel):
 
 
 class TransportLeg(BaseModel):
-    """Trajet proposé par l'agent transport. Datetimes naïves = heure locale de la course."""
+    """Leg proposed by the transport agent. Naive datetimes use race local time."""
 
     mode: Literal["train", "flight", "bus", "car", "other"] = "train"
     origin: str
@@ -206,7 +205,7 @@ class TransportLeg(BaseModel):
 
 
 class HotelStay(BaseModel):
-    """Hôtel proposé par l'agent hébergement (heures locales de la course)."""
+    """Hotel proposed by the accommodation agent (race local times)."""
 
     name: str
     check_in: date
@@ -231,7 +230,7 @@ class Alert(BaseModel):
 
 
 class TimelineEvent(BaseModel):
-    """Événement daté (datetimes avec fuseau). `assumption` = déduit d'une hypothèse, pas lu dans le règlement."""
+    """Dated event (timezone-aware datetimes). `assumption` means inferred, not read in the rules."""
 
     start: datetime
     end: datetime

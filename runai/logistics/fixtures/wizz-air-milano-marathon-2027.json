@@ -12,11 +12,11 @@
     "regulation_url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba",
     "start_time": "08:15:00",
     "start_location": null,
-    "start_waves": "Ondes et sas attribués selon le « tempo di accredito » déclaré (temps net depuis le 1er janvier 2025 sur marathon ou semi homologués FIDAL / World Athletics), couleur sur le dossard ; détail des vagues à venir.",
+    "start_waves": "Waves and corrals assigned according to your declared qualifying time (net time since 1 January 2025 in FIDAL / World Athletics certified marathons or half marathons), color shown on your bib; wave details to come.",
     "corrals_open": "07:00:00",
     "corrals_close_before_wave": "PT20M",
-    "bag_drop": "Consigne : Piazza Castello, uniquement le sac fourni avec le dossard.",
-    "bib_pickup_location": "Milano Running Festival (lieu 2027 à communiquer par l'organisateur)",
+    "bag_drop": "Bag drop: Piazza Castello, only the bag provided with your bib.",
+    "bib_pickup_location": "Milano Running Festival (2027 venue to be announced by the organizer)",
     "bib_pickup_windows": [
       {"day": "2027-04-01", "opens": "16:00:00", "closes": "20:00:00"},
       {"day": "2027-04-02", "opens": "10:00:00", "closes": "20:00:00"},
@@ -29,78 +29,78 @@
       {"km": 21.1, "max_elapsed": "PT3H15M", "clock_time": "12:05:00"},
       {"km": 27.8, "max_elapsed": "PT4H20M", "clock_time": "13:10:00"}
     ],
-    "aid_stations": "Ravitaillement à l'arrivée et tous les 5 km (8 réglementaires) + 2 supplémentaires : eau, boisson énergétique, fruits et biscuits dès le km 20 ; points d'épongement.",
+    "aid_stations": "Refreshments at the finish and every 5 km (8 required stations) + 2 extra: water, energy drink, fruit and biscuits from km 20; sponge stations.",
     "min_age": 20,
     "registration_deadline": "2027-03-31T23:59:00",
     "entry_paths": [
       {
         "id": "fidal_license",
-        "label": "Licencié FIDAL",
+        "label": "FIDAL license holder",
         "licenses": ["host_federation"],
         "requirements": [
-          {"kind": "license", "label": "Licence FIDAL valide le 4 avril 2027", "detail": "Téléverser la carte FIDAL, code et nom du club."}
+          {"kind": "license", "label": "FIDAL license valid on 4 April 2027", "detail": "Upload your FIDAL card, club code and club name."}
         ],
         "source": {"url": "https://www.milanomarathon.it/wp-content/uploads/2026/07/entry_flowchart_MM27_ENG_V02.pdf", "page": 2, "excerpt": "To participate it is only necessary for your FIDAL license to be valid on the date of the race."}
       },
       {
         "id": "foreign_federation_license",
-        "label": "Licencié d'une fédération étrangère affiliée à World Athletics (ex. FFA)",
+        "label": "License holder from a foreign federation affiliated with World Athletics (e.g. FFA)",
         "licenses": ["foreign_federation"],
         "requirements": [
-          {"kind": "license", "label": "Licence d'athlétisme valide le 4 avril 2027", "detail": "Nom de la fédération, numéro de licence, nom du club ; formulaire d'autodéclaration de licence si l'inscription n'est pas faite par la fédération ou le club. Hors UE : titre de séjour ou visa."}
+          {"kind": "license", "label": "Athletics license valid on 4 April 2027", "detail": "Federation name, license number, club name; license self-declaration form if registration is not made by the federation or club. Outside the EU: residence permit or visa."}
         ],
-        "limitations": ["Type de licence FFA accepté (compétition, running…) non précisé : à confirmer auprès de info@milanomarathon.it."],
+        "limitations": ["Accepted FFA license type (competition, running, etc.) not specified: confirm with info@milanomarathon.it."],
         "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 1, "excerpt": "Atlete/i tesserate/i per Federazioni straniere affiliate a World Athletics presentando, nel caso non vengano iscritti dalla propria Federazione o Club o Assistente, apposito modulo di autodichiarazione del tesseramento."}
       },
       {
         "id": "runcard_italian_citizen",
-        "label": "Runcard, citoyen italien",
+        "label": "Runcard, Italian citizen",
         "host_citizen": true,
         "licenses": ["none"],
         "requirements": [
-          {"kind": "runcard", "label": "Runcard FIDAL valide le 4 avril 2027", "detail": "Achat sur www.runcard.com (site en italien) : 30 € résident en Italie, 15 € résident à l'étranger."},
-          {"kind": "medical_certificate", "label": "Certificat d'aptitude à la compétition en athlétisme délivré en Italie", "detail": "Mention « idoneità sportiva agonistica alla pratica dell'ATLETICA LEGGERA (D.M. 18/02/1982) » ; les mentions « corsa », « podismo », « maratona » ne sont pas valables."}
+          {"kind": "runcard", "label": "FIDAL Runcard valid on 4 April 2027", "detail": "Buy on www.runcard.com (Italian website): 30 € for residents in Italy, 15 € for residents abroad."},
+          {"kind": "medical_certificate", "label": "Certificate of fitness for competitive athletics issued in Italy", "detail": "Must state fitness for competitive athletics under Italian law (D.M. 18/02/1982); wording referring only to running, road running or marathon is not valid."}
         ],
         "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 4, "excerpt": "I cittadini italiani (pur non essendo residenti in Italia), sono tenuti a fornire un certificato medico rilasciato in Italia."}
       },
       {
         "id": "runcard_foreign_resident_italy",
-        "label": "Runcard, étranger résidant en Italie",
+        "label": "Runcard, foreign citizen residing in Italy",
         "host_citizen": false,
         "resident_in_host_country": true,
         "licenses": ["none"],
         "requirements": [
-          {"kind": "runcard", "label": "Runcard FIDAL valide le 4 avril 2027", "cost_eur": 30, "detail": "Achat sur www.runcard.com (site en italien)."},
-          {"kind": "medical_certificate", "label": "Certificat d'aptitude à la compétition en athlétisme délivré en Italie"}
+          {"kind": "runcard", "label": "FIDAL Runcard valid on 4 April 2027", "cost_eur": 30, "detail": "Buy on www.runcard.com (Italian website)."},
+          {"kind": "medical_certificate", "label": "Certificate of fitness for competitive athletics issued in Italy"}
         ],
         "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 2, "excerpt": "Possessori di RUNCARD italiani (residenti e non residenti in Italia) e stranieri residenti in Italia. [...] La loro partecipazione è comunque subordinata al possesso di un certificato medico di idoneità agonistica specifica per l'Atletica Leggera."}
       },
       {
         "id": "runcard_foreign_resident_abroad",
-        "label": "Runcard, étranger résidant à l'étranger (compétition)",
+        "label": "Runcard, foreign citizen residing abroad (competitive)",
         "host_citizen": false,
         "resident_in_host_country": false,
         "licenses": ["none"],
         "requirements": [
-          {"kind": "runcard", "label": "Runcard FIDAL valide le 4 avril 2027", "cost_eur": 15, "detail": "Achetable avec l'inscription ou sur www.runcard.com (site en italien).", "deadline": "Numéro à saisir avant le retrait du dossard (1-3 avril 2027)"},
-          {"kind": "medical_certificate", "label": "Certificat médical d'aptitude à la compétition en athlétisme, aux normes italiennes", "detail": "Délivré dans votre pays mais avec les examens de la loi italienne (D.M. 18/02/1982) : visite médicale, analyse d'urine complète, électrocardiogramme au repos ET après effort, spirographie. Ou le « health form » de l'organisateur. Valide le 4 avril 2027, original présenté à l'organisateur.", "deadline": "À téléverser avant le retrait du dossard (1-3 avril 2027)", "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 3, "excerpt": "Questi atleti possono presentare un certificato medico emesso nel proprio paese, ma conforme agli esami diagnostici [...] Visita Medica; Esame completo delle urine; Elettrocardiogramma a riposo e dopo sforzo; Spirografia."}}
+          {"kind": "runcard", "label": "FIDAL Runcard valid on 4 April 2027", "cost_eur": 15, "detail": "Available during registration or on www.runcard.com (Italian website).", "deadline": "Enter the number before bib pick-up (1-3 April 2027)"},
+          {"kind": "medical_certificate", "label": "Medical certificate of fitness for competitive athletics, meeting Italian standards", "detail": "Issued in your country but with the examinations required by Italian law (D.M. 18/02/1982): medical examination, complete urinalysis, resting AND post-exercise ECG, spirometry. Or the organizer's health form. Valid on 4 April 2027, original shown to the organizer.", "deadline": "Upload before bib pick-up (1-3 April 2027)", "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 3, "excerpt": "Questi atleti possono presentare un certificato medico emesso nel proprio paese, ma conforme agli esami diagnostici [...] Visita Medica; Esame completo delle urine; Elettrocardiogramma a riposo e dopo sforzo; Spirografia."}}
         ],
         "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 2, "excerpt": "Possessori di RUNCARD stranieri residenti all'estero. Possono partecipare cittadini stranieri residenti all'estero [...] in possesso di RUNCARD in corso di validità."}
       },
       {
         "id": "sport_tourism",
-        "label": "Participation « tourisme sportif » (non compétitive), étranger résidant à l'étranger",
+        "label": "Sports tourism participation (non-competitive), foreign citizen residing abroad",
         "competitive": false,
         "host_citizen": false,
         "resident_in_host_country": false,
         "licenses": ["none"],
         "requirements": [
-          {"kind": "waiver", "label": "Lire et accepter la décharge de responsabilité et le formulaire d'information santé", "detail": "Dans le formulaire d'inscription : case à cocher par vous, jamais par l'agent."},
-          {"kind": "insurance_fee", "label": "Assurance obligatoire", "cost_eur": 5}
+          {"kind": "waiver", "label": "Read and accept the liability waiver and health information form", "detail": "In the registration form: you must tick the box yourself, never the agent."},
+          {"kind": "insurance_fee", "label": "Mandatory insurance", "cost_eur": 5}
         ],
         "limitations": [
-          "Dossard différent, classement séparé par ordre alphabétique",
-          "Ni prix, ni primes, ni remboursements de frais"
+          "Different bib, separate alphabetical results",
+          "No prizes, bonuses or expense reimbursements"
         ],
         "source": {"url": "https://indd.adobe.com/view/b16c5256-1bb0-4ca9-97a3-82c6730745ba", "page": 3, "excerpt": "Partecipazione con finalità turistico-sportive per stranieri residenti all'estero. [...] dovranno leggere attentamente e accettare il modulo di esonero di responsabilità e informazione sulla salute."}
       }
@@ -126,10 +126,10 @@
     },
     "missing_fields": ["start_location"],
     "notes": [
-      "Règlement officiel 2027 (Regolamento_MM27_it, lien depuis https://www.milanomarathon.it/wizz-air-milano-marathon/regolamento/) publié en images Adobe InDesign : lu par OCR puis relu à l'œil le 7 nov. 2026 ; Linkup /fetch renvoie une erreur sur indd.adobe.com.",
-      "Lieu exact du départ 2027 absent du règlement (2026 : Corso Sempione) : à confirmer.",
-      "Barrières : l'heure publiée (≈ 12:05 au km 21,1) vaut 8:15 + 3h50, pas 8:15 + 3h15 : elle vise sans doute la dernière vague. RunAI raisonne en temps de course depuis le départ de la vague.",
-      "Documents à téléverser au plus tard avant le retrait du dossard (FAQ https://www.milanomarathon.it/fr/informations-pratiques/)."
+      "Official 2027 rules (Regolamento_MM27_it, linked from https://www.milanomarathon.it/wizz-air-milano-marathon/regolamento/) published as Adobe InDesign images: read with OCR then reviewed visually on 7 Nov. 2026; Linkup /fetch returns an error for indd.adobe.com.",
+      "Exact 2027 start location absent from the rules (2026: Corso Sempione): to confirm.",
+      "Cut-offs: the published time (approx. 12:05 at km 21.1) equals 8:15 + 3h50, not 8:15 + 3h15: it probably refers to the last wave. RunAI uses elapsed race time from the wave start.",
+      "Upload documents before bib pick-up at the latest (FAQ https://www.milanomarathon.it/fr/informations-pratiques/)."
     ],
     "origin": "fixture",
     "verified_on": "2026-11-07"

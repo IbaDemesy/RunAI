@@ -1,4 +1,4 @@
-"""Sources audio PCM 16 bits mono : fichier (local ou URL), micro, découpées en morceaux."""
+"""Chunked mono 16-bit PCM audio sources: local file, URL or microphone."""
 
 import asyncio
 import io
@@ -28,7 +28,7 @@ class AudioStream:
 
 
 def load_pcm(source: str | Path | bytes) -> tuple[bytes, int]:
-    """Lit un WAV PCM 16 bits mono tel quel ; convertit tout autre format avec ffmpeg en 16 kHz."""
+    """Read mono 16-bit PCM WAV directly; convert other formats to 16 kHz with ffmpeg."""
     data = source if isinstance(source, bytes) else _read_bytes(source)
     if data[:4] == b"RIFF":
         try:
@@ -50,14 +50,14 @@ def _read_bytes(source: str | Path) -> bytes:
         response = httpx.get(text, follow_redirects=True, timeout=60)
         response.raise_for_status()
         if response.content.startswith(b"version https://git-lfs"):
-            raise AudioError("Pointeur Git LFS reçu : utiliser media.githubusercontent.com/media/...")
+            raise AudioError("Git LFS pointer received: use media.githubusercontent.com/media/...")
         return response.content
     return Path(source).read_bytes()
 
 
 def _ffmpeg_to_pcm(data: bytes) -> bytes:
     if shutil.which("ffmpeg") is None:
-        raise AudioError("ffmpeg est requis pour convertir ce format (ou fournir un WAV PCM 16 bits mono).")
+        raise AudioError("ffmpeg is required to convert this format (or provide a mono 16-bit PCM WAV).")
     result = subprocess.run(
         ["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-f", "s16le", "-ac", "1",
          "-ar", str(DEFAULT_SAMPLE_RATE), "pipe:1"],
@@ -66,7 +66,7 @@ def _ffmpeg_to_pcm(data: bytes) -> bytes:
         check=False,
     )
     if result.returncode != 0:
-        raise AudioError(f"Conversion ffmpeg impossible : {result.stderr.decode(errors='replace').strip()}")
+        raise AudioError(f"ffmpeg conversion failed: {result.stderr.decode(errors='replace').strip()}")
     return result.stdout
 
 
@@ -77,7 +77,7 @@ def chunk_size(sample_rate: int, chunk_ms: int = CHUNK_MS) -> int:
 async def pcm_chunks(
     pcm: bytes, sample_rate: int, *, realtime: bool = True, chunk_ms: int = CHUNK_MS
 ) -> AsyncIterator[bytes]:
-    """Découpe le PCM ; `realtime=True` envoie au rythme de la parole, comme un micro."""
+    """Chunk PCM; `realtime=True` sends at speech speed, like a microphone."""
     size = chunk_size(sample_rate, chunk_ms)
     for offset in range(0, len(pcm), size):
         yield pcm[offset:offset + size]
@@ -94,7 +94,7 @@ def microphone_stream(sample_rate: int = DEFAULT_SAMPLE_RATE, chunk_ms: int = CH
     try:
         import sounddevice
     except (ImportError, OSError) as error:
-        raise AudioError("Micro indisponible : installer sounddevice (et PortAudio).") from error
+        raise AudioError("Microphone unavailable: install sounddevice (and PortAudio).") from error
 
     async def chunks() -> AsyncIterator[bytes]:
         loop = asyncio.get_running_loop()
