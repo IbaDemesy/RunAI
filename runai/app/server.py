@@ -393,7 +393,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
             raise HTTPException(404, "Unknown mission") from None
         if not mission.is_terminal:
             raise HTTPException(409, "Mission is not terminal")
-        return JSONResponse(export_replay(mission).model_dump(mode="json"), headers={
+        return JSONResponse(export_replay(mission, get_service().profile).model_dump(mode="json"), headers={
             "Content-Disposition": f'attachment; filename="{mission.id}.replay.json"',
         })
 

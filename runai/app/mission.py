@@ -69,6 +69,8 @@ AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
 # Embedded step history: `step` SSE envelopes keep few entries (they are emitted per event), snapshots more.
 STEP_EVENT_HISTORY_LIMIT = 10
+SUBSCRIBER_QUEUE_SIZE = 2000
+_OVERFLOW: Any = object()
 SNAPSHOT_HISTORY_LIMIT = 200
 
 class MissionStatus(str, Enum):
@@ -281,6 +283,8 @@ class MissionService:
         ), terminal=mission.is_terminal)
 
     async def rehydrate(self) -> None:
+        with contextlib.suppress(OSError):
+            await asyncio.to_thread(self.capture_store.purge)  # retention: expired frames do not outlive a restart
         for document in self.store.load():
             snapshot = document.snapshot
             if snapshot.mission_id in self.missions:
@@ -513,8 +517,8 @@ class MissionService:
         else:
             envelope.provider = "app"
         mission.envelopes.append(envelope)
-        for queue in self._event_subscribers.get(mission.id, ()):
-            queue.put_nowait(envelope)
+        for queue in tuple(self._event_subscribers.get(mission.id, ())):
+            self._offer(self._event_subscribers[mission.id], queue, envelope)
 
     async def subscribe_events(self, mission_id: str, last_event_id: str | None = None):
         mission = self.get(mission_id)
@@ -527,22 +531,27 @@ class MissionService:
                 raise MissionError("Invalid Last-Event-ID") from None
             if prefix != mission_id or not 0 <= sequence <= len(mission.envelopes):
                 raise MissionError("Invalid Last-Event-ID")
-        queue = asyncio.Queue()
+        queue = asyncio.Queue(maxsize=SUBSCRIBER_QUEUE_SIZE)
         self._event_subscribers.setdefault(mission_id, set()).add(queue)
         try:
             for event in tuple(mission.envelopes[sequence:]):
                 yield event
             if mission.is_terminal:
                 while not queue.empty():
-                    yield queue.get_nowait()
+                    event = queue.get_nowait()
+                    if event is _OVERFLOW:
+                        return
+                    yield event
                 return
             while True:
                 event = await queue.get()
+                if event is _OVERFLOW:
+                    return  # slow consumer: the client reconnects with Last-Event-ID and replays
                 yield event
                 if event.type == "mission_status" and event.payload["status"] in {s.value for s in TERMINAL_STATUSES}:
                     return
         finally:
-            self._event_subscribers[mission_id].discard(queue)
+            self._event_subscribers.get(mission_id, set()).discard(queue)
 
     async def cancel(self, mission_id: str) -> None:
         mission = self._writable(mission_id)
@@ -556,7 +565,10 @@ class MissionService:
             await lifecycle.cancel_all(mission_id)
         for (mid, _), run in list(self._runs.items()):
             if mid == mission_id and hasattr(run, "cancel"):
-                await run.cancel()
+                try:
+                    await run.cancel()
+                except Exception:
+                    logger.exception("Could not cancel run %s of mission %s", run, mission_id)
         task = self._mission_tasks.get(mission_id)
         if task and not task.done():
             task.cancel()
@@ -659,7 +671,7 @@ class MissionService:
             resolved = self.questions.get(question_model.id)
             question_model.answer = resolved.answer
             question_model.answered_at = utcnow()
-            if mission.status is not MissionStatus.cancelled:
+            if mission.status is not MissionStatus.cancelled and step.status is StepStatus.waiting_for_user:
                 step.status = StepStatus.running
             self._emit(mission, "question_resolved", resolved.model_dump(mode="json"))
             self._record(mission, TraceEvent(source="human", type="answer",
@@ -767,18 +779,31 @@ class MissionService:
                     return mission, step
         return None
 
+    @staticmethod
+    def _offer(subscribers: set, queue: asyncio.Queue, item: Any) -> None:
+        """Non-blocking put; a full queue drops the slow subscriber instead of growing without bound."""
+        try:
+            queue.put_nowait(item)
+        except asyncio.QueueFull:
+            subscribers.discard(queue)
+            queue.get_nowait()
+            queue.put_nowait(_OVERFLOW)
+
     async def subscribe(
         self, mission_id: str
     ) -> AsyncIterator[tuple[str, dict[str, Any]]]:
         mission = self.get(mission_id)
-        queue: asyncio.Queue[tuple[str, dict[str, Any]]] = asyncio.Queue()
+        queue: asyncio.Queue[tuple[str, dict[str, Any]]] = asyncio.Queue(maxsize=SUBSCRIBER_QUEUE_SIZE)
         self._subscribers.setdefault(mission_id, set()).add(queue)
         try:
             yield "snapshot", mission.snapshot(include_events=True)
             if mission.is_terminal:
                 return
             while True:
-                name, data = await queue.get()
+                item = await queue.get()
+                if item is _OVERFLOW:
+                    return
+                name, data = item
                 yield name, data
                 if (
                     name == "mission"
@@ -786,7 +811,7 @@ class MissionService:
                 ):
                     return
         finally:
-            self._subscribers[mission_id].discard(queue)
+            self._subscribers.get(mission_id, set()).discard(queue)
 
     def _active(
         self, mission_id: str, kind: StepKind
@@ -883,8 +908,8 @@ class MissionService:
         self._save_mission(mission)
 
     def _publish(self, mission: Mission, message: tuple[str, dict[str, Any]]) -> None:
-        for queue in self._subscribers.get(mission.id, ()):
-            queue.put_nowait(message)
+        for queue in tuple(self._subscribers.get(mission.id, ())):
+            self._offer(self._subscribers[mission.id], queue, message)
         if message[0] == "trace":
             self._publish_state(mission)
 

@@ -358,6 +358,7 @@ class HLifecycle:
     async def _watchdog(self, job: HJob, run: HRun, params: dict[str, Any], timeout_s: float | None) -> None:
         loop = asyncio.get_running_loop()
         started = loop.time()
+        fired: set[str] = set()
         last_url = getattr(run, "last_url", None)
         same_since = (getattr(run, "metrics", None) or {}).get("steps") or getattr(run, "event_count", 0)
         while True:
@@ -370,20 +371,21 @@ class HLifecycle:
             if url != last_url or observed < same_since:
                 last_url, same_since = url, observed
             action = None
-            if ("force_answer_near_budget" not in job.watchdog
+            if ("force_answer_near_budget" not in fired
                     and ((steps is not None and params.get("max_steps")
                           and steps >= 0.8 * params["max_steps"])
                          or (timeout_s is not None and loop.time() - started >= 0.85 * timeout_s))
                     and callable(getattr(run, "force_answer", None))):
                 action = "force_answer_near_budget"
                 method = run.force_answer
-            elif ("stall_nudge" not in job.watchdog and observed - same_since >= 6
+            elif ("stall_nudge" not in fired and observed - same_since >= 6
                   and callable(getattr(run, "send_message", None))):
                 action = "stall_nudge"
                 async def method():
                     await run.send_message("You seem stuck on the same page: close any modal or cookie banner, "
                                            "then go back to the search form and continue.")
             if action:
+                fired.add(action)  # per attempt: a retried session gets its own nudge and forced answer
                 job.watchdog.append(action)
                 log = getattr(run, "_log", None)
                 if callable(log):
