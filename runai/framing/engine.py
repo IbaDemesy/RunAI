@@ -361,7 +361,7 @@ class FramingEngine:
         if not extract:
             return {}
         known = {
-            name.value: str(slot.value)
+            name.value: mask_address(str(slot.value))
             for name, slot in session.slots.items()
             if slot.is_known
             and not (
@@ -393,7 +393,7 @@ class FramingEngine:
             session.open_questions[0],
         )
         known = {
-            name.value: str(slot.value)
+            name.value: mask_address(str(slot.value))
             for name, slot in session.slots.items()
             if slot.is_known and slot.value is not None
         }
