@@ -71,6 +71,13 @@ class HQuotaTimeout(TimeoutError):
     """No free H slot before the deadline."""
 
 
+class HCreditsUnavailable(RuntimeError):
+    """Every H key is blocked after an `insufficient_credit` error."""
+
+
+DEFAULT_CREDIT_BLOCK_S = 900.0
+
+
 def api_keys_from_env() -> list[tuple[str, str]]:
     """Available H keys: `HAI_API_KEY`, then `HAI_API_KEY_2`, `HAI_API_KEY_3`… (return names, never log values)."""
     names = ["HAI_API_KEY"]
@@ -98,6 +105,19 @@ class HAccount:
         self._api_key = api_key
         self.max_concurrency = max_concurrency
         self.active = 0
+        self._credit_cap: int | None = None
+        self._credit_retry_at = 0.0
+
+    def block_credit(self, ttl_s: float) -> None:
+        """Take the key out of rotation after `insufficient_credit`, until `ttl_s` elapses."""
+        if self.max_concurrency > 0:
+            self._credit_cap = self.max_concurrency
+        self.max_concurrency = 0
+        self._credit_retry_at = time.monotonic() + ttl_s
+
+    def refresh_credit(self) -> None:
+        if self._credit_cap is not None and self.max_concurrency == 0 and time.monotonic() >= self._credit_retry_at:
+            self.max_concurrency, self._credit_cap = self._credit_cap, None
 
     @property
     def client(self) -> Any:
@@ -649,6 +669,7 @@ class HRunner:
         self.max_concurrency = max_concurrency or settings.h_max_concurrency
         self.quota_poll_s = quota_poll_s
         self.quota_timeout_s = quota_timeout_s
+        self.credit_block_s = float(os.getenv("RUNAI_H_CREDIT_BLOCK_S", str(DEFAULT_CREDIT_BLOCK_S)))
         self.traces_dir = traces_dir
         try:
             self.overrides = json.loads(os.environ.get("RUNAI_H_OVERRIDES", "{}"))
@@ -726,15 +747,20 @@ class HRunner:
         self, params: dict[str, Any], tools: list[Tool] | None = None
     ) -> tuple[HAccount, Any]:
         """Reserve a local slot on the freest key, then create the session; retry after a `429`."""
-        deadline = None
+        deadline = time.monotonic() + self.quota_timeout_s
         while True:
             releases = self._releases
+            for candidate in self.accounts:
+                candidate.refresh_credit()
+            if all(candidate.max_concurrency <= 0 for candidate in self.accounts):
+                raise HCreditsUnavailable("All H accounts have exhausted their credits.")
             local = [account for account in self.accounts if account.has_local_slot]
             if not local:
-                await self._wait_freed(None, releases)
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise HQuotaTimeout(f"No free local H slot after {self.quota_timeout_s}s")
+                await self._wait_freed(min(self.quota_poll_s, remaining), releases)
                 continue
-            if deadline is None:
-                deadline = time.monotonic() + self.quota_timeout_s
             account, seen = await self._pick(local)
             if account is not None and not account.has_local_slot:
                 continue  # pris par un lancement concurrent pendant la lecture du quota : on relit

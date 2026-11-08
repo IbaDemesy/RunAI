@@ -19,7 +19,9 @@ from uuid import uuid4
 from hai_agents.core.api_error import ApiError
 
 from runai.h.runner import (
+    DEFAULT_CREDIT_BLOCK_S,
     TERMINAL_STATUSES,
+    HCreditsUnavailable,
     HQuotaTimeout,
     HRun,
     HRunner,
@@ -233,10 +235,15 @@ class HLifecycle:
         run: HRun | None = None
         result_wrapper = start_params.pop("result_wrapper", None)
         try:
-            for attempt in range(self.retry_policy.max_attempts):
+            attempt = -1
+            while True:
+                attempt += 1
                 await self._paused_all.wait()
                 await job._resume.wait()
                 accounts = getattr(self.runner, "accounts", [])
+                for account in accounts:
+                    if refresh := getattr(account, "refresh_credit", None):
+                        refresh()
                 if accounts and all(a.max_concurrency == 0 for a in accounts):
                     raise HCreditsExhausted("All H accounts have exhausted their credits.")
                 params = dict(start_params)
@@ -245,6 +252,8 @@ class HLifecycle:
                     run = await self.runner.start(job.kind, task, mission_id=job.mission_id, **params)
                 except HQuotaTimeout as exc:
                     raise HQuotaSaturated(str(exc), job_id=job.job_id) from exc
+                except HCreditsUnavailable as exc:
+                    raise HCreditsExhausted(str(exc), job_id=job.job_id) from exc
                 job.attempts += 1
                 job.run = run
                 if job._cancel_requested:
@@ -271,11 +280,18 @@ class HLifecycle:
                 if code == "insufficient_credit":
                     account = getattr(run, "account", None)
                     if account is not None:
-                        account.max_concurrency = 0
+                        ttl = getattr(self.runner, "credit_block_s", DEFAULT_CREDIT_BLOCK_S)
+                        if block := getattr(account, "block_credit", None):
+                            block(ttl)
+                        else:
+                            account.max_concurrency = 0
                         logger.warning("H credits exhausted for account %s", account.name)
                     if outcome != "infeasible" and not any(a.max_concurrency > 0 for a in self.runner.accounts):
                         raise HCreditsExhausted("No H account with credits has an available slot.")
-                if (outcome == "infeasible" or attempt + 1 >= self.retry_policy.max_attempts
+                limit = self.retry_policy.max_attempts
+                if code == "insufficient_credit":
+                    limit = max(limit, len(accounts))
+                if (outcome == "infeasible" or attempt + 1 >= limit
                         or code not in {"environment_error", "internal", "no_answer", "answer_validation",
                                         "insufficient_credit"}):
                     break
