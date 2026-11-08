@@ -1,0 +1,4 @@
+[
+  {"databaseId": 123, "headSha": "abcdef0123456789", "status": "completed", "conclusion": "failure", "createdAt": "2026-05-01T12:00:00Z", "updatedAt": "2026-05-01T12:02:00Z", "url": "https://github.com/IbaDemesy/RunAI/actions/runs/123"},
+  {"databaseId": 124, "headSha": "fedcba0123456789", "status": "in_progress", "conclusion": "", "createdAt": "2026-05-01T13:00:00Z", "updatedAt": "2026-05-01T13:01:00Z", "url": "https://github.com/IbaDemesy/RunAI/actions/runs/124"}
+]

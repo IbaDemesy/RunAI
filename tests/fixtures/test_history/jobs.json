@@ -1,0 +1,7 @@
+{"jobs": [{"databaseId": 456, "name": "test", "status": "completed", "conclusion": "failure", "steps": [
+  {"name": "Set up job", "conclusion": "success", "number": 1, "startedAt": "2026-05-01T12:00:00Z", "completedAt": "2026-05-01T12:00:01Z"},
+  {"name": "Lint", "conclusion": "success", "number": 2, "startedAt": "2026-05-01T12:00:01Z", "completedAt": "2026-05-01T12:00:03Z"},
+  {"name": "Test", "conclusion": "failure", "number": 3, "startedAt": "2026-05-01T12:00:03Z", "completedAt": "2026-05-01T12:01:03Z"},
+  {"name": "JavaScript syntax", "conclusion": "success", "number": 4, "startedAt": "2026-05-01T12:01:03Z", "completedAt": "2026-05-01T12:01:04Z"},
+  {"name": "JavaScript tests", "conclusion": "skipped", "number": 5, "startedAt": null, "completedAt": null}
+]}]}
