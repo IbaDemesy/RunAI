@@ -260,3 +260,42 @@ def test_m9_directory_fsync_is_posix_only_and_failures_are_explained(tmp_path, m
     with caplog.at_level("WARNING", logger="runai.app.store"):
         mission = asyncio.run(scenario())
     assert any("PermissionError" in record.getMessage() for record in caplog.records)
+
+
+# --- M8 ------------------------------------------------------------------------------------------
+
+def test_m8_step_end_releases_capture_runs_and_dedup_state(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+
+    async def scenario():
+        service = build_demo_service(delay=0)
+        plan, summary = _plan()
+        mission = await service.create(plan, summary=summary)
+        service.capture_store._seen.add((mission.id, "transport", 1))
+        service.capture_store._locks[(mission.id, "transport")] = asyncio.Lock()
+        service._capture_runs[(mission.id, StepKind.transport)] = object()
+        await _drive_until_terminal(service, mission)
+        assert not [key for key in service._capture_runs if key[0] == mission.id]
+        assert not [key for key in service.capture_store._seen if key[0] == mission.id]
+        assert not [key for key in service.capture_store._locks if key[0] == mission.id]
+
+    asyncio.run(scenario())
+
+
+def test_m8_old_terminal_missions_are_pruned_from_memory(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_TRACES_DIR", str(tmp_path))
+    monkeypatch.setenv("RUNAI_MISSION_TTL_S", "0")
+
+    async def scenario():
+        service = build_demo_service(delay=0)
+        plan, summary = _plan()
+        first = await service.create(plan, summary=summary)
+        await service.cancel(first.id)
+        second = await service.create(plan, summary=summary)
+        assert first.id not in service.missions and second.id in service.missions
+        assert not [key for key in service._recaps if key[0] == first.id]
+        assert first.id not in service._writers
+        assert (tmp_path / "missions" / f"{first.id}.json").exists()
+        await service.cancel(second.id)
+
+    asyncio.run(scenario())

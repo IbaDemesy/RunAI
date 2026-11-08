@@ -84,6 +84,7 @@ TERMINAL_STATUSES = {
     MissionStatus.cancelled,
 }
 QUESTION_TIMEOUT_ANSWER = "No answer from the user: stop here and summarize."
+MISSION_TTL_S = 24 * 3600
 
 
 class Mission(BaseModel):
@@ -210,6 +211,7 @@ class MissionService:
         if not isinstance(plan, LaunchPlan):
             raise MissionError("Confirmed framing is required: /api/framings")
         self._loop = asyncio.get_running_loop()
+        self._prune_missions()
         mission = Mission(
             id=uuid.uuid4().hex[:12], query=plan.brief.race_label, user_id=user_id,
             race=plan.race, plan=plan, limitations=list(plan.limitations),
@@ -235,6 +237,29 @@ class MissionService:
         self._mission_tasks[mission.id] = task
         task.add_done_callback(self._tasks.discard)
         return mission
+
+    def _prune_missions(self) -> None:
+        """Drop terminal missions older than `RUNAI_MISSION_TTL_S` from memory (they stay on disk)."""
+        ttl = float(os.getenv("RUNAI_MISSION_TTL_S", str(MISSION_TTL_S)))
+        now = utcnow()
+        for mission_id, mission in list(self.missions.items()):
+            if not mission.is_terminal or mission.finished_at is None:
+                continue
+            if (now - mission.finished_at).total_seconds() < ttl or self._event_subscribers.get(mission_id):
+                continue
+            self.missions.pop(mission_id, None)
+            self._writers.pop(mission_id, None)
+            self._mission_tasks.pop(mission_id, None)
+            self._event_subscribers.pop(mission_id, None)
+            self._subscribers.pop(mission_id, None)
+            for key in [key for key in self._recaps if key[0] == mission_id]:
+                self._recaps.pop(key, None)
+            for key in [key for key in self._capture_runs if key[0] == mission_id]:
+                self._capture_runs.pop(key, None)
+            for qid in [qid for qid, q in self.questions.questions.items() if q.mission_id == mission_id]:
+                self.questions.questions.pop(qid, None)
+            for kind in StepKind:
+                self.capture_store.forget(mission_id, kind)
 
     @property
     def store(self) -> MissionStore:
@@ -988,6 +1013,8 @@ class MissionService:
                 return
             finally:
                 self._runs.pop((mission.id, kind), None)
+                self._capture_runs.pop((mission.id, kind), None)
+                self.capture_store.forget(mission.id, kind)
         step = mission.steps[kind] = self._merge_result(step, result)
         if step.status is StepStatus.stopped_before_commitment:
             step.data["headline"] = "Prepared — finish it yourself on the official site"
