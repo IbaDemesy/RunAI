@@ -7,6 +7,7 @@ avec `StepResult.data["provenance"]["mode"] == "replay"` et sans vue live.
 import asyncio
 import base64
 import os
+from collections.abc import AsyncIterable, AsyncIterator
 from pathlib import Path
 from typing import Any, Literal
 
@@ -25,6 +26,7 @@ from runai.models import (
     TraceEvent,
 )
 from runai.redaction import redact_secrets
+from runai.voice.models import TranscriptEvent
 
 
 class ReplayQuestion(BaseModel):
@@ -146,6 +148,17 @@ class ReplayTranscriber:
                 "Replay : aucune transcription dans la trace."
             )
         return self.trace.transcript
+
+    async def stream(self, chunks: AsyncIterable[bytes], sample_rate: int) -> AsyncIterator[TranscriptEvent]:
+        if not self.trace.transcript:
+            raise ProviderUnavailableError("Replay: no transcript in the trace.")
+        emitted = False
+        async for chunk in chunks:
+            if chunk and not emitted:
+                yield TranscriptEvent(utterance_id="replay-voice", text=self.trace.transcript, is_final=False)
+                emitted = True
+        if emitted:
+            yield TranscriptEvent(utterance_id="replay-voice", text=self.trace.transcript, is_final=True)
 
 
 class ReplayRun:

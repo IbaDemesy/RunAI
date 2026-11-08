@@ -24,8 +24,8 @@ class BasicAuthMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if (
-            scope["type"] != "http"
-            or scope["path"] in PUBLIC_PATHS
+            scope["type"] not in {"http", "websocket"}
+            or (scope["type"] == "http" and scope["path"] in PUBLIC_PATHS)
         ):
             await self.app(scope, receive, send)
             return
@@ -50,6 +50,15 @@ class BasicAuthMiddleware:
             status = 401
             headers = [(b"www-authenticate", b'Basic realm="RunAI", charset="UTF-8"')]
             body = b"Authentication required"
+        if scope["type"] == "websocket":
+            if "websocket.http.response" in scope.get("extensions", {}):
+                await send({"type": "websocket.http.response.start", "status": 403 if status == 401 else status, "headers": headers})
+                await send({"type": "websocket.http.response.body", "body": body})
+            else:
+                await receive()
+                await send({"type": "websocket.accept"})
+                await send({"type": "websocket.close", "code": 1008})
+            return
         await send(
             {
                 "type": "http.response.start",

@@ -3,6 +3,7 @@
 import asyncio
 import unicodedata
 import uuid
+from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import dataclass
 from datetime import date
 
@@ -19,6 +20,7 @@ from runai.models import (
     TraceEvent,
 )
 from runai.safety import STOP_INSTRUCTIONS
+from runai.voice.models import TranscriptEvent
 
 DEMO_RACES: dict[str, Race] = {
     "milan": Race(
@@ -302,3 +304,14 @@ class FakeTranscriber:
     async def transcribe(self, audio: bytes, content_type: str) -> str:
         await asyncio.sleep(self.delay)
         return self.TEXT
+
+    async def stream(self, chunks: AsyncIterable[bytes], sample_rate: int) -> AsyncIterator[TranscriptEvent]:
+        partials = ("I want", "I want to run a half")
+        index = 0
+        async for chunk in chunks:
+            if chunk and index < len(partials):
+                await asyncio.sleep(0.15)
+                yield TranscriptEvent(utterance_id="demo-voice", text=partials[index], is_final=False, language="en")
+                index += 1
+        if index:
+            yield TranscriptEvent(utterance_id="demo-voice", text="I want to run a half marathon.", is_final=True, language="en")
