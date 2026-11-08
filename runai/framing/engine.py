@@ -1,6 +1,8 @@
 import asyncio
 import math
+import os
 import re
+import unicodedata
 from collections.abc import Awaitable, Callable
 from datetime import date, timedelta
 from uuid import uuid4
@@ -30,10 +32,11 @@ from runai.contracts.framing import (
     missing_slots,
 )
 from runai.contracts.mission import MissionSnapshot
-from runai.framing.holo import TRANSPORTS, Phraser, _mask_address
+from runai.framing.holo import TRANSPORTS, Phraser, _mask_address, clean_extraction
 from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
+from runai.redaction import redact_secrets
 from runai.search.candidates import CandidateSearchError, location_hint
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
@@ -61,6 +64,34 @@ def _valid_place(value: object) -> bool:
         r"maybe|perhaps|whatever)(?:\b|$)",
         normalized,
     )
+
+
+LLM_INTENTS = {"answer", "correction", "advice", "smalltalk", "unclear"}
+LLM_SLOTS = {
+    SlotName.city, SlotName.origin, SlotName.race, SlotName.distance_km, SlotName.race_date,
+    SlotName.date_window, SlotName.edition, SlotName.budget, SlotName.nights, SlotName.transport_mode,
+}
+
+
+def _norm(text: str) -> str:
+    """Case, accent and whitespace-insensitive form used to check quoted evidence."""
+    folded = unicodedata.normalize("NFKD", text).casefold()
+    return " ".join("".join(c for c in folded if not unicodedata.combining(c)).split())
+
+
+def _sanitize_ack(value: object, *, allow_question: bool) -> str:
+    """Keep the model's short message safe to show: no links, no stray questions, bounded length."""
+    if not isinstance(value, str):
+        return ""
+    text = re.sub(r"https?://\S+|www\.\S+", "", value).strip().strip('"«» ')
+    text = re.sub(r"\s+", " ", text)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    if not allow_question:
+        sentences = [s for s in sentences if "?" not in s]
+    text = re.sub(r"\s+", " ", " ".join(sentences)).strip()
+    if len(text) > 320:
+        text = text[:320].rsplit(" ", 1)[0].rstrip(",;:") + "."
+    return redact_secrets(text)
 
 
 class FramingEngine:
@@ -183,105 +214,121 @@ class FramingEngine:
                     None,
                 )
             pending = question or next(iter(session.open_questions), None)
-            if (
-                pending and pending.choices and answer and not choice
-                and not reply.corrections
-            ):
-                return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
-            correction = re.match(
-                r"^(?:(?:en fait|actually)[,\s]+)?(?:plutôt|rather|instead)[,\s]+(.+?)\s*[.!?]?$"
-                r"|^(?:en fait|actually)[,\s]+(.+?)\s*[.!?]?$",
-                answer, re.IGNORECASE,
-            )
-            corrected_city = None
-            if correction and pending and pending.slots[0] in (SlotName.city, SlotName.origin):
-                corrected_city = next(group for group in correction.groups() if group)
-                if not _valid_place(corrected_city) or not re.fullmatch(
-                    r"[^\W\d_]+(?:[ '\u2019-][^\W\d_]+){0,4}", corrected_city
+            holo_values: dict[SlotName, object] = {}
+            values: dict[SlotName, object] = {}
+            llm_ack = None
+            decision = None
+            if answer and reply.text and not choice and not reply.corrections:
+                decision = await self._decide(session, answer, pending)
+            if decision is not None:
+                if not decision["values"]:
+                    return self._clarify(
+                        session, reply,
+                        self._with_question(session, decision["message"] or guidance, decision["intent"]),
+                    )
+                values = dict(decision["values"])
+                llm_ack = decision["message"]
+            else:
+                pending = question or next(iter(session.open_questions), None)
+                if (
+                    pending and pending.choices and answer and not choice
+                    and not reply.corrections
                 ):
-                    return self._clarify(session, reply, "Please specify the race city you want instead.")
-            if (
-                pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
-                and answer and not choice and not reply.corrections
-                and not corrected_city and not _valid_place(answer)
-            ):
-                return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
-            values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
-            if corrected_city:
-                values = {SlotName.city: corrected_city} | reply.corrections
-            if not values and not choice and not reply.question_id:
-                question = next(
-                    (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
-                    None,
+                    return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
+                correction = re.match(
+                    r"^(?:(?:en fait|actually)[,\s]+)?(?:plutôt|rather|instead)[,\s]+(.+?)\s*[.!?]?$"
+                    r"|^(?:en fait|actually)[,\s]+(.+?)\s*[.!?]?$",
+                    answer, re.IGNORECASE,
                 )
-            if question and len(question.slots) == 1 and answer and not question.choices and not choice and not corrected_city:
-                slot = question.slots[0]
-                if slot == SlotName.date_window and slot not in values:
-                    answer = reply.text.strip()
-                    normalized = answer.casefold()
-                    flexible = (
-                        "peu importe",
-                        "n'importe",
-                        "n’importe",
-                        "flexible",
-                        "pas de pr\u00e9f\u00e9rence",
-                        "any time",
-                        "anytime",
-                        "doesn't matter",
-                        "does not matter",
-                        "whenever",
-                        "no preference",
+                corrected_city = None
+                if correction and pending and pending.slots[0] in (SlotName.city, SlotName.origin):
+                    corrected_city = next(group for group in correction.groups() if group)
+                    if not _valid_place(corrected_city) or not re.fullmatch(
+                        r"[^\W\d_]+(?:[ '\u2019-][^\W\d_]+){0,4}", corrected_city
+                    ):
+                        return self._clarify(session, reply, "Please specify the race city you want instead.")
+                if (
+                    pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
+                    and answer and not choice and not reply.corrections
+                    and not corrected_city and not _valid_place(answer)
+                ):
+                    return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
+                values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
+                if corrected_city:
+                    values = {SlotName.city: corrected_city} | reply.corrections
+                if not values and not choice and not reply.question_id:
+                    question = next(
+                        (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
+                        None,
                     )
-                    if any(phrase in normalized for phrase in flexible):
-                        values[slot] = None
-                    else:
-                        values[slot] = (
-                            extract_slots(reply.text).get(slot) or answer
+                if question and len(question.slots) == 1 and answer and not question.choices and not choice and not corrected_city:
+                    slot = question.slots[0]
+                    if slot == SlotName.date_window and slot not in values:
+                        answer = reply.text.strip()
+                        normalized = answer.casefold()
+                        flexible = (
+                            "peu importe",
+                            "n'importe",
+                            "n’importe",
+                            "flexible",
+                            "pas de pr\u00e9f\u00e9rence",
+                            "any time",
+                            "anytime",
+                            "doesn't matter",
+                            "does not matter",
+                            "whenever",
+                            "no preference",
                         )
-                elif (
-                    slot == SlotName.budget
-                    and slot not in values
-                    and reply.text.strip().casefold() in (
-                        "no cap", "no limit", "unlimited", "sans plafond", "pas de limite",
-                    )
-                ):
-                    values[slot] = None
-                elif (
-                    slot in (SlotName.city, SlotName.origin, SlotName.race)
-                    and slot not in values
-                    and (reply.question_id or not values)
-                ):
-                    candidate = public_origin(answer) if slot == SlotName.origin else answer
-                    if _valid_place(candidate) and (reply.question_id or (
-                        len(answer) <= 60 and not any(c.isdigit() for c in answer)
-                    )):
-                        values[slot] = candidate.strip()
-                elif not values and slot in (
-                    SlotName.distance_km,
-                    SlotName.budget,
-                    SlotName.nights,
-                ):
-                    try:
-                        values[slot] = float(answer.replace(",", "."))
-                        self._validate(values)
-                    except (ValueError, FramingError) as exc:
-                        raise FramingError(
-                            f"Please enter a valid number for {slot.value}."
-                        ) from exc
-            holo_values = {}
-            if isinstance(origin := values.get(SlotName.origin), str):
-                public = public_origin(origin)
-                values[SlotName.origin] = None if public == public_origin("") else public
-            values = {
-                name: _mask_address(value)
-                if name in (SlotName.origin, SlotName.preferences) and isinstance(value, str)
-                else value
-                for name, value in values.items()
-            }
-            origin_pending = any(q.slots == [SlotName.origin] for q in session.open_questions)
-            if not choice and reply.text and not origin_pending:
-                holo_values = await self._holo_fill(session, _mask_address(reply.text), values)
-                values = holo_values | values
+                        if any(phrase in normalized for phrase in flexible):
+                            values[slot] = None
+                        else:
+                            values[slot] = (
+                                extract_slots(reply.text).get(slot) or answer
+                            )
+                    elif (
+                        slot == SlotName.budget
+                        and slot not in values
+                        and reply.text.strip().casefold() in (
+                            "no cap", "no limit", "unlimited", "sans plafond", "pas de limite",
+                        )
+                    ):
+                        values[slot] = None
+                    elif (
+                        slot in (SlotName.city, SlotName.origin, SlotName.race)
+                        and slot not in values
+                        and (reply.question_id or not values)
+                    ):
+                        candidate = public_origin(answer) if slot == SlotName.origin else answer
+                        if _valid_place(candidate) and (reply.question_id or (
+                            len(answer) <= 60 and not any(c.isdigit() for c in answer)
+                        )):
+                            values[slot] = candidate.strip()
+                    elif not values and slot in (
+                        SlotName.distance_km,
+                        SlotName.budget,
+                        SlotName.nights,
+                    ):
+                        try:
+                            values[slot] = float(answer.replace(",", "."))
+                            self._validate(values)
+                        except (ValueError, FramingError) as exc:
+                            raise FramingError(
+                                f"Please enter a valid number for {slot.value}."
+                            ) from exc
+                holo_values = {}
+                if isinstance(origin := values.get(SlotName.origin), str):
+                    public = public_origin(origin)
+                    values[SlotName.origin] = None if public == public_origin("") else public
+                values = {
+                    name: _mask_address(value)
+                    if name in (SlotName.origin, SlotName.preferences) and isinstance(value, str)
+                    else value
+                    for name, value in values.items()
+                }
+                origin_pending = any(q.slots == [SlotName.origin] for q in session.open_questions)
+                if not choice and reply.text and not origin_pending:
+                    holo_values = await self._holo_fill(session, _mask_address(reply.text), values)
+                    values = holo_values | values
             if isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
             if not values and choice is None and session.turns:
@@ -415,9 +462,96 @@ class FramingEngine:
                 for limitation in limitations:
                     if limitation.code == "close_match":
                         limitation.message = "Close to your request, but not an exact match."
-            await self._phrase_next_question(session)
+            if llm_ack:
+                self._append_ack(session, llm_ack)
+            else:
+                await self._phrase_next_question(session)
             self.sessions[framing_id] = session
             return self.get(framing_id)
+
+    async def _decide(self, session: FramingSession, text: str, pending) -> dict | None:
+        """LLM-first turn: the model proposes slot updates, this code validates every one of them.
+
+        Returns None when no LLM is configured or it failed, so the deterministic path takes over.
+        """
+        decide = getattr(self.phraser, "decide", None)
+        if decide is None or os.getenv("RUNAI_FRAMING_LLM", "1").strip().lower() in {"0", "false", "off", "no"}:
+            return None
+        known = {
+            name.value: str(slot.value)
+            for name, slot in session.slots.items()
+            if slot.is_known and slot.value is not None
+        }
+        try:
+            raw = await decide(_mask_address(text), known, session.turns, pending.text if pending else "")
+        except Exception:  # noqa: BLE001 - a failing model must never break the conversation
+            return None
+        if not isinstance(raw, dict):
+            return None
+        intent = raw.get("intent") if raw.get("intent") in LLM_INTENTS else "answer"
+        values: dict[SlotName, object] = {}
+        haystack = _norm(_mask_address(text))
+        updates = raw.get("updates")
+        for update in updates if isinstance(updates, list) else []:
+            if not isinstance(update, dict):
+                continue
+            try:
+                name = SlotName(update.get("slot"))
+            except ValueError:
+                continue
+            if name not in LLM_SLOTS:
+                continue
+            evidence = update.get("evidence")
+            if not isinstance(evidence, str) or not _norm(evidence) or _norm(evidence) not in haystack:
+                continue  # unquoted or invented: reject
+            value = update.get("value")
+            if value is None:
+                if name in (SlotName.budget, SlotName.date_window):
+                    values[name] = None
+                continue
+            if name == SlotName.origin:
+                if not isinstance(value, str):
+                    continue
+                value = _mask_address(public_origin(value))
+                if value == public_origin("") or not _valid_place(value):
+                    continue
+            elif name in (SlotName.city, SlotName.race):
+                if not isinstance(value, str) or not _valid_place(value):
+                    continue
+                value = clean_extraction({name.value: value}).get(name.value)
+            else:
+                value = clean_extraction({name.value: value}).get(name.value)
+            if value is None:
+                continue
+            current = session.slots[name]
+            if current.is_known and current.value is not None and str(current.value) == str(value):
+                continue
+            if current.is_known and current.value is not None and not update.get("replaces_previous"):
+                continue
+            values[name] = value
+        return {"intent": intent, "values": values,
+                "message": _sanitize_ack(raw.get("message"), allow_question=intent == "unclear")}
+
+    @staticmethod
+    def _next_question_text(session: FramingSession) -> str:
+        if not session.open_questions:
+            return ""
+        question = next(
+            (q for q in session.open_questions if not any(c.candidate_id for c in q.choices)),
+            session.open_questions[0],
+        )
+        if any(c.candidate_id for c in question.choices):
+            return "Select the race you want below, or tell me if none is suitable."
+        return question.text
+
+    def _with_question(self, session: FramingSession, message: str, intent: str) -> str:
+        if intent == "unclear" and "?" in message:
+            return message
+        return f"{message} {self._next_question_text(session)}".strip()
+
+    def _append_ack(self, session: FramingSession, ack: str) -> None:
+        text = f"{ack} {self._next_question_text(session)}".strip()
+        session.turns.append(FramingTurn(role="assistant", text=text, revision=session.revision))
 
     def _clarify(self, session: FramingSession, reply: FramingReply, message: str) -> FramingSession:
         session.revision += 1
