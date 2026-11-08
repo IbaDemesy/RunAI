@@ -7,6 +7,7 @@ from datetime import date, timedelta
 import httpx
 import pytest
 
+from runai.coach.models import Goal
 from runai.contracts.common import DataMode, Provenance
 from runai.contracts.framing import (
     FramingCreate,
@@ -272,3 +273,45 @@ def test_spring_before_the_distance_is_extracted():
     from runai.framing.interpret import extract_slots
     got = extract_slots("A spring marathon, leaving from Lyon")
     assert got[SlotName.origin] == "Lyon" and str(got[SlotName.date_window]).startswith("march-may")
+
+
+def test_coach_extract_audit2_regressions():
+    from runai.coach.extract import extract_rule_based as x
+    race = x("I ran 5K in 25:30 3 months ago").recent_race
+    assert (race.time_s, race.months_ago) == (1530, 3)
+    assert x("I am 10 weeks into training").age is None
+    assert x("I am 34 years old").age == 34
+    ten = x("j ai couru un 10 km en 52 minutes il y a 2 mois").recent_race
+    assert (ten.distance_km, ten.time_s, ten.months_ago) == (10, 3120, 2)
+    assert x("I do not run trail").goals == [] and x("I am not looking for a PR").goals == []
+    assert x("I want to run a trail").goals == [Goal.trail]
+    assert x("vingt-deux ans, je cours 3 fois par semaine").sessions_per_week == 3
+
+
+def test_official_domains_exclude_wikis_social_media_and_blogs():
+    from runai.models import Race, Source
+    from runai.search import official_domains
+    race = Race(name="R", city="C", country="IT", sources=[
+        Source(url="https://en.wikipedia.org/wiki/R"), Source(url="https://www.facebook.com/r"),
+        Source(url="https://r.blogspot.com/x"), Source(url="https://www.r-marathon.it/en")])
+    assert official_domains(race) == ["r-marathon.it"]
+
+
+def test_official_lookup_is_capped_and_deduplicated():
+    from types import SimpleNamespace
+    from runai.app.real import MAX_OFFICIAL_LOOKUPS, lookup_official_info_tool
+    from runai.models import Race, Source
+    class Client:
+        calls = 0
+        def search(self, **kwargs):
+            Client.calls += 1
+            return SimpleNamespace(answer="Not published.", sources=[])
+    race = Race(name="R", city="C", country="IT", sources=[Source(url="https://www.r-marathon.it/en")])
+    tool = lookup_official_info_tool(race, lambda event: None, lambda: Client())
+    async def go():
+        await tool.fn(question="Same question?")
+        await tool.fn(question="  same QUESTION? ")
+        return [await tool.fn(question=f"question {i}") for i in range(10)]
+    replies = asyncio.run(go())
+    assert Client.calls == MAX_OFFICIAL_LOOKUPS
+    assert "limit reached" in replies[-1]

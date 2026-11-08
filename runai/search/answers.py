@@ -34,13 +34,25 @@ class SourcedAnswer(BaseModel):
     estimated_cost_usd: float
 
 
+# Encyclopedias, social networks, blogs and forums: never the organiser's own pages.
+NOT_OFFICIAL_DOMAINS = (
+    "wikipedia.org", "wikimedia.org", "facebook.com", "instagram.com", "x.com", "twitter.com",
+    "tiktok.com", "youtube.com", "reddit.com", "strava.com", "linkedin.com", "medium.com",
+    "wordpress.com", "blogspot.com", "tripadvisor.com", "tumblr.com", "substack.com",
+)
+
+
+def _is_unofficial(host: str) -> bool:
+    return is_aggregator(host) or any(on_domain(host, domain) for domain in NOT_OFFICIAL_DOMAINS)
+
+
 def official_domains(race: Race) -> list[str]:
-    """Hosts of the race's own sources and registration page, never aggregators."""
+    """Hosts of the race's own sources and registration page, never aggregators, wikis, social media or blogs."""
     urls = [source.url for source in race.sources]
     if race.registration_url is not None:
         urls.append(race.registration_url)
     hosts = (host_of(url) for url in urls)
-    return list(dict.fromkeys(host for host in hosts if host and not is_aggregator(host)))
+    return list(dict.fromkeys(host for host in hosts if host and not _is_unofficial(host)))
 
 
 def build_question(race: Race, question: str) -> str:
@@ -80,7 +92,7 @@ def answer_official(
     race: Race | None = None,
 ) -> SourcedAnswer | None:
     """Ask Linkup for a cited answer from the official domains only; None when no official domain is known."""
-    domains = [domain for domain in dict.fromkeys(official_domains) if domain and not is_aggregator(domain)]
+    domains = [domain for domain in dict.fromkeys(official_domains) if domain and not _is_unofficial(domain)]
     if not domains:
         return None
     started = time.perf_counter()
