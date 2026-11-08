@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunAI — Voice input mockup (Gladia)</title>
+<style>
+  :root {
+    --night: #0f1b33; --night-2: #16264a; --haze: #8fb3e8; --sun: #ffd84d; --chalk: #f5f7fb; --mist: #b9c3d6;
+    --ok: #4fc27a; --line: #2a3b63;
+    --text: ui-sans-serif, system-ui, -apple-system, sans-serif; --mono: ui-monospace, SFMono-Regular, monospace;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px;
+    --radius-small: 8px; --radius-card: 14px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--night); color: var(--chalk); font: 16px/1.5 var(--text); }
+  main { max-width: 760px; margin: 0 auto; padding: var(--space-6) var(--space-4); }
+  h1 { font-size: 1.4rem; margin: 0 0 var(--space-1); }
+  .sub { color: var(--mist); margin: 0 0 var(--space-6); font-size: .875rem; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-6); padding: var(--space-3); border: 1px dashed var(--line); border-radius: var(--radius-small); }
+  .toolbar span { color: var(--mist); font-size: .8rem; width: 100%; }
+  .toolbar button, .chip-btn { background: transparent; color: var(--mist); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font: inherit; font-size: .8rem; cursor: pointer; }
+  .toolbar button[aria-pressed="true"] { color: var(--night); background: var(--haze); border-color: var(--haze); }
+  .toolbar .play { color: var(--night); background: var(--sun); border-color: var(--sun); font-weight: 600; }
+  .card { background: var(--night-2); border: 1px solid var(--line); border-radius: var(--radius-card); padding: var(--space-4); }
+  .ask { display: flex; gap: var(--space-2); align-items: center; }
+  .ask input { flex: 1; min-width: 0; background: var(--night); color: var(--chalk); border: 1px solid var(--line); border-radius: var(--radius-small); padding: 10px 12px; font: inherit; }
+  .ask input:focus-visible, button:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+  .mic { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 150px; justify-content: center; background: transparent; color: var(--chalk); border: 1px solid var(--haze); border-radius: var(--radius-small); padding: 10px 14px; font: inherit; cursor: pointer; }
+  .mic[disabled] { opacity: .6; cursor: default; }
+  .mic.on { background: var(--sun); color: var(--night); border-color: var(--sun); font-weight: 600; }
+  .icon { width: 16px; height: 16px; flex: none; }
+  .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  .meta { display: flex; align-items: center; gap: var(--space-3); min-height: 28px; margin-top: var(--space-2); font-size: .8rem; color: var(--mist); }
+  .meter { display: inline-flex; gap: 3px; align-items: flex-end; height: 18px; }
+  .meter i { width: 4px; background: var(--sun); border-radius: 2px; height: 3px; transition: height 80ms linear; }
+  .meter-static { width: 10px; height: 10px; border-radius: 50%; background: var(--sun); }
+  .badge { margin-left: auto; border: 1px solid var(--haze); color: var(--haze); border-radius: 999px; padding: 1px 10px; font-size: .75rem; }
+  .hint { margin: var(--space-2) 0 0; font-size: .875rem; color: var(--mist); }
+  .hint.warn { color: var(--sun); }
+  .hint a { color: var(--sun); }
+  .log { margin-top: var(--space-3); min-height: 24px; }
+  .utt { margin: 0 0 var(--space-2); }
+  .utt .lang { display: inline-block; font: 600 .7rem var(--mono); color: var(--night); background: var(--haze); border-radius: 4px; padding: 0 5px; margin-right: var(--space-2); vertical-align: 2px; }
+  .utt .lang.flash { background: var(--sun); }
+  .utt .txt.partial { color: var(--mist); font-style: italic; }
+  .utt .txt.partial::after { content: "▍"; color: var(--mist); margin-left: 2px; }
+  .utt .txt.final { color: var(--chalk); }
+  .utt .tr { display: block; color: var(--haze); font-size: .875rem; padding-left: 40px; }
+  .ent { text-decoration: underline dotted var(--sun); text-underline-offset: 3px; }
+  .switch { color: var(--sun); border: 1px solid var(--sun); border-radius: 999px; padding: 0 8px; font-size: .75rem; }
+  .understood { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0; margin: var(--space-4) 0 0; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 2px 12px; font-size: .875rem; color: var(--mist); }
+  .chip.answered { color: var(--chalk); border-color: var(--haze); }
+  .chip.candidate { color: var(--sun); border: 1px dashed var(--sun); background: transparent; font: inherit; font-size: .875rem; cursor: pointer; }
+  .confirm { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); font-size: .875rem; }
+  .confirm button { background: transparent; color: var(--chalk); border: 1px solid var(--haze); border-radius: var(--radius-small); padding: 2px 10px; font: inherit; cursor: pointer; }
+  h2 { font-size: 1rem; margin: var(--space-6) 0 var(--space-2); color: var(--mist); font-weight: 600; }
+  .pill { display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .875rem; color: var(--mist); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid currentColor; }
+  .pill.confirmed { color: var(--ok); border-color: var(--ok); }
+  .pill.confirmed .dot { background: var(--ok); }
+  .pill.failed { color: var(--sun); border-color: var(--sun); }
+  .steps { display: flex; gap: var(--space-2); align-items: center; font-size: .8rem; color: var(--mist); margin-top: var(--space-2); }
+  .steps b { color: var(--chalk); font-weight: 600; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } .meter i { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Voice input &amp; live transcript</h1>
+  <p class="sub">Design mockup · scripted fake Gladia stream · no network. Spec: docs/design/VOICE_INPUT.md</p>
+
+  <div class="toolbar" role="group" aria-label="Mockup controls">
+    <span>Preview a state (voice-input.js names), or play the 10-second scripted stream.</span>
+    <button type="button" class="play" id="play">Play demo stream</button>
+    <button type="button" data-state="idle">idle</button>
+    <button type="button" data-state="requesting_permission">requesting_permission</button>
+    <button type="button" data-state="permission_denied">permission_denied</button>
+    <button type="button" data-state="unsupported">unsupported</button>
+    <button type="button" data-state="listening">listening</button>
+    <button type="button" data-state="transcribing">transcribing</button>
+    <button type="button" data-state="error">error</button>
+    <button type="button" id="motion" aria-pressed="false">Reduced motion</button>
+    <button type="button" id="cmd">Play voice command</button>
+  </div>
+
+  <section class="card" aria-label="Ask RunAI">
+    <form class="ask" onsubmit="return false">
+      <label class="sr" for="ask">Describe your race</label>
+      <input id="ask" placeholder="Describe your race, or press Speak" autocomplete="off">
+      <button type="button" class="mic" id="mic" aria-pressed="false" title="Speak (Alt+M)"></button>
+    </form>
+    <div class="meta" id="meta"></div>
+    <p class="hint" id="hint" hidden></p>
+    <div class="log" id="log" aria-live="off" aria-label="Live transcript"></div>
+    <div class="sr" id="live" aria-live="polite"></div>
+    <ul class="understood" id="chips" aria-label="What RunAI understood"></ul>
+    <div id="confirm"></div>
+  </section>
+
+  <h2>Mid-mission voice command</h2>
+  <div class="card">
+    <div id="pill" class="pill" aria-live="polite"><span class="dot"></span><span>No voice command yet. Try "pause", "stop" or "switch to 10K".</span></div>
+    <div class="steps" aria-hidden="true"><b id="s1">1 · Requested</b> → <span id="s2">2 · Confirmed by H</span></div>
+  </div>
+</main>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const mic = $("mic"), meta = $("meta"), hint = $("hint"), log = $("log"), live = $("live"), chips = $("chips"), ask = $("ask");
+  const LANG = { fr: "French", en: "English", pt: "Portuguese" };
+  let state = "idle", reduced = matchMedia("(prefers-reduced-motion: reduce)").matches, meterTimer = 0, timers = [], lastLang = null;
+  const slots = [
+    { slot: "race", label: "Race ?" }, { slot: "date", label: "Date ?" }, { slot: "budget", label: "Budget ?" },
+    { slot: "origin", label: "From Lyon", answered: true },
+  ];
+
+  const ICON_MIC = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+  const ICON_OFF = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3l18 18M9 9v2a3 3 0 0 0 5 2M15 10V6a3 3 0 0 0-6 0M5 11a7 7 0 0 0 11 5.7M19 11a7 7 0 0 1-.5 2.5M12 18v3"/></svg>';
+  const ICON_STOP = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
+  const SPIN = '<span class="spin" aria-hidden="true"></span>';
+  const STATES = {
+    idle: { html: ICON_MIC + "Speak" },
+    requesting_permission: { html: SPIN + "Allow microphone…", disabled: true, hint: "Your browser is asking for microphone access.", say: "Waiting for microphone permission." },
+    permission_denied: { html: ICON_OFF + "Microphone blocked", warn: true, fallback: true, hint: 'Microphone access was denied. Type your request instead. <a href="#" onclick="return false">How to enable</a>' },
+    unsupported: { html: ICON_OFF + "Voice unavailable", disabled: true, fallback: true, hint: "This browser cannot record audio. Type instead." },
+    listening: { html: ICON_STOP + "Stop", on: true, badge: true, meter: true, say: "Listening." },
+    transcribing: { html: SPIN + "Finishing…", disabled: true, badge: true, say: "Transcribing." },
+    error: { html: ICON_MIC + "Try again", warn: true, fallback: true, hint: "Transcription failed (Gladia connection closed). What was heard is kept; you can type instead." },
+  };
+
+  function announce(text) { live.textContent = ""; setTimeout(() => { live.textContent = text; }, 30); }
+
+  function setState(next) {
+    state = next;
+    const s = STATES[next];
+    mic.innerHTML = s.html; mic.disabled = !!s.disabled; mic.className = "mic" + (s.on ? " on" : "");
+    mic.setAttribute("aria-pressed", String(next === "listening"));
+    hint.hidden = !s.hint; hint.innerHTML = s.hint || ""; hint.className = "hint" + (s.warn ? " warn" : "");
+    clearInterval(meterTimer); meta.innerHTML = "";
+    if (s.meter) {
+      const m = document.createElement("span");
+      if (reduced) { m.className = "meter-static"; m.setAttribute("aria-hidden", "true"); }
+      else { m.className = "meter"; m.setAttribute("aria-hidden", "true"); m.innerHTML = "<i></i><i></i><i></i><i></i><i></i>"; }
+      meta.append(m, Object.assign(document.createElement("span"), { textContent: "Listening · 0:0" + "0", id: "clock" }));
+      let t0 = Date.now();
+      meterTimer = setInterval(() => {
+        const level = 0.25 + Math.random() * 0.75;
+        if (reduced) m.style.opacity = String([0.35, 0.65, 1][Math.min(2, Math.floor(level * 3))]);
+        else [...m.children].forEach((bar, i) => { bar.style.height = Math.max(3, Math.round(18 * level * (0.5 + 0.5 * Math.sin(i + Date.now() / 120)) ** 2 + 3)) + "px"; });
+        const sec = Math.floor((Date.now() - t0) / 1000); const c = $("clock"); if (c) c.textContent = "Listening · 0:" + String(sec).padStart(2, "0");
+      }, 80);
+    }
+    if (s.badge) meta.append(Object.assign(document.createElement("span"), { className: "badge", textContent: "Powered by Gladia solaria-1" }));
+    if (s.fallback) ask.focus();
+    if (s.say || (s.hint && s.warn) || next === "unsupported") announce(s.say || hint.textContent);
+    document.querySelectorAll("[data-state]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.state === next)));
+  }
+
+  function renderChips() {
+    chips.innerHTML = "";
+    for (const c of slots) {
+      const li = document.createElement("li");
+      if (c.candidate) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "chip candidate"; b.id = "chip-" + c.slot; b.textContent = c.candidate + " ?";
+        b.setAttribute("aria-label", c.slot + " candidate from voice: " + c.candidate + ". Is this right?");
+        b.onclick = () => openConfirm(c);
+        li.append(b);
+      } else {
+        li.className = "chip" + (c.answered ? " answered" : ""); li.id = "chip-" + c.slot; li.textContent = c.label;
+      }
+      chips.append(li);
+    }
+  }
+
+  function openConfirm(c) {
+    const box = $("confirm"); box.innerHTML = "";
+    const row = Object.assign(document.createElement("div"), { className: "confirm" });
+    row.append(Object.assign(document.createElement("span"), { textContent: "Heard \u201c" + c.candidate + "\u201d as your " + c.slot + ". Is this right?" }));
+    const yes = Object.assign(document.createElement("button"), { type: "button", textContent: "Yes" });
+    const edit = Object.assign(document.createElement("button"), { type: "button", textContent: "Edit" });
+    yes.onclick = () => { c.label = c.candidate; c.answered = true; c.candidate = null; box.innerHTML = ""; renderChips(); announce(c.slot + " confirmed."); };
+    edit.onclick = () => { box.innerHTML = ""; ask.value = c.candidate; ask.focus(); };
+    row.append(yes, edit); box.append(row); yes.focus();
+  }
+
+  // Upsert by Gladia data.id: replace in place, never append revisions.
+  function onTranscript(data) {
+    let p = log.querySelector('[data-utterance-id="' + data.id + '"]');
+    if (!p) {
+      p = document.createElement("p"); p.className = "utt"; p.dataset.utteranceId = data.id;
+      p.innerHTML = '<span class="lang"></span><span class="txt"></span>'; log.append(p);
+    }
+    const lang = data.utterance.language, tag = p.querySelector(".lang"), txt = p.querySelector(".txt");
+    tag.textContent = lang.toUpperCase(); tag.title = LANG[lang] || lang;
+    txt.textContent = data.utterance.text;
+    txt.className = "txt " + (data.is_final ? "final" : "partial");
+    p.setAttribute("aria-hidden", data.is_final ? "false" : "true");
+    if (lastLang && lang !== lastLang && !p.dataset.switched) {
+      p.dataset.switched = "1"; tag.className = "lang flash";
+      const chip = Object.assign(document.createElement("span"), { className: "switch", textContent: "Language switched to " + (LANG[lang] || lang) });
+      meta.insertBefore(chip, meta.querySelector(".badge")); setTimeout(() => { chip.remove(); tag.className = "lang"; }, 3000);
+    }
+    if (data.is_final) { lastLang = lang; announce(data.utterance.text); }
+  }
+
+  function onTranslation(data) {
+    const p = log.querySelector('[data-utterance-id="' + data.utterance_id + '"]'); if (!p) return;
+    let tr = p.querySelector(".tr"); if (!tr) { tr = document.createElement("span"); tr.className = "tr"; p.append(tr); }
+    tr.textContent = "\u2192 EN  " + data.translated_utterance.text;
+  }
+
+  function onEntities(data) {
+    const p = log.querySelector('[data-utterance-id="' + data.utterance_id + '"]'); if (!p) return;
+    const txt = p.querySelector(".txt"); let html = txt.textContent;
+    for (const e of data.entities) {
+      const slot = slots.find((s) => s.slot === e.slot); if (!slot || slot.answered) continue;
+      slot.candidate = e.value;
+      html = html.replace(e.text, '<span class="ent" aria-describedby="chip-' + e.slot + '">' + e.text + "</span>");
+    }
+    txt.innerHTML = html; renderChips();
+  }
+
+  const SCRIPT = [
+    [0, () => setState("requesting_permission")],
+    [600, () => setState("listening")],
+    [1100, () => onTranscript({ id: "u1", is_final: false, utterance: { language: "fr", text: "Je veux courir" } })],
+    [1700, () => onTranscript({ id: "u1", is_final: false, utterance: { language: "fr", text: "Je veux courir le semi de Lisbonne" } })],
+    [2400, () => onTranscript({ id: "u1", is_final: false, utterance: { language: "fr", text: "Je veux courir le semi-marathon de Lisbonne en mars" } })],
+    [3200, () => onTranscript({ id: "u1", is_final: true, utterance: { language: "fr", text: "Je veux courir le semi-marathon de Lisbonne en mars, budget 300 euros." } })],
+    [3900, () => onTranslation({ utterance_id: "u1", translated_utterance: { language: "en", text: "I want to run the Lisbon half marathon in March, budget 300 euros." } })],
+    [4600, () => onEntities({ utterance_id: "u1", entities: [
+      { text: "semi-marathon de Lisbonne", slot: "race", value: "Lisbon Half Marathon" },
+      { text: "en mars", slot: "date", value: "March 2027" },
+      { text: "300 euros", slot: "budget", value: "\u20ac300 max" }] })],
+    [5600, () => onTranscript({ id: "u2", is_final: false, utterance: { language: "pt", text: "e preciso de um hotel" } })],
+    [6400, () => onTranscript({ id: "u2", is_final: false, utterance: { language: "pt", text: "e preciso de um hotel perto da partida" } })],
+    [7300, () => onTranscript({ id: "u2", is_final: true, utterance: { language: "pt", text: "E preciso de um hotel perto da partida." } })],
+    [7900, () => onTranslation({ utterance_id: "u2", translated_utterance: { language: "en", text: "And I need a hotel near the start." } })],
+    [8600, () => setState("transcribing")],
+    [9800, () => setState("idle")],
+  ];
+
+  function reset() {
+    timers.forEach(clearTimeout); timers = []; log.innerHTML = ""; lastLang = null; $("confirm").innerHTML = "";
+    slots.forEach((s) => { if (!s.answered || s.slot !== "origin") { s.candidate = null; s.answered = s.slot === "origin"; s.label = s.slot === "origin" ? "From Lyon" : s.slot[0].toUpperCase() + s.slot.slice(1) + " ?"; } });
+    renderChips();
+  }
+  function play() { reset(); SCRIPT.forEach(([t, fn]) => timers.push(setTimeout(fn, t))); }
+
+  function playCommand() {
+    const pill = $("pill"), s1 = $("s1"), s2 = $("s2");
+    pill.className = "pill"; pill.lastChild.textContent = "\u201cSwitch to 10K\u201d requested (voice)"; s1.style.color = "var(--chalk)"; s2.style.color = "";
+    setTimeout(() => { pill.className = "pill confirmed"; pill.lastChild.textContent = "Switched to 10K \u00b7 confirmed by H"; s2.style.color = "var(--ok)"; }, 2200);
+  }
+
+  mic.onclick = () => { if (state === "listening") { timers.forEach(clearTimeout); timers = []; setState("transcribing"); setTimeout(() => setState("idle"), 1200); } else if (!mic.disabled) play(); };
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state === "listening") mic.click();
+    if (e.altKey && (e.key === "m" || e.key === "M")) { e.preventDefault(); mic.focus(); mic.click(); }
+  });
+  $("play").onclick = play;
+  $("cmd").onclick = playCommand;
+  $("motion").onclick = () => { reduced = !reduced; $("motion").setAttribute("aria-pressed", String(reduced)); setState(state); };
+  document.querySelectorAll("[data-state]").forEach((b) => { b.onclick = () => setState(b.dataset.state); });
+  renderChips(); setState("idle");
+})();
+</script>
+</body>
+</html>
