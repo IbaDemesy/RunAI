@@ -1,0 +1,2 @@
+{"at":"2026-11-07T01:00:00Z","source":"h","type":"session_created","data":{"h_session_id":"s-live","step":"registration","start_url":"https://njuko.com/race"}}
+{"at":"2026-11-07T01:00:30Z","source":"h","type":"result","data":{"h_session_id":"s-live","step":"registration","result":{"kind":"registration","status":"stopped_before_commitment","stop_point":"payment","url":"https://njuko.com/race","h_session_id":"s-live","data":{"h_status":"completed","outcome":"success","steps":22,"total_cost":0.12,"provenance":{"mode":"live"}}}}}
