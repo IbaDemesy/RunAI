@@ -689,7 +689,7 @@ class FramingEngine:
                 for c in session.candidates
             ] if any(ch.candidate_id for q in session.open_questions for ch in q.choices) else []
             hint = (f"the runner is correcting the field '{force_slot.value}'" if force_slot
-                    else pending.text if pending else "")
+                    else f"{pending.text} [expects slot: {', '.join(n.value for n in pending.slots)}]" if pending else "")
             extra = {"candidates": options} if options else {}
             extra["missing"] = [n.value for n in missing_slots(session)]
             extra = {key: value for key, value in extra.items() if _accepts(decide, key)}

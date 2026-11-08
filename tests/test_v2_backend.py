@@ -61,7 +61,8 @@ def finish(client, mid):
 
 @pytest.mark.parametrize("live", [True, False])
 @pytest.mark.parametrize("missing_registration", [True, False])
-def test_linkup_snapshot_and_stream(tmp_path, live, missing_registration):
+def test_linkup_snapshot_and_stream(tmp_path, monkeypatch, live, missing_registration):
+    monkeypatch.setenv("RUNAI_FRAMING_LLM", "0")  # about the Linkup sweep: framing on the offline parser
     from runai.app.candidates import FixtureCandidateSearch
     from runai.app.fakes import DEMO_RACES
     from runai.search.logistics_sweep import LogisticsSweep
@@ -104,7 +105,8 @@ def test_linkup_snapshot_and_stream(tmp_path, live, missing_registration):
             assert '"type":"linkup_sweep"' not in stream
 
 
-def test_linkup_failure_does_not_fail_mission(tmp_path):
+def test_linkup_failure_does_not_fail_mission(tmp_path, monkeypatch):
+    monkeypatch.setenv("RUNAI_FRAMING_LLM", "0")  # about the Linkup sweep: framing on the offline parser
     from runai.app.candidates import FixtureCandidateSearch
     from runai.app.fakes import DEMO_RACES
 

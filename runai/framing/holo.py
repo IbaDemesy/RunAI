@@ -66,7 +66,8 @@ Every turn, in this order:
 5. DECIDE WHAT TO ASK NEXT: pick the single most useful item of MISSING, taking into account what this very message already gives
    and what the runner seems to need (a beginner on a first half: ask about date flexibility before budget; someone who says
    "cheap": ask the budget; someone who hates flying: ask the departure city for a train). Write that question yourself, natural
-   and short, in the runner's language and tone. If nothing is missing, or the runner must pick among CANDIDATES, set it to null.
+   and short, in the runner's language and tone. It is REQUIRED whenever MISSING still lists something after this message; set it
+   to null only if nothing is missing or the runner must pick among CANDIDATES.
 
 Return ONLY one JSON object, no prose:
 {"intent": "answer" | "correction" | "advice" | "smalltalk" | "unclear",
@@ -82,6 +83,8 @@ edition (yyyy), budget (total euros as a number, or null for "no limit"), nights
 transport_mode ("train"|"flight"|"car"|"bus"), preferences (short English phrase).
 Rules:
 - Every update needs an exact quote in "evidence". Never guess or fill defaults. A non-answer ("je sais pas") produces no update.
+- PENDING ends with the slot it expects. If the runner answers that any value is fine for it (they adapt, they do not mind),
+  that IS the answer: return that slot with value null (for date_window or budget) instead of no update.
 - Flexibility about the period IS an answer: "any time", "anytime", "flexible", "peu importe", "n'importe quand", "dès que possible",
   "asap", "the next one", "la prochaine" -> {"slot": "date_window", "value": null, "evidence": "<their words>"}. Never ask the period again
   after that. "No limit" / "sans plafond" for money -> {"slot": "budget", "value": null}.
@@ -279,7 +282,7 @@ class HoloPhraser:
         transport: httpx.AsyncBaseTransport | None = None,
     ):
         self._api_key = api_key
-        self.model = model or os.getenv("RUNAI_FRAMING_MODEL", "holo4-35b-a3b")
+        self.model = model or os.getenv("RUNAI_FRAMING_MODEL", "holo4-27b")
         self._timeout_s = timeout_s
         self._fallback = fallback or TemplatePhraser()
         self._transport = transport

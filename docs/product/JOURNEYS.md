@@ -20,7 +20,7 @@ should read on screen; placeholders are in `<angle brackets>`.
 
 Partners showcased, used as attribution labels everywhere:
 
-- **Holo** (H Company model `holo4-35b-a3b`): framing questions, slot extraction, rephrased agent questions.
+- **Holo** (H Company model `holo4-27b`, override with `RUNAI_FRAMING_MODEL`): framing questions, slot extraction, rephrased agent questions.
 - **Linkup**: race candidates with sources, start-URL precomputation, rules/race-sheet facts.
 - **H agents** (`h/web-surfer-pro`): the 3 browser agents filling forms up to the halt.
 - **Gladia** (solaria-1 live): voice input with live partials and mid-mission voice commands.
