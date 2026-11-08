@@ -36,7 +36,7 @@ class JourneyRecap:
 
 
 def _amount(value: float, currency: str) -> str:
-    amount = f"{value:,.2f}".rstrip("0").rstrip(".")
+    amount = f"{value:,.0f}" if value == int(value) else f"{value:,.2f}"
     return f"€{amount}" if currency == "EUR" else f"{amount} {currency}"
 
 

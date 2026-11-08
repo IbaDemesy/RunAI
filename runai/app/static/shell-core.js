@@ -20,7 +20,7 @@
   function framingState(framing) { return framing.mission_id ? "launched" : framing.status; }
   function budgetText(budget) {
     if (!budget) return { lines: [], total: "Budget pending", cap: "cap not assessable" };
-    const money = (value) => new Intl.NumberFormat("en-GB", { style: "currency", currency: budget.currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
+    const money = (value) => new Intl.NumberFormat("en-GB", { style: "currency", currency: budget.currency, minimumFractionDigits: Number.isInteger(value) ? 0 : 2, maximumFractionDigits: 2 }).format(value);
     return {
       lines: budget.lines.map((line) => line.label + " : " + (line.money ? money(line.money.amount) : "Price unknown") + (line.note ? " — " + line.note : "")),
       total: (budget.complete ? "Total" : "Known total (partial budget)") + " : " + money(budget.known_total),

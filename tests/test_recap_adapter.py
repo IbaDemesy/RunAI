@@ -79,6 +79,12 @@ def test_j8_integral_budget_is_formatted_without_decimal_suffix():
     assert "800.0" not in html
 
 
+def test_j8_cents_keep_two_decimal_places():
+    plan = tokyo_plan()
+    plan.budget.cap = 118.5
+    assert "€118.50" in unescape(render_html(recap_from_journey(plan)))
+
+
 def test_j9_recap_uses_race_identity_not_mission_id():
     recap = recap_from_journey(tokyo_plan()).recap
     assert recap.race_name == "Tokyo run"
