@@ -813,7 +813,7 @@ async def test_summary_mentioning_payment_is_treated_as_stop(tmp_path):
     assert registration.status is StepStatus.stopped_before_commitment
     assert registration.stop_point is StopPoint.payment
     assert str(registration.live_view_url) == "https://live.example.org/registration"
-    assert registration.data["headline"] == "Ready: finish it yourself on the official site"
+    assert registration.data["headline"] == "Prepared — finish it yourself on the official site"
     assert mission.steps[StepKind.accommodation].status is StepStatus.failed
     assert mission.steps[StepKind.accommodation].error == "H indisponible"
     assert mission.steps[StepKind.transport].data["headline"] == "Done"

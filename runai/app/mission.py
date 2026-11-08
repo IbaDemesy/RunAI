@@ -35,8 +35,10 @@ from runai.contracts.journey import JourneyPlan
 from runai.contracts.mission import (
     EventEnvelope,
     HumanAnswer,
+    MissionOutcome,
     MissionSnapshot,
     QuestionStatus,
+    StepOutcome,
 )
 from runai.framing.holo import Phraser
 from runai.framing.launch import LaunchPlan, plan_launch
@@ -244,7 +246,8 @@ class MissionService:
         self.store.save(mission.id, lambda: StoredMission(
             snapshot=self.snapshot(mission.id), envelopes=mission.envelopes,
             framing_summary=mission.framing_summary, framing_turns=mission.framing_turns,
-            plan=mission.plan, created_at=mission.created_at, journey=mission.journey,
+            plan=mission.plan, created_at=mission.created_at, finished_at=mission.finished_at,
+            journey=mission.journey,
         ), terminal=mission.is_terminal)
 
     def rehydrate(self) -> None:
@@ -254,7 +257,8 @@ class MissionService:
                 continue
             mission = Mission(
                 id=snapshot.mission_id, query=document.plan.brief.race_label,
-                status=snapshot.status, created_at=document.created_at, race=snapshot.race,
+                status=snapshot.status, created_at=document.created_at, finished_at=document.finished_at,
+                race=snapshot.race,
                 steps={step.kind: step for step in snapshot.steps}, plan=document.plan,
                 events=[TraceEvent.model_validate(event.payload) for event in document.envelopes if event.type == "trace"],
                 envelopes=document.envelopes, limitations=snapshot.limitations, error=snapshot.error,
@@ -268,6 +272,7 @@ class MissionService:
             if not mission.is_terminal:
                 message = "The server restarted while agents were running; relaunch the request."
                 mission.status = MissionStatus.failed
+                mission.finished_at = utcnow()
                 mission.error = message
                 mission.limitations.append(Limitation(code="server_restarted", message=message))
                 for question in snapshot.questions:
@@ -291,6 +296,68 @@ class MissionService:
     def snapshot(self, mission_id: str) -> MissionSnapshot:
         mission = self.get(mission_id)
         plan = mission.plan
+        labels = {
+            "payment": "Stopped at the payment page",
+            "consent": "Stopped before accepting the rules and medical certificate",
+            "health_declaration": "Stopped before accepting the rules and medical certificate",
+            "account_creation": "Stopped before creating an account",
+            "submission": "Stopped before submitting the form",
+        }
+        steps = []
+        automated = plan.automated_steps()
+        for step in mission.steps.values():
+            provenance = step.data.get("provenance", {})
+            mode = provenance.get("mode", plan.mode.value) if isinstance(provenance, dict) else plan.mode.value
+            steps.append(StepOutcome(
+                kind=step.kind, status=step.status,
+                headline=(step.data.get("headline") or step.summary or step.status.value.replace("_", " ").capitalize())
+                if step.kind in automated else "Not automated — plan this step yourself",
+                stop_point=step.stop_point,
+                stop_point_label=labels.get(step.stop_point) if step.kind in automated else "Not automated — plan this step yourself",
+                handoff_url=str(step.url) if step.url else (
+                    str(mission.race.registration_url)
+                    if step.kind is StepKind.registration and mission.race and mission.race.registration_url else None
+                ),
+                price=f"€{step.price_eur:g}" if step.price_eur is not None else None,
+                price_eur=step.price_eur,
+                provider="h" if plan.mode is DataMode.live else mode,
+            ))
+        automated_outcomes = [step for step in steps if step.kind in automated]
+        ready = sum(step.status in {StepStatus.stopped_before_commitment, StepStatus.completed} for step in automated_outcomes)
+        if mission.status is MissionStatus.cancelled:
+            state = "cancelled"
+        elif not mission.is_terminal:
+            state = "in_progress"
+        elif automated_outcomes and ready == len(automated_outcomes):
+            state = "prepared"
+        elif ready:
+            state = "partial"
+        else:
+            state = "failed"
+        titles = {
+            "in_progress": "Your trip is being prepared",
+            "prepared": "Your trip is prepared — nothing has been paid",
+            "partial": "Your trip is partially prepared — nothing has been paid",
+            "failed": "Your trip could not be prepared — nothing has been paid",
+            "cancelled": "Your trip preparation was cancelled — nothing has been paid",
+        }
+        prices = [step.price_eur for step in steps if step.price_eur is not None]
+        budget = mission.journey.budget if mission.journey else None
+        total = budget.known_total if budget else sum(prices) if prices else None
+        costs_complete = budget.complete if budget else bool(prices) and len(prices) == len(steps)
+        cap = plan.brief.budget_total_eur
+        budget_status = "no_cap" if cap is None else (
+            "over_cap" if total is not None and total > cap else
+            "within_cap" if costs_complete else "unknown"
+        )
+        outcome = MissionOutcome(
+            state=state, title=titles[state], steps=steps,
+            total=f"€{total:g}" if total is not None else None, total_eur=total,
+            budget_cap_eur=cap, budget_status=budget_status,
+            recap_urls={fmt: f"/api/missions/{mission.id}/recap.{fmt}?revision={mission.journey.revision}"
+                        for fmt in ("html", "pdf", "ics")} if mission.journey else {},
+            elapsed_s=max(0, ((mission.finished_at or utcnow()) - mission.created_at).total_seconds()),
+        )
         snapshot = MissionSnapshot(
             mission_id=mission.id, framing_id=plan.framing_id,
             framing_revision=plan.revision, mode=plan.mode,
@@ -301,6 +368,7 @@ class MissionService:
             limitations=mission.limitations, error=mission.error,
             journey_revision=mission.journey.revision if mission.journey else None,
             budget=mission.journey.budget if mission.journey else None,
+            outcome=outcome,
         )
         return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
 
@@ -412,6 +480,8 @@ class MissionService:
             except asyncio.CancelledError:
                 pass
         mission.limitations.append(Limitation(code="h_cancelled", message="Mission cancelled; no new launches."))
+        mission.finished_at = utcnow()
+        self._emit(mission, "mission_outcome", self.snapshot(mission.id).outcome.model_dump(mode="json"))
         self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
         self._publish_state(mission)
 
@@ -712,6 +782,7 @@ class MissionService:
         else:
             mission.status = MissionStatus.completed
         mission.finished_at = utcnow()
+        self._emit(mission, "mission_outcome", self.snapshot(mission.id).outcome.model_dump(mode="json"))
         self._emit(mission, "mission_status", self.snapshot(mission.id).model_dump(mode="json"))
         self._record(
             mission,
@@ -793,7 +864,7 @@ class MissionService:
                 self._runs.pop((mission.id, kind), None)
         step = mission.steps[kind] = self._merge_result(step, result)
         if step.status is StepStatus.stopped_before_commitment:
-            step.data["headline"] = "Ready: finish it yourself on the official site"
+            step.data["headline"] = "Prepared — finish it yourself on the official site"
         elif step.status is StepStatus.completed:
             step.data["headline"] = "Done"
         elif step.status is StepStatus.failed and step.error:

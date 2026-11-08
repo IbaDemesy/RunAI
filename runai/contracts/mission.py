@@ -92,6 +92,7 @@ class HumanAnswer(BaseModel):
 EventType = Literal[
     "snapshot",
     "mission_status",
+    "mission_outcome",
     "step",
     "question_opened",
     "question_resolved",
@@ -135,6 +136,31 @@ MissionStatusV2 = Literal[
 ]
 
 
+class StepOutcome(BaseModel):
+    kind: StepKind
+    status: StepStatus
+    headline: str
+    stop_point: StopPoint | None = None
+    stop_point_label: str | None = None
+    handoff_url: str | None = None
+    price: str | None = None
+    price_eur: float | None = None
+    provider: Literal["h", "demo", "replay"]
+
+
+class MissionOutcome(BaseModel):
+    state: Literal["in_progress", "prepared", "partial", "failed", "cancelled"]
+    title: str
+    steps: list[StepOutcome] = Field(default_factory=list)
+    total: str | None = None
+    total_eur: float | None = None
+    budget_cap_eur: float | None = None
+    budget_status: Literal["within_cap", "over_cap", "no_cap", "unknown"]
+    recap_urls: dict[Literal["html", "pdf", "ics"], str] = Field(default_factory=dict)
+    elapsed_s: float
+    disclaimer: str = "RunAI stops before any payment or commitment. Finish each step yourself on the official sites."
+
+
 class MissionSnapshot(BaseModel):
     linkup: LogisticsSweep | None = None
     schema_version: Literal["mission.v2"] = MISSION_SCHEMA_VERSION
@@ -151,6 +177,7 @@ class MissionSnapshot(BaseModel):
     budget: Budget | None = None
     limitations: list[Limitation] = Field(default_factory=list)
     error: str | None = None
+    outcome: MissionOutcome | None = None
 
     @model_serializer(mode="wrap")
     def serialize_snapshot(self, handler):
