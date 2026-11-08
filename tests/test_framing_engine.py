@@ -81,6 +81,138 @@ async def ready(engine):
     )
 
 
+@pytest.mark.anyio
+async def test_summary_budget_string_correction_is_typed():
+    engine = FramingEngine(Search(1), DataMode.demo)
+    session = await ready(engine)
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={SlotName.budget: "800"},
+    ))
+    assert type(session.slots[SlotName.budget].value) is float
+    assert session.slots[SlotName.budget].value == 800.0
+    assert session.summary.budget_eur == 800.0
+    assert session.summary.lines[-1] == "Budget: €800"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("slot,raw,expected", [
+    (SlotName.nights, "2.0", 2), (SlotName.nights, "3", 3),
+    (SlotName.distance_km, "10", 10.0),
+])
+async def test_numeric_corrections_are_stored_as_numbers(slot, raw, expected):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={slot: raw},
+    ))
+    assert session.slots[slot].value == expected
+    assert type(session.slots[slot].value) is type(expected)
+
+
+@pytest.mark.anyio
+async def test_fractional_nights_correction_is_rejected_with_message():
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    with pytest.raises(FramingError, match="nights"):
+        await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.nights: "2.5"},
+        ))
+    assert engine.get(session.id) == session
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("slot,value", [
+    (SlotName.transport_mode, "teleport"), (SlotName.nights, 999),
+    (SlotName.budget, 0), (SlotName.distance_km, 100000),
+    (SlotName.race_date, "2019-01-01"),
+])
+async def test_correction_bounds_reject_invalid_values_without_mutation(slot, value):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    with pytest.raises(FramingError, match=slot.value):
+        await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={slot: value},
+        ))
+    assert engine.get(session.id) == session
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("slot,value", [
+    (SlotName.nights, 30), (SlotName.nights, 0), (SlotName.budget, None),
+    (SlotName.budget, 0.5), (SlotName.distance_km, 400),
+    (SlotName.race_date, date.today().isoformat()),
+    *[(SlotName.transport_mode, mode) for mode in ("train", "flight", "car", "bus")],
+])
+async def test_correction_bounds_accept_boundary_values(slot, value):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={slot: value},
+    ))
+    assert session.slots[slot].is_known
+    assert session.slots[slot].value == value
+
+
+@pytest.mark.anyio
+async def test_correction_history_uses_readable_slot_labels():
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={SlotName.transport_mode: "train"},
+    ))
+    assert session.turns[-1].text == "transport_mode: train"
+    assert "SlotName" not in session.turns[-1].text
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("text", ["en fait plutôt Porto", "actually Porto", "rather Porto", "instead Porto"])
+async def test_place_correction_does_not_answer_origin(text):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="I want a half marathon in Lisbon in March 2027"))
+    question = next(q for q in session.open_questions if q.slots == [SlotName.origin])
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, question_id=question.id, text=text,
+    ))
+    assert session.slots[SlotName.city].value == "Porto"
+    assert not session.slots[SlotName.origin].is_known
+    assert any(q.slots == [SlotName.origin] for q in session.open_questions)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("answer", ["je sais pas encore", "oui", "non", "peu importe", "no", "none", "I don't know", "not sure", "1", "x" * 81])
+async def test_nonanswer_keeps_city_question_open_with_clarification(answer):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="I want a race"))
+    question = next(q for q in session.open_questions if q.slots == [SlotName.city])
+    old_revision = session.revision
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, question_id=question.id, text=answer,
+    ))
+    assert not session.slots[SlotName.city].is_known
+    assert any(q.slots == [SlotName.city] for q in session.open_questions)
+    assert session.revision == old_revision + 1
+    assert session.turns[-1].role == "assistant"
+    assert "Please" in session.turns[-1].text
+
+
+@pytest.mark.anyio
+async def test_candidate_text_never_becomes_manual_race():
+    engine = FramingEngine(Search(2), DataMode.demo)
+    session = await engine.create(FramingCreate(text=(
+        "Une course à Tokyo, 10 km, en juin 2028, depuis Lyon, 800 euros, 2 nuits, en avion"
+    )))
+    question = next(q for q in session.open_questions if q.choices)
+    for answer in ["the sunday one please", "None of these"]:
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text=answer,
+        ))
+        assert not session.slots[SlotName.race].is_known
+        assert session.status != FramingStatus.ready_to_confirm
+        assert session.summary is None
+        assert session.open_questions
+        assert session.turns[-1].role == "assistant"
+
+
 @pytest.mark.parametrize(
     "city", ["Lisbonne", "Tokyo", "Nairobi", "Chicago", "São Paulo", "Valence"]
 )

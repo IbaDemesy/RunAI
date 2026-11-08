@@ -211,6 +211,35 @@ def test_public_origin_never_keeps_street_address(raw, expected):
     assert public_origin(raw) == expected
 
 
+@pytest.mark.parametrize(("raw", "expected"), [
+    ("Place Bellecour 69002 Lyon", "Lyon"),
+    ("Chemin des Vignes, Lyon", "Lyon"),
+    ("Résidence Les Pins bat B, Lyon", "Lyon"),
+    ("Via Roma, Milano", "Milano"),
+    ("Place de la Bastille, Paris", "Paris"),
+    ("Avenida Paulista, Sao Paulo", "Sao Paulo"),
+    ("Karl-Marx-Allee, Berlin", "Berlin"),
+    ("Main St, Springfield", "Springfield"),
+    ("12 rue Victor Hugo 69002 Lyon", "Lyon"),
+    ("12 rue de la Roquette 75011 Paris", "Paris"),
+    ("Paris 15", "Paris 15"), ("Lyon 3", "Lyon 3"),
+    ("Roissy CDG T2", "Roissy CDG T2"),
+    ("Saint-Etienne 42", "Saint-Etienne 42"),
+    ("Part-Dieu, Lyon", "Lyon"),
+    ("Cours Lafayette, Lyon", "Lyon"),
+    ("Quai de la Fosse, Nantes", "Nantes"),
+    ("Route des Vins, Colmar", "Colmar"),
+    ("Viale Europa, Roma", "Roma"),
+    ("Alexanderplatz, Berlin", "Berlin"),
+    ("Hauptstr., Berlin", "Berlin"),
+    ("10 Main Rd, Springfield", "Springfield"),
+    ("Av. Paulista, Sao Paulo", "Sao Paulo"),
+    ("Impasse des Pins, Lyon", "Lyon"),
+])
+def test_public_origin_international_streets_and_city_labels(raw, expected):
+    assert public_origin(raw) == expected
+
+
 def test_exact_address_absent_from_plan():
     plan = flight_plan()
     dumped = plan.model_dump_json()
@@ -286,7 +315,7 @@ def test_live_plan_rejects_fixture_data_and_keeps_sources():
     assert not any("Demo data" in w for w in live.warnings)
 
 
-@pytest.mark.parametrize("raw", ["12 rue de la Roquette", "12 rue de la Roquette 75011 Paris",
+@pytest.mark.parametrize("raw", ["12 rue de la Roquette",
                                 "Rue de la Roquette", "東京都新宿区西新宿2-8-1"])
 def test_unseparated_private_address_is_not_public(raw):
     assert public_origin(raw) == "Origin not specified"
@@ -388,3 +417,11 @@ def test_unsupported_outbound_cannot_claim_automation():
     segment = next(seg for seg in plan.segments if seg.id == "s-home-hotel")
     assert segment.automation is Automation.manual
     assert segment.limitation.code == "transport_not_covered"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("Paris, France", "Paris"), ("12 rue de la Paix, 75002 Paris, France", "Paris")],
+)
+def test_public_origin_keeps_city_before_country(raw, expected):
+    assert public_origin(raw) == expected

@@ -6,7 +6,13 @@ import httpx
 import pytest
 
 from runai.contracts.common import DataMode
-from runai.contracts.framing import FramingCreate, FramingTurn
+from runai.contracts.framing import (
+    FramingCreate,
+    FramingQuestion,
+    FramingReply,
+    FramingTurn,
+    SlotName,
+)
 from runai.framing.engine import FramingEngine
 from runai.framing.holo import (
     EXTRACT_PROMPT,
@@ -33,8 +39,97 @@ class Recorder:
         return "Great plan! " + question
 
 
+@pytest.mark.anyio
+@pytest.mark.parametrize("origin_question", [True, False])
+@pytest.mark.parametrize("address", ["12 rue de la Paix, 75002 Paris", "42 avenue Victor Hugo, 69002 Lyon"])
+async def test_address_never_reaches_holo_or_persisted_turns(origin_question, address):
+    payloads = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        payloads.append(body)
+        content = "{}" if body["messages"][0]["content"] == EXTRACT_PROMPT else "Which city?"
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+
+    engine = FramingEngine(NoCandidates(), DataMode.demo, phraser=HoloPhraser("hk-test", transport=transport(handler)))
+    session = await engine.create(FramingCreate(text="A marathon in April 2027"))
+    question = FramingQuestion(
+        id="privacy", revision=session.revision,
+        slots=[SlotName.origin if origin_question else SlotName.budget],
+        text="Which city are you departing from?" if origin_question else "What budget?",
+    )
+    engine.sessions[session.id].open_questions = [question]
+    payloads.clear()
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision,
+        question_id=question.id if origin_question else None,
+        text=address if origin_question else f"My budget is 800 euros; my address is {address}",
+    ))
+    assert payloads, "The spy must observe actual phrasing calls"
+    private_street, city = address.split(", ")
+    postcode = city.split()[0]
+    for content in [json.dumps(payloads), *(turn.text for turn in session.turns)]:
+        assert private_street not in content
+        assert postcode not in content
+    if origin_question:
+        assert session.slots[SlotName.origin].value == city.split()[1]
+        assert not any(body["messages"][0]["content"] == EXTRACT_PROMPT for body in payloads)
+    else:
+        assert any(body["messages"][0]["content"] == EXTRACT_PROMPT for body in payloads)
+
+
 def transport(handler):
     return httpx.MockTransport(handler)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("race", ["Marathon de la Route du Vin", "Place to Place 10K"])
+async def test_address_masking_preserves_named_race_slots(race):
+    engine = FramingEngine(NoCandidates(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="A marathon in April 2027"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={SlotName.race: race},
+    ))
+    assert session.slots[SlotName.race].value == race
+
+
+@pytest.mark.anyio
+async def test_initial_address_never_reaches_holo_or_history():
+    payloads = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        payloads.append(body)
+        content = "{}" if body["messages"][0]["content"] == EXTRACT_PROMPT else "Which city?"
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+
+    engine = FramingEngine(NoCandidates(), DataMode.demo, phraser=HoloPhraser("hk-test", transport=transport(handler)))
+    session = await engine.create(FramingCreate(
+        text="Je pars du 12 rue de la Paix 75002 Paris pour le marathon de Lyon",
+    ))
+    assert any(body["messages"][0]["content"] == EXTRACT_PROMPT for body in payloads)
+    assert any(body["messages"][0]["content"] != EXTRACT_PROMPT for body in payloads)
+    for content in [json.dumps(payloads), *(turn.text for turn in session.turns)]:
+        assert "12 rue de la Paix" not in content
+        assert "75002" not in content
+
+
+@pytest.mark.anyio
+async def test_direct_holo_calls_mask_text_context_question_and_history():
+    payloads = []
+
+    def handler(request):
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+
+    address = "12 rue de la Paix, 75002 Paris"
+    phraser = HoloPhraser("hk-test", transport=transport(handler))
+    turns = [FramingTurn(role="user", text=address, revision=1)]
+    await phraser.extract(address, {"preferences": address}, turns)
+    await phraser.phrase(turns, f"Depart from {address}?", {"origin": address})
+    assert len(payloads) == 2
+    assert "12 rue de la Paix" not in json.dumps(payloads)
+    assert "75002" not in json.dumps(payloads)
 
 
 @pytest.mark.anyio
@@ -194,7 +289,7 @@ async def test_holo_extract_empty_or_malformed_output(content):
 
 @pytest.mark.anyio
 async def test_engine_fills_new_slots_from_mocked_holo_transport():
-    year = date.today().year
+    year = date.today().year + 1
     details = {"distance_km": 21.0975, "race_date": f"{year}-04-18", "edition": str(year)}
     seen = []
 

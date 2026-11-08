@@ -56,9 +56,11 @@ SEASONS = {
 TEMPORAL_PATTERN = MONTH_PATTERN + "|" + "|".join(SEASONS)
 DATE_WORDS = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "this"}
 NIGHT_NUMBERS = dict(zip(("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"), range(1, 11)))
+NIGHT_NUMBERS |= {"un": 1, "une": 1} | dict(zip(("deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix"), range(2, 11)))
+WORD_AMOUNTS = {"cent": 100, "cents": 100, "hundred": 100, "mille": 1000, "thousand": 1000} | NIGHT_NUMBERS
 LOCATION_BOUNDARY = (
     r"(?=\s+(?:depuis|from|to|this|leaving|departing|au départ|en|in|le|pour|avec|with|budget|au|on|by|"
-    r"flying|édition|edition|next|prochain|prochaine|"
+    r"flying|édition|edition|next|prochain|prochaine|for|and|et|because|so|but|while|where|"
     + MONTH_PATTERN
     + r"|\d+)\b|[,;.!?]|$)"
 )
@@ -87,6 +89,29 @@ def _is_temporal(value: str) -> bool:
             re.IGNORECASE,
         )
     )
+
+
+CITY_STOPWORDS = {
+    "i", "my", "me", "the", "a", "an", "je", "j", "le", "la", "les", "un", "une", "mon", "ma", "mes",
+    "want", "veux", "cours", "run", "need", "live", "vis", "habite", "first", "premier", "première",
+}
+
+
+def _plausible_city(value: str) -> bool:
+    words = re.findall(r"[\wÀ-ž'’\-]+", value)
+    return 0 < len(words) <= 3 and not any(
+        word.casefold() in CITY_STOPWORDS and word not in {"Le", "La", "Les"} for word in words
+    )
+
+
+def _parse_amount(raw: str) -> float:
+    value = raw.strip().lower()
+    factor = 1000.0 if value.endswith("k") else 1.0
+    value = value.rstrip("k").strip()
+    grouped = re.fullmatch(r"(\d{1,3}(?:[ ,.\u00a0\u202f]\d{3})+)(?:[.,](\d{1,2}))?", value)
+    if grouped:
+        return float(re.sub(r"\D", "", grouped[1]) + "." + (grouped[2] or "0")) * factor
+    return float(value.replace(",", ".")) * factor
 
 
 def _is_negated(text: str, start: int) -> bool:
@@ -210,7 +235,7 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             result[SlotName.race] = " ".join(words) + english[0][len(english[1]):]
     for slot, prefix in (
         (SlotName.origin, r"(?:depuis|au départ de|départ de|leaving\s+from|departing(?:\s+from)?|from)"),
-        (SlotName.city, r"(?:à|in|(?:marathon|semi|course|race)\s+(?:de|of))"),
+        (SlotName.city, r"(?<!live )(?<!vis )(?<!habite )(?:à|in|(?:marathon|semi|course|race|\d+\s*km?)\s+(?:de|of))"),
     ):
         matches = re.finditer(
             r"\b" + prefix + r"\s+([^\W\d_][\wÀ-ž '’\-]*?)" + boundary,
@@ -221,7 +246,7 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             value = match[1].strip()
             if slot not in result and not _is_temporal(value) and not re.search(
                 r"\b(?:ou|or)\b", value, re.IGNORECASE
-            ):
+            ) and (slot != SlotName.city or _plausible_city(value)):
                 result[slot] = value
                 break
     if SlotName.city not in result:
@@ -235,7 +260,7 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             text,
         )
         for match in (destination, after_distance):
-            if match and not _is_temporal(match[1]) and match[1].casefold() not in {"run", "race"}:
+            if match and not _is_temporal(match[1]) and match[1].casefold() not in {"run", "race"} and _plausible_city(match[1]):
                 result[SlotName.city] = match[1]
                 break
     named_race = re.search(
@@ -276,11 +301,15 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             text,
             re.IGNORECASE,
         )
-        if before_race and before_race[1][0].isupper() and not _is_temporal(before_race[1]) and not _is_negated(text, before_race.start()):
+        if before_race and before_race[1][0].isupper() and not _is_temporal(before_race[1]) and not _is_negated(text, before_race.start()) and _plausible_city(before_race[1]):
             result[SlotName.city] = before_race[1]
     for distance in re.finditer(
         r"\b(\d+(?:[.,]\d+)?)\s*(km|k|miles?)\b", text, re.IGNORECASE
     ):
+        if distance[2].lower() == "k" and re.match(
+            r"\s*(?:€|£|\$|euros?\b|eur\b|pounds?\b|dollars?\b)", text[distance.end():], re.IGNORECASE
+        ):
+            continue
         if not _is_negated(text, distance.start()):
             km = float(distance[1].replace(",", "."))
             result[SlotName.distance_km] = (
@@ -304,27 +333,57 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
                 break
     result.update(_extract_dates(text, today or date.today()))
     currency = r"(?:€|£|\$|euros?\b|eur\b|pounds?\b|dollars?\b)"
-    amount = r"(\d+(?:[.,]\d+)?)"
+    amount = r"(\d{1,3}(?:[ ,.\u00a0\u202f]\d{3})+(?:[.,]\d{1,2})?(?![.,]?\d)|\d+(?:[.,]\d+)?\s*k\b|\d+(?:[.,]\d+)?)"
     budget = re.search(
-        r"\b" + amount + r"\s*" + currency + "|" + currency + r"\s*" + amount,
+        r"\b" + amount + r"\s*" + currency + "|" + currency + r"\s*" + amount
+        + r"|\bbudget\s+(?:is\s+|of\s+|de\s+|:\s*)?(?:around\s+|about\s+|environ\s+)?" + amount,
         text,
         re.IGNORECASE,
     )
     if budget:
-        result[SlotName.budget] = float((budget[1] or budget[2]).replace(",", "."))
+        result[SlotName.budget] = _parse_amount(budget[1] or budget[2] or budget[3])
     elif re.search(r"pas de budget|sans plafond|no budget", text, re.IGNORECASE):
         result[SlotName.budget] = None
+    if SlotName.budget not in result:
+        words = re.search(
+            r"\b((?:(?:" + "|".join(WORD_AMOUNTS) + r")[\s-]*)+)" + currency, text, re.IGNORECASE
+        )
+        if words:
+            total = current = 0
+            for word in re.findall(r"[a-zé]+", words[1].lower()):
+                factor = WORD_AMOUNTS[word]
+                if factor >= 1000:
+                    total, current = total + (current or 1) * factor, 0
+                elif factor == 100:
+                    current = (current or 1) * factor
+                else:
+                    current += factor
+            result[SlotName.budget] = float(total + current)
+        elif re.search(r"\bno limit\b|pas de limite|sans limite", text, re.IGNORECASE):
+            result[SlotName.budget] = None
     nights = re.search(r"\b(\d+|" + "|".join(NIGHT_NUMBERS) + r")\s*(?:nuits?|nights?)\b", text, re.IGNORECASE)
-    if nights:
+    if nights and (not nights[1].isdigit() or int(nights[1]) <= 30):
         result[SlotName.nights] = int(nights[1]) if nights[1].isdigit() else NIGHT_NUMBERS[nights[1].lower()]
+    elif re.search(r"\b(?:un|a|one)\s+week-?\s?end\b", text, re.IGNORECASE):
+        result[SlotName.nights] = 2
+    elif re.search(r"\b(?:une|a|one)\s+(?:semaine|week)\b", text, re.IGNORECASE):
+        result[SlotName.nights] = 7
+    modes = []
     for pattern, mode in (
-        (r"train", "train"),
-        (r"avion|flight|plane|flying", "flight"),
-        (r"voiture|by car|rental car|drive", "car"),
-        (r"bus", "bus"),
+        (r"train|tgv|eurostar|sncf|rer", "train"),
+        (r"avion|vol|flight|plane|flying|ryanair|easyjet", "flight"),
+        (r"voiture|covoiturage|blablacar|by car|rental car|drive", "car"),
+        (r"bus|flixbus", "bus"),
     ):
-        if re.search(r"\b(?:" + pattern + r")\b", text, re.IGNORECASE):
-            result[SlotName.transport_mode] = mode
+        for match in re.finditer(r"\b(?:" + pattern + r")\b", text, re.IGNORECASE):
+            prefix = text[:match.start()]
+            negated = _is_negated(text, match.start()) or re.search(
+                r"\b(?:not|pas)\s+(?:by|en|in|the|a|par)\s*(?:the\s+)?$", prefix, re.IGNORECASE
+            )
+            modes.append((match.start(), mode, bool(negated)))
+    chosen = next((mode for _, mode, negated in sorted(modes) if not negated), None)
+    if chosen:
+        result[SlotName.transport_mode] = chosen
     if text.strip().lower() == "car":
         result[SlotName.transport_mode] = "car"
     return result
