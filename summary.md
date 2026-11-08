@@ -2,7 +2,7 @@
 
 | Wave | Runs | Pass rate | Median duration | Regressions |
 | --- | --- | --- | --- | --- |
-|  | 20 | 95% | 77.82s | 1 |
+|  | 21 | 90% | 78.93s | 9 |
 
 ## Regressions and fixes
 - 20261108T095350Z-e4d56a2: Regressions: None; Fixes: None
@@ -25,6 +25,7 @@
 - 20261108T120428Z-0aaade3: Regressions: None; Fixes: tests.test_static_shell::test_static_shell_has_no_fixed_city_or_distance_defaults
 - 20261108T122044Z-08eaa88: Regressions: None; Fixes: None
 - 20261108T123028Z-c41d681: Regressions: None; Fixes: None
+- 20261108T125056Z-de6d90a: Regressions: tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[JP], tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[KE], tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[PT], tests.safety_acceptance.test_human_stops::test_unknown_platform_is_explicitly_manual[https://race.example.org/register], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[un marathon \xe0 Tokyo-cand1-JP], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[un semi \xe0 Chicago depuis Montr\xe9al en avion 3 nuits 800 euros-cand2-US], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[une course \xe0 Nairobi-cand0-KE], tests.test_mission_outcome::test_manual_steps_do_not_count_as_prepared; Fixes: None
 
 ## Flaky tests (last 10 runs)
 tests.test_static_shell::test_static_shell_has_no_fixed_city_or_distance_defaults
