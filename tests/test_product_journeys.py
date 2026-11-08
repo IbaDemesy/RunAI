@@ -171,7 +171,6 @@ def user_strings(value, key=""):
         yield value
 
 
-@pytest.mark.xfail(strict=True, reason="AC-05, unit U5 translation")
 def test_ac05_english_only(client, completed):
     session, mid, snapshot, _ = completed
     strings = list(user_strings([start(client), session, snapshot, events(client, mid)]))

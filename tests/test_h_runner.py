@@ -424,14 +424,27 @@ def test_run_many_forwards_step_allowed_hosts(tmp_path):
     assert result.data["off_platform_hosts"] == ["example.com"]
 
 
-def test_reported_captcha_block_is_a_failed_step():
-    result = build_step_result(
-        StepKind.registration,
-        "completed",
-        answer="BLOCAGE CAPTCHA/ANTI-BOT : accès bloqué.",
-    )
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "BLOCAGE CAPTCHA/ANTI-BOT : accès bloqué.",
+        "BLOCKED: CAPTCHA/ANTI-BOT at https://example.org/checkout, step 2.",
+    ],
+)
+def test_reported_captcha_block_is_a_failed_step(answer):
+    result = build_step_result(StepKind.registration, "completed", answer=answer)
     assert result.status is StepStatus.failed
     assert "captcha" in result.error.lower()
+
+
+def test_task_anti_bot_marker_is_detected_by_runner():
+    from runai.app.tasks import ANTI_BOT_MARKER, STOP_RULES
+
+    assert ANTI_BOT_MARKER in STOP_RULES
+    result = build_step_result(
+        StepKind.accommodation, "completed", answer=f"{ANTI_BOT_MARKER}: stopped."
+    )
+    assert result.status is StepStatus.failed
 
 
 def test_failed_session(tmp_path):

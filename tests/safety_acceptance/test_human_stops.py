@@ -71,12 +71,13 @@ def test_generated_tasks_keep_all_guards_and_fictitious_profile(city, country, k
     assert task.endswith(STOP_INSTRUCTIONS)
     assert STOP_RULES in task and ASK_USER_RULES in task
     assert guard_task(task) == task
-    assert "captcha" in task and "protection anti-bot" in task
+    assert "captcha" in task and "anti-bot protection" in task
+    assert "BLOCKED: CAPTCHA/ANTI-BOT" in task
     if kind is StepKind.registration:
-        assert "Profil fictif" in task
+        assert "Fictitious profile" in task
         assert profile.email == "camille.test@example.com"
         assert profile.email in task and "Camille Test" in task
-    assert "données de santé" not in task or "aucune donnée de santé" in task
+    assert "health data" not in task
 
 
 @pytest.mark.parametrize("host", FORBIDDEN_HOSTS)

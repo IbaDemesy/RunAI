@@ -31,7 +31,7 @@ SETTLED_STATUSES = TERMINAL_STATUSES | {"idle"}
 EventCallback = Callable[[dict[str, Any]], Awaitable[None] | None]
 
 _HTTP_URL = TypeAdapter(HttpUrl)
-_ANTI_BOT_BLOCK = re.compile(r"\bBLOCAGE CAPTCHA/ANTI-BOT\b", re.IGNORECASE)
+_ANTI_BOT_BLOCK = re.compile(r"\b(?:BLOCAGE CAPTCHA/ANTI-BOT|BLOCKED: CAPTCHA/ANTI-BOT)\b", re.IGNORECASE)
 _PAYMENT_PROCESSOR_HOSTS = (
     "stripe.com", "adyen.com", "paypal.com", "checkout.com",
     "ingenico.com", "ingenico.fr", "worldline.com", "worldline-solutions.com",
