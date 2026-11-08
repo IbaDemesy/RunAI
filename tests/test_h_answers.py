@@ -73,6 +73,30 @@ def test_legacy_input_aliases_dump_canonical_fields(kind, payload, expected):
         assert answer.model_dump()[key] == value
 
 
+@pytest.mark.parametrize("kind,payload", [
+    (StepKind.registration, {"price": 100, "fees_eur": 5}),
+    (StepKind.accommodation, {"total_price": 200, "price_per_night_eur": 100}),
+    (StepKind.registration, {"price_eur": 100, "fees": 5}),
+    (StepKind.accommodation, {"total_price_eur": 200, "price_per_night": 100}),
+])
+def test_mixed_eur_aliases_do_not_verify_canonical_price_currency(kind, payload):
+    answer = parse_answer(kind, {"stop_screen": "payment", **payload})
+    assert answer.currency is None
+    result = apply_answer(StepResult(kind=kind), answer)
+    assert result.price_eur is None
+
+
+@pytest.mark.parametrize("kind,payload", [
+    (StepKind.registration, {"price_eur": 100, "fees_eur": 5}),
+    (StepKind.accommodation, {"total_price_eur": 200, "price_per_night_eur": 100}),
+    (StepKind.transport, {"total_price_eur": 70}),
+])
+def test_explicit_currency_is_not_overridden_by_legacy_eur_total(kind, payload):
+    answer = parse_answer(kind, {"stop_screen": "payment", "currency": "USD", **payload})
+    assert answer.currency == "USD"
+    assert apply_answer(StepResult(kind=kind), answer).price_eur is None
+
+
 @pytest.mark.parametrize("payload", [
     {"total_price": -1}, {"total_price": "180"}, {"total_price": True},
     {"total_price": float("nan")}, {"total_price": float("inf")},

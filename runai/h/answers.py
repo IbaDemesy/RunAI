@@ -62,11 +62,15 @@ class StepAnswer(_AnswerModel):
     @model_validator(mode="before")
     @classmethod
     def legacy_eur_currency(cls, value: Any) -> Any:
+        total_field = "price" if "price" in cls.model_fields else "total_price"
+        component_field = "fees" if total_field == "price" else "price_per_night"
         if (
             isinstance(value, dict)
             and "currency" in cls.model_fields
             and "currency" not in value
-            and any(key in value for key in ("price_eur", "fees_eur", "total_price_eur", "price_per_night_eur"))
+            and total_field not in value
+            and value.get(component_field) is None
+            and f"{total_field}_eur" in value
         ):
             return {**value, "currency": "EUR"}
         return value
