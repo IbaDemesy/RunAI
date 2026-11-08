@@ -76,8 +76,13 @@ def test_repository_fixture_hygiene():
                 continue
             documents = path.read_text().splitlines() if path.suffix == ".jsonl" else [path.read_text()]
             for document in documents:
-                if document.strip():
-                    failures.extend(f"{path.relative_to(root)}: {issue}" for issue in find_violations(json.loads(document)))
+                if not document.strip():
+                    continue
+                try:
+                    payload = json.loads(document)
+                except json.JSONDecodeError:
+                    continue  # Malformed-on-purpose robustness fixtures.
+                failures.extend(f"{path.relative_to(root)}: {issue}" for issue in find_violations(payload))
     assert not failures, "\n".join(failures)
 
 
