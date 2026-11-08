@@ -1,3 +1,4 @@
+# Acceptance: AC-37 (docs/product/ACCEPTANCE.md)
 import asyncio
 import json
 import time

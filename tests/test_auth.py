@@ -1,3 +1,4 @@
+# Acceptance: AC-62 (docs/product/ACCEPTANCE.md)
 from hashlib import sha256
 
 import pytest

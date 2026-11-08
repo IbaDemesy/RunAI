@@ -18,7 +18,8 @@ fallback, not every backend string or fixture. Evidence: `tests/test_english_onl
 xfail: a transport step total cannot be presented as a sourced per-leg fare.
 
 Priority: **P0** = blocks the primary jury demo (J1) or a hard rule; **P1** = strong score
-impact; **P2** = polish. Status: `todo` / `in-progress` / `done` (update with PR link).
+impact; **P2** = polish. Status: `todo` / `in-progress` / `done` (update with PR link). Statuses were re-checked
+against the tree on 8 Nov 2026 (audit J11): only items verified in the code are marked `done`.
 Teams: names from the night-loop master prompt.
 
 | Id | Pri | Source | Ticket | Owning team | AC | Status |

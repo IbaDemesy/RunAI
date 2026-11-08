@@ -113,7 +113,7 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 
 | Prix | Ce qu'on montre | État |
 | --- | --- | :---: |
-| Gladia (1 000 €) | Voix comme seule interface, vocabulaire course, transcription live, interruption | ❌ |
+| Gladia (1 000 €) | Voix comme seule interface, vocabulaire course, transcription live, interruption | 🟡 codé (`runai/voice/`, `runai/app/voice_ws.py`), non vérifié en live |
 | Best use of Devin (1 000 €) | Workflow de 16 agents d'exploration, PR, CI, Devin Review ; boucle d'auto-réparation en option | 🟡 |
 | LinkedIn et X (500 € chacun) | Un post par plateforme | ❌ |
 

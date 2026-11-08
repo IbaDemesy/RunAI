@@ -1,3 +1,4 @@
+# Acceptance: AC-58 (docs/product/ACCEPTANCE.md)
 import json
 import re
 import time

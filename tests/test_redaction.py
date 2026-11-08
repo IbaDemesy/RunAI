@@ -1,3 +1,4 @@
+# Acceptance: AC-63 (docs/product/ACCEPTANCE.md)
 import base64
 import os
 
