@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from runai.app import voice_ws
+from runai.app import voice_api, voice_ws
 from runai.app.auth import BasicAuthMiddleware
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
@@ -194,6 +194,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     app.include_router(build_screenshot_router(selected))
     app.include_router(telemetry_router)
     app.include_router(voice_ws.router)
+    app.include_router(voice_api.router)
     app.mount("/static/contract-fixtures", StaticFiles(directory=ROOT_DIR / "runai/contracts/fixtures"), name="contract-fixtures")
     app.mount("/static/flyover", StaticFiles(directory=ROOT_DIR / "web/flyover"), name="flyover")
     app.mount("/static/voice", StaticFiles(directory=ROOT_DIR / "web/voice"), name="voice")
