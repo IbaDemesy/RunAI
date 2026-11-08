@@ -7,7 +7,8 @@ from typing import Any
 
 _KEY_NAME = re.compile(r"[A-Z0-9_]*_API_KEY(?:_\d+)?\Z")
 _BASIC_AUTH = "RUNAI_BASIC_AUTH"
-_AUTH_HEADER = re.compile(r"\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{8,}")
+_BEARER = re.compile(r"\b(Bearer)\s+[A-Za-z0-9._~+/=-]{16,}", re.IGNORECASE)
+_BASIC = re.compile(r"\b(Basic)\s+([A-Za-z0-9+/]{4,}={0,2})(?![A-Za-z0-9+/=])", re.IGNORECASE)
 _AUTH_KEY = re.compile(r"(?:proxy-)?authorization\Z", re.IGNORECASE)
 _MASK = "[REDACTED]"
 _MIN_LEN = 8
@@ -22,6 +23,13 @@ def _configured_secrets() -> list[str]:
     return sorted((s for s in found if len(s) >= _MIN_LEN), key=len, reverse=True)
 
 
+def _is_basic_credential(token: str) -> bool:
+    try:
+        return ":" in base64.b64decode(token, validate=True).decode()
+    except (ValueError, UnicodeDecodeError):
+        return False
+
+
 def redact_secrets(value: Any) -> Any:
     secrets = _configured_secrets()
 
@@ -29,7 +37,8 @@ def redact_secrets(value: Any) -> Any:
         if isinstance(item, str):
             for secret in secrets:
                 item = item.replace(secret, _MASK)
-            return _AUTH_HEADER.sub(lambda m: f"{m.group(1)} {_MASK}", item)
+            item = _BEARER.sub(lambda m: f"{m.group(1)} {_MASK}", item)
+            return _BASIC.sub(lambda m: f"{m.group(1)} {_MASK}" if _is_basic_credential(m.group(2)) else m.group(0), item)
         if isinstance(item, dict):
             return {
                 walk(key): _MASK if isinstance(key, str) and _AUTH_KEY.match(key) and content else walk(content)

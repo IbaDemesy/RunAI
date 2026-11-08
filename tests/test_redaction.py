@@ -91,3 +91,11 @@ def test_authorization_header_values_masked(monkeypatch):
         "log": "sent Authorization: Bearer [REDACTED]",
     }
     assert redact_secrets("Bearer short") == "Bearer short"
+    assert redact_secrets("bearer abcdefgh12345678") == "bearer [REDACTED]"
+    assert redact_secrets("BASIC dXNlcjpwYXNz") == "BASIC [REDACTED]"
+
+
+def test_plain_text_after_auth_scheme_words_kept(monkeypatch):
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    text = "Basic training plan, bearer of the race bib"
+    assert redact_secrets(text) == text
