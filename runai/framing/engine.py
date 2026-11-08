@@ -22,6 +22,9 @@ from runai.contracts.framing import (
     SlotStatus,
     assert_launchable,
     check_reply_revision,
+    format_date,
+    format_distance,
+    format_money,
     matching_distance,
     missing_slots,
 )
@@ -182,6 +185,14 @@ class FramingEngine:
                             extract_slots(reply.text).get(slot) or answer
                         )
                 elif (
+                    slot == SlotName.budget
+                    and slot not in values
+                    and reply.text.strip().casefold() in (
+                        "no cap", "no limit", "unlimited", "sans plafond", "pas de limite",
+                    )
+                ):
+                    values[slot] = None
+                elif (
                     slot in (SlotName.city, SlotName.origin, SlotName.race)
                     and slot not in values
                     and (reply.question_id or not values)
@@ -202,8 +213,10 @@ class FramingEngine:
                         raise FramingError(
                             f"Please enter a valid number for {slot.value}."
                         ) from exc
+            holo_values = {}
             if not choice and reply.text:
-                values = await self._holo_fill(session, reply.text, values) | values
+                holo_values = await self._holo_fill(session, reply.text, values)
+                values = holo_values | values
             if not values and choice is None and session.turns:
                 raise FramingError(guidance)
             self._validate(values)
@@ -220,6 +233,11 @@ class FramingEngine:
             discovery_changed = any(
                 name in values
                 and session.slots[name].is_known
+                and not (
+                    name == SlotName.date_window
+                    and name in holo_values
+                    and session.slots[name].value is None
+                )
                 and values[name] != session.slots[name].value
                 for name in (
                     SlotName.city,
@@ -236,7 +254,10 @@ class FramingEngine:
                 session.selected_candidate_id = None
                 session.candidates = []
                 for name, old in list(session.slots.items()):
-                    if old.status == SlotStatus.sourced and name != SlotName.city:
+                    if old.status == SlotStatus.sourced and name in (
+                        SlotName.race, SlotName.race_date, SlotName.distance_km,
+                        SlotName.edition, SlotName.date_window,
+                    ):
                         session.slots[name] = Slot(name=name)
             for name, value in values.items():
                 session.slots[name] = Slot(
@@ -313,6 +334,10 @@ class FramingEngine:
                 )
             )
             await self._advance(session, search=choice is None)
+            for limitations in [session.limitations] + [c.limitations for c in session.candidates]:
+                for limitation in limitations:
+                    if limitation.code == "close_match":
+                        limitation.message = "Close to your request, but not an exact match."
             await self._phrase_next_question(session)
             self.sessions[framing_id] = session
             return self.get(framing_id)
@@ -530,7 +555,7 @@ class FramingEngine:
                             id=c.id,
                             candidate_id=c.id,
                             label=(
-                                f"{c.name} — {c.race_date or 'date to be confirmed'}"
+                                f"{c.name} — {format_date(c.race_date) if c.race_date else 'date to be confirmed'}"
                                 + (
                                     " · close to your request"
                                     if any(
@@ -598,11 +623,6 @@ class FramingEngine:
                 )
             )
         nights = int(value(SlotName.nights))
-        budget = value(SlotName.budget)
-        budget_label = "No budget cap"
-        if budget is not None:
-            amount = float(budget)
-            budget_label = f"€{int(amount) if amount.is_integer() else amount}"
         dates = (
             (
                 race.race_date - timedelta(days=nights - 1),
@@ -621,9 +641,9 @@ class FramingEngine:
             budget_eur=value(SlotName.budget),
             transport_mode=value(SlotName.transport_mode),
             lines=[
-                f"{race.name}, {race.city}, {race.race_date}, {race.distance_km:.1f} km",
-                f"Departure: {value(SlotName.origin)}; {nights} {'night' if nights == 1 else 'nights'}; {value(SlotName.transport_mode)}",
-                f"Budget: {budget_label}",
+                f"{race.name}, {race.city}, {format_date(race.race_date)}, {format_distance(race.distance_km)}",
+                f"From {value(SlotName.origin)} · {nights} {'night' if nights == 1 else 'nights'} · {value(SlotName.transport_mode)}",
+                f"Budget: {format_money(value(SlotName.budget))}",
             ],
             limitations=session.limitations,
         )

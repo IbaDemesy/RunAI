@@ -27,6 +27,22 @@ USER_ID_PATTERN = r"^[A-Za-z0-9_-]{1,64}$"
 UserId = Annotated[str, StringConstraints(pattern=USER_ID_PATTERN)]
 
 
+def format_money(value: float | None) -> str:
+    if value is None:
+        return "no cap"
+    return f"€{value:.0f}" if float(value).is_integer() else f"€{value:.2f}"
+
+
+def format_distance(value: float) -> str:
+    return f"{value:.1f}".removesuffix(".0") + " km"
+
+
+def format_date(value: date) -> str:
+    weekdays = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    months = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+    return f"{weekdays[value.weekday()]} {value.day} {months[value.month - 1]} {value.year}"
+
+
 class FramingStatus(str, Enum):
     collecting = "collecting"
     choosing_candidate = "choosing_candidate"

@@ -621,7 +621,7 @@ def test_close_candidates_use_close_match_choice_copy():
             "which one interests you?"
         )
         assert question.choices[0].label == (
-            "Course 0 — 2028-06-12 · close to your request"
+            "Course 0 — Monday 12 June 2028 · close to your request"
         )
         assert question.choices[-1].id == "none"
         assert question.choices[-1].label == "None of these, let me clarify"
@@ -844,6 +844,56 @@ def test_candidate_rejection_and_correction_preserve_known_answers():
     asyncio.run(run())
 
 
+def test_specific_period_correction_invalidates_selected_flexible_race():
+    async def run():
+        search = Search(1)
+        engine = FramingEngine(search)
+        session = await engine.create(FramingCreate(
+            text="course à Tokyo, 10 km, depuis Lyon, 800 euros, 2 nuits, train"
+        ))
+        question = next(q for q in session.open_questions if q.slots == [SlotName.date_window])
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text="any time"
+        ))
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0"
+        ))
+        assert session.status == FramingStatus.ready_to_confirm
+        assert session.slots[SlotName.date_window].value is None
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={SlotName.date_window: "October"}
+        ))
+        assert session.selected_candidate_id is None
+        assert session.summary is None
+        assert session.status == FramingStatus.choosing_candidate
+        assert len(search.calls) == 2
+        assert search.calls[-1][SlotName.date_window].value == "October"
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("answer", ["no cap", "NO LIMIT", "Unlimited", "sans plafond", "Pas de limite"])
+def test_budget_question_accepts_unlimited_answers(answer):
+    async def run():
+        engine = FramingEngine(Search(1))
+        session = await engine.create(FramingCreate(
+            text="course à Tokyo, 10 km en juin 2028, depuis Lyon, 2 nuits, train"
+        ))
+        question = next(q for q in session.open_questions if q.slots == [SlotName.budget])
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, question_id=question.id, text=answer
+        ))
+        assert session.slots[SlotName.budget].value is None
+        assert session.slots[SlotName.budget].status.value == "not_needed"
+        assert not any(SlotName.budget in q.slots for q in session.open_questions)
+        session = await engine.reply(session.id, FramingReply(
+            revision=session.revision, choice_id="c0"
+        ))
+        assert session.summary.lines[-1] == "Budget: no cap"
+
+    asyncio.run(run())
+
+
 def test_french_conjunction_car_is_not_a_transport_mode():
     assert SlotName.transport_mode not in extract_slots(
         "je viens car je veux courir à Tokyo"
@@ -854,9 +904,9 @@ def test_french_conjunction_car_is_not_a_transport_mode():
 @pytest.mark.parametrize(
     "budget,nights,budget_line,stay",
     [(800.0, 2, "Budget: €800", "2 nights"),
-     (800.5, 1, "Budget: €800.5", "1 night"),
+     (800.5, 1, "Budget: €800.50", "1 night"),
      (1000000.0, 2, "Budget: €1000000", "2 nights"),
-     (None, 0, "Budget: No budget cap", "0 nights")],
+     (None, 0, "Budget: no cap", "0 nights")],
 )
 def test_summary_formats_human_values_without_changing_numbers(budget, nights, budget_line, stay):
     async def run():
@@ -873,8 +923,8 @@ def test_summary_formats_human_values_without_changing_numbers(budget, nights, b
         )
         summary = session.summary
         assert summary.lines == [
-            "City Marathon, Tokyo, 2028-06-12, 42.2 km",
-            f"Departure: Lyon; {stay}; train", budget_line,
+            "City Marathon, Tokyo, Monday 12 June 2028, 42.2 km",
+            f"From Lyon · {stay} · train", budget_line,
         ]
         assert summary.race.distance_km == 42.195
         assert summary.budget_eur == budget
@@ -944,5 +994,54 @@ def test_clearing_race_date_clears_derived_period():
         assert window.value is None
         assert window.provenance is None
         assert any(q.slots == [SlotName.date_window] for q in session.open_questions)
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("city", ["Lyon", "Berlin"])
+def test_bare_city_answer_preserves_chip_origin(city):
+    async def run():
+        engine = FramingEngine(Search())
+        session = await engine.create(
+            FramingCreate(text="Un marathon au printemps, depuis Lyon")
+        )
+        assert session.slots[SlotName.origin].value == "Lyon"
+        session = await engine.reply(
+            session.id, FramingReply(revision=session.revision, text=city)
+        )
+        assert session.slots[SlotName.city].value == city
+        session = await engine.reply(
+            session.id,
+            FramingReply(revision=session.revision, corrections={SlotName.city: "Milan", SlotName.race: "Milano Marathon"}),
+        )
+        assert session.slots[SlotName.origin].value == "Lyon"
+        assert session.slots[SlotName.origin].provenance.kind == "human"
+        assert not any(SlotName.origin in q.slots for q in session.open_questions)
+
+    asyncio.run(run())
+
+
+def test_known_race_date_retires_discovery_slots_and_formats_summary():
+    async def run():
+        engine = FramingEngine(Search())
+        session = await engine.create(FramingCreate(text="Un marathon au printemps, depuis Lyon"))
+        session = await engine.reply(
+            session.id,
+            FramingReply(revision=session.revision, corrections={
+                SlotName.city: "Milan", SlotName.race: "Milano Marathon",
+                SlotName.race_date: "2027-04-11", SlotName.budget: 800,
+                SlotName.nights: 2, SlotName.transport_mode: "train",
+            }),
+        )
+        assert session.slots[SlotName.date_window].is_known
+        assert not any(SlotName.date_window in q.slots for q in session.open_questions)
+        assert session.summary.lines == [
+            "Milano Marathon, Milan, Sunday 11 April 2027, 42.2 km",
+            "From Lyon · 2 nights · train", "Budget: €800",
+        ]
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={SlotName.budget: None}))
+        assert session.summary.lines[-1] == "Budget: no cap"
+        session = await engine.reply(session.id, FramingReply(revision=session.revision, corrections={SlotName.budget: 129.5}))
+        assert session.summary.lines[-1] == "Budget: €129.50"
 
     asyncio.run(run())

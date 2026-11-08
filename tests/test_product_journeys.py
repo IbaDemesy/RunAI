@@ -139,7 +139,6 @@ def test_ac04_no_none(client, budget):
     assert "None" not in " ".join(ready(client, budget=budget)["summary"]["lines"])
 
 
-@pytest.mark.xfail(strict=True, reason="AC-04, unit U4")
 def test_ac04_no_float_artifacts(client):
     lines = ready(client, "une course à Tokyo, 10 km en juin 2028")["summary"]["lines"]
     assert not re.search(r"\.0(?:\s|$)", " ".join(lines)), lines
@@ -153,7 +152,7 @@ def test_ac04_no_empty_joins(client):
 def test_ac04_readable_budget(client, budget):
     line = ready(client, budget=budget)["summary"]["lines"][-1]
     if budget is None:
-        assert any(word in line.lower() for word in ("no limit", "unlimited", "sans plafond", "no budget cap"))
+        assert any(word in line.lower() for word in ("no limit", "unlimited", "sans plafond", "no budget cap", "no cap"))
     else:
         assert "900" in line and any(unit in line for unit in ("€", "EUR", "euros")), line
 
