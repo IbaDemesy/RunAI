@@ -25,6 +25,11 @@ HTML/PDF/ICS exports. **RunAI never pays or makes a binding booking.**
 
 [Partner resources](Infos/README.md) | [Demo and deliverables](docs/DEMO_ET_LIVRABLES.md) | [V2 technical details](docs/V2.md)
 
+H browser steps request typed JSON reports by default. Set `RUNAI_H_TYPED_ANSWERS=0`
+to disable the answer schema and use the legacy text-report path. Valid typed prices
+are authoritative; only EUR totals populate `price_eur`, and hotel text-price parsing
+is used only when no valid typed report is available. All commitment halts remain in place.
+
 ## Quickstart
 
 From the repository root, with Python 3.11+ installed:
