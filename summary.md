@@ -2,7 +2,7 @@
 
 | Wave | Runs | Pass rate | Median duration | Regressions |
 | --- | --- | --- | --- | --- |
-|  | 16 | 100% | 70.44s | 0 |
+|  | 17 | 94% | 70.75s | 1 |
 
 ## Regressions and fixes
 - 20261108T095350Z-e4d56a2: Regressions: None; Fixes: None
@@ -21,6 +21,7 @@
 - 20261108T101654Z-847bbc5: Regressions: None; Fixes: None
 - 20261108T102000Z-c6477e6: Regressions: None; Fixes: None
 - 20261108T102135Z-d320c2a: Regressions: None; Fixes: None
+- 20261108T115835Z-0bc8b24: Regressions: tests.test_static_shell::test_static_shell_has_no_fixed_city_or_distance_defaults; Fixes: None
 
 ## Flaky tests (last 10 runs)
 None
