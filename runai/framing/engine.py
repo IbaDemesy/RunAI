@@ -83,6 +83,7 @@ LLM_INTENTS = {"answer", "correction", "advice", "smalltalk", "unclear"}
 LLM_SLOTS = {
     SlotName.city, SlotName.origin, SlotName.race, SlotName.distance_km, SlotName.race_date,
     SlotName.date_window, SlotName.edition, SlotName.budget, SlotName.nights, SlotName.transport_mode,
+    SlotName.preferences,
 }
 
 
@@ -119,15 +120,21 @@ def _evidence_in(evidence: str, haystack: str) -> bool:
         if not before.isalnum() and not after.isalnum():
             return True
         start = index + 1
-    return False
+    # a light paraphrase of the quote is tolerated ("sympas" for "sympa"), an invented one is not:
+    # every word of the quote must start like a word actually written in the message
+    words = [w for w in quote.split() if len(w) >= 3]
+    written = [w for w in haystack.split() if len(w) >= 3]
+    return bool(words) and len(quote) >= 4 and all(
+        any(m.startswith(w[:4]) or w.startswith(m[:4]) for m in written) for w in words
+    )
 
 
-def _accepts_candidates(function) -> bool:
+def _accepts(function, name: str) -> bool:
     try:
         parameters = inspect.signature(function).parameters
     except (TypeError, ValueError):
         return False
-    return "candidates" in parameters or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values())
+    return name in parameters or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values())
 
 
 def _states_distance(text: str) -> bool:
@@ -653,8 +660,8 @@ class FramingEngine:
                 for limitation in limitations:
                     if limitation.code == "close_match":
                         limitation.message = "Close to your request, but not an exact match."
-            if llm_ack:
-                self._append_ack(session, llm_ack)
+            if llm_ack or decision is not None:
+                await self._append_ack(session, llm_ack or "", decision)
             else:
                 await self._phrase_next_question(session)
             self.sessions[framing_id] = session
@@ -684,8 +691,8 @@ class FramingEngine:
             hint = (f"the runner is correcting the field '{force_slot.value}'" if force_slot
                     else pending.text if pending else "")
             extra = {"candidates": options} if options else {}
-            if extra and not _accepts_candidates(decide):
-                extra = {}
+            extra["missing"] = [n.value for n in missing_slots(session)]
+            extra = {key: value for key, value in extra.items() if _accepts(decide, key)}
             raw = await decide(_mask_address(text), known, session.turns, hint, **extra)
         except Exception:  # noqa: BLE001 - a failing model must never break the conversation
             return None
@@ -719,7 +726,7 @@ class FramingEngine:
                 if name in (SlotName.budget, SlotName.date_window) and (not known_value or may_replace):
                     values[name] = None
                 continue
-            if name in (SlotName.city, SlotName.origin, SlotName.race) and not isinstance(value, str):
+            if name in (SlotName.city, SlotName.origin, SlotName.race, SlotName.preferences) and not isinstance(value, str):
                 continue
             if name == SlotName.origin:
                 value = _mask_address(public_origin(value))
@@ -728,6 +735,12 @@ class FramingEngine:
                     continue
             if name in (SlotName.city, SlotName.origin, SlotName.race) and _norm(value) not in haystack:
                 continue  # a place or event name must be written in the message itself
+            if name == SlotName.preferences:
+                value = _sanitize_ack(value, allow_question=False)[:200]
+                if not value:
+                    continue
+                values[name] = value
+                continue
             if name in (SlotName.city, SlotName.race):
                 if not _valid_place(value, 200 if name == SlotName.race else 80):
                     continue
@@ -745,6 +758,13 @@ class FramingEngine:
             if known_value and not may_replace:
                 continue
             values[name] = value
+        try:
+            ask_slot = SlotName(raw.get("ask_slot")) if isinstance(raw.get("ask_slot"), str) else None
+        except ValueError:
+            ask_slot = None
+        next_question = _sanitize_ack(raw.get("next_question"), allow_question=True)
+        if next_question.count("?") != 1 or not next_question.endswith("?") or len(next_question) > 220:
+            next_question = ""
         picked = None
         wanted = raw.get("choice")
         if isinstance(wanted, str) and wanted:
@@ -756,6 +776,7 @@ class FramingEngine:
                 None,
             )
         return {"intent": intent, "values": values, "origin_rejected": origin_rejected, "choice": picked,
+                "ask_slot": ask_slot, "next_question": next_question,
                 "message": _sanitize_ack(raw.get("message"), allow_question=intent == "unclear")}
 
     @staticmethod
@@ -806,7 +827,8 @@ class FramingEngine:
 
     async def _decide_corrections(self, session: FramingSession, reply: FramingReply) -> dict | None:
         """A value typed in the "Change something" form: the model reads it like any other message."""
-        merged = {"intent": "correction", "values": {}, "origin_rejected": False, "choice": None, "message": ""}
+        merged = {"intent": "correction", "values": {}, "origin_rejected": False, "choice": None,
+                  "ask_slot": None, "next_question": "", "message": ""}
         for slot, typed in reply.corrections.items():
             text = typed if isinstance(typed, str) else str(typed)
             decision = await self._decide(session, text, None, force_slot=slot)
@@ -833,8 +855,26 @@ class FramingEngine:
             return message
         return f"{message} {self._next_question_text(session)}".strip()
 
-    def _append_ack(self, session: FramingSession, ack: str) -> None:
-        text = f"{ack} {self._next_question_text(session)}".strip()
+    async def _append_ack(self, session: FramingSession, ack: str, decision: dict | None = None) -> None:
+        """Acknowledge, then ask what the model judged most useful (in the runner's language)."""
+        asked = ""
+        if session.open_questions:
+            plain = [q for q in session.open_questions if not any(c.candidate_id for c in q.choices)]
+            if not plain:
+                known = {n.value: str(x.value) for n, x in session.slots.items() if x.is_known and x.value is not None}
+                asked = await self.phraser.phrase(
+                    session.turns, "Invite the runner to pick one of the proposed races shown below, or say none fits.", known)
+            else:
+                wanted = decision.get("ask_slot") if decision else None
+                chosen = next((q for q in plain if wanted in q.slots), None) if wanted else None
+                if chosen is not None and decision and decision.get("next_question"):
+                    chosen.text = decision["next_question"]
+                    session.open_questions.remove(chosen)
+                    session.open_questions.insert(0, chosen)
+                    asked = chosen.text
+                else:
+                    asked = plain[0].text
+        text = f"{ack} {asked}".strip()
         session.turns.append(FramingTurn(role="assistant", text=text, revision=session.revision))
 
     def _clarify(self, session: FramingSession, reply: FramingReply, message: str) -> FramingSession:

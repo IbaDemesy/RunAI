@@ -109,3 +109,15 @@ def test_model_outage_gives_a_clear_message_and_writes_nothing():
     _engine, session = start(phraser(fail=True), "Half marathon in Lisbon in March 2027")
     assert not session.slots[SlotName.city].is_known
     assert "could not process" in session.turns[-1].text.lower()
+
+
+def test_the_model_chooses_the_next_question_in_the_runners_language_and_records_preferences():
+    first = {"intent": "answer", "language": "fr", "message": "Un premier semi, super.",
+             "updates": [upd("city", "Lisbonne", "Lisbonne"), upd("distance_km", 21.0975, "semi"),
+                         upd("preferences", "first half marathon, flat and scenic course", "parcours plat")],
+             "ask_slot": "date_window", "next_question": "Tu es flexible sur la date, ou c'est un week-end précis ?"}
+    _engine, session = start(phraser(first), "Mon premier semi à Lisbonne, parcours plat si possible")
+    assert session.slots[SlotName.preferences].value == "first half marathon, flat and scenic course"
+    assert session.open_questions[0].slots == [SlotName.date_window]
+    assert session.turns[-1].text.endswith("Tu es flexible sur la date, ou c'est un week-end précis ?")
+    assert "Select the race" not in session.turns[-1].text
