@@ -297,19 +297,24 @@ class FakeAgentRun:
         leg = round(script.price_eur / 2, 2)
         now = utcnow().isoformat()
 
-        def trip(origin_label: str, destination_label: str) -> dict:
+        def trip(mode: str, origin_label: str, destination_label: str) -> dict:
             return {
-                "mode": "train",
+                "mode": mode,
                 "from_hub": {"label": origin_label, "confidence": "illustrative"},
                 "to_hub": {"label": destination_label, "confidence": "illustrative"},
                 "cost": {"amount": leg, "currency": "EUR", "collected_at": now,
                          "confidence": "illustrative", "provenance": provenance},
             }
 
+        mode = {"avion": "flight", "plane": "flight", "vol": "flight", "air": "flight", "rail": "train"}.get(
+            (brief.transport_mode or "train").casefold(), (brief.transport_mode or "train").casefold())
+        if mode not in {"train", "flight"}:
+            return {}  # bus/car are not covered: leave the legs unpriced rather than inventing them
+        hub = "station" if mode == "train" else "airport"
         origin = brief.origin or "Home"
         return {"journey": {
-            "outbound": trip(f"{origin} station (demo)", f"{brief.city} station (demo)"),
-            "return_trip": trip(f"{brief.city} station (demo)", f"{origin} station (demo)"),
+            "outbound": trip(mode, f"{origin} {hub} (demo)", f"{brief.city} {hub} (demo)"),
+            "return_trip": trip(mode, f"{brief.city} {hub} (demo)", f"{origin} {hub} (demo)"),
         }}
 
 

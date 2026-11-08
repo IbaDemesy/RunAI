@@ -78,7 +78,7 @@ def _description(item: TimelineItem, local: datetime) -> str:
     if item.time_known and item.start.utcoffset() != local.utcoffset():
         parts.append(f"Local time: {item.start:%H:%M} ({item.start.tzinfo}).")
     if item.tag == "a_payer":
-        parts.append("Status: ready, for you to pay (0 € paid by RunAI).")
+        parts.append("Status: ready, for you to pay (€0 paid by RunAI).")
     parts.append("Prepared by RunAI.")
     return "\n".join(p for p in parts if p)
 
