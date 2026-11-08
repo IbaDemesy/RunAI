@@ -74,9 +74,29 @@ def test_basic_auth_password_part_masked(monkeypatch):
     assert redact_secrets("demo:long-password-42") == "[REDACTED]"
 
 
-def test_short_basic_auth_password_kept_but_pair_masked(monkeypatch):
+def test_short_basic_auth_password_and_pair_masked(monkeypatch):
     monkeypatch.setenv("RUNAI_BASIC_AUTH", "u:pw")
-    assert redact_secrets("u:pw pw") == "u:pw pw"
+    assert redact_secrets("u:pw pw") == "[REDACTED] [REDACTED]"
+
+
+def test_multiple_basic_auth_passwords_and_encoded_pairs_masked(monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "alice:Pass1,bob:Pass2")
+    for pair in ("alice:Pass1", "bob:Pass2"):
+        password = pair.partition(":")[2]
+        encoded = base64.b64encode(pair.encode()).decode()
+        assert redact_secrets(f"failure {password} {encoded}") == "failure [REDACTED] [REDACTED]"
+    assert redact_secrets("alice:Pass1,bob:Pass2") == "[REDACTED]"
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("hk" + "-abcdefghijklmnop_123", "[REDACTED]"),
+    ("https://alice:fake-password@example.org/path", "https://[REDACTED]@example.org/path"),
+    ("https://example.org/?token=fake&city=Paris", "https://example.org/?token=[REDACTED]&city=Paris"),
+    ("?access_token=fake&api_key=fake&key=fake&secret=fake#top",
+     "?access_token=[REDACTED]&api_key=[REDACTED]&key=[REDACTED]&secret=[REDACTED]#top"),
+])
+def test_unconfigured_credential_patterns_are_masked(text, expected):
+    assert redact_secrets(text) == expected
 
 
 def test_authorization_header_values_masked(monkeypatch):

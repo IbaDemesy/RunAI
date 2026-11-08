@@ -1,6 +1,8 @@
 import asyncio
 import base64
+import io
 import threading
+import wave
 from contextlib import contextmanager
 from functools import partial
 from types import SimpleNamespace
@@ -55,6 +57,93 @@ def assert_error(ws, message):
     assert error["type"] == "error"
     assert message in error["message"]
     assert_closed(ws, 1011)
+
+
+def test_invalid_content_length_is_bad_request(service):
+    with TestClient(create_app(service), raise_server_exceptions=False) as client:
+        response = client.post("/api/transcribe", content=b"audio", headers={"Content-Length": "abc"})
+    assert response.status_code == 400
+
+
+def test_oversized_duration_upload_never_calls_gladia(service):
+    async def streamer(*args, **kwargs):
+        pytest.fail("Long upload reached Gladia")
+        yield
+
+    service.transcriber = RealTranscriber(streamer=streamer)
+    audio = io.BytesIO()
+    with wave.open(audio, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(8000)
+        wav.writeframes(b"\x00\x00" * 8000 * 121)
+    with TestClient(create_app(service)) as client:
+        response = client.post("/api/transcribe", content=audio.getvalue())
+    assert response.status_code == 413
+    assert "120-second" in response.text
+
+
+def test_demo_upload_duration_is_also_bounded(service):
+    audio = io.BytesIO()
+    with wave.open(audio, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(8000)
+        wav.writeframes(b"\x00\x00" * 8000 * 121)
+    with TestClient(create_app(service)) as client:
+        assert client.post("/api/transcribe", content=audio.getvalue()).status_code == 413
+
+
+def test_foreign_origin_is_refused(service):
+    with TestClient(create_app(service)) as client:
+        with pytest.raises(WebSocketDisconnect) as error, client.websocket_connect(PATH, headers={"Origin": "https://foreign.example"}):
+            pass
+        assert error.value.code == 1008
+
+
+def test_same_origin_is_accepted(service):
+    with TestClient(create_app(service)) as client, client.websocket_connect(PATH, headers={"Origin": "http://testserver"}) as ws:
+        ws.send_json({"type": "start", "sample_rate": 16000})
+        assert ws.receive_json()["type"] == "ready"
+        ws.send_json({"type": "stop"})
+        assert ws.receive_json() == {"type": "ended"}
+
+
+def test_voice_admission_is_shared_and_released(service):
+    with TestClient(create_app(service)) as client:
+        with client.websocket_connect(PATH) as ws:
+            ws.send_json({"type": "start", "sample_rate": 16000})
+            assert ws.receive_json()["type"] == "ready"
+            busy = client.post("/api/transcribe", content=b"audio")
+            assert busy.status_code == 429
+            assert "voice busy" in busy.text.lower()
+            with pytest.raises(WebSocketDisconnect) as error, client.websocket_connect(PATH):
+                pass
+            assert error.value.code == 1013
+            ws.send_json({"type": "stop"})
+            assert ws.receive_json() == {"type": "ended"}
+        assert client.post("/api/transcribe", content=b"audio").status_code == 200
+
+
+def test_voice_rate_uses_last_forwarded_hop_and_expires(service, monkeypatch):
+    clock = [100.0]
+    monkeypatch.setattr("time.monotonic", lambda: clock[0])
+    with TestClient(create_app(service)) as client:
+        for index in range(10):
+            with client.websocket_connect(PATH, headers={"X-Forwarded-For": f"198.51.100.{index}, 192.0.2.1"}) as ws:
+                ws.send_json({"type": "start", "sample_rate": 16000})
+                assert ws.receive_json()["type"] == "ready"
+                ws.send_json({"type": "stop"})
+                assert ws.receive_json() == {"type": "ended"}
+        with pytest.raises(WebSocketDisconnect) as error, client.websocket_connect(PATH, headers={"X-Forwarded-For": "other, 192.0.2.1"}):
+            pass
+        assert error.value.code == 1008
+        clock[0] += 60
+        with client.websocket_connect(PATH, headers={"X-Forwarded-For": "other, 192.0.2.1"}) as ws:
+            ws.send_json({"type": "start", "sample_rate": 16000})
+            assert ws.receive_json()["type"] == "ready"
+            ws.send_json({"type": "stop"})
+            assert ws.receive_json() == {"type": "ended"}
 
 
 def test_demo_streams_partials_before_stop_then_final_and_ended(service):

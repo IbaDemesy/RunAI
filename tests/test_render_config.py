@@ -49,7 +49,8 @@ def test_every_service_is_probed_on_health_and_single_instance():
     for name, service in SERVICES.items():
         assert service["healthCheckPath"] == "/api/health", name
         assert service["numInstances"] == "1", name
-        assert service["autoDeploy"] == "true", name
+        assert service["autoDeployTrigger"] == "checksPass", name
+        assert "autoDeploy" not in service, name
         assert service["envVars"]["RUNAI_PUBLIC"] == {"value": "1"}, name
 
 

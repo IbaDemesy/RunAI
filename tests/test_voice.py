@@ -17,6 +17,7 @@ from runai.voice import (
     TranscriptEvent,
     TranslationEvent,
     WarningEvent,
+    audio,
     command_from_text,
     extract_race,
     parse_command,
@@ -211,6 +212,43 @@ def test_load_pcm_reads_wav_without_conversion(tmp_path):
     path.write_bytes(_wav_bytes())
     pcm, sample_rate = load_pcm(path)
     assert (len(pcm), sample_rate) == (8000, 16000)
+
+
+def test_load_pcm_rejects_audio_over_120_seconds():
+    with pytest.raises(RuntimeError, match="120-second"):
+        load_pcm(_wav_bytes(sample_rate=8000, seconds=121))
+
+
+def test_ffmpeg_has_timeout_and_output_cap(monkeypatch):
+    monkeypatch.setattr(audio.shutil, "which", lambda _: "/fake/ffmpeg")
+
+    def run(command, **kwargs):
+        assert kwargs["timeout"] <= 30
+        assert "-t" in command and "-fs" in command
+        return SimpleNamespace(returncode=0, stdout=b"\x00\x00", stderr=b"")
+
+    monkeypatch.setattr(audio.subprocess, "run", run)
+    assert load_pcm(b"compressed") == (b"\x00\x00", 16000)
+
+
+def test_ffmpeg_timeout_is_an_audio_error(monkeypatch):
+    monkeypatch.setattr(audio.shutil, "which", lambda _: "/fake/ffmpeg")
+
+    def run(*args, **kwargs):
+        raise audio.subprocess.TimeoutExpired("ffmpeg", 20)
+
+    monkeypatch.setattr(audio.subprocess, "run", run)
+    with pytest.raises(audio.AudioError, match="timed out"):
+        load_pcm(b"compressed")
+
+
+def test_ffmpeg_oversized_output_is_rejected(monkeypatch):
+    monkeypatch.setattr(audio.shutil, "which", lambda _: "/fake/ffmpeg")
+    monkeypatch.setattr(audio.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(
+        returncode=0, stdout=b"\x00" * (audio.MAX_CONVERTED_BYTES + 1), stderr=b"",
+    ))
+    with pytest.raises(audio.AudioDurationError, match="120-second"):
+        load_pcm(b"compressed")
 
 
 def test_pcm_chunks_split_in_100ms():

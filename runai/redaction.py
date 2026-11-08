@@ -15,15 +15,21 @@ _BASIC = re.compile(r"\b(Basic)\s+([A-Za-z0-9+/]{4,}={0,2})(?![A-Za-z0-9+/=])", 
 _AUTH_KEY = re.compile(r"(?:proxy-)?authorization\Z", re.IGNORECASE)
 _MASK = "[REDACTED]"
 _MIN_LEN = 8
+_H_KEY = re.compile(r"\bhk-[A-Za-z0-9_-]{16,}")
+_URL_AUTH = re.compile(r"(https?://)[^\s/@]+:[^\s/@]*@", re.IGNORECASE)
+_QUERY_SECRET = re.compile(r"([?&](?:token|access_token|api_key|key|secret)=)[^&#\s]*", re.IGNORECASE)
 
 
 def _configured_secrets() -> list[str]:
     found = {secret for name, secret in os.environ.items() if _KEY_NAME.fullmatch(name)}
     if credentials := os.environ.get(_BASIC_AUTH):
-        found.add(credentials)
-        found.add(base64.b64encode(credentials.encode()).decode())
-        found.add(credentials.partition(":")[2])
-    return sorted((s for s in found if len(s) >= _MIN_LEN), key=len, reverse=True)
+        basic = {credentials, base64.b64encode(credentials.encode()).decode()}
+        for pair in credentials.split(","):
+            pair = pair.strip()
+            basic.update((pair, base64.b64encode(pair.encode()).decode(), pair.partition(":")[2]))
+    else:
+        basic = set()
+    return sorted({s for s in found if len(s) >= _MIN_LEN} | {s for s in basic if s}, key=len, reverse=True)
 
 
 def _is_basic_credential(token: str) -> bool:
@@ -38,6 +44,9 @@ def redact_secrets(value: Any) -> Any:
 
     def walk(item: Any) -> Any:
         if isinstance(item, str):
+            item = _URL_AUTH.sub(lambda m: f"{m.group(1)}{_MASK}@", item)
+            item = _QUERY_SECRET.sub(lambda m: f"{m.group(1)}{_MASK}", item)
+            item = _H_KEY.sub(_MASK, item)
             for secret in secrets:
                 item = item.replace(secret, _MASK)
             item = _BEARER.sub(lambda m: f"{m.group(1)} {_MASK}", item)
