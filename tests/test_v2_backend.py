@@ -4,6 +4,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
+from runai.app.fakes import DEMO_RACES
 from runai.app.server import build_demo_service, build_service, create_app
 from runai.contracts.common import DataMode, ProvenanceKind
 from runai.search.candidates import CandidateSearchError
@@ -161,29 +162,35 @@ def test_confirmed_demo_mission_is_idempotent_and_sse_resumes(tmp_path, city, ch
         assert client.get(f"/api/missions/{mid}/events", headers={"Last-Event-ID": "wrong:2"}).status_code == 409
 
 
-def test_unknown_demo_city_has_no_invented_candidate_or_launch(tmp_path):
+@pytest.mark.parametrize("request_text", [
+    "A race in Nairobi, 10 km on 2028-10-01, from Mombasa, 900 euros, 2 nights, bus",
+    "A half marathon in China on 2028-10-01, from Mombasa, 900 euros, 2 nights, bus",
+])
+def test_unmatched_demo_request_requires_explicit_recorded_candidate_choice(tmp_path, request_text):
     service = build_demo_service(delay=0)
     service.traces_dir = tmp_path
     with TestClient(create_app(service)) as client:
         session = client.post("/api/framings", json={
-            "text": (
-                "une course à Nairobi, 10 km en octobre 2028, depuis Mombasa, "
-                "900 euros, 2 nuits, bus"
-            )
+            "text": request_text,
         }).json()
-        assert session["candidates"] == []
-        assert any(l["code"] == "fixture_missing" and "cette ville" in l["message"] for l in session["limitations"])
+        assert session["status"] == "choosing_candidate"
+        assert len(session["candidates"]) == len(DEMO_RACES)
+        assert {(c["name"], c["city"], c["race_date"], tuple(c["distances_km"]))
+                for c in session["candidates"]} == {
+            (race.name, race.city, race.race_date.isoformat(), (race.distance_km,))
+            for race in DEMO_RACES.values()
+        }
+        assert all(any(limit["code"] == "close_match" for limit in candidate["limitations"])
+                   for candidate in session["candidates"])
+        assert any(limit["code"] == "demo_closest" for limit in session["limitations"])
+        assert session["selected_candidate_id"] is None
         assert confirm(client, session).status_code == 409
         assert not service.missions and not service.agents.agents.runs
         session = client.post(f"/api/framings/{session['id']}/replies", json={
-            "revision": session["revision"], "corrections": {
-                "race": "Course humaine à Nairobi", "race_date": "2028-10-08", "distance_km": 10,
-                "origin": "Mombasa", "nights": 2, "budget": None, "transport_mode": "bus",
-            },
+            "revision": session["revision"], "choice_id": session["candidates"][0]["id"],
         }).json()
         assert session["status"] == "ready_to_confirm"
-        blocked = confirm(client, session)
-        assert blocked.status_code == 409 and "Pas de fixture demo" in blocked.text
+        assert session["summary"]["race"]["name"] == DEMO_RACES["milan"].name
         assert not service.missions and not service.agents.agents.runs
 
 

@@ -52,14 +52,20 @@ AGENT_KINDS = (StepKind.registration, StepKind.accommodation, StepKind.transport
 
 
 @pytest.mark.anyio
-async def test_fixture_search_does_not_offer_races_for_country_only_request():
+async def test_country_only_demo_request_offers_only_recorded_alternatives():
     candidate_search = FixtureCandidateSearch(
-        [DEMO_RACES["milan"]], DataMode.demo
+        list(DEMO_RACES.values()), DataMode.demo
     )
     result = await candidate_search.search(
-        {}, request_text="Un semi marathon en Chine"
+        {}, request_text="A half marathon in China"
     )
-    assert result.candidates == []
+    assert {candidate.name for candidate in result.candidates} == {
+        race.name for race in DEMO_RACES.values()
+    }
+    assert len(result.candidates) == len(DEMO_RACES)
+    assert all(any(limit.code == "close_match" for limit in candidate.limitations)
+               for candidate in result.candidates)
+    assert [limit.code for limit in result.limitations] == ["demo_closest"]
 
 
 def test_live_h_progress_and_separate_views_reach_snapshot_and_sse(tmp_path, monkeypatch):
@@ -319,7 +325,7 @@ def api_confirm(client, city="Milan"):
 
 
 async def answer_fake_questions(service, mission):
-    while len(mission.questions) < 3 or any(q.answer is None for q in mission.questions):
+    while len(mission.questions) < 2 or any(q.answer is None for q in mission.questions):
         for question in list(mission.questions):
             wrapped = service.questions.get(question.id)
             if wrapped.status.value == "open":
@@ -577,7 +583,7 @@ async def test_full_fake_mission_stops_before_commitment(tmp_path):
         assert step["status"] == "stopped_before_commitment"
         assert step["stop_point"] in {"consent", "payment"}
         assert step["human_action"]
-        assert "Réponses utilisateur :" in step["summary"]
+        assert ("Your answers:" in step["summary"]) == (step["kind"] != StepKind.accommodation.value)
         assert step["data"]["live_view_path"].startswith("/demo/live?session=")
     assert all(run.task.endswith(STOP_INSTRUCTIONS) for run in agents.runs)
     registration_step = next(
@@ -585,17 +591,17 @@ async def test_full_fake_mission_stops_before_commitment(tmp_path):
         for step in snapshot["steps"]
         if step["kind"] == StepKind.registration.value
     )
-    assert "Découverte" in registration_step["summary"]
+    assert "Under 3h30" in registration_step["summary"]
     registration_questions = [
         question
         for question in mission.questions
         if question.kind is StepKind.registration
     ]
     assert registration_questions[0].question == (
-        "Quel sas souhaitez-vous examiner (démo) ?"
+        "Which start corral should I pick?"
     )
-    assert registration_questions[0].options == ["Découverte", "Performance"]
-    assert len(registration_questions) == 2
+    assert registration_questions[0].options == ["Under 3h30", "3h30–4h", "Over 4h"]
+    assert len(registration_questions) == 1
     trace = TraceWriter(mission.id, traces_dir=tmp_path).read()
     assert trace[0].type == "mission_created"
     assert trace[-1].type == "mission_done"
@@ -605,7 +611,7 @@ async def test_full_fake_mission_stops_before_commitment(tmp_path):
 @pytest.mark.anyio
 async def test_lisbon_query_picks_lisbon_demo_race():
     race = await FakeRaceSearch(delay=0).find_race("Je veux courir à Lisboa")
-    assert race.city == "Lisbonne"
+    assert race.city == "Lisbon"
 
 
 @pytest.mark.anyio

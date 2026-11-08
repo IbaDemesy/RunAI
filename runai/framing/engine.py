@@ -436,6 +436,7 @@ class FramingEngine:
                             "no_candidates",
                             "candidate_provider_error",
                             "fixture_missing",
+                            "demo_closest",
                         }
                     ]
                     try:
