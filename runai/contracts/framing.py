@@ -236,6 +236,7 @@ class FramingReply(BaseModel):
     question_id: str | None = None
     choice_id: str | None = None
     corrections: dict[SlotName, Any] = Field(default_factory=dict)
+    client_message_id: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class FramingConfirm(BaseModel):
