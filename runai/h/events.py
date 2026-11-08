@@ -65,6 +65,11 @@ def event_summary(event: dict[str, Any]) -> str | None:
     if not isinstance(data, dict):
         return None
     event_type = event.get("type")
+    if event_type == "MetricsUpdateEvent":
+        metrics = data.get("metrics")
+        if not isinstance(metrics, dict):
+            return None
+        return f"step {metrics.get('steps') or 0} · ${metrics.get('total_cost') or 0:.2f}"
     if event_type == "LiveViewUrlEvent":
         return "vue live disponible"
     if event_type == "AgentRunStatusChangeEvent":
@@ -98,6 +103,9 @@ def event_summary(event: dict[str, Any]) -> str | None:
 
 
 def to_trace_event(event: dict[str, Any], session_id: str, step: str) -> TraceEvent:
+    if event.get("source") == "h" and event.get("type") == "metrics":
+        # Already a RunAI metrics line emitted by HRun: keep its message and top-level fields.
+        return TraceEvent.model_validate(event)
     return TraceEvent(
         source="h",
         type=event_label(event),

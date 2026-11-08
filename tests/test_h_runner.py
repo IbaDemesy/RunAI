@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -15,7 +16,7 @@ from runai.h import (
     build_step_result,
 )
 from runai.h.events import compact, event_label, event_summary
-from runai.models import StepKind, StepStatus, StopPoint
+from runai.models import StepKind, StepStatus, StopPoint, TraceEvent
 from runai.safety import STOP_INSTRUCTIONS, guard_task
 from runai.tracing import TraceWriter
 
@@ -137,7 +138,7 @@ def test_run_guards_task_and_returns_step_result(tmp_path):
     assert result.data["title"] == "Example Domain"
     assert result.data["steps"] == 2
     assert result.data["agent_view_url"] == VIEW
-    assert len(seen) == 4
+    assert len(seen) == 5
 
 
 @pytest.mark.parametrize("share_url", [SHARE, None])
@@ -863,3 +864,60 @@ def test_run_many_forwards_mission_id_to_idempotency_keys(tmp_path):
     asyncio.run(runner.run_many([HStep(StepKind.search, "x"), HStep(StepKind.registration, "y")], mission_id="batch"))
     keys = sorted(p["idempotency_key"] for p in sessions.create_attempts)
     assert keys == ["batch:registration:1", "batch:search:1"]
+
+
+@pytest.mark.parametrize("copies", [1, 2])
+def test_live_metrics_are_deduplicated_and_in_final_result(tmp_path, copies):
+    metric = {"type": "MetricsUpdateEvent", "data": {"metrics": {"steps": 2, "total_cost": 0.01}}}
+    sessions = FakeSessions(events=[metric] * copies)
+    runner = make_runner(tmp_path, sessions)
+    seen = []
+    result = asyncio.run(runner.run(
+        StepKind.search, "Read the title", max_steps=5,
+        start_url="https://example.com", mission_id="metrics", on_event=seen.append,
+    ))
+    metrics = [event for event in TraceWriter("metrics", traces_dir=tmp_path).read() if event.type == "metrics"]
+    assert len(metrics) == 1
+    assert metrics[0].message == "step 2/5 · $0.010"
+    assert metrics[0].data["steps"] == 2
+    assert metrics[0].data["total_cost"] == 0.01
+    assert metrics[0].data["elapsed_s"] >= 0
+    assert [event for event in seen if event["type"] == "metrics"] == [metrics[0].model_dump(mode="json")]
+    assert isinstance(result.data["duration_s"], float)
+    assert result.data["duration_s"] >= 0
+    assert result.data["steps"] == 2
+    assert result.data["total_cost"] == 0.01
+    assert result.data["h_key"] == "default"
+    assert result.data["agent"] == runner.agent
+    assert result.data["outcome"] is None
+    assert result.data["max_steps"] == 5
+    assert result.data["events"] == copies
+    assert result.data["start_url"] == "https://example.com"
+    assert datetime.fromisoformat(result.data["started_at"]) <= datetime.fromisoformat(result.data["ended_at"])
+
+
+def test_status_metrics_without_cost_are_deduplicated(tmp_path):
+    runner = make_runner(tmp_path, FakeSessions(events=[], final_status="failed"))
+    seen = []
+    result = asyncio.run(runner.run(StepKind.search, "Read the title", on_event=seen.append))
+    metrics = [event for event in seen if event["type"] == "metrics"]
+    assert len(metrics) == 1
+    assert metrics[0]["data"]["steps"] == 2
+    assert metrics[0]["data"]["total_cost"] is None
+    assert result.data["total_cost"] is None
+    assert result.data["max_steps"] is None
+    assert result.data["events"] == 0
+    assert result.status is StepStatus.failed
+
+
+def test_forwarded_metrics_line_keeps_message_and_fields():
+    from runai.h.events import to_trace_event
+
+    line = TraceEvent(
+        source="h", type="metrics", message="step 2/5 · $0.010",
+        data={"h_session_id": "s1", "step": "search", "steps": 2, "total_cost": 0.01, "elapsed_s": 0.1},
+    ).model_dump(mode="json")
+    event = to_trace_event(line, "s1", "search")
+    assert event.type == "metrics"
+    assert event.message == "step 2/5 · $0.010"
+    assert event.data["steps"] == 2 and event.data["total_cost"] == 0.01
