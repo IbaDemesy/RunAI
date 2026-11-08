@@ -62,7 +62,6 @@ def test_optional_pdf(client, mission):
     assert response.content.startswith(b"%PDF")
 
 
-@pytest.mark.xfail(strict=True, reason="GAP-W1-1: mission.v2 snapshot steps (StepResult) do not expose human_action for stop points")
 def test_stop_points_expose_human_action(client, mission):
     snapshot = checked(client.get(f"/api/missions/{mission[0]['mission_id']}"))
     stopped = [step for step in snapshot["steps"] if step["stop_point"]]
@@ -97,22 +96,28 @@ def test_known_date_resolves_period(client):
     assert not any(re.search(r"Période\s*\?|period.*unknown", line, re.IGNORECASE) for line in (session.get("summary") or {}).get("lines", []))
 
 
-@pytest.mark.xfail(strict=True, reason="JURY-W1-5: parse an English month as a period, never as the city")
+LOGISTICS = {"date_window": None, "budget": 800, "nights": 2, "transport_mode": "train"}
+
+
 def test_english_month_is_not_city(client):
     session = checked(client.post("/api/framings", json={"text": "Milan marathon in April 2027"}), 201)
     assert session["slots"]["city"]["value"] == "Milan"
+    assert session["slots"]["date_window"]["value"] == "April 2027"
+    # sourced candidates only appear once the logistics prerequisites are known
+    session = reply(client, session, corrections={"origin": "Lyon", "budget": 800, "nights": 2, "transport_mode": "train"})
     assert session["candidates"]
+    assert all(c["city"] == "Milan" for c in session["candidates"])
 
 
-@pytest.mark.xfail(strict=True, reason="JURY-W1-6: city reply after a marathon chip offers the nearest demo fixture")
 def test_chip_city_nearest_fixture(client):
     session = checked(client.post("/api/framings", json={"text": "marathon from Lyon"}), 201)
     session = reply(client, session, text="Lisbon")
+    assert session["slots"]["city"]["value"] == "Lisbon"
+    session = reply(client, session, corrections=LOGISTICS)
     assert session["candidates"], session
-    assert any(c["city"] == "Lisbonne" for c in session["candidates"])
+    assert any(c["city"] == "Lisbon" for c in session["candidates"])
 
 
-@pytest.mark.xfail(strict=True, reason="J10 / JURY-W1-7 (PB-09): transport step total is not a sourced per-leg fare")
 def test_journey_recap_consistent_with_cards(mission):
     snapshot, journey, html, _ = mission
     assert snapshot["race"]["name"] in html

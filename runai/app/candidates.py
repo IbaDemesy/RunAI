@@ -21,6 +21,17 @@ def normalized(value: object) -> str:
     return _LISBON_WORDS[0] if text in _LISBON_WORDS else text
 
 
+_GENERIC_RACE_WORDS = {
+    "marathon", "semi", "half", "10k", "5k", "21k", "trail", "race", "course", "run", "the", "de", "of", "du", "la", "le",
+}
+
+
+def _is_city_generic_name(name: object, city: str) -> bool:
+    """"Milan marathon" names the Milan fixture: only the city and generic race words remain."""
+    rest = [w for w in re.findall(r"[a-z0-9]+", normalized(name)) if w not in _GENERIC_RACE_WORDS]
+    return bool(rest) and rest == re.findall(r"[a-z0-9]+", normalized(city))
+
+
 class FixtureCandidateSearch:
     def __init__(self, races: list[Race], mode: DataMode):
         if mode is DataMode.live:
@@ -56,6 +67,7 @@ class FixtureCandidateSearch:
             race_matches = name and (
                 normalized(name) in normalized(race.name)
                 or normalized(name) == normalized(race.city)
+                or _is_city_generic_name(name, race.city)
             )
             if not race_matches and (name or (city and normalized(city) != normalized(race.city))):
                 continue

@@ -119,10 +119,10 @@ def test_race_without_time_gives_all_day_event():
 
 def test_html_content_and_vocabulary():
     html = render_html(demo_recap())
-    assert "0 € paid by RunAI" in html
+    assert "€0 paid by RunAI" in html
     assert "What you still need to do" in html and "Sources and traceability" in html
     assert "https://in.njuko.com/wizz-air-milano-marathon-20271776152378557" in html
-    assert "114.00 €" in html and "≈ 492 €" in html
+    assert "€114" in html and "≈ €492" in html and "114.00 €" not in html
     lower = html.lower()
     assert 'lang="en"' in html and "prepared ≠ booked" in lower
     assert "sunday 4 april 2027" in lower
@@ -156,7 +156,7 @@ def test_ics_rfc5545_structure():
     assert "DTSTART;TZID=Europe/Paris:20270404T080000" in dtstarts
     assert "TRIGGER:-PT720M" in lines and "TRIGGER:-PT120M" in lines
     assert "CATEGORIES:RunAI,race" in lines and "CATEGORIES:RunAI,to pay" in lines
-    assert any("0 € paid by RunAI" in line for line in lines if line.startswith("DESCRIPTION:"))
+    assert any("€0 paid by RunAI" in line for line in lines if line.startswith("DESCRIPTION:"))
 
 
 def test_ics_converts_other_timezones_and_escapes():
@@ -288,4 +288,6 @@ def test_english_key_fact_date_and_distance():
     facts = {fact.label: fact.value for fact in default_key_facts(_race())}
     assert facts["Start"] == "Sun 4 Apr 2027 · 09:00"
     assert facts["Distance"] == "42.195 km"
-    assert render_mod.eur(1234.5) == "1,234.50 €"
+    assert render_mod.eur(1234.5) == "€1,234.50"
+    assert render_mod.eur(800) == "€800" and render_mod.eur(800.0) == "€800"
+    assert all(render_mod.status_label(status, True) for status in StepStatus)

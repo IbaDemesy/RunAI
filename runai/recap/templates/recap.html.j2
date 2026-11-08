@@ -74,7 +74,7 @@ a { color: #4f46e5; }
   <div class="kpi"><b class="green">{{ r.ready_count }} / {{ r.missions | length }}</b><small>missions ready</small></div>
   <div class="kpi"><b class="orange">{{ r.payments_to_do }}</b><small>payments for you to make</small></div>
   <div class="kpi"><b>≈ {{ r.total_eur | eur0 }}</b><small>estimated total, for you to pay</small></div>
-  <div class="kpi zero"><b class="green">0 € paid by RunAI</b><small>agents stopped before every payment</small></div>
+  <div class="kpi zero"><b class="green">€0 paid by RunAI</b><small>agents stopped before every payment</small></div>
 </div>
 <div class="fine">Prepared ≠ booked. Nothing is secured until you pay yourself. Prices and availability may change.</div>
 
@@ -121,6 +121,6 @@ a { color: #4f46e5; }
 {% if r.sources %}<table class="grid"><tr><th>#</th><th>source</th><th>found by</th><th>used for</th></tr>
 {% for s in r.sources %}<tr><td>[{{ loop.index }}]</td><td>{% if s.url %}<a href="{{ s.url }}">{{ s.label }}</a><br><span class="fine">{{ s.url }}</span>{% else %}{{ s.label }}{% endif %}</td><td>{{ s.found_by }}</td><td>{{ s.used_for }}</td></tr>{% endfor %}</table>
 {% else %}<div class="fine">No sources recorded: check every detail on the official website.</div>{% endif %}
-<div class="never"><b>What RunAI deliberately did not do</b><br>No payment (0 € paid by RunAI). No health, rules or consent boxes ticked for you. No accounts created, no passwords entered. No final submission. The links above take you back to the page where the agent stopped.</div>
+<div class="never"><b>What RunAI deliberately did not do</b><br>No payment (€0 paid by RunAI). No health, rules or consent boxes ticked for you. No accounts created, no passwords entered. No final submission. The links above take you back to the page where the agent stopped.</div>
 <div class="foot"><span>RunAI · Gladia (voice), Linkup (search), H Company (web agents)</span><span>Summary {{ r.id | upper }}</span></div>
 </body></html>

@@ -110,18 +110,30 @@ def test_ac01_sourced_milan_happy_path(client, completed):
 IDEAS = ["My first half marathon in October", "A spring marathon, leaving from Lyon", "A mountain trail this summer"]
 
 
+IDEA_REPLIES = {
+    IDEAS[0]: "Milan, avril 2027, depuis Lyon, 900 euros, 2 nuits, train",
+    IDEAS[1]: "Milan, avril 2027, depuis Lyon, 900 euros, 2 nuits, train",
+    # a trail has no default distance: the user must give one, we never invent it
+    IDEAS[2]: "Milan, avril 2027, 25 km, depuis Lyon, 900 euros, 2 nuits, train",
+}
+
+
 @pytest.mark.parametrize("idea", IDEAS)
-@pytest.mark.xfail(strict=True, reason="AC-02, unit U3")
 def test_ac02_idea_with_one_reply(client, idea):
-    source = Path("runai/app/static/app.js").read_text()
+    source = Path("runai/app/static/app.js").read_text(encoding="utf-8")
     assert idea in source
     session = start(client, idea)
     response = client.post(f"/api/framings/{session['id']}/replies", json={
         "revision": session["revision"],
-        "text": "Milan, avril 2027, depuis Lyon, 900 euros, 2 nuits, train",
+        "text": IDEA_REPLIES[idea],
     })
     assert response.status_code == 200, response.text
-    assert response.json()["status"] == "ready_to_confirm"
+    session = response.json()
+    assert session["slots"]["city"]["value"] == "Milan", session
+    # the only remaining step is the user's own choice of the sourced event
+    assert session["status"] in {"ready_to_confirm", "choosing_candidate"}, session
+    session = drive_framing(client, session, {})
+    assert session["status"] == "ready_to_confirm", session
 
 
 @pytest.mark.parametrize(("prompt", "city", "distance"), [
@@ -222,3 +234,28 @@ def test_ac09_sse_reconnect(client, completed):
     sequences = [e["sequence"] for e in original[:len(original) // 2 + 1] + resumed]
     assert len(sequences) == len(set(sequences))
     assert events(client, mid, original[-1]["event_id"]) == []
+
+
+def reply_text(client, session, text):
+    response = client.post(f"/api/framings/{session['id']}/replies", json={"revision": session["revision"], "text": text})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_period_answer_is_never_a_place_name(client):
+    session = reply_text(client, start(client, "marathon from Lyon"), "Lisbon")
+    session = reply_text(client, session, "Tokyo")
+    assert session["slots"]["date_window"]["value"] != "Tokyo"
+    assert session["slots"]["city"]["value"] == "Lisbon"
+
+
+def test_flexible_period_inside_a_multi_slot_reply(client):
+    session = reply_text(client, start(client, "marathon from Lyon"), "Lisbon, any time, 900 euros, 2 nights, train")
+    assert session["status"] == "choosing_candidate", session
+    assert any(c["city"] == "Lisbon" for c in session["candidates"])
+
+
+def test_typed_city_marathon_matches_recorded_fixture(client):
+    session = reply_text(client, start(client, "Milan marathon in April 2027"), "depuis Lyon, 800 euros, 2 nights, train")
+    assert [c["city"] for c in session["candidates"]] == ["Milan"]
+    assert not any(item["code"] == "demo_closest" for item in session["limitations"])

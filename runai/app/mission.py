@@ -435,10 +435,25 @@ class MissionService:
         return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
 
     @staticmethod
+    def _with_defaults(mission: Mission, step: StepResult) -> dict[str, Any]:
+        """Additive: every published step carries a headline and a provenance mode, even while pending."""
+        data = {key: value for key, value in step.data.items() if key != "share_url"}
+        if not data.get("headline"):
+            data["headline"] = step.summary or step.status.value.replace("_", " ").capitalize()
+        provenance = data.get("provenance")
+        provenance = dict(provenance) if isinstance(provenance, dict) else {}
+        if mission.plan is not None:
+            provenance.setdefault("mode", mission.plan.mode.value)
+        if provenance:
+            data["provenance"] = provenance
+        return data
+
+
+    @staticmethod
     def _snapshot_steps(mission: Mission, history_limit: int | None = SNAPSHOT_HISTORY_LIMIT) -> list[StepResult]:
         steps = [step.model_copy(update={
             "live_view_url": None if str(step.live_view_url) == step.data.get("share_url") else step.live_view_url,
-            "data": {key: value for key, value in step.data.items() if key != "share_url"},
+            "data": MissionService._with_defaults(mission, step),
         }) for step in mission.steps.values()]
         if mission.read_only:
             return steps

@@ -37,11 +37,15 @@ def status_label(status: StepStatus, has_price: bool) -> str:
         StepStatus.pending: "not launched",
         StepStatus.running: "in progress",
         StepStatus.paused: "paused",
+        StepStatus.waiting_for_user: "waiting for you",
     }[status]
 
 
-def eur(value: float, decimals: int = 2) -> str:
-    return f"{value:,.{decimals}f} €"
+def eur(value: float, decimals: int | None = None) -> str:
+    """Money as shown everywhere else: €800 (whole) or €118.50 (cents), never "800 €"."""
+    if decimals is None:
+        decimals = 0 if round(value, 2) == round(value) else 2
+    return f"€{value:,.{decimals}f}"
 
 
 def _date_long(d: date) -> str:

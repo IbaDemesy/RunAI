@@ -34,7 +34,13 @@ from runai.contracts.framing import (
 )
 from runai.contracts.mission import MissionSnapshot
 from runai.framing.holo import TRANSPORTS, Phraser, _mask_address, clean_extraction
-from runai.framing.interpret import extract_slots, normalize_date_window
+from runai.framing.interpret import (
+    TEMPORAL_PATTERN,
+    _is_temporal,
+    _plausible_city,
+    extract_slots,
+    normalize_date_window,
+)
 from runai.framing.store import RETENTION_SECONDS, FramingStore
 from runai.journey import public_origin
 from runai.models import Race
@@ -115,6 +121,28 @@ def _sanitize_ack(value: object, *, allow_question: bool) -> str:
     if len(text) > 320:
         text = text[:320].rsplit(" ", 1)[0].rstrip(",;:") + "."
     return redact_secrets(text)
+
+
+FLEXIBLE_PERIOD = (
+    "peu importe",
+    "n'importe",
+    "n’importe",
+    "flexible",
+    "pas de préférence",
+    "any time",
+    "anytime",
+    "doesn't matter",
+    "does not matter",
+    "whenever",
+    "no preference",
+)
+
+
+def _looks_like_period(value: str) -> bool:
+    return bool(
+        re.search(r"\d", value)
+        or re.search(r"\b(?:" + TEMPORAL_PATTERN + r")\b", value, re.IGNORECASE)
+    )
 
 
 class FramingEngine:
@@ -351,6 +379,24 @@ class FramingEngine:
                 values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
                 if corrected_city:
                     values = {SlotName.city: corrected_city} | reply.corrections
+                if (
+                    values and not choice and SlotName.date_window not in values
+                    and any(SlotName.date_window in q.slots for q in session.open_questions)
+                    and any(phrase in (reply.text or "").casefold() for phrase in FLEXIBLE_PERIOD)
+                ):
+                    values[SlotName.date_window] = None
+                if (
+                    values and not choice and SlotName.city not in values
+                    and "," in (reply.text or "")
+                    and any(SlotName.city in q.slots for q in session.open_questions)
+                ):
+                    # "Milan, April 2027, from Lyon, ...": a leading bare place answers the open city question
+                    lead = (reply.text or "").split(",", 1)[0].strip()
+                    if (
+                        re.fullmatch(r"[A-ZÀ-ÖØ-Þ][^\W\d_]*(?:[ '’-][A-ZÀ-ÖØ-Þa-zà-ÿ][^\W\d_]*){0,2}", lead)
+                        and not _is_temporal(lead) and _plausible_city(lead) and _valid_place(lead)
+                    ):
+                        values[SlotName.city] = lead
                 if not values and not choice and not reply.question_id:
                     question = next(
                         (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
@@ -361,25 +407,16 @@ class FramingEngine:
                     if slot == SlotName.date_window and slot not in values:
                         answer = reply.text.strip()
                         normalized = answer.casefold()
-                        flexible = (
-                            "peu importe",
-                            "n'importe",
-                            "n’importe",
-                            "flexible",
-                            "pas de pr\u00e9f\u00e9rence",
-                            "any time",
-                            "anytime",
-                            "doesn't matter",
-                            "does not matter",
-                            "whenever",
-                            "no preference",
-                        )
-                        if any(phrase in normalized for phrase in flexible):
+                        if any(phrase in normalized for phrase in FLEXIBLE_PERIOD):
                             values[slot] = None
                         else:
-                            values[slot] = (
-                                extract_slots(reply.text).get(slot) or answer
-                            )
+                            period = extract_slots(reply.text).get(slot)
+                            if not period and not _looks_like_period(answer):
+                                return self._clarify(
+                                    session, reply,
+                                    "Please give a month or a season (for example 'April 2027' or 'autumn'), or say 'any time'.",
+                                )
+                            values[slot] = period or answer
                     elif (
                         slot == SlotName.budget
                         and slot not in values
