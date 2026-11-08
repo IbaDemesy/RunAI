@@ -19,7 +19,7 @@ test("only stale-revision refusals are reported as a silent refresh", () => {
 });
 
 test("a client message id is forwarded so a double send is applied once", () => {
-  const payload = core.replyPayload({ revision: 2 }, "Paris", { client_message_id: "m-1", question_id: "q" });
+  const payload = core.replyPayload({ revision: 2 }, "my reply", { client_message_id: "m-1", question_id: "q" });
   assert.equal(payload.client_message_id, "m-1");
-  assert.equal("client_message_id" in core.replyPayload({ revision: 2 }, "Paris"), false);
+  assert.equal("client_message_id" in core.replyPayload({ revision: 2 }, "my reply"), false);
 });
