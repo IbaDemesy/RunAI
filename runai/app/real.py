@@ -6,11 +6,13 @@ import re
 from collections.abc import AsyncIterable, Callable
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from hai_agents.tools import Tool, tool
 
 from runai.app.ports import AskUser, EventSink
 from runai.app.providers import (
+    PLATFORMS,
     forbidden_reason,
     host_matches,
     platform,
@@ -206,11 +208,21 @@ class RealBrowserAgents:
                     "Lien d'inscription Njuko manquant ; Klikego et les autres plateformes sont interdits."
                 )
             start_url = str(race.registration_url)
+            allowed_hosts = platform("njuko").hosts
+        else:
+            platform_url = getattr(brief, f"{kind.value}_url", None) or start_url
+            allowed_hosts = next(
+                (candidate.hosts for candidate in PLATFORMS if candidate.kind is kind and host_matches(platform_url, candidate.hosts)),
+                (),
+            )
+        if start_url and (host := urlsplit(start_url).hostname):
+            allowed_hosts = tuple(dict.fromkeys((*allowed_hosts, host.lower())))
         job = self.lifecycle.submit(
             kind,
             guard_task(task),
             mission_id=mission_id,
             start_url=start_url,
+            allowed_hosts=allowed_hosts,
             max_steps=self.max_steps,
             max_time_s=self.max_time_s,
             tools=[ask_user_tool(ask_user)],

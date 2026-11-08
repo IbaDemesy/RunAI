@@ -106,6 +106,7 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert kind is StepKind.registration
     assert "STOP" in task or "arrête" in task.lower()
     assert params["start_url"] == "https://in.njuko.com/milano-marathon"
+    assert params["allowed_hosts"] == ("njuko.com", "in.njuko.com")
     assert params["mission_id"] == "mission-1"
     assert params["max_steps"] == 12
     assert params["max_time_s"] == 60
@@ -115,6 +116,49 @@ def test_real_browser_agent_passes_registration_url_and_ask_tool():
     assert isinstance(run, LifecycleAgentRun)
     assert run.session_id == "h-session-1"
     assert result.status is StepStatus.stopped_before_commitment
+
+
+@pytest.mark.parametrize(
+    "kind,brief,start_url,expected_hosts",
+    [
+        (StepKind.accommodation, SimpleNamespace(accommodation_url="https://all.accor.com"), "https://reservation.accor.com/room", ("all.accor.com", "accor.com", "reservation.accor.com")),
+        (StepKind.transport, SimpleNamespace(transport_url="https://www.trenitalia.com"), "https://booking.trenitalia.com/train", ("trenitalia.com", "booking.trenitalia.com")),
+        (StepKind.accommodation, None, "https://all.accor.com/hotel", ("all.accor.com", "accor.com")),
+    ],
+)
+def test_real_browser_passes_step_platform_and_start_host(kind, brief, start_url, expected_hosts):
+    class FakeRun:
+        id = "hosts"
+        status = "completed"
+        live_view_url = None
+        agent_view_url = None
+
+        async def wait(self, **kwargs):
+            return StepResult(kind=kind, status=StepStatus.stopped_before_commitment, price_eur=100)
+
+        async def close(self):
+            pass
+
+    class FakeRunner:
+        params = None
+
+        async def start(self, step, task, **params):
+            self.params = params
+            return FakeRun()
+
+    runner = FakeRunner()
+    agents = RealBrowserAgents(runner=runner)
+
+    async def scenario():
+        run = await agents.start(
+            kind, "Prepare travel", Race(name="Race", city="Rome", country="IT"),
+            RunnerProfile(), lambda event: None, lambda q, o: asyncio.sleep(0),
+            start_url=start_url, brief=brief,
+        )
+        assert (await run.wait()).status is StepStatus.stopped_before_commitment
+
+    asyncio.run(scenario())
+    assert runner.params["allowed_hosts"] == expected_hosts
 
 
 def test_real_agent_run_extracts_exact_two_night_hotel_total():
