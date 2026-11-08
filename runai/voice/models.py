@@ -50,16 +50,69 @@ class VoiceCommand(BaseModel):
     detail: str | None = None
 
 
-class TranscriptEvent(BaseModel):
+class _GladiaEvent(BaseModel):
+    provider: Literal["gladia"] = "gladia"
+    model: str = "solaria-1"
+    received_at: datetime = Field(default_factory=utcnow)
+
+
+class TranscriptEvent(_GladiaEvent):
+    """A complete replacement for an utterance, never text to append.
+
+    Partials with the same utterance_id replace the previous provisional text.
+    Stream revisions increase per utterance, including its final update, so
+    consumers can discard older updates that arrive out of order downstream.
+    """
+
     type: Literal["transcript"] = "transcript"
     at: datetime = Field(default_factory=utcnow)
     utterance_id: str
+    revision: int = Field(default=1, ge=1)
     text: str
     is_final: bool
     language: str | None = None
     start: float | None = None
     end: float | None = None
     confidence: float | None = None
+
+
+class TranslationEvent(_GladiaEvent):
+    """Translation correlated with TranscriptEvent.utterance_id."""
+
+    type: Literal["translation"] = "translation"
+    utterance_id: str
+    source_language: str
+    target_language: str
+    text: str
+
+
+class Entity(BaseModel):
+    type: str
+    text: str
+    start: float
+    end: float
+
+
+class EntitiesEvent(_GladiaEvent):
+    """Named entities correlated with TranscriptEvent.utterance_id."""
+
+    type: Literal["entities"] = "entities"
+    utterance_id: str
+    entities: list[Entity]
+
+
+class SpeechEvent(_GladiaEvent):
+    type: Literal["speech"] = "speech"
+    kind: Literal["start", "end"]
+    time: float
+
+
+class WarningEvent(_GladiaEvent):
+    """A nonfatal addon failure; transcription can continue."""
+
+    type: Literal["warning"] = "warning"
+    event_type: str
+    message: str
 
 
 class CommandEvent(BaseModel):
@@ -84,4 +137,4 @@ class CommandEvent(BaseModel):
         )
 
 
-VoiceEvent = TranscriptEvent | CommandEvent
+VoiceEvent = TranscriptEvent | TranslationEvent | EntitiesEvent | SpeechEvent | WarningEvent | CommandEvent

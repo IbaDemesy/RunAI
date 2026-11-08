@@ -2,6 +2,7 @@ import asyncio
 import io
 import json
 import wave
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -11,7 +12,11 @@ from runai.voice import (
     CommandKind,
     CommandSource,
     CorrectionTarget,
+    EntitiesEvent,
+    SpeechEvent,
     TranscriptEvent,
+    TranslationEvent,
+    WarningEvent,
     command_from_text,
     extract_race,
     parse_command,
@@ -22,6 +27,7 @@ from runai.voice.live import (
     build_live_options,
     stream_events,
     stream_transcripts,
+    stream_voice_events,
 )
 from runai.voice.vocabulary import HALF_MARATHON_KM, MARATHON_KM
 
@@ -154,6 +160,14 @@ def test_build_live_options():
     assert options["model"] == "solaria-1"
     assert options["language_config"] == {"languages": ["fr", "en", "pt"], "code_switching": True}
     assert options["messages_config"]["receive_partial_transcripts"] is True
+    assert options["messages_config"]["receive_speech_events"] is True
+    assert options["messages_config"]["receive_realtime_processing_events"] is True
+    processing = options["realtime_processing"]
+    assert processing["translation"] is True
+    assert processing["translation_config"] == {
+        "target_languages": ["en"], "model": "base", "match_original_utterances": True,
+    }
+    assert processing["named_entity_recognition"] is True
     vocabulary = options["realtime_processing"]["custom_vocabulary_config"]["vocabulary"]
     values = {entry["value"] for entry in vocabulary}
     assert {"Lisbonne", "Lisboa", "Meia Maratona de Lisboa", "Milano Marathon", "Njuko"} <= values
@@ -162,9 +176,24 @@ def test_build_live_options():
 
 
 def test_build_live_options_single_language_without_vocabulary():
-    options = build_live_options(8000, languages=["fr"], vocabulary=[])
+    options = build_live_options(
+        8000, languages=["fr"], vocabulary=[], translate_to=None, ner=False, speech_events=False,
+    )
     assert options["language_config"]["code_switching"] is False
     assert "realtime_processing" not in options
+    assert options["messages_config"]["receive_realtime_processing_events"] is False
+    assert options["messages_config"]["receive_speech_events"] is False
+
+
+def test_build_live_options_addons_are_independent():
+    translated = build_live_options(vocabulary=[], translate_to="pt", ner=False, speech_events=False)
+    assert translated["realtime_processing"]["translation_config"]["target_languages"] == ["pt"]
+    assert "named_entity_recognition" not in translated["realtime_processing"]
+    entities_only = build_live_options(vocabulary=[], translate_to=None)
+    assert entities_only["realtime_processing"] == {"named_entity_recognition": True}
+    vocabulary_only = build_live_options(translate_to=None, ner=False)
+    assert vocabulary_only["realtime_processing"]["custom_vocabulary"] is True
+    assert "translation" not in vocabulary_only["realtime_processing"]
 
 
 def _wav_bytes(sample_rate=16000, seconds=0.25):
@@ -239,9 +268,223 @@ async def _audio():
         yield chunk
 
 
+def _sdk_message(message_type, data=None, *, error=None):
+    """Use actual frozen SDK dataclasses without creating any network client."""
+    from gladiaio_sdk import (
+        LiveV2NamedEntityRecognitionMessage,
+        LiveV2SpeechEndMessage,
+        LiveV2SpeechStartMessage,
+        LiveV2TranscriptMessage,
+        LiveV2TranslationMessage,
+    )
+
+    message_class = {
+        "transcript": LiveV2TranscriptMessage,
+        "translation": LiveV2TranslationMessage,
+        "named_entity_recognition": LiveV2NamedEntityRecognitionMessage,
+        "speech_start": LiveV2SpeechStartMessage,
+        "speech_end": LiveV2SpeechEndMessage,
+    }[message_type]
+    payload = {
+        "session_id": "test-session", "created_at": "2026-11-07T20:00:00Z",
+        "type": message_type, "data": data,
+    }
+    if error is not None:
+        payload["error"] = error
+    return message_class.from_dict(payload)
+
+
+def _utterance(text="Hello", language="en"):
+    return {
+        "text": text, "language": language, "start": 0.0, "end": 1.0,
+        "confidence": 0.9, "channel": 0, "words": [],
+    }
+
+
+def _addon_messages(uid="u1"):
+    return [
+        _sdk_message("translation", {
+            "utterance_id": uid, "utterance": _utterance("Bonjour", "fr"),
+            "original_language": "fr", "target_language": "en",
+            "translated_utterance": _utterance(),
+        }),
+        _sdk_message("named_entity_recognition", {
+            "utterance_id": uid, "utterance": _utterance(),
+            "results": [{"entity_type": "location", "text": "Lisbon", "start": 0.2, "end": 0.8}],
+        }),
+        _sdk_message("speech_start", {"time": 0.0, "channel": 0}),
+        _sdk_message("speech_end", {"time": 1.0, "channel": 0}),
+    ]
+
+
+def _collect_voice(messages, *, streamer=stream_voice_events, options=None):
+    session = FakeSession(messages)
+    client = FakeClient(session)
+
+    async def collect():
+        return [event async for event in streamer(_audio(), sample_rate=8000, client=client, options=options)]
+
+    events = asyncio.run(collect())
+    assert session.ended
+    assert session.audio == [b"\x01\x00", b"\x02\x00"]
+    assert client.options == (options or build_live_options(8000))
+    return events
+
+
+def test_stream_voice_partials_replace_text_and_increment_per_utterance_revision():
+    updates = [("u1", "Sign", False), ("u2", "Wait", False), ("u1", "Sign me up", False),
+               ("u1", "Sign me up for a race", True)]
+    messages = [_sdk_message("transcript", {"id": uid, "is_final": final, "utterance": _utterance(text)})
+                for uid, text, final in updates]
+    messages.append(SimpleNamespace(type="post_final_transcript", data=None))
+    events = _collect_voice(messages)
+    assert [(event.utterance_id, event.revision) for event in events] == [
+        ("u1", 1), ("u2", 1), ("u1", 2), ("u1", 3),
+    ]
+    current = {}
+    for event, (_, expected_text, _) in zip(events, updates):
+        assert event.text == expected_text
+        current[event.utterance_id] = event.text
+    assert current == {"u1": "Sign me up for a race", "u2": "Wait"}
+    assert events[-1].is_final
+    assert _collect_voice([messages[0]])[0].revision == 1
+
+
+def test_stream_voice_addons_correlate_and_include_receipt_metadata():
+    before = datetime.now(UTC)
+    events = _collect_voice([_message("u1", "Bonjour", True), *_addon_messages()])
+    after = datetime.now(UTC)
+    transcript, translation, entities, speech_start, speech_end = events
+    assert isinstance(translation, TranslationEvent)
+    assert translation.utterance_id == entities.utterance_id == transcript.utterance_id == "u1"
+    assert (translation.source_language, translation.target_language, translation.text) == ("fr", "en", "Hello")
+    assert isinstance(entities, EntitiesEvent)
+    assert [entity.model_dump() for entity in entities.entities] == [
+        {"type": "location", "text": "Lisbon", "start": 0.2, "end": 0.8},
+    ]
+    assert isinstance(speech_start, SpeechEvent) and isinstance(speech_end, SpeechEvent)
+    assert [(event.kind, event.time) for event in events[-2:]] == [("start", 0.0), ("end", 1.0)]
+    for event in events:
+        assert event.provider == "gladia" and event.model == "solaria-1"
+        assert before <= event.received_at <= after
+        assert json.loads(event.model_dump_json())["received_at"].endswith("Z")
+
+
+@pytest.mark.parametrize("addons_first", [False, True])
+def test_stream_voice_normalizes_numeric_addon_ids_to_transcript_ids(addons_first):
+    transcript = _message("00_00000000", "Hello", True)
+    addons = _addon_messages("0")[:2]
+    events = _collect_voice([*addons, transcript] if addons_first else [transcript, *addons])
+    assert [event.type for event in events] == ["transcript", "translation", "entities"]
+    assert {event.utterance_id for event in events} == {"00_00000000"}
+    if addons_first:
+        assert events[1].received_at < events[0].received_at
+
+
+def test_stream_voice_correlation_keeps_channels_separate():
+    transcripts = [_sdk_message("transcript", {
+        "id": f"channel-{channel}", "is_final": True,
+        "utterance": {**_utterance(), "channel": channel},
+    }) for channel in (0, 1)]
+    entity_message = _sdk_message("named_entity_recognition", {
+        "utterance_id": "0", "utterance": {**_utterance(), "channel": 1}, "results": [],
+    })
+    events = _collect_voice([*transcripts, entity_message])
+    assert events[-1].utterance_id == "channel-1"
+
+
+def test_stream_voice_preserves_unmatched_addons_at_session_end():
+    events = _collect_voice(_addon_messages("orphan")[:2])
+    assert [event.type for event in events] == ["translation", "entities"]
+    assert {event.utterance_id for event in events} == {"orphan"}
+
+
+@pytest.mark.parametrize("message_type", ["translation", "named_entity_recognition"])
+def test_stream_voice_addon_failure_yields_one_warning_and_continues(message_type):
+    failed = _sdk_message(message_type, error={"status_code": 500, "message": "Addon failed"})
+    events = _collect_voice([failed, _message("u1", "Stop", True)])
+    warning, transcript = events
+    assert isinstance(warning, WarningEvent)
+    assert warning.type == "warning" and warning.event_type == message_type
+    assert "transcription continues" in warning.message
+    assert isinstance(transcript, TranscriptEvent) and transcript.text == "Stop"
+
+
+def test_stream_voice_empty_entities_are_valid():
+    message = _sdk_message("named_entity_recognition", {
+        "utterance_id": "u1", "utterance": _utterance(), "results": [],
+    })
+    assert _collect_voice([message])[0].entities == []
+
+
+@pytest.mark.parametrize("end_code,with_transcripts", [(1000, True), (1000, False), (1006, False)])
+def test_typed_stream_preserves_telemetry(monkeypatch, end_code, with_transcripts):
+    from runai import telemetry
+
+    monkeypatch.setattr(telemetry, "default_log", telemetry.CallLog())
+    messages = [*_addon_messages()]
+    if with_transcripts:
+        messages += [_message("u1", "Stop", False), _message("u1", "Stop", True)]
+    client = FakeClient(FakeSession(messages, end_code=end_code))
+
+    async def collect():
+        return [event async for event in stream_voice_events(_audio(), client=client)]
+
+    if end_code == 1000:
+        asyncio.run(collect())
+    else:
+        with pytest.raises(VoiceError, match="Gladia session ended abnormally"):
+            asyncio.run(collect())
+    call, = telemetry.default_log.list()
+    assert call.provider == "gladia" and call.operation == "live.transcribe"
+    assert call.ok == (end_code == 1000)
+    assert call.meta["audio_s"] == 4 / (16000 * 2)
+    assert call.meta["n_final_utterances"] == int(with_transcripts)
+    assert ("time_to_first_partial_ms" in call.meta) == with_transcripts
+
+
+def test_stream_transcripts_filters_all_addons_and_warnings():
+    failed = _sdk_message("translation", error={"status_code": 500, "message": "Addon failed"})
+    events = _collect_voice(
+        [*_addon_messages(), failed, _message("u1", "Stop", True)],
+        streamer=stream_transcripts, options=build_live_options(8000, translate_to=None),
+    )
+    assert len(events) == 1 and isinstance(events[0], TranscriptEvent)
+
+
+def test_cli_emits_addons_but_only_detects_commands_from_transcripts(monkeypatch, capsys):
+    from runai.voice import __main__ as cli
+
+    events = _collect_voice([_message("u1", "Stop", False), *_addon_messages(), _message("u1", "Stop", True)])
+
+    async def fake_stream(chunks, *, sample_rate):
+        assert sample_rate == 16000
+        for event in events:
+            yield event
+
+    monkeypatch.setattr(cli, "stream_voice_events", fake_stream)
+    monkeypatch.setattr(cli, "file_stream", lambda source: AudioStream(16000, _audio()))
+    cli.main(["--file", "unused.wav", "--partials"])
+    output = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert [event["type"] for event in output] == [
+        "transcript", "command", "translation", "entities", "speech", "speech", "transcript",
+    ]
+    assert output[1]["command"]["kind"] == "pause"
+
+
+def test_cli_hides_partials_but_not_addons(capsys):
+    from runai.voice.__main__ import _emit
+
+    for event in _collect_voice([_message("u1", "Hello", False), *_addon_messages()]):
+        _emit(event, None, show_partials=False)
+    output = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert [event["type"] for event in output] == ["translation", "entities", "speech", "speech"]
+
+
 def test_stream_events_with_fake_gladia():
     session = FakeSession([
         SimpleNamespace(type="audio_chunk"),
+        *_addon_messages(),
         _message("u1", "Non, attends", is_final=False),
         _message("u1", "Non, attends, plutôt un hôtel près du départ", is_final=True),
         _message("u2", "Reprends", is_final=True),
