@@ -5,7 +5,7 @@ import unicodedata
 import uuid
 from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from runai.app.ports import AskUser, EventSink
 from runai.app.tasks import TripBrief
@@ -18,6 +18,7 @@ from runai.models import (
     StepStatus,
     StopPoint,
     TraceEvent,
+    utcnow,
 )
 from runai.safety import STOP_INSTRUCTIONS
 from runai.voice.models import TranscriptEvent
@@ -268,8 +269,48 @@ class FakeAgentRun:
             stop_point=script.stop_point,
             url=url,
             price_eur=script.price_eur,
-            data={"headline": script.summary, "simulated": True, "provenance": {"mode": "demo", "kind": "fixture"}},
+            data={
+                "headline": script.summary, "simulated": True,
+                "provenance": {"mode": "demo", "kind": "fixture"},
+                **self._journey_fixture(script),
+            },
         )
+
+    def _journey_fixture(self, script: _Script) -> dict:
+        """Structured choices of the recorded demo, labelled as fixtures; no time or coordinates are invented."""
+        brief = self.brief
+        if self.kind is StepKind.registration or brief is None:
+            return {}
+        provenance = {"kind": "fixture", "label": "Demo: recorded fixture, not a real offer"}
+        if self.kind is StepKind.accommodation:
+            if brief.race_date is None:
+                return {}
+            check_in = brief.race_date - timedelta(days=1)
+            nights = brief.nights or 2
+            return {"journey": {"hotel": {
+                "place": {"label": f"Recorded demo hotel near the start ({brief.city})", "confidence": "illustrative"},
+                "check_in": check_in.isoformat(),
+                "check_out": (check_in + timedelta(days=nights)).isoformat(),
+            }}}
+        if script.price_eur is None:
+            return {}
+        leg = round(script.price_eur / 2, 2)
+        now = utcnow().isoformat()
+
+        def trip(origin_label: str, destination_label: str) -> dict:
+            return {
+                "mode": "train",
+                "from_hub": {"label": origin_label, "confidence": "illustrative"},
+                "to_hub": {"label": destination_label, "confidence": "illustrative"},
+                "cost": {"amount": leg, "currency": "EUR", "collected_at": now,
+                         "confidence": "illustrative", "provenance": provenance},
+            }
+
+        origin = brief.origin or "Home"
+        return {"journey": {
+            "outbound": trip(f"{origin} station (demo)", f"{brief.city} station (demo)"),
+            "return_trip": trip(f"{brief.city} station (demo)", f"{origin} station (demo)"),
+        }}
 
 
 class FakeBrowserAgents:
