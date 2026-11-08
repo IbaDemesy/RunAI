@@ -1,0 +1,43 @@
+{
+  "schema_version": "test-history.v1",
+  "run_id": "42468906240",
+  "started_at": "2026-11-08T09:51:19.997433+00:00",
+  "finished_at": "2026-11-08T09:52:19.063858+00:00",
+  "duration_s": 59.066425,
+  "git": {
+    "sha": "b677b50cfedca63a12cbc9887416c440a30ca84f",
+    "branch": "main",
+    "dirty": false
+  },
+  "wave": null,
+  "ci": {
+    "provider": "github-actions",
+    "run_id": "42468906240",
+    "run_url": "https://github.com/IbaDemesy/RunAI/actions/runs/42468906240"
+  },
+  "verdict": "pass",
+  "suites": {
+    "ruff": {
+      "verdict": "pass",
+      "duration_s": 0.058899,
+      "counts": null,
+      "failures": [],
+      "tests": []
+    },
+    "pytest": {
+      "verdict": "pass",
+      "duration_s": 57.901048,
+      "counts": null,
+      "failures": [],
+      "tests": []
+    },
+    "node": {
+      "verdict": "pass",
+      "duration_s": 1.106062,
+      "counts": null,
+      "failures": [],
+      "tests": []
+    }
+  },
+  "source": "fallback"
+}
