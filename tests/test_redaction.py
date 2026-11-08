@@ -1,3 +1,4 @@
+import base64
 import os
 
 import pytest
@@ -91,3 +92,23 @@ def test_authorization_header_values_masked(monkeypatch):
         "log": "sent Authorization: Bearer [REDACTED]",
     }
     assert redact_secrets("Bearer short") == "Bearer short"
+    assert redact_secrets("bearer abcdefgh12345678") == "bearer [REDACTED]"
+    assert redact_secrets("BASIC dXNlcjpwYXNz") == "BASIC [REDACTED]"
+
+
+def test_plain_text_after_auth_scheme_words_kept(monkeypatch):
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    text = "Basic training plan, bearer of the race bib"
+    assert redact_secrets(text) == text
+
+
+def test_short_bearer_and_non_utf8_basic_masked(monkeypatch):
+    monkeypatch.delenv("RUNAI_BASIC_AUTH", raising=False)
+    token = base64.b64encode(b"user:\xff\xfepass").decode()
+    assert redact_secrets("Bearer abcd1234") == "Bearer [REDACTED]"
+    assert redact_secrets(f"Basic {token}") == "Basic [REDACTED]"
+
+
+def test_bearer_prose_is_preserved():
+    text = "The bearer presents identification."
+    assert redact_secrets(text) == text

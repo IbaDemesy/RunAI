@@ -16,6 +16,3 @@ regexes = [
   '''hk-EXAMPLE_KEY_REDACTED''',
   '''sk_(live|test)_x+''',
 ]
-paths = [
-  '''(^|/)\.env\.example$''',
-]
