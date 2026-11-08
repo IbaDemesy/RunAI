@@ -18,6 +18,8 @@ services:
         value: live
       - key: RUNAI_BASIC_AUTH
         sync: false
+      - key: RUNAI_CSP_ENFORCE
+        value: "0"
       - key: HAI_API_KEY
         sync: false
       - key: LINKUP_API_KEY

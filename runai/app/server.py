@@ -18,6 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from runai.app.auth import BasicAuthMiddleware
 from runai.app.candidates import FixtureCandidateSearch, UnavailableCandidateSearch
 from runai.app.fakes import DEMO_RACES
+from runai.app.headers import SecurityHeadersMiddleware
 from runai.app.mission import MissionError, MissionService
 from runai.app.providers import (
     ProviderSet,
@@ -122,6 +123,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     app = FastAPI(title="RunAI", lifespan=lifespan)
     if credentials := os.getenv("RUNAI_BASIC_AUTH"):
         app.add_middleware(BasicAuthMiddleware, credentials=credentials)
+    app.add_middleware(SecurityHeadersMiddleware, enforce=os.getenv("RUNAI_CSP_ENFORCE") == "1")
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, error):

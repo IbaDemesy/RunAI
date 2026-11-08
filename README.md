@@ -167,7 +167,26 @@ Secrets de dépôt requis : `HAI_API_KEY`, `LINKUP_API_KEY`, `GLADIA_API_KEY`.
 
 Les workflows installent les dépendances avec `uv` ; en local, utilisez `uv venv && uv pip install -r requirements.txt -r requirements-dev.txt`.
 
-Le déploiement continu vers Render sera ajouté avec le backend.
+## Hosting on Render
+
+Deploy the repository with the `render.yaml` Blueprint. Keep a single instance:
+missions and authentication failure counters live in process memory and reset on
+restart. `/api/health` is the only public route when authentication is enabled;
+static assets, `/demo/live`, event streams and screenshots require credentials.
+
+Set `RUNAI_BASIC_AUTH=user:password` in Render's secret environment settings.
+For separate credentials, use a comma-separated list such as
+`user:password,user2:password2` (commas cannot be part of a password).
+After five failed authentication attempts within 60 seconds, that client IP is
+blocked with HTTP 429 and a `Retry-After` header until the window expires.
+The first `X-Forwarded-For` hop identifies clients behind Render's TLS proxy;
+use this deployment only behind a trusted proxy that supplies that header.
+
+Security headers apply to authenticated and rejected responses alike, and API
+responses use `Cache-Control: no-store`. Content Security Policy defaults to
+`Content-Security-Policy-Report-Only` (`RUNAI_CSP_ENFORCE=0`) so violations can
+be reviewed in the browser console without blocking resources. Set
+`RUNAI_CSP_ENFORCE=1` to send enforcing `Content-Security-Policy` instead.
 
 ## Structure du repo
 
