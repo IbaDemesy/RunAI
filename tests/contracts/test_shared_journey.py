@@ -147,9 +147,12 @@ def test_planner_detects_inconsistent_times(case, code):
         inputs.return_trip.depart = start - timedelta(hours=1)
     else:
         inputs.outbound.arrive = inputs.outbound.depart - timedelta(hours=1)
-    assert code in {
-        item.code for item in generate("berlin_train", inputs=inputs).limitations
-    }
+    plan = generate("berlin_train", inputs=inputs)
+    if case == "early_return":
+        assert code not in {item.code for item in plan.limitations}
+        assert any("assumed 6:00/km pace" in warning for warning in plan.warnings)
+    else:
+        assert code in {item.code for item in plan.limitations}
 
 
 @pytest.mark.parametrize(

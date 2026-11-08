@@ -8,23 +8,32 @@ J-TE Technical, J-UX UX/control, J-DE Demo), **C** = compliance (English-only, p
 usage, deliverables), **P** = product gap found while writing [JOURNEYS.md](JOURNEYS.md).
 Later waves append jury-1/2/3 and compliance findings here with the same columns.
 
+Audit update (8 November 2026, offline evidence only): the shell, mission
+orchestrator, voice interface and Explore view exist. `todo` below is not a claim
+that all associated code is absent. PB-01/02/03/04/09/11 remain partial until the
+whole criterion is verified; the current guard covers Explore and its shell
+fallback, not every backend string or fixture. Evidence: `tests/test_english_only.py`,
+`tests/test_recap_adapter.py`, `tests/test_journey_backend.py`, and
+`runai/app/static/tests/shell.test.js`. J10 / JURY-W1-7 (PB-09) remains a strict
+xfail: a transport step total cannot be presented as a sourced per-leg fare.
+
 Priority: **P0** = blocks the primary jury demo (J1) or a hard rule; **P1** = strong score
 impact; **P2** = polish. Status: `todo` / `in-progress` / `done` (update with PR link).
 Teams: names from the night-loop master prompt.
 
 | Id | Pri | Source | Ticket | Owning team | AC | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| PB-01 | P0 | C | Translate framing question templates in `runai/framing/engine.py` (`"Quel événement officiel…"`, `"Combien de nuits ?"`, …) and all Holo/`TemplatePhraser` copy to English. | Prompt engineering / Holo | AC-01, AC-13 | todo |
-| PB-02 | P0 | C | Translate backend user-facing strings (errors, `Limitation.message`, headlines, `summary.lines`, log messages surfaced to UI, docstrings later) to English. | English translation | AC-01, AC-06 | todo |
-| PB-03 | P0 | C | Translate static shell (`runai/app/static/*`) labels, placeholders, toasts to English (`front-night` PR). | Frontend | AC-01, AC-10 | todo |
-| PB-04 | P0 | C | Add `tests/test_english_only.py` guard (French markers in code strings, static files, fixtures) and wire it into CI. | Tests & test history | AC-01 | todo |
+| PB-01 | P0 | C | Translate framing question templates in `runai/framing/engine.py` (`"Quel événement officiel…"`, `"Combien de nuits ?"`, …) and all Holo/`TemplatePhraser` copy to English. | Prompt engineering / Holo | AC-01, AC-13 | in-progress |
+| PB-02 | P0 | C | Translate backend user-facing strings (errors, `Limitation.message`, headlines, `summary.lines`, log messages surfaced to UI, docstrings later) to English. | English translation | AC-01, AC-06 | in-progress |
+| PB-03 | P0 | C | Translate static shell (`runai/app/static/*`) labels, placeholders, toasts to English (`front-night` PR). | Frontend | AC-01, AC-10 | in-progress |
+| PB-04 | P0 | C | Extend existing `tests/test_english_only.py` Explore guard to backend strings and API fixtures; standard CI pytest already collects it. | Tests & test history | AC-01 | in-progress |
 | PB-05 | P0 | P | Demo no-dead-end test: every suggestion chip + first answer chip reaches `ready_to_confirm` in ≤ 6 turns; fix any fixture that stalls. | Tests & test history | AC-11 | todo |
 | PB-06 | P0 | J-UX | Halt card: "Prepared — not booked" + "Stopped before: <stop point>" + "Finish on official site ↗" on every step (`front-night`). | Frontend | AC-50, AC-51, AC-52 | todo |
 | PB-07 | P0 | J-CU | Expose `steps[].data.step_count` (H agent step counter) alongside existing `headline` and `current_url` in snapshot + SSE `step` events. | Backend / orchestration | AC-31 | todo |
 | PB-08 | P0 | P | Guarantee `steps[].url` (official-site handoff) is non-null for every halted or failed step, with fallback to candidate `registration_url` / `official_url`; add pytest on demo fixtures. | Backend / orchestration | AC-52, AC-57 | todo |
-| PB-09 | P0 | J-UX | "Your trip" summary: race + stay + transport + total vs budget + 3 official-site CTAs (`front-night`). | Frontend | AC-55, AC-56, AC-57 | todo |
+| PB-09 | P0 | J-UX | "Your trip" summary: race + stay + transport + total vs budget + 3 official-site CTAs (`front-night`). | Frontend | AC-55, AC-56, AC-57 | in-progress |
 | PB-10 | P0 | J-DE | Replay mode end to end with zero env vars; e2e pytest booting the app with an empty environment. | DevOps / release | AC-60 | todo |
-| PB-11 | P0 | J-TE | Shared formatters: money `€800`, dates `Sun 12 Apr 2026`, null-safe joins; backend display strings and front helpers use them. | Backend / orchestration | AC-02, AC-03, AC-04 | todo |
+| PB-11 | P0 | J-TE | Money `€800` / `€118.50` and partial caps covered in shell/exports; human-readable dates and null-safe joins still require whole-product verification. | Backend / orchestration | AC-02, AC-03, AC-04 | in-progress |
 | PB-12 | P0 | C | Hard rule audit: confirm no code path can click a payment control; e2e demo mission asserts every step ends before commitment. | Security & code review | AC-05 | todo |
 | PB-13 | P1 | J-CU | Live view lane: partner badge, screenshot thumbnail refresh, "Open H replay ↗" via `share_session` public link. | H specialists | AC-32 | todo |
 | PB-14 | P1 | J-CU | Per-platform runbooks (Njuko, Klikego, Accor, TAP) with Linkup-precomputed start URLs to cut steps (Booking test: 48 → 22). | H specialists | AC-31, AC-36 | todo |

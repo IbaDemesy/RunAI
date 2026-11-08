@@ -210,8 +210,8 @@ class HotelStay(BaseModel):
     name: str
     check_in: date
     check_out: date
-    check_in_from: time = time(15, 0)
-    check_out_until: time = time(11, 0)
+    check_in_from: time | None = time(15, 0)
+    check_out_until: time | None = time(11, 0)
     minutes_to_start: int = 30
     minutes_to_bib_pickup: int = 30
 

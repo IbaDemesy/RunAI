@@ -231,7 +231,7 @@ Chip text is data, not code: FE reads it from `GET /api/health` → `suggestions
 | **Before** | `interpret.py` is French-first: `MONTHS` is French only (`interpret.py:8-21`); the city prefix `in` matches the next capitalised word (`interpret.py:28-37`), so English month names become cities. Verified on `3373e01`: "Milan marathon in April 2027" → `{city: "April", distance_km: 42.195}`; "My first half marathon in October" → `{city: "October"}`; "Half marathon in Lisbon next spring, budget 600 euros" → `{city: "Lisbon next spring"}`; "Something in April, from Lyon by car" → `{origin: "Lyon by car", city: "April"}`; "Tokyo 10K on 2028-06-12…" → no city, no distance. |
 | **After** | English month and season names are date words, never places; `10K`/`5K`/`half` are distances; "<City> marathon" (city before the race word) yields city; trailing qualifiers ("next spring", "by car", "by train") are cut from place names. Holo's extraction prompt receives these 8 phrases as few-shot / eval cases. |
 
-Acceptance fixtures (copy-paste into `tests/test_framing_extraction_en.py`, `today = 2026-11-07`). Slots not listed must be **absent**.
+Acceptance fixtures (copy-paste into `tests/test_framing_extract_english.py`, `today = 2026-11-07`). Slots not listed must be **absent**.
 
 ```python
 EN_EXTRACTION_CASES = [

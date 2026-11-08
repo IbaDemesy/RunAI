@@ -43,7 +43,7 @@ test("parses KML LineString coordinates", () => {
 });
 
 test("rejects files without a usable line", () => {
-  assert.throws(() => R.parseTrack("<gpx><wpt lat='1' lon='1'/></gpx>"), /au moins deux points/);
+  assert.throws(() => R.parseTrack("<gpx><wpt lat='1' lon='1'/></gpx>"), /at least two points/);
 });
 
 test("builds cumulative distance and climb with hysteresis", () => {

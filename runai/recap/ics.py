@@ -1,6 +1,7 @@
 """Recap to .ics (RFC 5545), dependency-free: CRLF, 75-byte folding, TZID + VTIMEZONE."""
 
 from datetime import UTC, date, datetime, timedelta
+from hashlib import sha256
 from zoneinfo import ZoneInfo
 
 from .models import Recap, TimelineItem
@@ -12,7 +13,7 @@ DEFAULT_DURATION = timedelta(minutes=30)
 
 def escape_text(value: str) -> str:
     return (value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
-            .replace("\r\n", "\\n").replace("\n", "\\n"))
+            .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n"))
 
 
 def fold(line: str) -> str:
@@ -103,9 +104,12 @@ def render_ics(recap: Recap) -> bytes:
             return f"{prop};TZID={tzname}:{value.astimezone(tz):%Y%m%dT%H%M%S}"
         return f"{prop}:{value.astimezone(UTC):%Y%m%dT%H%M%SZ}"
 
-    for i, item in enumerate(sorted(items, key=lambda t: t.start)):
+    for item in sorted(items, key=lambda t: t.start):
         local = item.start.astimezone(tz)
-        lines += ["BEGIN:VEVENT", f"UID:{recap.id}-{i:02d}@runai", f"DTSTAMP:{stamp}"]
+        identity = [recap.calendar_id or recap.id, item.calendar_id or item.title,
+                    item.tag, item.start.astimezone(UTC).isoformat()]
+        uid = sha256("\0".join(identity).encode()).hexdigest()
+        lines += ["BEGIN:VEVENT", f"UID:{uid}@runai", f"SEQUENCE:{recap.calendar_revision}", f"DTSTAMP:{stamp}"]
         if item.time_known:
             lines += [dt("DTSTART", item.start), dt("DTEND", item.end or item.start + DEFAULT_DURATION)]
         else:

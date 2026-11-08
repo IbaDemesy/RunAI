@@ -1,6 +1,8 @@
 # Notation du jury : ce qui est fait, ce qui manque
 
-État au 7 novembre 2026, 15 h. À mettre à jour à chaque PR qui fait avancer un critère.
+Code review on 8 November 2026 against `d320c2a`. This audit uses offline
+fakes/fixtures: historical live benchmarks below were not revalidated.
+Implemented code is not evidence of a successful live demo.
 
 Légende : ✅ fait et vérifié · 🟡 en cours ou partiel · ❌ pas commencé.
 
@@ -8,11 +10,11 @@ Légende : ✅ fait et vérifié · 🟡 en cours ou partiel · ❌ pas commenc�
 
 | Critère | Poids | État | En une phrase |
 | --- | ---: | :---: | --- |
-| Use of Computer Use | 25 % | 🟡 | Les agents H tournent en vrai sur 3 sites, mais pas encore depuis l'application RunAI. |
-| Technical execution & reliability | 25 % | 🟡 | CI et smoke tests en place ; orchestrateur et taux de réussite mesurés manquants. |
+| Use of Computer Use | 25 % | 🟡 | H integration exists in the app; deterministic tests, live demo not revalidated. |
+| Technical execution & reliability | 25 % | 🟡 | CI and orchestration exist; live success rates not revalidated. |
 | Usefulness & impact | 20 % | 🟡 | Problème réel et logistique propre à la course identifiés ; pas encore démontrés de bout en bout. |
 | Originality & innovation | 15 % | 🟡 | Angle « logistique course » et voix qui pilote 3 agents choisis ; à montrer. |
-| UX & user control | 10 % | ❌ | Portail humain et commandes vocales conçus, pas codés. |
+| UX & user control | 10 % | partial | Shell, human handoff and voice implemented; browser and live-demo checks still pending. |
 | Demo clarity & Q&A | 5 % | 🟡 | Déroulé, plans de secours et questions du jury rédigés ; vidéo à tourner. |
 
 ## Détail par critère
@@ -28,7 +30,7 @@ Légende : ✅ fait et vérifié · 🟡 en cours ou partiel · ❌ pas commenc�
 | Manque | Pour prendre les points |
 | --- | --- |
 | ❌ Inscription remplie jusqu'au paiement sur une course ouverte (Njuko ou Klikego) | Lisbonne est complète : prendre une course déjà testée |
-| ❌ Agents lancés depuis RunAI, vues live à l'écran | Montrer les 3 agents en direct pendant le pitch, pas une vidéo accélérée |
+| Partial: app launch and live views implemented | `runai/app/mission.py`, `runai/app/static/live.html`; live presentation not revalidated |
 
 Bonus visé : corriger un agent en cours à la voix (`send_message`).
 
@@ -43,7 +45,7 @@ Bonus visé : corriger un agent en cours à la voix (`send_message`).
 
 | Manque | Pour prendre les points |
 | --- | --- |
-| ❌ Orchestrateur (backend) : Linkup → 3 sessions H → réponses typées | Cœur du produit |
+| Partial: orchestration is implemented, not missing | `runai/app/mission.py`, `tests/e2e/test_demo_journey.py` (fakes); fresh live evidence still needed |
 | ❌ Taux de réussite réels (5 runs par site) | Les chiffres « 4/5 » des docs sont des exemples, pas des mesures |
 | ❌ Mode dégradé quand un site bloque | Plan B prévu dans [DEMO_ET_LIVRABLES.md](DEMO_ET_LIVRABLES.md) |
 | ❌ Hébergement du test live (Render ou tunnel) | Nécessaire pour le livrable 6 |
@@ -59,7 +61,7 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 
 | Manque | Pour prendre les points |
 | --- | --- |
-| ❌ Logistique course dans le résultat : retrait du dossard, accès au départ, hôtel choisi selon le temps d'accès | C'est ce qu'aucune agence de voyage ne fait |
+| Partial: logistics in JourneyPlan and exports | `runai/journey/planner.py`, `tests/test_journey_planner.py`; per-leg prices incomplete (J10 / JURY-W1-7) |
 
 ### 4. Originality & innovation (15 %)
 
@@ -81,9 +83,9 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 
 | Manque | Pour prendre les points |
 | --- | --- |
-| ❌ Portail « l'agent remplit, l'humain signe » sur chaque case santé, règlement, RGPD et avant paiement | Pas seulement avant le paiement : le formulaire Lisbonne a un consentement dès l'étape 1 |
-| ❌ Interface vocale Gladia : transcription live, « stop », « pause », « reprends » | Prix Gladia |
-| ❌ Vue live de chaque agent | Le coureur voit et peut arrêter |
+| Partial: human handoff and pre-commitment stops implemented | `runai/app/static/app.js`, offline mission tests; real journey not revalidated |
+| Partial: voice interface implemented | `runai/app/voice_ws.py`, `web/voice/voice-input.js`; no real Gladia call during this audit |
+| Partial: live view implemented | `runai/app/static/live.html`; browser rendering not revalidated |
 
 ### 6. Demo clarity & Q&A (5 %)
 

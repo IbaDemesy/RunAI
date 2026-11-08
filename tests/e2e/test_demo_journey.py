@@ -71,7 +71,6 @@ def test_stop_points_expose_human_action(client, mission):
         assert (step.get("human_action") or "").strip(), "Stop point is missing its HTTP human_action"
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-1: display an integral euro budget without a decimal suffix")
 def test_budget_display(mission):
     snapshot, _, html, _ = mission
     assert snapshot["budget"]["cap"] == 800
@@ -116,7 +115,7 @@ def test_chip_city_nearest_fixture(client):
     assert any(c["city"] == "Lisbonne" for c in session["candidates"])
 
 
-@pytest.mark.xfail(strict=False, reason="JURY-W1-7: journey and recap reflect selected race, hotel and transport cards (jury-2 #5)")
+@pytest.mark.xfail(strict=True, reason="J10 / JURY-W1-7 (PB-09): transport step total is not a sourced per-leg fare")
 def test_journey_recap_consistent_with_cards(mission):
     snapshot, journey, html, _ = mission
     assert snapshot["race"]["name"] in html

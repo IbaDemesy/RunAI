@@ -86,7 +86,7 @@
       return !previous || previous.lon !== point.lon || previous.lat !== point.lat;
     });
     if (points.length < 2) {
-      throw new Error("Aucun tracé exploitable : il faut au moins deux points (trkpt, rtept ou LineString).");
+      throw new Error("No usable route: at least two points are required (trkpt, rtept or LineString).");
     }
     return { name: parsed.name, points };
   }

@@ -226,7 +226,7 @@ def journey_timeline(summary: FramingSummary, inputs: JourneyInputs) -> Timeline
             update["start_time"] = start_local.time().replace(tzinfo=None)
         rules = rules.model_copy(update=update)
     hotel = None
-    if inputs.hotel and inputs.hotel.check_in_from is not None and inputs.hotel.check_out_until is not None:
+    if inputs.hotel:
         h = inputs.hotel
         hotel = HotelStay(
             name=h.place.label,
@@ -324,7 +324,8 @@ def _geometry(geometry, provenance, verified, a: Coords | None, b: Coords | None
     if geometry and len(geometry) >= 2:
         if provenance is None:
             return GeometryStatus.illustrative, geometry
-        return (GeometryStatus.verified if verified else GeometryStatus.approximate), geometry
+        trusted = provenance.kind in {ProvenanceKind.official_api, ProvenanceKind.human, ProvenanceKind.linkup}
+        return (GeometryStatus.verified if verified and trusted and provenance.url else GeometryStatus.approximate), geometry
     if a and b:
         return GeometryStatus.illustrative, [(a.lon, a.lat), (b.lon, b.lat)]
     return GeometryStatus.unavailable, None
@@ -558,14 +559,21 @@ def build_journey_plan(
         _chapter(ChapterId.return_trip, CHAPTER_LABELS[ChapterId.return_trip], return_stops, return_segments, b),
     ]
 
-    nights = summary.nights
+    nights = (inputs.hotel.check_out - inputs.hotel.check_in).days if inputs.hotel else summary.nights
+    if inputs.hotel and nights != summary.nights:
+        b.warnings.append(f"Selected hotel dates cover {nights} nights; you requested {summary.nights} nights.")
+    if inputs.hotel and summary.race.race_date and not (
+        inputs.hotel.check_in <= summary.race.race_date - timedelta(days=1)
+        and inputs.hotel.check_out >= summary.race.race_date
+    ):
+        b.warnings.append("Selected hotel dates do not cover the night before the race.")
     legs = [inputs.outbound, inputs.return_trip]
     budget = Budget(
         currency=currency,
         cap=summary.budget_eur if currency == "EUR" else None,
         lines=[
             _line("c-reg", CostCategory.registration, "Registration", race_in.registration_cost, currency, "Fare unknown"),
-            _line("c-hotel", CostCategory.accommodation, f"Hotel {nights} night{'s' if nights > 1 else ''}",
+            _line("c-hotel", CostCategory.accommodation, f"Hotel {nights} night{'s' if nights != 1 else ''}",
                   inputs.hotel.cost if inputs.hotel else None, currency, "Price unknown"),
             *_transport_lines(legs, currency, main_mode is not None),
             _line("c-local", CostCategory.local, "Local transport", inputs.local_cost, currency, "Not estimated"),
@@ -584,6 +592,7 @@ def build_journey_plan(
             limitations.append(item)
     plan = JourneyPlan(
         mission_id=mission_id,
+        race_name=summary.race.name,
         revision=0,
         framing_revision=summary.revision,
         mode=mode,

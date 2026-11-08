@@ -68,7 +68,12 @@ def project_journey(mission):
     if raw["race"].get("rules") and "timezone" not in raw["race"]["rules"]:
         raise ValueError("Rules lack a timezone: cannot interpret the time")
     inputs = JourneyInputs.model_validate(raw)
+    if inputs.race.track:
+        inputs.race.track_provenance = Provenance(kind=kind, collected_at=mission.created_at)
     for leg in (inputs.outbound, inputs.return_trip):
+        if leg and leg.geometry:
+            leg.geometry_verified = False
+            leg.provenance = Provenance(kind=kind, collected_at=mission.created_at)
         if leg and (leg.mode != "train" or mission.plan.steps[StepKind.transport].automation is not Automation.automated):
             leg.automation = Automation.manual
     if inputs.hotel and mission.plan.steps[StepKind.accommodation].automation is not Automation.automated:

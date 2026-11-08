@@ -9,16 +9,16 @@
   "use strict";
 
   const GEOMETRY = {
-    verified: "Vérifié : géométrie sourcée, pas une réservation.",
-    approximate: "Approximatif : géométrie estimée, à vérifier.",
-    illustrative: "Illustratif : liaison indicative, pas un itinéraire à suivre.",
-    unavailable: "Tracé indisponible : aucun itinéraire inventé.",
+    verified: "Verified: sourced geometry, not a booking.",
+    approximate: "Approximate: estimated geometry, please verify.",
+    illustrative: "Illustrative: indicative link, not a route to follow.",
+    unavailable: "Route unavailable: no invented itinerary.",
   };
-  const MODES = { live: "Réel (live)", demo: "Démonstration : données fictives", replay: "Replay : enregistrement, pas du direct" };
-  const TRANSPORT = { walk: "Marche", local: "Transport local", train: "Train", flight: "Vol", race: "Course" };
-  const AUTOMATION = { automated: "Préparation automatisée, rien de réservé", manual: "À finaliser manuellement", not_covered: "Non automatisé" };
-  const STATUS = { available: "Renseigné", partial: "Partiel", unavailable: "À compléter" };
-  const CONFIDENCE = { verified: "vérifié", estimated: "estimé", illustrative: "illustratif", unknown: "non vérifié" };
+  const MODES = { live: "Live", demo: "Demo: fictional data", replay: "Replay: recorded, not live" };
+  const TRANSPORT = { walk: "Walk", local: "Local transport", train: "Train", flight: "Flight", race: "Race" };
+  const AUTOMATION = { automated: "Automated preparation, nothing booked", manual: "Finish manually", not_covered: "Not automated" };
+  const STATUS = { available: "Available", partial: "Partial", unavailable: "To complete" };
+  const CONFIDENCE = { verified: "verified", estimated: "estimated", illustrative: "illustrative", unknown: "unverified" };
 
   function safeUrl(value) {
     try {
@@ -30,9 +30,9 @@
   }
 
   function moneyText(money) {
-    if (!money) return "Prix inconnu";
+    if (!money) return "Price unknown";
     try {
-      return new Intl.NumberFormat("fr-FR", { style: "currency", currency: money.currency }).format(money.amount);
+      return new Intl.NumberFormat("en-GB", { style: "currency", currency: money.currency, minimumFractionDigits: Number.isInteger(money.amount) ? 0 : 2, maximumFractionDigits: 2 }).format(money.amount);
     } catch (_) {
       return `${money.amount} ${money.currency}`;
     }
@@ -40,7 +40,7 @@
 
   // errorTarget can be the map/timeline common ancestor. E3 owns hiding/destroying the failed map.
   function createJourneyView(container, options = {}) {
-    if (!contract) throw new Error("Charger journey-contract.js avant le repli du séjour.");
+    if (!contract) throw new Error("Load journey-contract.js before the journey fallback.");
     const doc = container.ownerDocument;
     const win = doc.defaultView;
     const errorTarget = options.errorTarget || container;
@@ -65,9 +65,9 @@
     }
 
     const root = el("section", undefined, "journey-fallback");
-    root.setAttribute("aria-label", "Séjour sans carte");
+    root.setAttribute("aria-label", "Trip without a map");
     root.hidden = !!options.hiddenUntilError;
-    const live = el("p", "Choisissez un séjour pour afficher sa timeline.", "journey-status");
+    const live = el("p", "Choose a trip to show its timeline.", "journey-status");
     live.setAttribute("role", "status");
     live.setAttribute("aria-live", "polite");
     live.setAttribute("aria-atomic", "true");
@@ -92,7 +92,7 @@
         node.setAttribute("href", href);
         node.setAttribute("target", "_blank");
         node.setAttribute("rel", "noopener noreferrer");
-        node.setAttribute("aria-label", `${label} (nouvel onglet)`);
+        node.setAttribute("aria-label", `${label} (new tab)`);
       }
       parent.append(node);
     }
@@ -102,39 +102,39 @@
       const p = el("p", limitation.message, "journey-limitation");
       if (safeUrl(limitation.manual_url)) {
         p.append(el("span", " "));
-        addLink(p, "Consulter le site manuellement", limitation.manual_url);
+        addLink(p, "Check the official site manually", limitation.manual_url);
       }
       parent.append(p);
     }
 
     function timeText(value, timezone) {
-      return value ? `${value.replace("T", " ")} (${timezone || plan.timezone})` : "Horaire non renseigné";
+      return value ? `${value.replace("T", " ")} (${timezone || plan.timezone})` : "Time not provided";
     }
 
     function renderBudget() {
       const budget = plan.budget;
       const section = el("section", undefined, "journey-budget");
-      section.setAttribute("aria-label", "Budget du séjour");
+      section.setAttribute("aria-label", "Trip budget");
       section.append(el("h3", "Budget"));
-      section.append(el("p", `${budget.complete ? "Total renseigné" : "Total partiel"} : ${moneyText({ amount: budget.known_total, currency: budget.currency })}`));
+      section.append(el("p", `${budget.complete ? "Known total" : "Partial total"} : ${moneyText({ amount: budget.known_total, currency: budget.currency })}`));
       const list = el("ul");
       for (const line of budget.lines) {
         const li = el("li", `${line.label} : ${moneyText(line.money)}${line.note ? ` — ${line.note}` : ""}`);
-        if (line.money) li.append(el("span", ` (${CONFIDENCE[line.money.confidence] || "non vérifié"}, collecte : ${line.money.collected_at})`));
+        if (line.money) li.append(el("span", ` (${CONFIDENCE[line.money.confidence] || "unverified"}, collected: ${line.money.collected_at})`));
         list.append(li);
       }
       section.append(list);
-      if (!budget.complete) section.append(el("p", "Postes manquants non comptés comme zéro. Le total final reste inconnu."));
+      if (!budget.complete) section.append(el("p", "Missing prices are not counted as zero. The final total is unknown."));
       if (budget.cap != null) {
-        section.append(el("p", `Plafond : ${moneyText({ amount: budget.cap, currency: budget.currency })}. ${budget.over_cap === true ? "Plafond dépassé." : budget.over_cap === false ? "Total renseigné sous le plafond." : "Plafond non vérifiable avec les prix manquants."}`));
+        section.append(el("p", `Cap: ${moneyText({ amount: budget.cap, currency: budget.currency })}. ${budget.over_cap === true ? "Over cap." : budget.over_cap === false ? "Known total within cap." : "Cap not assessable with missing prices."}`));
       }
       return section;
     }
 
     function renderSources() {
       const section = el("section", undefined, "journey-sources");
-      section.setAttribute("aria-label", "Sources et attributions");
-      section.append(el("h3", "Sources et attributions"));
+      section.setAttribute("aria-label", "Sources and credits");
+      section.append(el("h3", "Sources and credits"));
       const list = el("ul");
       const seen = new Set();
       const provenances = [...(plan.sources || [])];
@@ -148,7 +148,7 @@
         seen.add(key);
         const li = el("li");
         addLink(li, source.label || source.kind || "Source", source.url);
-        li.append(el("span", ` — ${source.kind || "origine inconnue"}, collecte : ${source.collected_at || "date inconnue"}`));
+        li.append(el("span", ` — ${source.kind || "unknown origin"}, collected: ${source.collected_at || "date unknown"}`));
         list.append(li);
       }
       for (const credit of options.attributions || []) {
@@ -156,8 +156,8 @@
         addLink(li, credit.label, credit.url);
         list.append(li);
       }
-      if (!list.children.length) list.append(el("li", "Aucune source fournie : informations à vérifier."));
-      section.append(list, el("p", "Vue sans fond de carte : aucune tuile chargée. Les crédits de la carte, si utilisée, restent à afficher dans sa vue."));
+      if (!list.children.length) list.append(el("li", "No source provided: please verify this information."));
+      section.append(list, el("p", "Map-free view: no tiles loaded. Map credits remain visible in the map view when used."));
       return section;
     }
 
@@ -170,20 +170,20 @@
       content.replaceChildren();
       if (!plan) return;
       const header = el("header");
-      header.append(el("h2", "Mon séjour, étape par étape"), el("p", MODES[plan.mode], "journey-mode"));
-      header.append(el("p", `Depuis ${plan.origin_public} — ${plan.date_range ? plan.date_range.join(" au ") : "Dates à préciser"} — fuseau du séjour : ${plan.timezone}`));
-      header.append(el("p", "Préparé ne signifie pas réservé. Aucune action engageante depuis cette vue."));
+      header.append(el("h2", "Your trip, step by step"), el("p", MODES[plan.mode], "journey-mode"));
+      header.append(el("p", `From ${plan.origin_public} — ${plan.date_range ? plan.date_range.join(" to ") : "Dates to confirm"} — trip timezone: ${plan.timezone}`));
+      header.append(el("p", "Prepared does not mean booked. No binding actions from this view."));
       const legend = el("ul", undefined, "journey-legend");
-      legend.setAttribute("aria-label", "Légende des tracés");
+      legend.setAttribute("aria-label", "Route legend");
       for (const [status, label] of Object.entries(GEOMETRY)) {
         const li = el("li", label);
         li.setAttribute("data-geometry", status);
         legend.append(li);
       }
       const nav = el("nav");
-      nav.setAttribute("aria-label", "Chapitres du séjour");
+      nav.setAttribute("aria-label", "Trip chapters");
       const controls = el("div", undefined, "journey-controls");
-      for (const [action, label] of [["previous", "Chapitre précédent"], ["play", "Lire la timeline"], ["pause", "Pause"], ["next", "Chapitre suivant"]]) {
+      for (const [action, label] of [["previous", "Previous chapter"], ["play", "Play timeline"], ["pause", "Pause"], ["next", "Next chapter"]]) {
         const button = el("button", label);
         button.setAttribute("type", "button");
         button.setAttribute("data-action", action);
@@ -207,11 +207,11 @@
         const item = el("li");
         const article = el("article");
         article.setAttribute("aria-label", chapter.label);
-        article.append(el("h3", chapter.label), el("p", STATUS[chapter.status] || "À compléter", "journey-chapter-state"));
+        article.append(el("h3", chapter.label), el("p", STATUS[chapter.status] || "To complete", "journey-chapter-state"));
         for (const stopId of chapter.stop_ids) {
           const stop = stops.get(stopId);
           article.append(el("p", stop.label, "journey-stop"));
-          article.append(el("p", `${timeText(stop.local_time, stop.timezone)}${stop.coords ? "" : " — Localisation non renseignée"}`));
+          article.append(el("p", `${timeText(stop.local_time, stop.timezone)}${stop.coords ? "" : " — Location not provided"}`));
         }
         for (const segmentId of chapter.segment_ids) {
           const segment = segments.get(segmentId);
@@ -219,14 +219,14 @@
           detail.setAttribute("data-geometry", segment.geometry_status);
           detail.append(el("p", `${TRANSPORT[segment.mode]} : ${stops.get(segment.from_stop_id).label} → ${stops.get(segment.to_stop_id).label}`));
           detail.append(el("p", GEOMETRY[segment.geometry_status]));
-          detail.append(el("p", `Départ : ${timeText(segment.departure, segment.timezone)} ; arrivée : ${timeText(segment.arrival, segment.timezone)}`));
-          detail.append(el("p", `${segment.duration_min == null ? "Durée inconnue" : `${segment.duration_min} min`} — ${moneyText(segment.cost)}`));
-          detail.append(el("p", AUTOMATION[segment.automation] || "Non automatisé"));
-          if (safeUrl(segment.manual_url)) addLink(detail, "Ouvrir le site manuellement", segment.manual_url);
+          detail.append(el("p", `Departure: ${timeText(segment.departure, segment.timezone)}; arrival: ${timeText(segment.arrival, segment.timezone)}`));
+          detail.append(el("p", `${segment.duration_min == null ? "Duration unknown" : `${segment.duration_min} min`} — ${moneyText(segment.cost)}`));
+          detail.append(el("p", AUTOMATION[segment.automation] || "Not automated"));
+          if (safeUrl(segment.manual_url)) addLink(detail, "Open the official site manually", segment.manual_url);
           addLimitation(detail, segment.limitation);
           article.append(detail);
         }
-        if (!chapter.stop_ids.length && !chapter.segment_ids.length) article.append(el("p", "Informations non renseignées. À compléter avec vous."));
+        if (!chapter.stop_ids.length && !chapter.segment_ids.length) article.append(el("p", "Information not provided. Complete it with your input."));
         articles.set(chapter.id, article);
         item.append(article);
         timeline.append(item);
@@ -262,7 +262,7 @@
       playing = false;
       updateControls();
       if (wasPlaying) {
-        live.textContent = "Lecture de la timeline en pause.";
+        live.textContent = "Timeline playback paused.";
         emit("playback", { state: "paused" });
       }
     }
@@ -270,10 +270,10 @@
     function showChapter(id) {
       if (destroyed || !plan) return false;
       const chapter = plan.chapters.find((item) => item.id === id);
-      if (!chapter) throw new RangeError(`Chapitre inconnu : ${id}`);
+      if (!chapter) throw new RangeError(`Unknown chapter: ${id}`);
       selected = id;
       updateSelection();
-      live.textContent = `Chapitre : ${chapter.label}. ${STATUS[chapter.status] || "À compléter"}.`;
+      live.textContent = `Chapter: ${chapter.label}. ${STATUS[chapter.status] || "To complete"}.`;
       emit("chapter");
       return true;
     }
@@ -292,12 +292,12 @@
     function play() {
       if (destroyed || root.hidden || !plan || !plan.chapters.length || playing) return;
       if (reduced()) {
-        live.textContent = "Mouvement réduit : utilisez les chapitres sans lecture automatique.";
+        live.textContent = "Reduced motion: use chapters without automatic playback.";
         return;
       }
       playing = true;
       updateControls();
-      live.textContent = "Lecture de la timeline. Pause arrête uniquement cette vue, pas les agents.";
+      live.textContent = "Timeline playing. Pause stops only this view, not the agents.";
       emit("playback", { state: "playing" });
       schedule();
     }
@@ -318,12 +318,12 @@
         selected = null;
         render();
         root.hidden = false;
-        live.textContent = "Séjour indisponible : données invalides. Rechargez le séjour.";
+        live.textContent = "Trip unavailable: invalid data. Reload the trip.";
         emit("error", { error: "invalid-plan" });
-        throw new TypeError(`JourneyPlan invalide : ${errors.join(", ")}`);
+        throw new TypeError(`Invalid JourneyPlan: ${errors.join(", ")}`);
       }
       plan = next;
-      if (!recovery.hidden) recovery.textContent = "Carte indisponible : le séjour reste lisible sans carte. Utilisez les chapitres et les liens manuels.";
+      if (!recovery.hidden) recovery.textContent = "Map unavailable: your trip remains readable without it. Use chapters and manual links.";
       selected = next.chapters.some((c) => c.id === selected) ? selected : (next.chapters[0] || {}).id || null;
       render();
       if (focusChapter && buttons.has(focusChapter)) buttons.get(focusChapter).focus();
@@ -333,23 +333,23 @@
         else if (playButton && !playButton.disabled) playButton.focus();
         else if (buttons.size) buttons.values().next().value.focus();
       }
-      live.textContent = reduced() ? "Mouvement réduit : navigation manuelle par chapitre." : "Séjour disponible sans carte. Choisissez un chapitre.";
+      live.textContent = reduced() ? "Reduced motion: navigate chapters manually." : "Trip available without a map. Choose a chapter.";
       emit("ready", { state: "fallback" });
     }
 
     function seekKm(km) {
-      if (!Number.isFinite(km) || km < 0) throw new RangeError("Distance invalide");
+      if (!Number.isFinite(km) || km < 0) throw new RangeError("Invalid distance");
       if (destroyed || !plan) return false;
       pause();
       if (plan.chapters.some((chapter) => chapter.id === "race")) showChapter("race");
       const segment = plan.segments.find((item) => item.mode === "race" && item.geometry && item.geometry.length >= 2);
       if (!segment || !route) {
-        live.textContent = "Distance non disponible : aucun tracé de course exploitable dans cette vue.";
+        live.textContent = "Distance unavailable: no usable race route in this view.";
         return false;
       }
       const track = route.buildTrack(segment.geometry.map(([lon, lat]) => ({ lon, lat, ele: null })));
       const value = Math.min(km, track.totalM / 1000);
-      live.textContent = `Course : km ${value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}. ${GEOMETRY[segment.geometry_status]}`;
+      live.textContent = `Race: km ${value.toLocaleString("en-GB", { maximumFractionDigits: 2 })}. ${GEOMETRY[segment.geometry_status]}`;
       emit("chapter", { km: value });
       return value;
     }
@@ -398,7 +398,7 @@
       if (plan && detail.planRevision != null && detail.planRevision !== plan.revision) return;
       pause();
       root.hidden = false;
-      live.textContent = plan ? "Carte indisponible : le séjour reste lisible sans carte. Utilisez les chapitres et les liens manuels." : "Séjour indisponible : rechargez ses données.";
+      live.textContent = plan ? "Map unavailable: your trip remains readable without it. Use chapters and manual links." : "Trip unavailable: reload its data.";
       recovery.textContent = live.textContent;
       recovery.hidden = false;
     }
@@ -406,7 +406,7 @@
     function onMotionChange() {
       if (reduced()) {
         pause();
-        live.textContent = "Mouvement réduit : navigation manuelle par chapitre.";
+        live.textContent = "Reduced motion: navigate chapters manually.";
       }
       updateControls();
     }

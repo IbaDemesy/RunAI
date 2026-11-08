@@ -1,6 +1,7 @@
 {
   "schema_version": "journey.v1",
   "mission_id": "e1-berlin_train",
+  "race_name": "Course Berlin",
   "revision": 0,
   "framing_revision": 3,
   "mode": "demo",

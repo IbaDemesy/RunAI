@@ -47,13 +47,13 @@
     runner: null,
   };
 
-  const km = (meters, digits) => (meters / 1000).toFixed(digits === undefined ? 2 : digits).replace(".", ",");
+  const km = (meters, digits) => (meters / 1000).toFixed(digits === undefined ? 2 : digits);
   const setStatus = (text) => {
     ui.status.textContent = text || "";
   };
 
   if (!window.maplibregl) {
-    setStatus("MapLibre GL JS n'a pas pu être chargé (réseau ?).");
+    setStatus("MapLibre GL JS could not be loaded (network unavailable?).");
     return;
   }
 
@@ -300,13 +300,13 @@
       );
     }
     state.markers.push(
-      new maplibregl.Marker({ element: markerElement("marker-flag marker-start", loop ? "Départ / Arrivée" : "Départ"), anchor: "bottom" })
+      new maplibregl.Marker({ element: markerElement("marker-flag marker-start", loop ? "Start / Finish" : "Start"), anchor: "bottom" })
         .setLngLat([start.lon, start.lat])
         .addTo(map),
     );
     if (!loop) {
       state.markers.push(
-        new maplibregl.Marker({ element: markerElement("marker-flag marker-finish", "Arrivée"), anchor: "bottom" })
+        new maplibregl.Marker({ element: markerElement("marker-flag marker-finish", "Finish"), anchor: "bottom" })
           .setLngLat([finish.lon, finish.lat])
           .addTo(map),
       );
@@ -410,7 +410,7 @@
 
   function pause() {
     state.playing = false;
-    ui.play.textContent = "▶ Lecture";
+    ui.play.textContent = "▶ Play";
   }
 
   // ---- Loading.
@@ -419,9 +419,9 @@
     setStatus("");
     const parsed = R.parseTrack(text);
     let points = parsed.points;
-    let source = "fichier (GPX/KML)";
+    let source = "file (GPX/KML)";
     if (!R.hasElevation(points)) {
-      setStatus("Pas d'altitude dans le fichier : lecture du relief Mapterhorn…");
+      setStatus("No elevation in the file: loading Mapterhorn terrain…");
       points = await sampleTerrain(points);
       source = `Mapterhorn (z${TERRAIN_SAMPLE_ZOOM})`;
       setStatus("");
@@ -429,7 +429,7 @@
     const track = R.buildTrack(points);
     state.track = track;
     state.distance = 0;
-    ui.name.textContent = parsed.name || label || "Parcours sans nom";
+    ui.name.textContent = parsed.name || label || "Unnamed route";
     ui.disclaimer.hidden = !/exemple/i.test(`${parsed.name} ${label || ""}`);
     ui.distance.textContent = `${km(track.totalM)} km`;
     ui.climb.textContent = `≈ +${Math.round(track.gain)} m / −${Math.round(track.loss)} m`;
@@ -500,8 +500,8 @@
       if (params.has("km")) seek(Number(params.get("km")) * 1000, { follow: true });
       if (params.get("autoplay") === "1") play();
     } catch (error) {
-      const hint = window.location.protocol === "file:" ? " Ouvrez la page via un serveur local (voir README) ou choisissez un fichier." : "";
-      setStatus(`Impossible de charger ${url} : ${error.message}.${hint}`);
+      const hint = window.location.protocol === "file:" ? " Open the page through a local server (see README) or choose a file." : "";
+      setStatus(`Could not load ${url}: ${error.message}.${hint}`);
     }
   });
 
