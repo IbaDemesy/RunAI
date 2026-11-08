@@ -1,3 +1,4 @@
+# Acceptance: AC-62 (docs/product/ACCEPTANCE.md)
 import pytest
 from fastapi.testclient import TestClient
 

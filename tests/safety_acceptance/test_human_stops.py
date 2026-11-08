@@ -1,3 +1,4 @@
+# Acceptance: AC-05 (docs/product/ACCEPTANCE.md)
 import asyncio
 from unittest.mock import AsyncMock
 

@@ -9,7 +9,7 @@ Légende : ✅ fait et vérifié · 🟡 en cours ou partiel · ❌ pas commenc�
 | Critère | Poids | État | En une phrase |
 | --- | ---: | :---: | --- |
 | Use of Computer Use | 25 % | 🟡 | Les agents H tournent en vrai sur 3 sites, mais pas encore depuis l'application RunAI. |
-| Technical execution & reliability | 25 % | 🟡 | CI et smoke tests en place ; orchestrateur et taux de réussite mesurés manquants. |
+| Technical execution & reliability | 25 % | 🟡 | CI et smoke tests en place ; orchestrateur codé (`runai/app/mission.py`), robustesse en cours ; taux de réussite mesurés manquants. |
 | Usefulness & impact | 20 % | 🟡 | Problème réel et logistique propre à la course identifiés ; pas encore démontrés de bout en bout. |
 | Originality & innovation | 15 % | 🟡 | Angle « logistique course » et voix qui pilote 3 agents choisis ; à montrer. |
 | UX & user control | 10 % | 🟡 | Arrêt humain avant engagement, commandes vocales (`runai/voice/commands.py`, `runai/app/voice_ws.py`) et vue live (`runai/app/static/live.html`) codés ; rendu navigateur non vérifié par l'audit. |
@@ -59,7 +59,7 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 
 | Manque | Pour prendre les points |
 | --- | --- |
-| ❌ Logistique course dans le résultat : retrait du dossard, accès au départ, hôtel choisi selon le temps d'accès | C'est ce qu'aucune agence de voyage ne fait |
+| 🟡 Logistique course dans le résultat : retrait du dossard, accès au départ, hôtel choisi selon le temps d'accès | Codée (`runai/logistics/`, `runai/journey/planner.py`) ; corrections en cours (audit J4, J6, J7) ; non démontrée de bout en bout |
 
 ### 4. Originality & innovation (15 %)
 
@@ -81,7 +81,7 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 
 | Manque | Pour prendre les points |
 | --- | --- |
-| ❌ Portail « l'agent remplit, l'humain signe » sur chaque case santé, règlement, RGPD et avant paiement | Pas seulement avant le paiement : le formulaire Lisbonne a un consentement dès l'étape 1 |
+| 🟡 Portail « l'agent remplit, l'humain signe » sur chaque case santé, règlement, RGPD et avant paiement | Arrêt codé (`runai/safety.py` `detect_stop_point`, statut `stopped_before_commitment`, `runai/app/static/live.html`) ; garde-fous durcis par l'audit (S1, S2, M3) ; non vérifié en live |
 | 🟡 Interface vocale Gladia : transcription live, « stop », « pause », « reprends » | Codée (`runai/app/voice_ws.py`, `runai/voice/commands.py`) ; non vérifiée en live par l'audit |
 | 🟡 Vue live de chaque agent | `runai/app/static/live.html` ; rendu non vérifié par l'audit |
 
@@ -111,7 +111,7 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 
 | Prix | Ce qu'on montre | État |
 | --- | --- | :---: |
-| Gladia (1 000 €) | Voix comme seule interface, vocabulaire course, transcription live, interruption | ❌ |
+| Gladia (1 000 €) | Voix comme seule interface, vocabulaire course, transcription live, interruption | 🟡 codé (`runai/voice/`, `runai/app/voice_ws.py`), non vérifié en live |
 | Best use of Devin (1 000 €) | Workflow de 16 agents d'exploration, PR, CI, Devin Review ; boucle d'auto-réparation en option | 🟡 |
 | LinkedIn et X (500 € chacun) | Un post par plateforme | ❌ |
 
