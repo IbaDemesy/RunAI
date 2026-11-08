@@ -929,6 +929,31 @@ async def test_subscribe_receives_final_state(tmp_path):
     assert messages[-1][1]["status"] == "awaiting_human"
 
 
+@pytest.mark.anyio
+@pytest.mark.parametrize("resume_sequence", [0, 1])
+async def test_slow_event_consumer_drains_terminal_events_during_replay(tmp_path, resume_sequence):
+    service = make_service(tmp_path)
+    mission = Mission(id="slow-consumer", query="Test event replay", steps={}, status=MissionStatus.running)
+    service.missions[mission.id] = mission
+    for index in range(3):
+        service._emit(mission, "trace", {"message": f"History event {index}"})
+    cursor = f"{mission.id}:{resume_sequence}" if resume_sequence else None
+    stream = service.subscribe_events(mission.id, cursor)
+    first = await anext(stream)
+
+    # The consumer pauses on history while the mission finishes and queues new events.
+    mission.status = MissionStatus.completed
+    service._emit(mission, "step", {"status": "completed"})
+    service._emit(mission, "mission_status", {"status": "completed"})
+    service._emit(mission, "trace", {"message": "Mission finished"})
+    events = [first, *[event async for event in stream]]
+
+    assert events == mission.envelopes[resume_sequence:]
+    assert [event.sequence for event in events] == list(range(resume_sequence + 1, 7))
+    assert any(event.type == "mission_status" for event in events)
+    assert not service._event_subscribers[mission.id]
+
+
 def read_sse(response):
     events = []
     name = None

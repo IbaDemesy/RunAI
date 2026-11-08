@@ -371,6 +371,8 @@ class MissionService:
             for event in tuple(mission.envelopes[sequence:]):
                 yield event
             if mission.is_terminal:
+                while not queue.empty():
+                    yield queue.get_nowait()
                 return
             while True:
                 event = await queue.get()
