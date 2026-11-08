@@ -27,7 +27,7 @@ _PATTERNS: dict[StopPoint, re.Pattern[str]] = {
         re.IGNORECASE,
     ),
     StopPoint.consent: re.compile(
-        r"\b(j'accepte|i agree|accept (the )?terms|cgu|cgv|r[èe]glement|terms and conditions|rules acceptance|accept (the )?(race |event )?rules|(race|event) rules|aceito|accetto)\b",
+        r"\b(j'accepte|i agree|accept (the )?terms|cgu|cgv|r[èe]glement|terms and conditions|rules acceptance|accept(?:ing|ed)? (the )?(race |event )?rules|aceito|accetto)\b",
         re.IGNORECASE,
     ),
     StopPoint.submission: re.compile(

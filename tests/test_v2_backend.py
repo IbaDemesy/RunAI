@@ -379,11 +379,16 @@ def test_message_route_refuses_release_without_forwarding_to_agent(tmp_path, tex
         assert refused[0].source == "human" and refused[0].message == reason
         assert refused[0].data == {"step": "registration"}
 
-        benign = "choose the 9:05 train"
-        accepted = client.post(f"{route}/steps/registration/message", json={"text": benign})
-        assert accepted.status_code == 200
-        assert run.received == [guard_task(benign)]
-        assert mission.steps[StepKind.registration].data["messages"] == [benign]
+        benign_messages = [
+            "choose the 9:05 train",
+            "read the race rules on the official site",
+            "show me the event rules",
+        ]
+        for benign in benign_messages:
+            accepted = client.post(f"{route}/steps/registration/message", json={"text": benign})
+            assert accepted.status_code == 200
+        assert run.received == [guard_task(message) for message in benign_messages]
+        assert mission.steps[StepKind.registration].data["messages"] == benign_messages
         assert client.post(f"{route}/cancel").status_code == 200
         envelopes = [json.loads(line[6:]) for line in client.get(f"{route}/events").text.splitlines()
                      if line.startswith("data: ")]
