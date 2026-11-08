@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any, Self
 from urllib.parse import unquote, urlsplit
+from uuid import uuid4
 
 from hai_agents import AsyncClient
 from hai_agents.errors import TooManyRequestsError
@@ -19,7 +20,7 @@ from pydantic import HttpUrl, TypeAdapter, ValidationError
 from runai.app.providers import FORBIDDEN_HOSTS, host_matches
 from runai.config import get_settings
 from runai.h.events import answer_text, as_dict, safe_text, to_trace_event
-from runai.models import StepKind, StepResult, StepStatus, TraceEvent
+from runai.models import StepKind, StepResult, StepStatus, StopPoint, TraceEvent
 from runai.safety import detect_stop_point, guard_task
 from runai.tracing import TraceWriter
 
@@ -38,6 +39,14 @@ _PAYMENT_PROCESSOR_HOSTS = (
 
 
 RESERVED_CREATE_PARAMS = frozenset({"agent", "messages", "queue"})
+
+_STOP_SCREENS = {
+    "payment": StopPoint.payment,
+    "account": StopPoint.account_creation,
+    "health": StopPoint.health_declaration,
+    "consent": StopPoint.consent,
+    "submission": StopPoint.submission,
+}
 
 
 class HQuotaTimeout(TimeoutError):
@@ -126,6 +135,13 @@ def build_step_result(
     text = answer_text(answer)
     stop_point = None
     result_data = {"h_status": h_status, "answer": answer, **(data or {}), "outcome": outcome, "error_code": error_code}
+    typed_answer = answer if isinstance(answer, dict) else {}
+    screen = typed_answer.get("stop_screen")
+    price = typed_answer.get("total_price")
+    if not isinstance(price, int | float) or isinstance(price, bool):
+        price = None
+    if price is not None:
+        result_data["price_eur"] = price
     if outcome == "partial":
         result_data["partial"] = True
     if outcome == "blocked":
@@ -140,7 +156,10 @@ def build_step_result(
             status = StepStatus.failed
             error = error or "Blocage captcha/anti-bot signalé par l'agent."
         else:
-            stop_point = detect_stop_point(text or "", ignore_negated=True)
+            if screen in _STOP_SCREENS or screen == "none":
+                stop_point = _STOP_SCREENS.get(screen)
+            else:
+                stop_point = detect_stop_point(text or "", ignore_negated=True)
             status = StepStatus.stopped_before_commitment if stop_point else StepStatus.completed
     elif h_status in ("failed", "timed_out"):
         status = StepStatus.failed
@@ -170,7 +189,8 @@ def build_step_result(
         status=status,
         summary=text,
         stop_point=stop_point,
-        url=_http_url(last_url),
+        url=_http_url(typed_answer.get("final_url") or last_url),
+        price_eur=price,
         live_view_url=_http_url(live_view_url),
         agent_view_url=_http_url(agent_view_url),
         h_session_id=session_id,
@@ -230,7 +250,8 @@ class HRun:
         self.off_platform = False
         self.payment_processor = False
         self.off_platform_hosts: list[str] = []
-        self.metrics: dict[str, Any] = {}
+        self._created_at = time.monotonic()
+        self.metrics: dict[str, Any] = {"elapsed_s": 0.0}
         self.event_count = 0
         self.result: StepResult | None = None
         self._cursor = 0
@@ -261,11 +282,14 @@ class HRun:
         if event_type == "LiveViewUrlEvent" and data.get("live_view_url"):
             self.live_view_url = data["live_view_url"]
         elif event_type == "MetricsUpdateEvent" and isinstance(data.get("metrics"), dict):
-            self.metrics = data["metrics"]
+            self.metrics.update({key: value for key, value in data["metrics"].items() if value is not None})
         elif event_type == "AgentRunStatusChangeEvent" and data.get("status"):
             self.status = data["status"]
+            self.error_code = data.get("error_code") or self.error_code
         elif event_type == "AgentErrorEvent":
             self.error = data.get("error") or self.error
+            info = data.get("info") if isinstance(data.get("info"), dict) else {}
+            self.error_code = data.get("error_code") or info.get("error_code") or self.error_code
         elif event_type == "AgentEvent":
             kind = data.get("kind")
             if kind == "observation_event":
@@ -331,6 +355,7 @@ class HRun:
         self.outcome = getattr(status, "outcome", None) or self.outcome
         self.error = getattr(status, "error", None) or self.error
         self.error_code = getattr(status, "error_code", None) or self.error_code
+        self.metrics["elapsed_s"] = time.monotonic() - self._created_at
         if getattr(status, "steps", None) is not None:
             self.metrics["steps"] = status.steps
         return self.status
@@ -423,6 +448,7 @@ class HRun:
         return self._result()
 
     def _result(self, error: str | None = None) -> StepResult:
+        self.metrics["elapsed_s"] = time.monotonic() - self._created_at
         return build_step_result(
             self.kind,
             self.status,
@@ -444,6 +470,7 @@ class HRun:
                 "title": self.last_title,
                 "steps": self.metrics.get("steps"),
                 "total_cost": self.metrics.get("total_cost"),
+                "elapsed_s": self.metrics["elapsed_s"],
                 "events": self.event_count,
             },
         )
@@ -547,6 +574,8 @@ class HRunner:
             raise ValueError("Au moins une clé H est nécessaire")
         self._slot_freed = asyncio.Event()
         self._releases = 0
+        self._attempts: dict[tuple[str, StepKind], int] = {}
+        self._failed_attempts: dict[tuple[str, StepKind], list[int]] = {}
 
     @property
     def client(self) -> Any:
@@ -639,6 +668,14 @@ class HRunner:
                 raise HQuotaTimeout(f"Aucun slot H libre après {self.quota_timeout_s}s ({detail})")
             await self._wait_freed(self.quota_poll_s, releases)
 
+    def _next_attempt(self, key: tuple[str, StepKind]) -> int:
+        """Reuse the oldest attempt whose create failed, otherwise allocate a new one."""
+        failed = self._failed_attempts.get(key)
+        if failed:
+            return failed.pop(0)
+        self._attempts[key] = self._attempts.get(key, 0) + 1
+        return self._attempts[key]
+
     async def start(
         self,
         kind: StepKind,
@@ -658,6 +695,11 @@ class HRunner:
         if reserved:
             raise ValueError(f"Paramètres gérés par HRunner, non surchargeables : {sorted(reserved)}")
         params: dict[str, Any] = {**create_params, "agent": self.agent, "messages": guard_task(task), "queue": False}
+        attempt_key = attempt = None
+        if not params.get("idempotency_key"):
+            attempt_key = (mission_id if mission_id is not None else str(uuid4()), kind)
+            attempt = self._next_attempt(attempt_key) if mission_id is not None else 1
+            params["idempotency_key"] = f"{attempt_key[0]}:{kind.value}:{attempt}"
         if self.overrides:
             params["overrides"] = {**self.overrides, **params.get("overrides", {})}
         if max_steps is not None:
@@ -668,7 +710,13 @@ class HRunner:
             params["overrides"] = {**params.get("overrides", {}), "agent.environments[kind=web].start_url": start_url}
 
         normalized_tools = as_tools(list(tools)) if tools else None
-        account, session = await self._create(params, normalized_tools)
+        try:
+            account, session = await self._create(params, normalized_tools)
+        except BaseException:
+            if mission_id is not None and attempt_key is not None:
+                # The session may exist server-side: the caller's retry must reuse this key.
+                self._failed_attempts.setdefault(attempt_key, []).append(attempt)
+            raise
         session_handle = session if normalized_tools else None
         try:
             if session_handle is not None:
@@ -745,6 +793,7 @@ class HRunner:
             own = {"start_url": step.start_url, "max_steps": step.max_steps, "max_time_s": step.max_time_s, "allowed_hosts": step.allowed_hosts}
             params = {**run_params, **step.options, **{k: v for k, v in own.items() if v is not None}}
             params.setdefault("trace", trace)
+            params.setdefault("mission_id", mission_id)
             try:
                 return await self.run(step.kind, step.task, **params)
             except Exception as exc:  # noqa: BLE001 - une étape en échec ne bloque pas les autres
