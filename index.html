@@ -1,9 +1,25 @@
 <!doctype html><html lang="en"><meta charset="utf-8">
 <title>Test history</title><style>body{background:#161b22;color:#e6edf3;font:15px system-ui;margin:2rem}a{color:#8fcaff}table{border-collapse:collapse;width:100%}th,td{padding:.6rem;text-align:left;border-bottom:1px solid #445}.badge{border:1px solid #899;padding:.2rem .5rem;border-radius:.4rem}svg{vertical-align:middle}h2{margin-top:2rem}</style><body><h1>Test history</h1>
 <h2>Runs</h2><table><tr><th>Time</th><th>Wave</th><th>Branch</th><th>Commit</th><th>Verdict</th><th>Duration</th><th>Suites (pass / fail / skip)</th><th>CI</th></tr>
+<tr><td>2026-11-08T09:53:50.661940+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/e4d56a2d5f301280531fde2c1ca67dac03b97405">e4d56a2</a></td><td><span class="badge">pass</span></td><td>70.75s</td><td>ruff: 0 / 0 / 0; pytest: 1640 / 0 / 3; node: 120 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42469091377">CI</a></td></tr>
 </table><h2>Per-wave rollup</h2><table><tr><th>Wave</th><th>Runs</th><th>Pass rate</th><th>Median duration</th><th>Regressions</th></tr>
+<tr><td></td><td>1</td><td>100%</td><td>70.75s</td><td>0</td></tr>
 </table><h2>Regressions and fixes</h2><ul>
+<li>20261108T095350Z-e4d56a2 — Regressions: None; Fixes: None</li>
 </ul><h2>Flaky tests (last 10 runs)</h2><p>None</p>
 <h2>Slowest tests of latest run</h2><ol>
+<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 8.45s</li>
+<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 2.77s</li>
+<li>pytest: tests.test_mission_store::test_completed_demo_survives_restart_with_journey_exports_and_event_replay — 1.58s</li>
+<li>pytest: tests.test_boot::test_demo_mode_boots_and_serves_pages — 1.43s</li>
+<li>pytest: tests.test_recap::test_render_pdf_real_chrome — 1.13s</li>
+<li>pytest: tests.test_recap_adapter::test_pdf — 1.12s</li>
+<li>pytest: tests.test_boot::test_replay_mode_boots_from_trace — 1.05s</li>
+<li>pytest: tests.test_logistics_sweep::test_real_sdk_task_shapes_and_partial_failure[Provider unavailable] — 1.00s</li>
+<li>pytest: tests.test_logistics_sweep::test_success — 1.00s</li>
+<li>pytest: tests.test_logistics_sweep::test_filtering — 1.00s</li>
 </ol><h2>Suite duration trends</h2>
+<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,5.00"/></svg></p>
+<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,5.00"/></svg></p>
+<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,5.00"/></svg></p>
 </body></html>
