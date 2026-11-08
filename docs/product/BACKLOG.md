@@ -9,15 +9,16 @@ usage, deliverables), **P** = product gap found while writing [JOURNEYS.md](JOUR
 Later waves append jury-1/2/3 and compliance findings here with the same columns.
 
 Priority: **P0** = blocks the primary jury demo (J1) or a hard rule; **P1** = strong score
-impact; **P2** = polish. Status: `todo` / `in-progress` / `done` (update with PR link).
+impact; **P2** = polish. Status: `todo` / `in-progress` / `done` (update with PR link). Statuses were re-checked
+against the tree on 8 Nov 2026 (audit J11): only items verified in the code are marked `done`.
 Teams: names from the night-loop master prompt.
 
 | Id | Pri | Source | Ticket | Owning team | AC | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| PB-01 | P0 | C | Translate framing question templates in `runai/framing/engine.py` (`"Quel événement officiel…"`, `"Combien de nuits ?"`, …) and all Holo/`TemplatePhraser` copy to English. | Prompt engineering / Holo | AC-01, AC-13 | todo |
+| PB-01 | P0 | C | Translate framing question templates in `runai/framing/engine.py` (`"Quel événement officiel…"`, `"Combien de nuits ?"`, …) and all Holo/`TemplatePhraser` copy to English. | Prompt engineering / Holo | AC-01, AC-13 | done (no French template left in `runai/framing`) |
 | PB-02 | P0 | C | Translate backend user-facing strings (errors, `Limitation.message`, headlines, `summary.lines`, log messages surfaced to UI, docstrings later) to English. | English translation | AC-01, AC-06 | todo |
-| PB-03 | P0 | C | Translate static shell (`runai/app/static/*`) labels, placeholders, toasts to English (`front-night` PR). | Frontend | AC-01, AC-10 | todo |
-| PB-04 | P0 | C | Add `tests/test_english_only.py` guard (French markers in code strings, static files, fixtures) and wire it into CI. | Tests & test history | AC-01 | todo |
+| PB-03 | P0 | C | Translate static shell (`runai/app/static/*`) labels, placeholders, toasts to English (`front-night` PR). | Frontend | AC-01, AC-10 | done (`index.html` is `lang="en"`, copy in `docs/design/COPY_DECK.md`; Explore screen `web/flyover` still French, see audit J5) |
+| PB-04 | P0 | C | Add `tests/test_english_only.py` guard (French markers in code strings, static files, fixtures) and wire it into CI. File still absent on `main` (audit J5). | Tests & test history | AC-01 | todo |
 | PB-05 | P0 | P | Demo no-dead-end test: every suggestion chip + first answer chip reaches `ready_to_confirm` in ≤ 6 turns; fix any fixture that stalls. | Tests & test history | AC-11 | todo |
 | PB-06 | P0 | J-UX | Halt card: "Prepared — not booked" + "Stopped before: <stop point>" + "Finish on official site ↗" on every step (`front-night`). | Frontend | AC-50, AC-51, AC-52 | todo |
 | PB-07 | P0 | J-CU | Expose `steps[].data.step_count` (H agent step counter) alongside existing `headline` and `current_url` in snapshot + SSE `step` events. | Backend / orchestration | AC-31 | todo |
