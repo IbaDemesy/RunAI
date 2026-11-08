@@ -20,7 +20,8 @@ tested separately when a local Chrome renderer is installed, otherwise skipped.
 
 ## Tracked jury expectations
 
-All tracking marks are non-strict xfails: an XPASS is a visible fix, not a failure.
+All tracking marks are strict xfails (`strict=True`): an XPASS fails the run, so a fix must
+remove its marker in the same PR. JURY-W1-2, JURY-W1-3 and JURY-W1-4 now pass and are normal tests.
 IDs below are local W1 tracking IDs, not original jury ticket numbering.
 
 | ID | Expected correct behaviour |
@@ -36,7 +37,7 @@ IDs below are local W1 tracking IDs, not original jury ticket numbering.
 ## Tracked backend gap
 
 GAP-W1-1 expects every stop-point step in the HTTP mission snapshot to expose a
-non-empty `human_action`. It is tracked separately as a non-strict xfail because
+non-empty `human_action`. It is tracked separately as a strict xfail because
 mission.v2 currently serializes StepResult without that field. The six normal
 journeys retain the remaining safety and consistency assertions.
 

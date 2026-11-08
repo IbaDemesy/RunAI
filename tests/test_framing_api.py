@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from test_framing_engine import Search, mission
 
 from runai.contracts.common import DataMode
 from runai.framing.api import build_framing_router
 from runai.framing.engine import FramingEngine
 from runai.search.candidates import LinkupCandidateSearch
+from tests.test_framing_engine import Search, mission
 
 
 def test_routes_revision_and_launch_gate():
@@ -75,7 +75,7 @@ def test_routes_revision_and_launch_gate():
 
 
 def test_get_framing_exposes_linkup_search_stats():
-    from test_search_candidates import FakeClient, row
+    from tests.test_search_candidates import FakeClient, row
 
     app = FastAPI()
     engine = FramingEngine(LinkupCandidateSearch(FakeClient([row()])))

@@ -1,6 +1,6 @@
 # Notation du jury : ce qui est fait, ce qui manque
 
-État au 7 novembre 2026, 15 h. À mettre à jour à chaque PR qui fait avancer un critère.
+État au 7 novembre 2026, 15 h, corrigé le 8 novembre 2026 (audit J11) pour l'orchestrateur et l'UX, d'après le code présent sur `main`. À mettre à jour à chaque PR qui fait avancer un critère.
 
 Légende : ✅ fait et vérifié · 🟡 en cours ou partiel · ❌ pas commencé.
 
@@ -12,7 +12,7 @@ Légende : ✅ fait et vérifié · 🟡 en cours ou partiel · ❌ pas commenc�
 | Technical execution & reliability | 25 % | 🟡 | CI et smoke tests en place ; orchestrateur et taux de réussite mesurés manquants. |
 | Usefulness & impact | 20 % | 🟡 | Problème réel et logistique propre à la course identifiés ; pas encore démontrés de bout en bout. |
 | Originality & innovation | 15 % | 🟡 | Angle « logistique course » et voix qui pilote 3 agents choisis ; à montrer. |
-| UX & user control | 10 % | ❌ | Portail humain et commandes vocales conçus, pas codés. |
+| UX & user control | 10 % | 🟡 | Arrêt humain avant engagement, commandes vocales (`runai/voice/commands.py`, `runai/app/voice_ws.py`) et vue live (`runai/app/static/live.html`) codés ; rendu navigateur non vérifié par l'audit. |
 | Demo clarity & Q&A | 5 % | 🟡 | Déroulé, plans de secours et questions du jury rédigés ; vidéo à tourner. |
 
 ## Détail par critère
@@ -43,7 +43,7 @@ Bonus visé : corriger un agent en cours à la voix (`send_message`).
 
 | Manque | Pour prendre les points |
 | --- | --- |
-| ❌ Orchestrateur (backend) : Linkup → 3 sessions H → réponses typées | Cœur du produit |
+| 🟡 Orchestrateur (backend) : Linkup → 3 sessions H → réponses typées | Codé (`runai/app/mission.py`, `runai/h/runner.py`) ; robustesse en cours (audit M1–M9) |
 | ❌ Taux de réussite réels (5 runs par site) | Les chiffres « 4/5 » des docs sont des exemples, pas des mesures |
 | ❌ Mode dégradé quand un site bloque | Plan B prévu dans [DEMO_ET_LIVRABLES.md](DEMO_ET_LIVRABLES.md) |
 | ❌ Hébergement du test live (Render ou tunnel) | Nécessaire pour le livrable 6 |
@@ -82,8 +82,8 @@ Attention : le plan H Free a 3 slots ; banc de tests, dev et démo se les partag
 | Manque | Pour prendre les points |
 | --- | --- |
 | ❌ Portail « l'agent remplit, l'humain signe » sur chaque case santé, règlement, RGPD et avant paiement | Pas seulement avant le paiement : le formulaire Lisbonne a un consentement dès l'étape 1 |
-| ❌ Interface vocale Gladia : transcription live, « stop », « pause », « reprends » | Prix Gladia |
-| ❌ Vue live de chaque agent | Le coureur voit et peut arrêter |
+| 🟡 Interface vocale Gladia : transcription live, « stop », « pause », « reprends » | Codée (`runai/app/voice_ws.py`, `runai/voice/commands.py`) ; non vérifiée en live par l'audit |
+| 🟡 Vue live de chaque agent | `runai/app/static/live.html` ; rendu non vérifié par l'audit |
 
 ### 6. Demo clarity & Q&A (5 %)
 
