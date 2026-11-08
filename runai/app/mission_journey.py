@@ -5,6 +5,7 @@ from copy import deepcopy
 from runai.contracts.common import Automation, DataMode, Provenance
 from runai.contracts.journey import CostCategory, CostLine, JourneyPlan, Money
 from runai.journey import JourneyInputs, Place, build_journey_plan
+from runai.journey.planner import PARTIAL_BUDGET_WARNING
 from runai.logistics.models import RaceRules
 from runai.models import StepKind, StepStatus
 from runai.planning.evidence import (
@@ -104,9 +105,9 @@ def project_journey(mission):
                                   label=f"{category.value} (step total)", money=prices[step_kind],
                                   note="Choice details are still incomplete."))
     plan.budget = build_budget(lines, cap=summary.budget_eur)
-    plan.warnings = [warning for warning in plan.warnings if not warning.startswith("Budget partiel :")]
+    plan.warnings = [warning for warning in plan.warnings if warning != PARTIAL_BUDGET_WARNING]
     if not plan.budget.complete:
-        plan.warnings.append("Partial budget: unpriced items excluded from the total.")
+        plan.warnings.append(PARTIAL_BUDGET_WARNING)
     for line in plan.budget.lines:
         if line.money:
             provenance = line.money.provenance

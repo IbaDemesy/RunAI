@@ -2,17 +2,19 @@ import json
 import re
 import time
 from html.parser import HTMLParser
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
 from runai.app.candidates import FixtureCandidateSearch
+from runai.app.mission_journey import project_journey
 from runai.app.server import build_demo_service, create_app
-from runai.contracts.common import DataMode
+from runai.contracts.common import Automation, DataMode
 from runai.contracts.journey import JourneyPlan
 from runai.models import StepKind, StepResult
 from runai.planning import recap_adapter
-from tests.contracts.test_shared_journey import scenario
+from tests.contracts.test_shared_journey import AT, money, scenario
 from tests.test_planning_evidence import quote, rules
 
 
@@ -25,6 +27,39 @@ class ResultRun:
 
     async def wait(self):
         return self.result
+
+
+@pytest.mark.parametrize("complete", [True, False])
+def test_projected_budget_warning_uses_final_costs(complete):
+    summary, inputs = scenario("berlin_train")
+    inputs.hotel = None
+    inputs.local_cost = money(20) if complete else None
+    structured = inputs.model_dump(mode="json")
+    steps = {
+        kind: StepResult(kind=kind, status="completed")
+        for kind in (StepKind.registration, StepKind.accommodation, StepKind.transport)
+    }
+    steps[StepKind.registration].data = {"journey": {"race": structured["race"]}}
+    steps[StepKind.accommodation].price_eur = 200
+    steps[StepKind.transport].data = {"journey": {
+        key: structured[key] for key in ("home", "outbound", "return_trip", "local_cost")
+    }}
+    mission = SimpleNamespace(
+        id="budget-warning", framing_summary=summary, limitations=[], steps=steps,
+        created_at=AT, journey=None,
+        plan=SimpleNamespace(mode=DataMode.demo, steps={
+            kind: SimpleNamespace(automation=Automation.automated) for kind in steps
+        }),
+    )
+
+    plan, _ = project_journey(mission)
+
+    assert plan.budget.complete is complete
+    partial_warnings = [warning for warning in plan.warnings
+                        if warning.startswith(("Partial budget:", "Budget partiel :"))]
+    assert partial_warnings == ([] if complete else [
+        "Partial budget: unpriced items excluded from the total."
+    ])
 
 
 @pytest.mark.parametrize("name", ["berlin_train", "tokyo_flight", "nairobi_incomplete"])
