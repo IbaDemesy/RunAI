@@ -22,3 +22,9 @@ def test_j5_explore_english_only(name):
         r"Durée du survol|Vue d'ensemble|Ouvrir un GPX|Aucun tracé exploitable|lang=\"fr\""
     )
     assert not french_copy.search(text)
+
+
+def test_j11_new_jury_audit_notes_are_english():
+    text = (ROOT / "docs" / "NOTATION.md").read_text()
+    assert not re.search(r"Revue du code le|Intégration H présente|orchestrateur présents|Partiel :|contrôle navigateur", text)
+    assert "Code review on" in text
