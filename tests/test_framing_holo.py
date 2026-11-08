@@ -83,6 +83,56 @@ def transport(handler):
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize("race", ["Marathon de la Route du Vin", "Place to Place 10K"])
+async def test_address_masking_preserves_named_race_slots(race):
+    engine = FramingEngine(NoCandidates(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="A marathon in April 2027"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={SlotName.race: race},
+    ))
+    assert session.slots[SlotName.race].value == race
+
+
+@pytest.mark.anyio
+async def test_initial_address_never_reaches_holo_or_history():
+    payloads = []
+
+    def handler(request):
+        body = json.loads(request.content)
+        payloads.append(body)
+        content = "{}" if body["messages"][0]["content"] == EXTRACT_PROMPT else "Which city?"
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+
+    engine = FramingEngine(NoCandidates(), DataMode.demo, phraser=HoloPhraser("hk-test", transport=transport(handler)))
+    session = await engine.create(FramingCreate(
+        text="Je pars du 12 rue de la Paix 75002 Paris pour le marathon de Lyon",
+    ))
+    assert any(body["messages"][0]["content"] == EXTRACT_PROMPT for body in payloads)
+    assert any(body["messages"][0]["content"] != EXTRACT_PROMPT for body in payloads)
+    for content in [json.dumps(payloads), *(turn.text for turn in session.turns)]:
+        assert "12 rue de la Paix" not in content
+        assert "75002" not in content
+
+
+@pytest.mark.anyio
+async def test_direct_holo_calls_mask_text_context_question_and_history():
+    payloads = []
+
+    def handler(request):
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+
+    address = "12 rue de la Paix, 75002 Paris"
+    phraser = HoloPhraser("hk-test", transport=transport(handler))
+    turns = [FramingTurn(role="user", text=address, revision=1)]
+    await phraser.extract(address, {"preferences": address}, turns)
+    await phraser.phrase(turns, f"Depart from {address}?", {"origin": address})
+    assert len(payloads) == 2
+    assert "12 rue de la Paix" not in json.dumps(payloads)
+    assert "75002" not in json.dumps(payloads)
+
+
+@pytest.mark.anyio
 async def test_holo_phraser_calls_h_models_and_returns_reply():
     seen = {}
 

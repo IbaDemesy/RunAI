@@ -30,7 +30,7 @@ from runai.contracts.framing import (
     missing_slots,
 )
 from runai.contracts.mission import MissionSnapshot
-from runai.framing.holo import Phraser
+from runai.framing.holo import Phraser, _mask_address
 from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
@@ -49,25 +49,6 @@ LABELS = {
     SlotName.nights: "How many nights?",
     SlotName.transport_mode: "Which transport: train, plane, car or bus?",
 }
-
-
-def _mask_address(text: str) -> str:
-    text = re.sub(
-        r"\b(?:\d+[a-z]?(?:\s*(?:bis|ter))?\s+)?"
-        r"(?:rue|avenue|av\.|boulevard|bd\.|chemin|route|impasse|allée|allee|place)\s+"
-        r"[^,;\n\d]+",
-        "[redacted address]",
-        text,
-        flags=re.IGNORECASE,
-    )
-    text = re.sub(
-        r"\b\d+[a-z]?\s+[^,;\n\d]+?\s+"
-        r"(?:street|st\.?|road|rd\.?|avenue|ave\.?|lane|drive|way)\b",
-        "[redacted address]",
-        text,
-        flags=re.IGNORECASE,
-    )
-    return re.sub(r"\b\d{5}(?:-\d{4})?\b", "[redacted postcode]", text)
 
 
 class FramingEngine:
@@ -244,7 +225,9 @@ class FramingEngine:
                 public = public_origin(origin)
                 values[SlotName.origin] = None if public == public_origin("") else public
             values = {
-                name: _mask_address(value) if isinstance(value, str) else value
+                name: _mask_address(value)
+                if name in (SlotName.origin, SlotName.preferences) and isinstance(value, str)
+                else value
                 for name, value in values.items()
             }
             origin_pending = any(q.slots == [SlotName.origin] for q in session.open_questions)

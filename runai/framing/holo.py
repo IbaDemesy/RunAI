@@ -113,6 +113,25 @@ def _user_turns(turns: Sequence[FramingTurn]) -> int:
     return sum(turn.role == "user" for turn in turns)
 
 
+def _mask_address(text: str) -> str:
+    text = re.sub(
+        r"\b(?:\d+[a-z]?(?:\s*(?:bis|ter))?\s+)?"
+        r"(?:rue|avenue|av\.|boulevard|bd\.|chemin|route|impasse|allée|allee|place)\s+"
+        r"[^,;\n\d]+",
+        "[redacted address]",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"\b\d+[a-z]?\s+[^,;\n\d]+?\s+"
+        r"(?:street|st\.?|road|rd\.?|avenue|ave\.?|lane|drive|way)\b",
+        "[redacted address]",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return re.sub(r"\b\d{5}(?:-\d{4})?\b", "[redacted postcode]", text)
+
+
 def _history(turns: Sequence[FramingTurn]) -> str:
     return "\n".join(
         ("Runner: " if turn.role == "user" else "Holo: ") + turn.text
@@ -157,6 +176,11 @@ class HoloPhraser:
         self._transport = transport
 
     async def _complete(self, messages: list[dict[str, str]], max_tokens: int, operation: str = "chat.phrase") -> str:
+        messages = [
+            {**message, "content": _mask_address(message["content"])}
+            if message["role"] != "system" else message
+            for message in messages
+        ]
         try:
             async with (
                 timed("holo", operation, model=self.model, max_tokens=max_tokens) as call,
