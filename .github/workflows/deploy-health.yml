@@ -1,0 +1,134 @@
+name: Deploy health
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: render-deploy-health-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  health:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      report: ${{ steps.check.outputs.report }}
+    env:
+      RENDER_URL: ${{ vars.RENDER_URL }}
+      RENDER_DEMO_URL: ${{ vars.RENDER_DEMO_URL }}
+      EVENT_NAME: ${{ github.event_name }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check deployed services
+        id: check
+        shell: bash
+        run: |
+          if [[ -z "$RENDER_URL" && -z "$RENDER_DEMO_URL" ]]; then
+            echo "::notice title=Deploy health skipped::Configure the RENDER_URL or RENDER_DEMO_URL repository variable."
+            exit 0
+          fi
+
+          expected_version="${HEAD_SHA:0:7}"
+          if [[ "$EVENT_NAME" == workflow_run ]]; then
+            main_sha=$(gh api "repos/$GH_REPO/commits/main" --jq .sha) || main_sha="$HEAD_SHA"
+            if [[ "$main_sha" != "$HEAD_SHA" ]]; then
+              echo "::notice title=Stale CI run::$HEAD_SHA is no longer main HEAD ($main_sha); checking health only."
+              EVENT_NAME=stale_workflow_run
+            fi
+          fi
+          report="$RUNNER_TEMP/deploy-health-report.md"
+          body="$RUNNER_TEMP/deploy-health-body.txt"
+          printf 'Render health checks failed.\n' > "$report"
+          failed=0
+          for url in "$RENDER_URL" "$RENDER_DEMO_URL"; do
+            [[ -n "$url" ]] || continue
+            endpoint="${url%/}/api/health"
+            deadline=$((SECONDS + 600))
+            healthy=0
+            status=000
+            while (( SECONDS < deadline )); do
+              remaining=$((deadline - SECONDS))
+              request_timeout=$((remaining < 20 ? remaining : 20))
+              : > "$body"
+              status=$(curl --silent --show-error --max-time "$request_timeout" \
+                --output "$body" --write-out '%{http_code}' "$endpoint") || status=000
+              if [[ "$status" == 200 ]]; then
+                if [[ "$EVENT_NAME" == workflow_run ]]; then
+                  if jq -e --arg version "$expected_version" '.version == $version' "$body" > /dev/null 2>&1; then
+                    healthy=1
+                  fi
+                elif jq -e '.ok == true' "$body" > /dev/null 2>&1; then
+                  healthy=1
+                fi
+              fi
+              if (( healthy )); then
+                echo "Healthy: $endpoint"
+                break
+              fi
+              remaining=$((deadline - SECONDS))
+              if (( remaining > 0 )); then
+                sleep "$((remaining < 20 ? remaining : 20))"
+              fi
+            done
+            if (( ! healthy )); then
+              failed=1
+              {
+                printf '\nURL: %s\n\nHTTP status: %s\n\n' "$endpoint" "$status"
+                if [[ "$EVENT_NAME" == workflow_run ]]; then
+                  printf 'Expected version: %s\n\n' "$expected_version"
+                fi
+                printf 'Body:\n\n```text\n'
+                head -c 20000 "$body"
+                printf '\n```\n'
+              } >> "$report"
+              echo "::error::Render health check failed: $endpoint (HTTP $status)"
+            fi
+          done
+
+          if (( failed )); then
+            {
+              echo 'report<<DEPLOY_HEALTH_EOF'
+              cat "$report"
+              echo 'DEPLOY_HEALTH_EOF'
+            } >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+  report:
+    needs: health
+    if: failure() && needs.health.outputs.report != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: render-deploy-health-issue
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      REPORT: ${{ needs.health.outputs.report }}
+    steps:
+      - name: Open or update the incident issue
+        shell: bash
+        run: |
+          report="$RUNNER_TEMP/deploy-health-report.md"
+          printf '%s\n' "$REPORT" > "$report"
+          issue=$(gh issue list --search 'in:title "Render deploy unhealthy"' --state open \
+            --json number,title --jq '.[] | select(.title == "Render deploy unhealthy") | .number' | head -n 1)
+          if [[ -n "$issue" ]]; then
+            gh issue comment "$issue" --body-file "$report"
+          else
+            gh issue create --title 'Render deploy unhealthy' --body-file "$report"
+          fi
