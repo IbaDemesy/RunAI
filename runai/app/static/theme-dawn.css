@@ -234,3 +234,9 @@ button.ghost:hover:not(:disabled), button.secondary:hover:not(:disabled) { borde
 .agent-live > summary { color: var(--haze); font-weight: 600; cursor: pointer; }
 .agent-live iframe, .agent-live img { background: var(--surface-1); border-color: var(--border); border-radius: var(--radius-card); }
 .agent-live iframe { height: 360px; }
+
+/* ---- Legacy light-on-light leftovers: dark-on-dark colours in style.css that the remap missed ---- */
+.course li[data-state="failed"] .cp { color: var(--text-error); border-color: var(--text-error); }
+.question-answer, .source-agent { color: var(--text-success); }
+.step[data-status="running"] { border-color: var(--sun); }
+.question-history { border-left-color: var(--border-strong); }
