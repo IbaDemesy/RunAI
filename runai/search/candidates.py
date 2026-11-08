@@ -181,10 +181,10 @@ class LinkupCandidateSearch:
             )
             response = await asyncio.to_thread(
                 self._search,
-                client,
                 build_candidate_prompt(
                     slots, today=today, location_constraint=place
                 ),
+                client=client,
             )
             candidates = self._parse_candidates(response, slots, today=today)
         except Exception as exc:
@@ -201,13 +201,13 @@ class LinkupCandidateSearch:
         try:
             response = await asyncio.to_thread(
                 self._search,
-                client,
                 build_candidate_prompt(
                     fallback_slots,
                     today=today,
                     relaxed=True,
                     location_constraint=place,
                 ),
+                client=client,
             )
             candidates = self._parse_candidates(
                 response, fallback_slots, today=today, close_match=True
@@ -473,7 +473,9 @@ class LinkupCandidateSearch:
         except Exception:  # noqa: BLE001
             return None
 
-    def _search(self, client: SearchClient, prompt: str) -> Any:
+    def _search(self, prompt: str, *, client: SearchClient | None = None) -> Any:
+        if client is None:
+            client = self._client if self._client is not None else default_client()
         with timed("linkup", "search.structured", depth="standard",
                    output_type="structured", domains=EXCLUDED_DOMAINS) as call:
             response = client.search(query=prompt, depth="standard", output_type="structured",
