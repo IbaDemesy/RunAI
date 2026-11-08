@@ -1,0 +1,122 @@
+name: Test history
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      wave:
+        description: Optional test wave
+        type: string
+        required: false
+  schedule:
+    - cron: '0 */2 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: test-history-publication
+  cancel-in-progress: false
+
+env:
+  RUNAI_WAVE: ""
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install uv==0.13.7
+          uv pip install --system -r requirements.txt -r requirements-dev.txt
+      - name: Run checks
+        continue-on-error: true
+        env:
+          WAVE: ${{ inputs.wave || env.RUNAI_WAVE }}
+        run: |
+          mkdir -p history
+          if [[ -f scripts/check.py || -f scripts/check/__main__.py ]]; then
+            python -m scripts.check --out history --wave "$WAVE"
+          elif [[ -f scripts/test_history/check.py || -f scripts/test_history/check/__main__.py ]]; then
+            python -m scripts.test_history.check --out history --wave "$WAVE"
+          else
+            echo '::notice::Check module unavailable; recording fallback checks.'
+            python -m scripts.test_history.backfill --fallback-record --out history
+          fi
+      - name: Ensure record exists
+        env:
+          WAVE: ${{ inputs.wave || env.RUNAI_WAVE }}
+        run: |
+          if ! find history -type f -name '*.json' -print -quit | grep -q .; then
+            echo '::notice::No JSON record produced; recording fallback checks.'
+            python -m scripts.test_history.backfill --fallback-record --out history
+          fi
+      - name: Publish history
+        if: github.ref == 'refs/heads/main'
+        env:
+          HISTORY_WORKTREE: ${{ runner.temp }}/test-history
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          if git ls-remote --exit-code --heads origin test-history; then
+            git fetch origin test-history
+            git worktree add -b test-history "$HISTORY_WORKTREE" FETCH_HEAD
+          else
+            git worktree add --detach "$HISTORY_WORKTREE" HEAD
+            git -C "$HISTORY_WORKTREE" checkout --orphan test-history
+            git -C "$HISTORY_WORKTREE" rm -rf .
+            git -C "$HISTORY_WORKTREE" commit --allow-empty -m 'Initialize test history'
+          fi
+          mkdir -p "$HISTORY_WORKTREE/records"
+          find history -type f -name '*.json' -exec cp {} "$HISTORY_WORKTREE/records/" \;
+          render_history() {
+            if [[ -f scripts/test_history/render.py || -f scripts/test_history/render/__main__.py ]]; then
+              python -m scripts.test_history.render --history "$HISTORY_WORKTREE/records" --out "$HISTORY_WORKTREE"
+            else
+              python -m scripts.test_history.backfill --fallback-summary --history "$HISTORY_WORKTREE/records" --out "$HISTORY_WORKTREE"
+            fi
+          }
+          render_history
+          git -C "$HISTORY_WORKTREE" add records summary.md
+          if [[ -f "$HISTORY_WORKTREE/index.html" ]]; then
+            git -C "$HISTORY_WORKTREE" add index.html
+          fi
+          if ! git -C "$HISTORY_WORKTREE" diff --cached --quiet; then
+            git -C "$HISTORY_WORKTREE" commit -m "Record test history for $GITHUB_SHA"
+          fi
+          for attempt in 1 2 3; do
+            if git -C "$HISTORY_WORKTREE" push origin HEAD:test-history; then
+              break
+            fi
+            if [[ "$attempt" == 3 ]]; then
+              exit 1
+            fi
+            git -C "$HISTORY_WORKTREE" pull --rebase -X theirs origin test-history
+            render_history
+            git -C "$HISTORY_WORKTREE" add summary.md
+            if [[ -f "$HISTORY_WORKTREE/index.html" ]]; then
+              git -C "$HISTORY_WORKTREE" add index.html
+            fi
+            if ! git -C "$HISTORY_WORKTREE" diff --cached --quiet; then
+              git -C "$HISTORY_WORKTREE" commit -m 'Refresh test history summary'
+            fi
+          done
+          cat "$HISTORY_WORKTREE/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload record
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-history-${{ github.run_id }}-${{ github.run_attempt }}
+          path: history/*.json
+          if-no-files-found: error
