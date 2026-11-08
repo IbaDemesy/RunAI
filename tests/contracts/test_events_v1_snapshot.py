@@ -148,13 +148,11 @@ def assert_no_forbidden_keys(value):
             assert_no_forbidden_keys(item)
 
 
-@pytest.mark.xfail(strict=True, reason="backend gap: pending SSE steps have neither headline nor summary")
 def test_every_step_has_headline_or_summary(demo_contract):
     for step in steps(demo_contract[0]):
         assert step.get("headline") or step["data"].get("headline") or step.get("summary")
 
 
-@pytest.mark.xfail(strict=True, reason="backend gap: pending SSE steps have no data.provenance.mode")
 def test_every_step_has_provenance(demo_contract):
     for step in steps(demo_contract[0]):
         assert step["data"].get("provenance", {}).get("mode") in {"demo", "live", "replay"}
