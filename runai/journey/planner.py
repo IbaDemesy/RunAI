@@ -152,16 +152,26 @@ class JourneyInputs(BaseModel):
 
 def public_origin(text: str) -> str:
     """City or neighborhood only: remove street numbers and postcodes from an address."""
-    parts = re.split(r"[,;\n]", text)
+    street_word = re.compile(
+        r"\b(?:rue|avenue|ave|av|boulevard|bd|street|st|road|rd|lane|drive|"
+        r"strasse|straße|calle|rua|place|chemin|impasse|cours|résidence|residence|"
+        r"via|viale|quai|route|platz|allee|allée|str|avenida|paseo|camino|estrada)\b"
+        r"|\b\w*(?:platz|allee|straße|strasse|str\.)",
+        re.IGNORECASE,
+    )
+    parts = re.split(r"[,;\n]|\b\d{5}\b", text)
     cleaned = []
     for part in parts:
         value = " ".join(_POSTCODE.sub(" ", part).split())
-        if not value or _STREET_NUMBER.match(value) or _STREET_WORD.search(value):
+        if not value or _STREET_NUMBER.match(value) or street_word.search(value):
             continue
-        if re.search(r"\d", value) and not re.fullmatch(r"[^\d]+\d{1,2}(?:e|er|ème|th|st|nd|rd)", value):
+        if re.search(r"\d", value) and not re.fullmatch(
+            r"[^\d]+\s(?:\d{1,2}(?:e|er|ème|th|st|nd|rd)?|T\d{1,2})", value,
+            re.IGNORECASE,
+        ):
             continue
         cleaned.append(value)
-    return cleaned[0] if cleaned else "Origin not specified"
+    return cleaned[-1] if cleaned else "Origin not specified"
 
 
 def normalize_mode(mode: str | None) -> str | None:
