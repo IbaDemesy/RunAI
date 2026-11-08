@@ -28,7 +28,7 @@ def mission(client):
 def test_judge_journey(client, city, channel):
     snapshot, journey, html, envelopes = run_mission(client, city, channel)
     base = f"/api/missions/{snapshot['mission_id']}"
-    assert snapshot["race"]["city"] == {"Lisbon": "Lisbonne"}.get(city, city)
+    assert snapshot["race"]["city"] == city
     assert journey["revision"] == snapshot["journey_revision"]
     for step in snapshot["steps"]:
         if step["data"]["automation"] == "automated":

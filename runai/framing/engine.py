@@ -162,7 +162,7 @@ class FramingEngine:
                     (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
                     None,
                 )
-            if question and len(question.slots) == 1 and answer and not question.choices and not choice:
+            if question and len(question.slots) == 1 and answer and (not question.choices or reply.question_id) and not choice:
                 slot = question.slots[0]
                 if slot == SlotName.date_window and slot not in values:
                     answer = reply.text.strip()

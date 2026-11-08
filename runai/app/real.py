@@ -145,7 +145,7 @@ class RealAgentRun:
                     result.status = StepStatus.stopped_before_commitment
         if (
             result.data.get("error_code") == "answer_validation"
-            or ("error_code" not in result.data and "answer_validation" in (result.error or ""))
+            or (not result.data.get("error_code") and "answer_validation" in (result.error or ""))
         ):
             result.data["error_user"] = (
                 "The agent finished but its report did not match the expected format."

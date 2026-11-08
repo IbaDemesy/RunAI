@@ -27,7 +27,7 @@ def test_export_finished_demo_round_trip(tmp_path):
         path = tmp_path / "trace.json"
         trace.dump(path)
         loaded = ReplayTrace.load(path)
-        assert loaded == trace
+        assert loaded.model_dump() == trace.model_dump()
 
         async def replay():
             async def answer(question, options):

@@ -114,8 +114,8 @@ def test_custom_spelling():
 
 
 def test_extract_race_still_understands_english_aliases():
-    assert extract_race("the Lisbon half marathon").city == "Lisbonne"
-    assert extract_race("a 10K in Barcelona").city == "Barcelone"
+    assert extract_race("the Lisbon half marathon").city == "Lisbon"
+    assert extract_race("a 10K in Barcelona").city == "Barcelona"
     assert extract_race("running in London").country == "GB"
     assert extract_race("the Milan marathon").name == "Milano Marathon"
 

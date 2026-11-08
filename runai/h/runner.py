@@ -163,7 +163,6 @@ def build_step_result(
             "Payment provider page reached — automation stopped" if payment_processor
             else f"The agent left the official site ({host}); result not trusted"
         )
-    result_data = {"h_status": h_status, "answer": answer, "outcome": outcome, **(data or {})}
     if off_platform or payment_processor:
         result_data.update(off_platform_hosts=untrusted_hosts, off_platform=off_platform, payment_processor=payment_processor)
     return StepResult(

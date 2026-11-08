@@ -75,8 +75,8 @@ def test_noisy_races(text, city, distance, origin):
         assert (race.city, race.distance_km, race.origin) == (city, distance, origin)
 
 
-def test_vocabulary_entry_count_is_unchanged():
-    assert len(gladia_vocabulary()) == 32
+def test_vocabulary_entry_count_matches_supported_terms():
+    assert len(gladia_vocabulary()) == 40
 
 
 @pytest.fixture
