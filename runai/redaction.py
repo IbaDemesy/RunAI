@@ -7,7 +7,10 @@ from typing import Any
 
 _KEY_NAME = re.compile(r"[A-Z0-9_]*_API_KEY(?:_\d+)?\Z")
 _BASIC_AUTH = "RUNAI_BASIC_AUTH"
-_BEARER = re.compile(r"\b(Bearer)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE)
+_BEARER = re.compile(
+    r"\b(Bearer)\s+(?:(?=[A-Za-z]*[0-9._~+/=-])[A-Za-z0-9._~+/=-]{8,}|[A-Za-z]{16,})",
+    re.IGNORECASE,
+)
 _BASIC = re.compile(r"\b(Basic)\s+([A-Za-z0-9+/]{4,}={0,2})(?![A-Za-z0-9+/=])", re.IGNORECASE)
 _AUTH_KEY = re.compile(r"(?:proxy-)?authorization\Z", re.IGNORECASE)
 _MASK = "[REDACTED]"

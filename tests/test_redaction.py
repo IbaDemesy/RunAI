@@ -107,3 +107,8 @@ def test_short_bearer_and_non_utf8_basic_masked(monkeypatch):
     token = base64.b64encode(b"user:\xff\xfepass").decode()
     assert redact_secrets("Bearer abcd1234") == "Bearer [REDACTED]"
     assert redact_secrets(f"Basic {token}") == "Basic [REDACTED]"
+
+
+def test_bearer_prose_is_preserved():
+    text = "The bearer presents identification."
+    assert redact_secrets(text) == text
