@@ -121,6 +121,50 @@ async def test_fractional_nights_correction_is_rejected_with_message():
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize("slot,value", [
+    (SlotName.transport_mode, "teleport"), (SlotName.nights, 999),
+    (SlotName.budget, 0), (SlotName.distance_km, 100000),
+    (SlotName.race_date, "2019-01-01"),
+])
+async def test_correction_bounds_reject_invalid_values_without_mutation(slot, value):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    with pytest.raises(FramingError, match=slot.value):
+        await engine.reply(session.id, FramingReply(
+            revision=session.revision, corrections={slot: value},
+        ))
+    assert engine.get(session.id) == session
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("slot,value", [
+    (SlotName.nights, 30), (SlotName.nights, 0), (SlotName.budget, None),
+    (SlotName.budget, 0.5), (SlotName.distance_km, 400),
+    (SlotName.race_date, date.today().isoformat()),
+    *[(SlotName.transport_mode, mode) for mode in ("train", "flight", "car", "bus")],
+])
+async def test_correction_bounds_accept_boundary_values(slot, value):
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={slot: value},
+    ))
+    assert session.slots[slot].is_known
+    assert session.slots[slot].value == value
+
+
+@pytest.mark.anyio
+async def test_correction_history_uses_readable_slot_labels():
+    engine = FramingEngine(Search(), DataMode.demo)
+    session = await engine.create(FramingCreate(text="a race"))
+    session = await engine.reply(session.id, FramingReply(
+        revision=session.revision, corrections={SlotName.transport_mode: "train"},
+    ))
+    assert session.turns[-1].text == "transport_mode: train"
+    assert "SlotName" not in session.turns[-1].text
+
+
+@pytest.mark.anyio
 @pytest.mark.parametrize("text", ["en fait plutôt Porto", "actually Porto", "rather Porto", "instead Porto"])
 async def test_place_correction_does_not_answer_origin(text):
     engine = FramingEngine(Search(), DataMode.demo)

@@ -30,7 +30,7 @@ from runai.contracts.framing import (
     missing_slots,
 )
 from runai.contracts.mission import MissionSnapshot
-from runai.framing.holo import Phraser, _mask_address
+from runai.framing.holo import TRANSPORTS, Phraser, _mask_address
 from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
@@ -99,7 +99,11 @@ class FramingEngine:
                     if not _valid_place(value):
                         raise ValueError()
                 elif name == SlotName.race_date and value is not None:
-                    date.fromisoformat(str(value))
+                    if date.fromisoformat(str(value)) < date.today():
+                        raise ValueError()
+                elif name == SlotName.transport_mode and value is not None:
+                    if not isinstance(value, str) or value not in TRANSPORTS:
+                        raise ValueError()
                 elif (
                     name in (SlotName.distance_km, SlotName.budget, SlotName.nights)
                     and value is not None
@@ -108,7 +112,9 @@ class FramingEngine:
                     if (
                         not math.isfinite(number)
                         or number < 0
-                        or (name == SlotName.distance_km and number == 0)
+                        or (name in (SlotName.distance_km, SlotName.budget) and number == 0)
+                        or (name == SlotName.distance_km and number > 400)
+                        or (name == SlotName.nights and number > 30)
                     ):
                         raise ValueError()
                     if name == SlotName.nights and not number.is_integer():
@@ -290,7 +296,9 @@ class FramingEngine:
             if isinstance(origin := values.get(SlotName.origin), str):
                 public = public_origin(origin)
                 values[SlotName.origin] = None if public == public_origin("") else public
-            turn_text = reply.text or reply.choice_id or str(values)
+            turn_text = reply.text or reply.choice_id or "; ".join(
+                f"{name.value}: {value}" for name, value in values.items()
+            )
             if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
             turn_text = _mask_address(turn_text)
