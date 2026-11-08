@@ -101,6 +101,21 @@ def test_j1_geometry_requires_trusted_sourced_provenance(kind, url, verified):
     assert {s.geometry_status for s in plan.segments if s.id in {"s-race", "s-main-out"}} == {expected}
 
 
+def test_j4_hotel_coverage_checked_without_checkin_times():
+    inputs = train_inputs()
+    inputs.hotel.check_in = date(2027, 10, 17)
+    inputs.hotel.check_in_from = inputs.hotel.check_out_until = None
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j4", mode=DataMode.demo)
+    assert "hotel_nights" in {lim.code for lim in plan.limitations}
+    from runai.journey.planner import journey_timeline
+
+    timeline = journey_timeline(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"), inputs)
+    transfer = next(event for event in timeline.events if event.title == "Hotel → start area journey")
+    assert transfer.end - transfer.start == timedelta(minutes=35)
+    assert not [event for event in timeline.events if event.title.startswith(("Check-in", "Check-out"))]
+
+
 def flight_plan():
     lis, par = "Europe/Lisbon", "Europe/Paris"
     out_hub, in_hub = place("ORY", 48.7262, 2.3652, par), place("LIS", 38.7742, -9.1342, lis)

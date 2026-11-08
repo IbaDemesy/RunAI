@@ -207,7 +207,7 @@ def journey_timeline(summary: FramingSummary, inputs: JourneyInputs) -> Timeline
             update["start_time"] = start_local.time().replace(tzinfo=None)
         rules = rules.model_copy(update=update)
     hotel = None
-    if inputs.hotel and inputs.hotel.check_in_from is not None and inputs.hotel.check_out_until is not None:
+    if inputs.hotel:
         h = inputs.hotel
         hotel = HotelStay(
             name=h.place.label,
