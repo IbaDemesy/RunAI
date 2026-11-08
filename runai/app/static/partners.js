@@ -44,7 +44,9 @@
     for (const card of screen.querySelectorAll(".candidate")) {
       const heading = Array.from(card.children || []).find(node => /^H[1-6]$/i.test(node.tagName));
       const candidate = ctx.framing?.candidates?.find(candidate => candidate.name === heading?.textContent);
-      if (!candidate || !badge(card, partnerFor({ candidate, mode }))) continue;
+      if (!candidate) continue;
+      badge(card, partnerFor({ candidate, mode }));
+      if (card.querySelectorAll(".sources").length) continue;
       const sources = candidate.sources || [];
       const details = make("details", null, "sources");
       details.append(make("summary", "Sources (" + sources.length + ")"));

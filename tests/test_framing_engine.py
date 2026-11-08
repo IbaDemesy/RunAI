@@ -1330,3 +1330,30 @@ def test_s6_exact_address_never_reaches_llm_or_turns():
         assert "75002" not in seen
 
     asyncio.run(run())
+
+
+def test_s6_known_slot_addresses_are_masked_before_holo():
+    class Spy:
+        def __init__(self):
+            self.known = []
+
+        async def phrase(self, turns, question, known):
+            self.known.append(known)
+            return question
+
+        async def extract(self, text, known, turns):
+            self.known.append(known)
+            return {}
+
+    async def run():
+        spy = Spy()
+        engine = FramingEngine(Search(1), DataMode.demo, phraser=spy)
+        session = await engine.create(FramingCreate(text="Un semi marathon à Pékin"))
+        session.slots[SlotName.city].value = "12 rue de la Paix, 75002 Paris"
+        await engine._holo_fill(session, "hello", {})
+        await engine._phrase_next_question(session)
+        seen = str(spy.known)
+        assert "rue de la Paix" not in seen
+        assert "75002" not in seen
+
+    asyncio.run(run())

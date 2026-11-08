@@ -82,3 +82,15 @@ def test_f3_f9_transport_synonyms_and_negation(text, mode):
 
 def test_f9_only_negated_mode_sets_nothing():
     assert "transport_mode" not in slots("not by car")
+
+
+@pytest.mark.parametrize(
+    ("text", "budget"),
+    [("1,200.50 euros", 1200.5), ("deux mille cinq cents euros", 2500.0), ("trois cents euros", 300.0)],
+)
+def test_f6_grouped_decimal_and_compound_word_budgets(text, budget):
+    assert slots(text)["budget"] == budget
+
+
+def test_f5_article_city_is_kept():
+    assert slots("a race in Le Mans")["city"] == "Le Mans"

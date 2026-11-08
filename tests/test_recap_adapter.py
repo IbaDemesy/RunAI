@@ -71,6 +71,7 @@ def test_j2_calendar_metadata_only_inserted_at_final_terminator():
 
 
 def test_j8_integral_budget_is_formatted_without_decimal_suffix():
+    """AC-02: whole-euro recap budget formatting."""
     plan = tokyo_plan()
     plan.budget.cap = 800
     snapshot = recap_from_journey(plan)
@@ -172,6 +173,7 @@ def test_plan_exports(factory):
 
 
 def test_masked_home_and_snapshot_isolation():
+    """AC-27: exports never expose the private home label."""
     plan = fixture("flight")
     home = next(s for s in plan.stops if s.kind.value == "home")
     home.label = "12 rue de la Roquette, 75011 Paris"

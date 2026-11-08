@@ -1,3 +1,4 @@
+# Acceptance: AC-63 (docs/product/ACCEPTANCE.md)
 import base64
 import os
 
@@ -74,18 +75,19 @@ def test_basic_auth_password_part_masked(monkeypatch):
     assert redact_secrets("demo:long-password-42") == "[REDACTED]"
 
 
-def test_short_basic_auth_password_and_pair_masked(monkeypatch):
-    monkeypatch.setenv("RUNAI_BASIC_AUTH", "u:pw")
-    assert redact_secrets("u:pw pw") == "[REDACTED] [REDACTED]"
+def test_short_basic_auth_password_kept_but_pair_masked(monkeypatch):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "u:demo,bob:pw")
+    assert redact_secrets("u:demo bob:pw demo pw") == "[REDACTED] [REDACTED] demo pw"
+    assert redact_secrets({"mode": "demo"}) == {"mode": "demo"}
 
 
 def test_multiple_basic_auth_passwords_and_encoded_pairs_masked(monkeypatch):
-    monkeypatch.setenv("RUNAI_BASIC_AUTH", "alice:Pass1,bob:Pass2")
-    for pair in ("alice:Pass1", "bob:Pass2"):
+    monkeypatch.setenv("RUNAI_BASIC_AUTH", "alice:Password-1,bob:Password-2")
+    for pair in ("alice:Password-1", "bob:Password-2"):
         password = pair.partition(":")[2]
         encoded = base64.b64encode(pair.encode()).decode()
         assert redact_secrets(f"failure {password} {encoded}") == "failure [REDACTED] [REDACTED]"
-    assert redact_secrets("alice:Pass1,bob:Pass2") == "[REDACTED]"
+    assert redact_secrets("alice:Password-1,bob:Password-2") == "[REDACTED]"
 
 
 @pytest.mark.parametrize("text,expected", [

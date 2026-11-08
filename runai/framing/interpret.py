@@ -99,15 +99,18 @@ CITY_STOPWORDS = {
 
 def _plausible_city(value: str) -> bool:
     words = re.findall(r"[\wÀ-ž'’\-]+", value)
-    return 0 < len(words) <= 3 and not any(word.casefold() in CITY_STOPWORDS for word in words)
+    return 0 < len(words) <= 3 and not any(
+        word.casefold() in CITY_STOPWORDS and word not in {"Le", "La", "Les"} for word in words
+    )
 
 
 def _parse_amount(raw: str) -> float:
     value = raw.strip().lower()
     factor = 1000.0 if value.endswith("k") else 1.0
     value = value.rstrip("k").strip()
-    if re.fullmatch(r"\d{1,3}(?:[ ,.\u00a0\u202f]\d{3})+", value):
-        return float(re.sub(r"\D", "", value)) * factor
+    grouped = re.fullmatch(r"(\d{1,3}(?:[ ,.\u00a0\u202f]\d{3})+)(?:[.,](\d{1,2}))?", value)
+    if grouped:
+        return float(re.sub(r"\D", "", grouped[1]) + "." + (grouped[2] or "0")) * factor
     return float(value.replace(",", ".")) * factor
 
 
@@ -330,7 +333,7 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
                 break
     result.update(_extract_dates(text, today or date.today()))
     currency = r"(?:€|£|\$|euros?\b|eur\b|pounds?\b|dollars?\b)"
-    amount = r"(\d{1,3}(?:[ ,.\u00a0\u202f]\d{3})+(?![.,]?\d)|\d+(?:[.,]\d+)?\s*k\b|\d+(?:[.,]\d+)?)"
+    amount = r"(\d{1,3}(?:[ ,.\u00a0\u202f]\d{3})+(?:[.,]\d{1,2})?(?![.,]?\d)|\d+(?:[.,]\d+)?\s*k\b|\d+(?:[.,]\d+)?)"
     budget = re.search(
         r"\b" + amount + r"\s*" + currency + "|" + currency + r"\s*" + amount
         + r"|\bbudget\s+(?:is\s+|of\s+|de\s+|:\s*)?(?:around\s+|about\s+|environ\s+)?" + amount,
@@ -346,15 +349,20 @@ def extract_slots(text: str, today: date | None = None) -> dict[SlotName, object
             r"\b((?:(?:" + "|".join(WORD_AMOUNTS) + r")[\s-]*)+)" + currency, text, re.IGNORECASE
         )
         if words:
-            total = 0
+            total = current = 0
             for word in re.findall(r"[a-zé]+", words[1].lower()):
                 factor = WORD_AMOUNTS[word]
-                total = (total or 1) * factor if factor >= 100 else total + factor
-            result[SlotName.budget] = float(total)
+                if factor >= 1000:
+                    total, current = total + (current or 1) * factor, 0
+                elif factor == 100:
+                    current = (current or 1) * factor
+                else:
+                    current += factor
+            result[SlotName.budget] = float(total + current)
         elif re.search(r"\bno limit\b|pas de limite|sans limite", text, re.IGNORECASE):
             result[SlotName.budget] = None
     nights = re.search(r"\b(\d+|" + "|".join(NIGHT_NUMBERS) + r")\s*(?:nuits?|nights?)\b", text, re.IGNORECASE)
-    if nights:
+    if nights and (not nights[1].isdigit() or int(nights[1]) <= 30):
         result[SlotName.nights] = int(nights[1]) if nights[1].isdigit() else NIGHT_NUMBERS[nights[1].lower()]
     elif re.search(r"\b(?:un|a|one)\s+week-?\s?end\b", text, re.IGNORECASE):
         result[SlotName.nights] = 2

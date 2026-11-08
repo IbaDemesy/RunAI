@@ -101,6 +101,18 @@ for (const [name, total] of [["train", "503"], ["flight", "540"], ["incomplete",
   });
 }
 
+test("J8 Explore shows full cents and no decimals for integral euros", () => {
+  const { container, view } = setup();
+  const plan = load("incomplete");
+  plan.budget.lines[0].money.amount = 118.5;
+  plan.budget.known_total = 118.5;
+  plan.budget.cap = 800;
+  view.setPlan(plan);
+  assert.match(container.textContent, /€118\.50/);
+  assert.match(container.textContent, /Cap: €800\./);
+  assert.doesNotMatch(container.textContent, /€800\.00/);
+});
+
 test("unknown coordinates, dates and money remain unknown; manual links and non-coverage stay visible", () => {
   const { container, view } = setup();
   view.setPlan(load("incomplete"));

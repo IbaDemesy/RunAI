@@ -429,14 +429,18 @@ class MissionService:
 
     @staticmethod
     def _snapshot_steps(mission: Mission) -> list[StepResult]:
+        steps = [step.model_copy(update={
+            "live_view_url": None if str(step.live_view_url) == step.data.get("share_url") else step.live_view_url,
+            "data": {key: value for key, value in step.data.items() if key != "share_url"},
+        }) for step in mission.steps.values()]
         if mission.read_only:
-            return list(mission.steps.values())
-        return [step.model_copy(update={"live_view_url": step.live_view_url or step.data.get("share_url"), "data": {**step.data, "history": [
+            return steps
+        return [step.model_copy(update={"data": {**step.data, "history": [
             {"at": event.at.isoformat(), "message": event.message, "type": event.type}
             for event in mission.events
             if event.data.get("step") == step.kind.value
             and (event.source == "h" or event.source.startswith("agent"))
-        ]}}) for step in mission.steps.values()]
+        ]}}) for step in steps]
 
     def _refresh_journey(self, mission: Mission) -> None:
         if mission.framing_summary is None:
@@ -1087,10 +1091,7 @@ class MissionService:
 
     @staticmethod
     def _set_agent_views(step: StepResult, run: AgentRun) -> None:
-        share_url = getattr(run, "share_url", None)
-        if share_url:
-            step.data["share_url"] = share_url
-        MissionService._set_live_view(step, getattr(run, "live_view_url", None) or (share_url if step.live_view_url is None else None))
+        MissionService._set_live_view(step, getattr(run, "live_view_url", None))
         url = getattr(run, "agent_view_url", None)
         if url and url.startswith(("http://", "https://")):
             step.agent_view_url = HttpUrl(url)

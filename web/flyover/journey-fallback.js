@@ -32,7 +32,7 @@
   function moneyText(money) {
     if (!money) return "Price unknown";
     try {
-      return new Intl.NumberFormat("en-GB", { style: "currency", currency: money.currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(money.amount);
+      return new Intl.NumberFormat("en-GB", { style: "currency", currency: money.currency, minimumFractionDigits: Number.isInteger(money.amount) ? 0 : 2, maximumFractionDigits: 2 }).format(money.amount);
     } catch (_) {
       return `${money.amount} ${money.currency}`;
     }

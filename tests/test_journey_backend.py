@@ -1,3 +1,4 @@
+# Acceptance: AC-58 (docs/product/ACCEPTANCE.md)
 import json
 import re
 import time
@@ -81,6 +82,7 @@ def test_projected_budget_warning_uses_final_costs(complete):
 
 @pytest.mark.parametrize("name", ["berlin_train", "tokyo_flight", "nairobi_incomplete"])
 def test_confirmed_journey_revisions_and_shared_exports(tmp_path, monkeypatch, name):
+    """AC-58: HTTP exports retain the requested journey revision."""
     summary, inputs = scenario(name)
     inputs.race.bib_pickup_closes = inputs.race.start_time
     inputs.race.bib_pickup_time = None

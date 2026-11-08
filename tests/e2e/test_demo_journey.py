@@ -112,7 +112,7 @@ def test_chip_city_nearest_fixture(client):
     assert any(c["city"] == "Lisbonne" for c in session["candidates"])
 
 
-@pytest.mark.xfail(strict=True, reason="JURY-W1-7: journey and recap reflect selected race, hotel and transport cards (jury-2 #5)")
+@pytest.mark.xfail(strict=True, reason="J10 / JURY-W1-7 (PB-09): transport step total is not a sourced per-leg fare")
 def test_journey_recap_consistent_with_cards(mission):
     snapshot, journey, html, _ = mission
     assert snapshot["race"]["name"] in html

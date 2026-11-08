@@ -26,7 +26,9 @@ def _configured_secrets() -> list[str]:
         basic = {credentials, base64.b64encode(credentials.encode()).decode()}
         for pair in credentials.split(","):
             pair = pair.strip()
-            basic.update((pair, base64.b64encode(pair.encode()).decode(), pair.partition(":")[2]))
+            basic.update((pair, base64.b64encode(pair.encode()).decode()))
+            if len(password := pair.partition(":")[2]) >= _MIN_LEN:
+                basic.add(password)
     else:
         basic = set()
     return sorted({s for s in found if len(s) >= _MIN_LEN} | {s for s in basic if s}, key=len, reverse=True)

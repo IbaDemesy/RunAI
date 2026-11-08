@@ -1,3 +1,4 @@
+# Acceptance: AC-26 (docs/product/ACCEPTANCE.md)
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 

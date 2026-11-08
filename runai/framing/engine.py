@@ -36,7 +36,7 @@ from runai.framing.holo import TRANSPORTS, Phraser, _mask_address, clean_extract
 from runai.framing.interpret import extract_slots, normalize_date_window
 from runai.journey import public_origin
 from runai.models import Race
-from runai.redaction import redact_secrets
+from runai.redaction import mask_address, redact_secrets
 from runai.search.candidates import CandidateSearchError, location_hint
 
 OnConfirm = Callable[[FramingSession], Awaitable[MissionSnapshot]]
@@ -54,8 +54,8 @@ LABELS = {
 }
 
 
-def _valid_place(value: object) -> bool:
-    if not isinstance(value, str) or not 2 <= len(value.strip()) <= 80:
+def _valid_place(value: object, limit: int = 80) -> bool:
+    if not isinstance(value, str) or not 2 <= len(value.strip()) <= limit:
         return False
     normalized = value.strip().casefold().replace("’", "'").strip(".!?")
     return any(c.isalpha() for c in value) and not re.search(
@@ -64,20 +64,6 @@ def _valid_place(value: object) -> bool:
         r"maybe|perhaps|whatever)(?:\b|$)",
         normalized,
     )
-
-
-def _names_a_race(text: str) -> bool:
-    """True for an explicit event name or link typed instead of picking a candidate.
-
-    "Marathon 2026 de Lisboa", "Lisboa 2026 Night Run" and race URLs are accepted;
-    vague replies such as "the sunday one please" still get a clarification.
-    """
-    value = text.strip()
-    if re.match(r"https?://\S+$", value, re.IGNORECASE):
-        return True
-    if re.search(r"\b(?:19|20)\d{2}\b", value) and sum(c.isalpha() for c in value) >= 4:
-        return True
-    return SlotName.race in extract_slots(value)
 
 
 LLM_INTENTS = {"answer", "correction", "advice", "smalltalk", "unclear"}
@@ -98,10 +84,9 @@ def _sanitize_ack(value: object, *, allow_question: bool) -> str:
     if not isinstance(value, str):
         return ""
     text = re.sub(r"https?://\S+|www\.\S+", "", value).strip().strip('"«» ')
-    text = re.sub(r"\s+", " ", text)
     sentences = re.split(r"(?<=[.!?])\s+", text)
     if not allow_question:
-        sentences = [s for s in sentences if "?" not in s]
+        sentences = [x for x in sentences if "?" not in x]
     text = re.sub(r"\s+", " ", " ".join(sentences)).strip()
     if len(text) > 320:
         text = text[:320].rsplit(" ", 1)[0].rstrip(",;:") + "."
@@ -141,11 +126,7 @@ class FramingEngine:
         for name, value in values.items():
             try:
                 if name in (SlotName.city, SlotName.origin, SlotName.race) and value is not None:
-                    explicit_race = (
-                        name == SlotName.race and isinstance(value, str)
-                        and len(value.strip()) <= 300 and _names_a_race(value)
-                    )
-                    if not (_valid_place(value) or explicit_race):
+                    if not _valid_place(value, 200 if name == SlotName.race else 80):
                         raise ValueError()
                 elif name == SlotName.race_date and value is not None:
                     if date.fromisoformat(str(value)) < date.today():
@@ -250,7 +231,12 @@ class FramingEngine:
                 pending = question or next(iter(session.open_questions), None)
                 if (
                     pending and pending.choices and answer and not choice
-                    and not reply.corrections and not _names_a_race(answer)
+                    and not reply.corrections
+                    and not re.search(
+                        r"https?://|\b(?:marathon|semi|half|run|race|trail|course|corrida|foulées|\d+\s*km?)\b",
+                        answer,
+                        re.IGNORECASE,
+                    )
                 ):
                     return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
                 correction = re.match(
@@ -268,17 +254,13 @@ class FramingEngine:
                 if (
                     pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
                     and answer and not choice and not reply.corrections
-                    and not corrected_city and not _valid_place(answer) and not _names_a_race(answer)
+                    and not corrected_city
+                    and not _valid_place(answer, 200 if pending.slots[0] == SlotName.race else 80)
                 ):
                     return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
                 values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
                 if corrected_city:
                     values = {SlotName.city: corrected_city} | reply.corrections
-                if (
-                    pending and pending.choices and answer and not choice
-                    and not reply.corrections and _names_a_race(answer)
-                ):
-                    values = {SlotName.race: answer}  # an event name typed in full: nothing else is extracted from it
                 if not values and not choice and not reply.question_id:
                     question = next(
                         (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
@@ -350,7 +332,7 @@ class FramingEngine:
                 }
                 origin_pending = any(q.slots == [SlotName.origin] for q in session.open_questions)
                 if not choice and reply.text and not origin_pending:
-                    holo_values = await self._holo_fill(session, _mask_address(reply.text), values)
+                    holo_values = await self._holo_fill(session, mask_address(_mask_address(reply.text)), values)
                     values = holo_values | values
             if isinstance(window := values.get(SlotName.date_window), str):
                 values[SlotName.date_window] = normalize_date_window(window)
@@ -371,7 +353,7 @@ class FramingEngine:
             )
             if isinstance(origin, str):
                 turn_text = turn_text.replace(origin, public)
-            turn_text = _mask_address(turn_text)
+            turn_text = mask_address(_mask_address(turn_text))
             session.revision += 1
             session.summary = None
             session.confirm_key = session.confirmed_revision = None
@@ -539,9 +521,9 @@ class FramingEngine:
                 if value == public_origin("") or not _valid_place(value):
                     continue
             elif name in (SlotName.city, SlotName.race):
-                if not isinstance(value, str) or not _valid_place(value):
+                if not isinstance(value, str) or not _valid_place(value, 200 if name == SlotName.race else 80):
                     continue
-                value = clean_extraction({name.value: value}).get(name.value)
+                value = value.strip()
             else:
                 value = clean_extraction({name.value: value}).get(name.value)
             if value is None:
@@ -597,7 +579,7 @@ class FramingEngine:
         if not extract:
             return {}
         known = {
-            name.value: str(slot.value)
+            name.value: mask_address(str(slot.value))
             for name, slot in session.slots.items()
             if slot.is_known
             and not (
@@ -629,7 +611,7 @@ class FramingEngine:
             session.open_questions[0],
         )
         known = {
-            name.value: str(slot.value)
+            name.value: mask_address(str(slot.value))
             for name, slot in session.slots.items()
             if slot.is_known and slot.value is not None
         }

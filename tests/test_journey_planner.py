@@ -472,3 +472,11 @@ def test_unsupported_outbound_cannot_claim_automation():
     segment = next(seg for seg in plan.segments if seg.id == "s-home-hotel")
     assert segment.automation is Automation.manual
     assert segment.limitation.code == "transport_not_covered"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("Paris, France", "Paris"), ("12 rue de la Paix, 75002 Paris, France", "Paris")],
+)
+def test_public_origin_keeps_city_before_country(raw, expected):
+    assert public_origin(raw) == expected
