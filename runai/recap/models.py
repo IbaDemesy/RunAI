@@ -29,6 +29,7 @@ class TimelineItem(BaseModel):
     time_known: bool = Field(True, description="False: only the date is known (all-day event in the .ics)")
     in_calendar: bool = True
     alarm_minutes: int | None = Field(None, description="Reminder N minutes before (VALARM)")
+    calendar_id: str | None = None
 
 
 class KeyFact(BaseModel):
@@ -85,6 +86,8 @@ class RecapMission(BaseModel):
 
 class Recap(BaseModel):
     id: str
+    calendar_id: str | None = None
+    calendar_revision: int = Field(default=0, ge=0)
     generated_at: datetime
     race_name: str
     race_city: str

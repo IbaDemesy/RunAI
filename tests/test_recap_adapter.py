@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from html import unescape
 from zoneinfo import ZoneInfo
 
@@ -77,6 +77,37 @@ def test_j8_integral_budget_is_formatted_without_decimal_suffix():
     html = unescape(render_html(snapshot))
     assert "€800" in html
     assert "800.0" not in html
+
+
+def test_j9_recap_uses_race_identity_not_mission_id():
+    recap = recap_from_journey(tokyo_plan()).recap
+    assert recap.race_name == "Tokyo run"
+    assert recap.runner_name != "you"
+
+
+def test_j9_calendar_uids_survive_event_insertion_and_revision():
+    plan = tokyo_plan()
+
+    def events(text):
+        result = {}
+        for event in text.split("BEGIN:VEVENT")[1:]:
+            fields = dict(line.split(":", 1) for line in event.split("\r\n") if ":" in line)
+            result[(fields["DTSTART"], fields["SUMMARY"])] = fields
+        return result
+
+    original = events(unfolded(recap_from_journey(plan)))
+    home = next(stop for stop in plan.stops if stop.kind.value == "home")
+    home.local_time = datetime(2030, 3, 1, tzinfo=UTC)
+    plan.revision += 1
+    revised = events(unfolded(recap_from_journey(plan)))
+    assert len(revised) == len(original) + 1
+    for key, event in original.items():
+        assert revised[key]["UID"] == event["UID"]
+        assert revised[key]["SEQUENCE"] == str(plan.revision)
+    assert len({event["UID"] for event in revised.values()}) == len(revised)
+    home.local_time -= timedelta(hours=1)
+    changed = events(unfolded(recap_from_journey(plan)))
+    assert {event["UID"] for event in revised.values()} != {event["UID"] for event in changed.values()}
 
 
 @pytest.mark.parametrize("factory", [lambda: fixture("train"), lambda: fixture("flight"),

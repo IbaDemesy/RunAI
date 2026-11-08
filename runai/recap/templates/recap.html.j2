@@ -66,7 +66,7 @@ a { color: #4f46e5; }
     <div class="brand">Run<span>AI</span></div>
     <h1>Your race weekend is ready</h1>
     <div class="sub">{{ r.race_name }} · {{ r.race_city }}{% if r.race_date %} · {{ r.race_date | date_long }}{% endif %}<br>
-    Prepared for <b>{{ r.runner_name }}</b>{% if r.runner_fictive %} (fictional profile){% endif %}{% if r.goal %} · goal <b>{{ r.goal }}</b>{% endif %} · generated on {{ generated | dt_short }}</div>
+    {% if r.runner_name %}Prepared for <b>{{ r.runner_name }}</b>{% if r.runner_fictive %} (fictional profile){% endif %}{% endif %}{% if r.goal %} · goal <b>{{ r.goal }}</b>{% endif %} · generated on {{ generated | dt_short }}</div>
   </div>
   <div class="dossier">Summary {{ r.id | upper }}{% if r.voice_request %}<br>Voice request:<i>« {{ r.voice_request }} »</i>{% endif %}</div>
 </div>

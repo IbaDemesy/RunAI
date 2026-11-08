@@ -568,6 +568,7 @@ def build_journey_plan(
             limitations.append(item)
     plan = JourneyPlan(
         mission_id=mission_id,
+        race_name=summary.race.name,
         revision=0,
         framing_revision=summary.revision,
         mode=mode,
