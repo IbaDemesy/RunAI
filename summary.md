@@ -2,7 +2,7 @@
 
 | Wave | Runs | Pass rate | Median duration | Regressions |
 | --- | --- | --- | --- | --- |
-|  | 23 | 83% | 79.22s | 11 |
+|  | 24 | 79% | 79.27s | 11 |
 
 ## Regressions and fixes
 - 20261108T095350Z-e4d56a2: Regressions: None; Fixes: None
@@ -28,6 +28,7 @@
 - 20261108T125056Z-de6d90a: Regressions: tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[JP], tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[KE], tests.safety_acceptance.test_human_stops::test_uncovered_flight_is_manual_not_global_rejection[PT], tests.safety_acceptance.test_human_stops::test_unknown_platform_is_explicitly_manual[https://race.example.org/register], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[un marathon \xe0 Tokyo-cand1-JP], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[un semi \xe0 Chicago depuis Montr\xe9al en avion 3 nuits 800 euros-cand2-US], tests.test_framing_end_to_end::test_framing_to_launch_plan_any_city[une course \xe0 Nairobi-cand0-KE], tests.test_mission_outcome::test_manual_steps_do_not_count_as_prepared; Fixes: None
 - 20261108T125817Z-b5c652f: Regressions: tests.test_framing_holo::test_holo_phraser_calls_h_models_and_returns_reply[asyncio]; Fixes: None
 - 20261108T130944Z-bd0cc1b: Regressions: tests.safety_acceptance.test_human_stops::test_unknown_platform_is_explicitly_manual[None]; Fixes: None
+- 20261108T162758Z-bd0cc1b: Regressions: None; Fixes: None
 
 ## Flaky tests (last 10 runs)
 tests.test_static_shell::test_static_shell_has_no_fixed_city_or_distance_defaults
