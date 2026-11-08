@@ -116,6 +116,16 @@ def test_j4_hotel_coverage_checked_without_checkin_times():
     assert not [event for event in timeline.events if event.title.startswith(("Check-in", "Check-out"))]
 
 
+@pytest.mark.parametrize(("nights", "label"), [(5, "Hotel 5 nights"), (1, "Hotel 1 night"), (0, "Hotel 0 nights")])
+def test_j7_hotel_nights_use_selected_dates(nights, label):
+    inputs = train_inputs()
+    inputs.hotel.check_out = inputs.hotel.check_in + timedelta(days=nights)
+    plan = build_journey_plan(summary("Amsterdam", "NL", date(2027, 10, 17), "Lille", "train"),
+                              inputs, mission_id="j7", mode=DataMode.demo)
+    assert next(line for line in plan.budget.lines if line.id == "c-hotel").label == label
+    assert any("requested 2 nights" in warning for warning in plan.warnings)
+
+
 def flight_plan():
     lis, par = "Europe/Lisbon", "Europe/Paris"
     out_hub, in_hub = place("ORY", 48.7262, 2.3652, par), place("LIS", 38.7742, -9.1342, lis)

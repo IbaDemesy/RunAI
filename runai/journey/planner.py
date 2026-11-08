@@ -540,14 +540,16 @@ def build_journey_plan(
         _chapter(ChapterId.return_trip, CHAPTER_LABELS[ChapterId.return_trip], return_stops, return_segments, b),
     ]
 
-    nights = summary.nights
+    nights = (inputs.hotel.check_out - inputs.hotel.check_in).days if inputs.hotel else summary.nights
+    if inputs.hotel and nights != summary.nights:
+        b.warnings.append(f"Selected hotel dates cover {nights} nights; you requested {summary.nights} nights.")
     legs = [inputs.outbound, inputs.return_trip]
     budget = Budget(
         currency=currency,
         cap=summary.budget_eur if currency == "EUR" else None,
         lines=[
             _line("c-reg", CostCategory.registration, "Registration", race_in.registration_cost, currency, "Fare unknown"),
-            _line("c-hotel", CostCategory.accommodation, f"Hotel {nights} night{'s' if nights > 1 else ''}",
+            _line("c-hotel", CostCategory.accommodation, f"Hotel {nights} night{'s' if nights != 1 else ''}",
                   inputs.hotel.cost if inputs.hotel else None, currency, "Price unknown"),
             *_transport_lines(legs, currency, main_mode is not None),
             _line("c-local", CostCategory.local, "Local transport", inputs.local_cost, currency, "Not estimated"),
