@@ -89,11 +89,22 @@ def human_action(stop_point: StopPoint | None) -> str:
 
 
 def _profile_lines(profile: RunnerProfile) -> str:
-    return (
+    text = (
         f"Profil fictif : {profile.first_name} {profile.last_name}, {profile.email}, "
         f"né(e) le {profile.birth_date.isoformat()}, sexe {profile.gender}, "
         f"nationalité {profile.nationality}, ville {profile.city}."
     )
+    if not profile.fictional:
+        text = (
+            f"Runner profile: {profile.first_name} {profile.last_name}, {profile.email}, "
+            f"born {profile.birth_date.isoformat()}, gender {profile.gender}, "
+            f"nationality {profile.nationality}, city {profile.city}."
+        )
+    for field in ("phone", "emergency_contact_name", "emergency_contact_phone",
+                  "license_number", "tshirt_size", "estimated_finish_time"):
+        if value := getattr(profile, field):
+            text += f" {field.replace('_', ' ')}: {value}."
+    return text
 
 
 class TripBrief(BaseModel):
