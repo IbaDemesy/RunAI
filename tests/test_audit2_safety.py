@@ -23,7 +23,7 @@ from runai.safety import release_attempt
         "https://www.flytap.pt/",
         "https://booking。com/",
         "https://booking%2ecom/",
-        "https://booking.com\@evil.example/",
+        r"https://booking.com\@evil.example/",
         "https://ｂooking.com/",
     ],
 )

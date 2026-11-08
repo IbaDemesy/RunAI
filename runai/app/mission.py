@@ -67,6 +67,9 @@ logger = logging.getLogger(__name__)
 
 AGENT_STEPS = (StepKind.registration, StepKind.accommodation, StepKind.transport)
 ACTIVE_STATUSES = {StepStatus.running, StepStatus.paused}
+# Embedded step history: `step` SSE envelopes keep few entries (they are emitted per event), snapshots more.
+STEP_EVENT_HISTORY_LIMIT = 10
+SNAPSHOT_HISTORY_LIMIT = 200
 
 class MissionStatus(str, Enum):
     searching = "searching"
@@ -428,19 +431,29 @@ class MissionService:
         return MissionSnapshot.model_validate(redact_secrets(snapshot.model_dump(mode="json")))
 
     @staticmethod
-    def _snapshot_steps(mission: Mission) -> list[StepResult]:
+    def _snapshot_steps(mission: Mission, history_limit: int | None = SNAPSHOT_HISTORY_LIMIT) -> list[StepResult]:
         steps = [step.model_copy(update={
             "live_view_url": None if str(step.live_view_url) == step.data.get("share_url") else step.live_view_url,
             "data": {key: value for key, value in step.data.items() if key != "share_url"},
         }) for step in mission.steps.values()]
         if mission.read_only:
             return steps
-        return [step.model_copy(update={"data": {**step.data, "history": [
-            {"at": event.at.isoformat(), "message": event.message, "type": event.type}
-            for event in mission.events
-            if event.data.get("step") == step.kind.value
-            and (event.source == "h" or event.source.startswith("agent"))
-        ]}}) for step in steps]
+        histories: dict[str, list[dict[str, str]]] = {}
+        for event in mission.events:
+            name = event.data.get("step")
+            if name in {step.kind.value for step in steps} and (event.source == "h" or event.source.startswith("agent")):
+                histories.setdefault(name, []).append(
+                    {"at": event.at.isoformat(), "message": event.message, "type": event.type}
+                )
+        result = []
+        for step in steps:
+            history = histories.get(step.kind.value, [])
+            extra: dict[str, Any] = {"history": history}
+            if history_limit is not None and len(history) > history_limit:
+                # Additive: bound the embedded history so event payloads stay linear in the event count.
+                extra = {"history": history[-history_limit:], "history_total": len(history), "history_truncated": True}
+            result.append(step.model_copy(update={"data": {**step.data, **extra}}))
+        return result
 
     def _refresh_journey(self, mission: Mission) -> None:
         if mission.framing_summary is None:
@@ -862,8 +875,11 @@ class MissionService:
         self._emit(mission, "agent_step", payload)
 
     def _publish_state(self, mission: Mission) -> None:
-        self._publish(mission, ("mission", mission.snapshot()))
-        self._emit(mission, "step", {"steps": [step.model_dump(mode="json") for step in self._snapshot_steps(mission)]})
+        if self._subscribers.get(mission.id):
+            self._publish(mission, ("mission", mission.snapshot()))
+        self._emit(mission, "step", {"steps": [
+            step.model_dump(mode="json") for step in self._snapshot_steps(mission, STEP_EVENT_HISTORY_LIMIT)
+        ]})
         self._save_mission(mission)
 
     def _publish(self, mission: Mission, message: tuple[str, dict[str, Any]]) -> None:
