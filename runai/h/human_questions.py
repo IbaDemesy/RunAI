@@ -1,11 +1,10 @@
 import asyncio
 import hashlib
-import re
 from datetime import datetime, timedelta
 
 from runai.contracts.mission import HumanAnswer, HumanQuestion, QuestionStatus
 from runai.models import AgentQuestion, utcnow
-from runai.safety import detect_stop_point
+from runai.safety import release_attempt
 
 
 class HumanQuestionError(Exception):
@@ -80,18 +79,13 @@ class HumanQuestionRegistry:
             self._events[question_id].set()
             raise HumanQuestionError("Question expired")
         text = f"{question.text} {' '.join(question.choices)} {question.reason or ''} {answer.answer}"
-        stop = detect_stop_point(text)
-        forbidden = stop is not None or re.search(
-            r"\b(compte|account|santé|health|consentement|consent|envoi|envoyer|send|soumission|réservation|booking)\b",
-            text,
-            re.IGNORECASE,
-        )
+        refusal = release_attempt(text)
         question.status = (
-            QuestionStatus.refused if forbidden else QuestionStatus.answered
+            QuestionStatus.refused if refusal else QuestionStatus.answered
         )
-        question.answer = None if forbidden else answer.answer
-        if forbidden:
-            question.reason = f"Mandatory human stop: {stop.value if stop else 'forbidden commitment'}. No automation authorized."
+        question.answer = None if refusal else answer.answer
+        if refusal:
+            question.reason = refusal
         self._keys[question_id] = answer.idempotency_key
         self._answer_digests[question_id] = digest
         self._events[question_id].set()

@@ -58,7 +58,7 @@ from runai.models import (
 )
 from runai.planning.recap_adapter import recap_from_journey
 from runai.redaction import redact_secrets
-from runai.safety import detect_stop_point, guard_task
+from runai.safety import detect_stop_point, guard_task, release_attempt
 from runai.search.checks import host_of
 from runai.search.logistics_sweep import LogisticsSweep
 from runai.tracing import TraceWriter
@@ -652,6 +652,17 @@ class MissionService:
 
     async def send_message(self, mission_id: str, kind: StepKind, text: str) -> None:
         mission, step, run = self._active(mission_id, kind)
+        if reason := release_attempt(text):
+            self._record(
+                mission,
+                TraceEvent(
+                    source="human",
+                    type="message_refused",
+                    message=reason,
+                    data={"step": kind.value},
+                ),
+            )
+            raise MissionError(reason)
         if run.session_id is None:
             raise MissionError("H session is still queued; try again after it starts.")
         await run.send_message(guard_task(text))
