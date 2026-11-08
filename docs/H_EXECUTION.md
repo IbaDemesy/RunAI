@@ -46,4 +46,35 @@ Le script affiche le quota de chaque clé, vérifie qu'un slot est libre, lance 
 | Sans `start_url`, avec pause/reprise/message | 3 | 27 s | 0,0076 $ | Démarre sur Bing. Pause : appel 0,5 s, état `paused` 1,5 s après la demande. `flow_event` pause/resume et message reçus |
 | Avec `start_url` | 1 | 13 s | 0,0028 $ | L'override `agent.environments[kind=web].start_url` fonctionne avec `h/web-surfer-pro` |
 
-Aucun `LiveViewUrlEvent` n'a été émis dans ces deux runs : `live_view_url` retombe alors sur l'`agent_view_url` (page Agent View de la plateforme H, connexion requise). Un lien public sans clé passerait par le [partage de session](https://hub.hcompany.ai/agents-api/sessions/share.md), non branché ici.
+## Public share link
+
+Each new session requests a public link through `sessions.share_session()`. Relative share paths
+use the owning client's base URL origin (scheme and host), falling back to
+`https://agp.eu.hcompany.ai` when unavailable; absolute URLs are preserved. `run.share_url`
+and `StepResult.data['share_url']` expose the link. Without a `LiveViewUrlEvent`,
+`live_view_url` uses this public link; an explicit live-view event takes precedence.
+Sharing failures produce a warning trace without interrupting the session. The private
+`agent_view_url` remains separate and may require an H login. The `session_created` trace
+and result data include `h_key`, the account name only, never its secret value.
+
+## Outcome and error_code mapping
+
+| H signal | Step result |
+| --- | --- |
+| `outcome=blocked` | `failed`, with `Blocked by the site (captcha/anti-bot or login wall)` |
+| `outcome=infeasible` | `failed`, with the first 200 answer characters and `retryable=false` |
+| `outcome=partial` | Existing status and stop-point detection, with `partial=true` |
+| Other or missing outcome | Existing H status, captcha-marker and stop-point detection |
+| Failed H status with `error_code` | Uses the error code if no error text is available |
+
+Both `outcome` and `error_code` are included in result data. Error codes such as
+`environment_error`, `no_answer`, `answer_validation`, `timeout`, `insufficient_credit`,
+and `internal` are preserved unchanged.
+
+### Environment overrides
+
+`RUNAI_H_OVERRIDES` optionally supplies a JSON object of H agent overrides, for example
+`{"agent.environments[kind=web].settle_s": 0.5, "agent.environments[kind=web].lazy": true}`.
+Explicit `start(overrides=...)` values win over environment values, and `start_url`
+is applied last. An invalid JSON object raises `ValueError` when constructing `HRunner`.
+With the variable unset, behavior is unchanged.
