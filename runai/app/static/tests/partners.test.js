@@ -12,6 +12,20 @@ class Node {
   insertBefore(node, reference) { node.parentNode = this; this.children.splice(reference ? this.children.indexOf(reference) : this.children.length, 0, node); }
   querySelectorAll(selector) { return this.children.flatMap(child => [...(child.className.split(" ").includes(selector.slice(1)) ? [child] : []), ...child.querySelectorAll(selector)]); }
 }
+test("J3 live citations survive missing provider metadata without false badges", () => {
+  const doc = { createElement: tag => new Node(tag, doc), getElementById: () => null };
+  const screen = doc.createElement("section"), card = doc.createElement("article");
+  card.className = "candidate";
+  const heading = doc.createElement("h2"); heading.textContent = "Sourced race";
+  card.append(heading); screen.append(card);
+  const ctx = { framing: { mode: "live", candidates: [{ name: heading.textContent,
+    sources: [{ url: "https://example.org/race", title: "Official source" }] }] } };
+  decorate(screen, ctx); decorate(screen, ctx);
+  assert.equal(card.querySelectorAll(".partner-badge").length, 0);
+  const details = card.querySelectorAll(".sources");
+  assert.equal(details.length, 1);
+  assert.equal(details[0].children[1].children[0].children[0].href, "https://example.org/race");
+});
 test("J3 partner attribution requires explicit live mode and provider", () => {
   for (const provider of ["h", "linkup", "holo4", "gladia"]) {
     assert.equal(partnerFor({ mode: "demo", provider }).label, "Demo");
