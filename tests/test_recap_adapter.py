@@ -52,6 +52,24 @@ def calendar_starts(text):
     return sorted(starts)
 
 
+@pytest.mark.parametrize("value", ["x\rBEGIN:VEVENT", "x\r\nBEGIN:VEVENT", "x\nBEGIN:VEVENT"])
+def test_j2_ics_escapers_remove_every_line_break(value):
+    from runai.logistics.ics import _escape
+    from runai.recap.ics import escape_text
+
+    for escape in (escape_text, _escape):
+        assert escape(value) == "x\\nBEGIN:VEVENT"
+
+
+def test_j2_calendar_metadata_only_inserted_at_final_terminator():
+    plan = tokyo_plan()
+    next(s for s in plan.stops if s.id == "start").label = "END:VCALENDAR; injected\rBEGIN:VEVENT"
+    text = unfolded(recap_from_journey(plan))
+    assert text.count("X-RUNAI-SCHEMA:") == 1
+    assert "\r" not in text.replace("\r\n", "")
+    assert text.endswith("END:VCALENDAR\r\n")
+
+
 @pytest.mark.parametrize("factory", [lambda: fixture("train"), lambda: fixture("flight"),
                                      lambda: fixture("incomplete"), tokyo_plan])
 def test_plan_exports(factory):

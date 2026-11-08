@@ -12,7 +12,7 @@ DEFAULT_DURATION = timedelta(minutes=30)
 
 def escape_text(value: str) -> str:
     return (value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
-            .replace("\r\n", "\\n").replace("\n", "\\n"))
+            .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n"))
 
 
 def fold(line: str) -> str:

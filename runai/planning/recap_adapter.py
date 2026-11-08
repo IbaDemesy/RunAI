@@ -155,4 +155,5 @@ def render_ics(snapshot: JourneyRecap) -> bytes:
                 f"X-RUNAI-MISSION-ID:{escape_text(snapshot.mission_id)}",
                 f"X-RUNAI-REVISION:{snapshot.revision}", f"X-RUNAI-MODE:{snapshot.mode}",
                 f"X-WR-CALDESC:{escape_text(description)}"]
-    return text.replace("END:VCALENDAR", "\r\n".join(fold(line) for line in metadata) + "\r\nEND:VCALENDAR").encode()
+    content, separator, tail = text.rpartition("END:VCALENDAR")
+    return (content + "\r\n".join(fold(line) for line in metadata) + "\r\n" + separator + tail).encode()
