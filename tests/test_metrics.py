@@ -12,7 +12,7 @@ from runai.models import StepResult, TraceEvent
 from runai.tracing import TraceWriter, iter_traces
 from tests.test_v2_backend import confirm, finish, prepare
 
-FIXTURE = Path(__file__).parent / "fixtures" / "traces" / "sample_mission.jsonl"
+FIXTURE = Path(__file__).parent / "fixtures" / "metrics_traces" / "sample_mission.jsonl"
 
 
 def fixture_events():
