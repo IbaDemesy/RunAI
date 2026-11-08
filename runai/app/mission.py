@@ -249,7 +249,7 @@ class MissionService:
             snapshot=self.snapshot(mission.id), envelopes=mission.envelopes,
             framing_summary=mission.framing_summary, framing_turns=mission.framing_turns,
             plan=mission.plan, created_at=mission.created_at, finished_at=mission.finished_at,
-            journey=mission.journey,
+            user_id=mission.user_id, journey=mission.journey,
         ), terminal=mission.is_terminal)
 
     def rehydrate(self) -> None:
@@ -258,7 +258,7 @@ class MissionService:
             if snapshot.mission_id in self.missions:
                 continue
             mission = Mission(
-                id=snapshot.mission_id, query=document.plan.brief.race_label,
+                id=snapshot.mission_id, query=document.plan.brief.race_label, user_id=document.user_id,
                 status=snapshot.status, created_at=document.created_at, finished_at=document.finished_at,
                 race=snapshot.race,
                 steps={step.kind: step for step in snapshot.steps}, plan=document.plan,
