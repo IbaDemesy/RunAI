@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   health:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     outputs:
@@ -67,7 +67,7 @@ jobs:
                 --output "$body" --write-out '%{http_code}' "$endpoint") || status=000
               if [[ "$status" == 200 ]]; then
                 if [[ "$EVENT_NAME" == workflow_run ]]; then
-                  if jq -e --arg version "$expected_version" '.version == $version' "$body" > /dev/null 2>&1; then
+                  if jq -e --arg version "$expected_version" '.ok == true and .version == $version' "$body" > /dev/null 2>&1; then
                     healthy=1
                   fi
                 elif jq -e '.ok == true' "$body" > /dev/null 2>&1; then

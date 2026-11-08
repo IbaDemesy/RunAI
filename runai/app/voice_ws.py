@@ -2,7 +2,11 @@
 
 import asyncio
 import json
+import time
+from collections import OrderedDict
 from contextlib import aclosing, suppress
+from hashlib import sha256
+from urllib.parse import urlsplit
 
 import anyio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -16,6 +20,34 @@ MAX_AUDIO_SECONDS = 120
 IDLE_TIMEOUT_SECONDS = 20
 DRAIN_TIMEOUT_SECONDS = 20
 MAX_BUFFERED_FRAMES = 32
+
+
+class VoiceAdmission:
+    def __init__(self):
+        self.slot = asyncio.Semaphore(1)
+        self.starts: OrderedDict[str, tuple[float, int]] = OrderedDict()
+
+    async def acquire(self, scope) -> str | None:
+        if self.slot.locked():
+            return "Voice busy. Try again later."
+        now = time.monotonic()
+        while self.starts and next(iter(self.starts.values()))[0] <= now:
+            self.starts.popitem(last=False)
+        forwarded = dict(scope["headers"]).get(b"x-forwarded-for", b"")
+        client = scope.get("client")
+        ip = forwarded.decode("latin-1").rsplit(",", 1)[-1].strip() or (client[0] if client else "unknown")
+        key = sha256(ip.encode()).hexdigest()
+        expires, count = self.starts.get(key, (now + 60, 0))
+        if count >= 10:
+            return "Voice rate limit reached. Try again later."
+        if key not in self.starts and len(self.starts) >= 4096:
+            self.starts.popitem(last=False)
+        self.starts[key] = (expires, count + 1)
+        await self.slot.acquire()
+        return None
+
+    def release(self) -> None:
+        self.slot.release()
 
 
 def _control(message: dict) -> dict:
@@ -32,7 +64,19 @@ def _control(message: dict) -> dict:
 async def voice_stream(websocket: WebSocket) -> None:
     from runai.app.server import MAX_AUDIO_BYTES
 
-    await websocket.accept()
+    origin = websocket.headers.get("origin")
+    if origin is not None:
+        try:
+            allowed = urlsplit(origin).scheme in {"http", "https"} and urlsplit(origin).netloc.lower() == websocket.headers.get("host", "").lower()
+        except ValueError:
+            allowed = False
+        if not allowed:
+            await websocket.close(code=1008)
+            return
+    admission = websocket.app.state.voice_admission
+    if error := await admission.acquire(websocket.scope):
+        await websocket.close(code=1013 if "busy" in error else 1008, reason=error)
+        return
     tasks: list[asyncio.Task] = []
     queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=MAX_BUFFERED_FRAMES)
     stopped = asyncio.Event()
@@ -47,6 +91,7 @@ async def voice_stream(websocket: WebSocket) -> None:
             yield chunk
 
     try:
+        await websocket.accept()
         first = await asyncio.wait_for(websocket.receive(), IDLE_TIMEOUT_SECONDS)
         if first["type"] == "websocket.disconnect":
             return
@@ -131,3 +176,4 @@ async def voice_stream(websocket: WebSocket) -> None:
                 task.cancel()
         with anyio.CancelScope(shield=True):
             await asyncio.gather(*tasks, return_exceptions=True)
+        admission.release()

@@ -68,6 +68,7 @@ from runai.redaction import redact_secrets
 from runai.search.candidates import LinkupCandidateSearch
 from runai.search.linkup_search import default_client
 from runai.search.logistics_sweep import LinkupLogisticsSweeper
+from runai.voice.audio import AudioDurationError, validate_wav_duration
 
 STATIC_DIR = Path(__file__).parent / "static"
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -203,7 +204,8 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         if lifecycle:
             await lifecycle.aclose()
 
-    public_without_auth = os.getenv("RUNAI_PUBLIC") == "1" and not os.getenv("RUNAI_BASIC_AUTH")
+    public = os.getenv("RUNAI_PUBLIC") == "1"
+    public_without_auth = public and not os.getenv("RUNAI_BASIC_AUTH")
     if public_without_auth and not selected.simulated:
         raise RuntimeError(
             "RUNAI_PUBLIC=1 in live mode: set RUNAI_BASIC_AUTH or anyone can use your credits"
@@ -211,7 +213,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     app = FastAPI(title="RunAI", lifespan=lifespan)
     if credentials := os.getenv("RUNAI_BASIC_AUTH"):
         app.add_middleware(BasicAuthMiddleware, credentials=credentials)
-    app.add_middleware(SecurityHeadersMiddleware, enforce=os.getenv("RUNAI_CSP_ENFORCE") == "1")
+    app.add_middleware(SecurityHeadersMiddleware, enforce=os.getenv("RUNAI_CSP_ENFORCE") == "1", public=public)
     app.add_middleware(RequestIdMiddleware)
 
     @app.exception_handler(StarletteHTTPException)
@@ -224,6 +226,7 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         detail = json.dumps(redact_secrets(jsonable_encoder(error.errors())), ensure_ascii=False)
         return JSONResponse({"detail": detail}, status_code=422)
     app.state.service = selected
+    app.state.voice_admission = voice_ws.VoiceAdmission()
     engine = FramingEngine(
         search=candidate_search(selected.providers), mode=selected.providers.mode,
         phraser=selected.phraser,
@@ -338,7 +341,9 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         return FileResponse(STATIC_DIR / "live.html")
 
     @app.get("/api/health")
-    async def health() -> dict:
+    async def health(request: Request) -> dict:
+        if public and not getattr(request.state, "basic_authenticated", False):
+            return {"ok": True, "version": app_version()}
         service = get_service()
         payload = service.providers.health_payload()
         payload.update(
@@ -544,7 +549,13 @@ def create_app(service: MissionService | None = None) -> FastAPI:
     @app.post("/api/transcribe")
     async def transcribe(request: Request) -> dict:
         too_large = HTTPException(status_code=413, detail="Audio too large")
-        if int(request.headers.get("content-length") or 0) > MAX_AUDIO_BYTES:
+        try:
+            content_length = int(request.headers.get("content-length") or 0)
+            if content_length < 0:
+                raise ValueError
+        except ValueError:
+            raise HTTPException(400, "Invalid Content-Length") from None
+        if content_length > MAX_AUDIO_BYTES:
             raise too_large
         audio = bytearray()
         async for chunk in request.stream():
@@ -554,12 +565,23 @@ def create_app(service: MissionService | None = None) -> FastAPI:
         audio = bytes(audio)
         if not audio:
             raise HTTPException(status_code=400, detail="Empty audio")
+        try:
+            validate_wav_duration(audio)
+        except AudioDurationError as error:
+            raise HTTPException(413, str(error)) from None
         content_type = request.headers.get("content-type", "application/octet-stream")
+        admission = app.state.voice_admission
+        if error := await admission.acquire(request.scope):
+            raise HTTPException(429, error)
         try:
             return redact_secrets({"text": await get_service().transcribe(audio, content_type), "mode": selected.providers.mode.value})
+        except AudioDurationError as error:
+            raise HTTPException(413, str(error)) from None
         except Exception:
             logger.exception("Audio transcription failed")
             raise HTTPException(503, "Audio transcription is temporarily unavailable.") from None
+        finally:
+            admission.release()
 
     @app.get("/api/live/{session_id}")
     async def live_session(session_id: str) -> dict:
