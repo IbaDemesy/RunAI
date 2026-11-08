@@ -96,19 +96,26 @@ def test_known_date_resolves_period(client):
     assert not any(re.search(r"Période\s*\?|period.*unknown", line, re.IGNORECASE) for line in (session.get("summary") or {}).get("lines", []))
 
 
-@pytest.mark.xfail(strict=True, reason="JURY-W1-5: parse an English month as a period, never as the city")
+LOGISTICS = {"date_window": None, "budget": 800, "nights": 2, "transport_mode": "train"}
+
+
 def test_english_month_is_not_city(client):
     session = checked(client.post("/api/framings", json={"text": "Milan marathon in April 2027"}), 201)
     assert session["slots"]["city"]["value"] == "Milan"
+    assert session["slots"]["date_window"]["value"] == "April 2027"
+    # sourced candidates only appear once the logistics prerequisites are known
+    session = reply(client, session, corrections={"origin": "Lyon", "budget": 800, "nights": 2, "transport_mode": "train"})
     assert session["candidates"]
+    assert all(c["city"] == "Milan" for c in session["candidates"])
 
 
-@pytest.mark.xfail(strict=True, reason="JURY-W1-6: city reply after a marathon chip offers the nearest demo fixture")
 def test_chip_city_nearest_fixture(client):
     session = checked(client.post("/api/framings", json={"text": "marathon from Lyon"}), 201)
     session = reply(client, session, text="Lisbon")
+    assert session["slots"]["city"]["value"] == "Lisbon"
+    session = reply(client, session, corrections=LOGISTICS)
     assert session["candidates"], session
-    assert any(c["city"] == "Lisbonne" for c in session["candidates"])
+    assert any(c["city"] == "Lisbon" for c in session["candidates"])
 
 
 @pytest.mark.xfail(strict=True, reason="J10 / JURY-W1-7 (PB-09): transport step total is not a sourced per-leg fare")

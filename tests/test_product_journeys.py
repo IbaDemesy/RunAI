@@ -234,3 +234,28 @@ def test_ac09_sse_reconnect(client, completed):
     sequences = [e["sequence"] for e in original[:len(original) // 2 + 1] + resumed]
     assert len(sequences) == len(set(sequences))
     assert events(client, mid, original[-1]["event_id"]) == []
+
+
+def reply_text(client, session, text):
+    response = client.post(f"/api/framings/{session['id']}/replies", json={"revision": session["revision"], "text": text})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_period_answer_is_never_a_place_name(client):
+    session = reply_text(client, start(client, "marathon from Lyon"), "Lisbon")
+    session = reply_text(client, session, "Tokyo")
+    assert session["slots"]["date_window"]["value"] != "Tokyo"
+    assert session["slots"]["city"]["value"] == "Lisbon"
+
+
+def test_flexible_period_inside_a_multi_slot_reply(client):
+    session = reply_text(client, start(client, "marathon from Lyon"), "Lisbon, any time, 900 euros, 2 nights, train")
+    assert session["status"] == "choosing_candidate", session
+    assert any(c["city"] == "Lisbon" for c in session["candidates"])
+
+
+def test_typed_city_marathon_matches_recorded_fixture(client):
+    session = reply_text(client, start(client, "Milan marathon in April 2027"), "depuis Lyon, 800 euros, 2 nights, train")
+    assert [c["city"] for c in session["candidates"]] == ["Milan"]
+    assert not any(item["code"] == "demo_closest" for item in session["limitations"])
