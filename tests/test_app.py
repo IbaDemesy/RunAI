@@ -737,7 +737,7 @@ def _assert_question_answer_endpoint(client):
     created = api_confirm(client)
     assert created.status_code == 200
     mission_id = created.json()["mission_id"]
-    payload = {"answer": "Découverte", "revision": created.json()["framing_revision"], "idempotency_key": "test-answer"}
+    payload = {"answer": "Not an option", "revision": created.json()["framing_revision"], "idempotency_key": "test-answer"}
     assert client.post(f"/api/missions/{mission_id}/questions/not-a-question/answer", json=payload).status_code == 409
     assert client.post("/api/missions/unknown/questions/q1/answer", json=payload).status_code == 404
     for _ in range(100):
@@ -747,14 +747,16 @@ def _assert_question_answer_endpoint(client):
         time.sleep(0.01)
     question = snapshot["questions"][0]
     url = f"/api/missions/{mission_id}/questions/{question['question_id']}/answer"
+    assert client.post(url, json=payload).status_code == 409
+    payload = payload | {"answer": question["choices"][0]}
     assert client.post(url, json=payload | {"answer": "x" * 501}).status_code == 422
     assert client.post(url, json=payload | {"answer": " "}).status_code == 422
     assert client.post(url, json=payload | {"revision": -1}).status_code == 409
     answered = client.post(url, json=payload)
     assert answered.status_code == 200
-    assert answered.json()["questions"][0]["answer"] == "Découverte"
+    assert answered.json()["questions"][0]["answer"] == question["choices"][0]
     assert client.post(url, json=payload).status_code == 200
-    assert client.post(url, json=payload | {"answer": "Performance"}).status_code == 409
+    assert client.post(url, json=payload | {"answer": question["choices"][1]}).status_code == 409
     for _ in range(1000):
         snapshot = client.get(f"/api/missions/{mission_id}").json()
         for pending in snapshot["questions"]:
