@@ -283,7 +283,7 @@
     step();
   }
   function stepper() {
-    const nav = el("nav", null, "stepper"); nav.setAttribute("aria-label", "Progress");
+    const nav = el("nav", null, "stepper"); nav.setAttribute("aria-label", "Trip screens");
     const current = core.journeyStage(framing, mission), list = el("ol");
     core.STAGES.forEach((title, index) => {
       const item = el("li", null, index < current ? "done" : index === current ? "current" : "todo");

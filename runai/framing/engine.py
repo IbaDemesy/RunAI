@@ -66,6 +66,20 @@ def _valid_place(value: object) -> bool:
     )
 
 
+def _names_a_race(text: str) -> bool:
+    """True for an explicit event name or link typed instead of picking a candidate.
+
+    "Marathon 2026 de Lisboa", "Lisboa 2026 Night Run" and race URLs are accepted;
+    vague replies such as "the sunday one please" still get a clarification.
+    """
+    value = text.strip()
+    if re.match(r"https?://\S+$", value, re.IGNORECASE):
+        return True
+    if re.search(r"\b(?:19|20)\d{2}\b", value) and sum(c.isalpha() for c in value) >= 4:
+        return True
+    return SlotName.race in extract_slots(value)
+
+
 LLM_INTENTS = {"answer", "correction", "advice", "smalltalk", "unclear"}
 LLM_SLOTS = {
     SlotName.city, SlotName.origin, SlotName.race, SlotName.distance_km, SlotName.race_date,
@@ -127,7 +141,11 @@ class FramingEngine:
         for name, value in values.items():
             try:
                 if name in (SlotName.city, SlotName.origin, SlotName.race) and value is not None:
-                    if not _valid_place(value):
+                    explicit_race = (
+                        name == SlotName.race and isinstance(value, str)
+                        and len(value.strip()) <= 300 and _names_a_race(value)
+                    )
+                    if not (_valid_place(value) or explicit_race):
                         raise ValueError()
                 elif name == SlotName.race_date and value is not None:
                     if date.fromisoformat(str(value)) < date.today():
@@ -232,7 +250,7 @@ class FramingEngine:
                 pending = question or next(iter(session.open_questions), None)
                 if (
                     pending and pending.choices and answer and not choice
-                    and not reply.corrections
+                    and not reply.corrections and not _names_a_race(answer)
                 ):
                     return self._clarify(session, reply, "Please select an event from the choices, or choose 'None of these' to clarify your search.")
                 correction = re.match(
@@ -250,12 +268,17 @@ class FramingEngine:
                 if (
                     pending and pending.slots[0] in (SlotName.city, SlotName.origin, SlotName.race)
                     and answer and not choice and not reply.corrections
-                    and not corrected_city and not _valid_place(answer)
+                    and not corrected_city and not _valid_place(answer) and not _names_a_race(answer)
                 ):
                     return self._clarify(session, reply, "Please provide a city or official race name (2–80 characters), or clarify your request.")
                 values = ({} if choice else extract_slots(reply.text or "")) | reply.corrections
                 if corrected_city:
                     values = {SlotName.city: corrected_city} | reply.corrections
+                if (
+                    pending and pending.choices and answer and not choice
+                    and not reply.corrections and _names_a_race(answer)
+                ):
+                    values = {SlotName.race: answer}  # an event name typed in full: nothing else is extracted from it
                 if not values and not choice and not reply.question_id:
                     question = next(
                         (q for q in session.open_questions if len(q.slots) == 1 and not q.choices),
