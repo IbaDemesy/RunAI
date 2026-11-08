@@ -35,8 +35,13 @@ class JourneyRecap:
         return Recap.model_validate_json(self._recap_json)
 
 
+def _amount(value: float, currency: str) -> str:
+    amount = f"{value:,.2f}".rstrip("0").rstrip(".")
+    return f"€{amount}" if currency == "EUR" else f"{amount} {currency}"
+
+
 def _money(value: Money | None) -> str:
-    return f"{value.amount} {value.currency}" if value else "not priced"
+    return _amount(value.amount, value.currency) if value else "not priced"
 
 
 def _local(value: datetime, timezone: str | None) -> datetime:
@@ -66,8 +71,8 @@ def recap_from_journey(plan: JourneyPlan) -> JourneyRecap:
     budget = plan.budget
     facts.extend([
         KeyFact(label="Known total" + (" (partial)" if not budget.complete else ""),
-                value=f"{budget.known_total} {budget.currency}"),
-        KeyFact(label="Budget cap", value=str(budget.cap) + " " + budget.currency if budget.cap is not None else "unknown"),
+                value=_amount(budget.known_total, budget.currency)),
+        KeyFact(label="Budget cap", value=_amount(budget.cap, budget.currency) if budget.cap is not None else "unknown"),
         KeyFact(label="Over budget cap", value="unknown" if budget.over_cap is None else str(budget.over_cap).lower()),
     ])
     for line in budget.lines:

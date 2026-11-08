@@ -20,11 +20,13 @@
   function framingState(framing) { return framing.mission_id ? "launched" : framing.status; }
   function budgetText(budget) {
     if (!budget) return { lines: [], total: "Budget pending", cap: "cap not assessable" };
-    const money = (value) => new Intl.NumberFormat("en-GB", { style: "currency", currency: budget.currency }).format(value);
+    const money = (value) => new Intl.NumberFormat("en-GB", { style: "currency", currency: budget.currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
     return {
       lines: budget.lines.map((line) => line.label + " : " + (line.money ? money(line.money.amount) : "Price unknown") + (line.note ? " — " + line.note : "")),
       total: (budget.complete ? "Total" : "Known total (partial budget)") + " : " + money(budget.known_total),
-      cap: budget.over_cap == null ? "cap not assessable" : (budget.over_cap ? "Over cap" : "Within cap") + (budget.cap == null ? "" : " : " + money(budget.cap)),
+      cap: budget.cap == null ? "cap not assessable" : budget.over_cap == null
+        ? "Cap " + money(budget.cap) + " · known total " + money(budget.known_total) + " (partial)"
+        : (budget.over_cap ? "Over cap" : "Within cap") + " : " + money(budget.cap),
     };
   }
   return { replyPayload, idempotencyKey, framingState, budgetText };

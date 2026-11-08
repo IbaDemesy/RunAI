@@ -70,6 +70,15 @@ def test_j2_calendar_metadata_only_inserted_at_final_terminator():
     assert text.endswith("END:VCALENDAR\r\n")
 
 
+def test_j8_integral_budget_is_formatted_without_decimal_suffix():
+    plan = tokyo_plan()
+    plan.budget.cap = 800
+    snapshot = recap_from_journey(plan)
+    html = unescape(render_html(snapshot))
+    assert "€800" in html
+    assert "800.0" not in html
+
+
 @pytest.mark.parametrize("factory", [lambda: fixture("train"), lambda: fixture("flight"),
                                      lambda: fixture("incomplete"), tokyo_plan])
 def test_plan_exports(factory):
@@ -102,9 +111,14 @@ def test_plan_exports(factory):
     assert calendar_starts(ics) == sorted(expected)
     assert "DTEND" not in ics
     for line in plan.budget.lines:
-        value = f"{line.money.amount} {line.money.currency}" if line.money else "not priced"
+        if line.money:
+            amount = f"{line.money.amount:,.2f}".rstrip("0").rstrip(".")
+            value = f"€{amount}" if line.money.currency == "EUR" else f"{amount} {line.money.currency}"
+        else:
+            value = "not priced"
         assert value in html and value in ics
-    assert f"{plan.budget.known_total} {plan.budget.currency}" in html
+    total = f"{plan.budget.known_total:,.2f}".rstrip("0").rstrip(".")
+    assert (f"€{total}" if plan.budget.currency == "EUR" else f"{total} {plan.budget.currency}") in html
     if not plan.budget.complete:
         assert "Known total (partial)" in html and "Known total (partial)" in ics
     if plan.budget.over_cap is None:
@@ -163,7 +177,7 @@ def test_segment_currency_not_added_to_budget():
     snapshot = recap_from_journey(plan)
     html, ics = render_html(snapshot), unfolded(snapshot)
     assert "987.65 USD" in html and "987.65 USD" in ics
-    assert f"{plan.budget.known_total} {plan.currency}" in html
+    assert "€503" in html
     assert f"{plan.budget.known_total + 987.65} {plan.currency}" not in html
 
 
