@@ -33,8 +33,9 @@
 <tr><td>2026-11-10T11:59:31.153834+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/bd0cc1be5c1500ab6b4a83f05033480a50172b22">bd0cc1b</a></td><td><span class="badge">fail</span></td><td>164.47s</td><td>ruff: 0 / 0 / 0; pytest: 2488 / 10 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42811917867">CI</a></td></tr>
 <tr><td>2026-11-10T19:28:56.361214+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/bd0cc1be5c1500ab6b4a83f05033480a50172b22">bd0cc1b</a></td><td><span class="badge">fail</span></td><td>151.08s</td><td>ruff: 0 / 0 / 0; pytest: 2488 / 10 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42885646851">CI</a></td></tr>
 <tr><td>2026-11-11T00:20:58.140003+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/bd0cc1be5c1500ab6b4a83f05033480a50172b22">bd0cc1b</a></td><td><span class="badge">fail</span></td><td>137.29s</td><td>ruff: 0 / 0 / 0; pytest: 2488 / 10 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42930611640">CI</a></td></tr>
+<tr><td>2026-11-11T08:41:15.317112+00:00</td><td></td><td>main</td><td><a href="https://github.com/IbaDemesy/RunAI/commit/bd0cc1be5c1500ab6b4a83f05033480a50172b22">bd0cc1b</a></td><td><span class="badge">fail</span></td><td>156.14s</td><td>ruff: 0 / 0 / 0; pytest: 2488 / 10 / 3; node: 128 / 0 / 0</td><td><a href="https://github.com/IbaDemesy/RunAI/actions/runs/42988983401">CI</a></td></tr>
 </table><h2>Per-wave rollup</h2><table><tr><th>Wave</th><th>Runs</th><th>Pass rate</th><th>Median duration</th><th>Regressions</th></tr>
-<tr><td></td><td>32</td><td>59%</td><td>110.03s</td><td>11</td></tr>
+<tr><td></td><td>33</td><td>58%</td><td>137.29s</td><td>11</td></tr>
 </table><h2>Regressions and fixes</h2><ul>
 <li>20261108T095350Z-e4d56a2 — Regressions: None; Fixes: None</li>
 <li>20261108T095516Z-f2f8f97 — Regressions: None; Fixes: None</li>
@@ -68,20 +69,21 @@
 <li>20261110T115931Z-bd0cc1b — Regressions: None; Fixes: None</li>
 <li>20261110T192856Z-bd0cc1b — Regressions: None; Fixes: None</li>
 <li>20261111T002058Z-bd0cc1b — Regressions: None; Fixes: None</li>
+<li>20261111T084115Z-bd0cc1b — Regressions: None; Fixes: None</li>
 </ul><h2>Flaky tests (last 10 runs)</h2><p>None</p>
 <h2>Slowest tests of latest run</h2><ol>
-<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 1.92s</li>
-<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 1.59s</li>
-<li>pytest: tests.test_audit2_missions::test_store_background_flush_writes_latest_document_off_loop[asyncio] — 1.36s</li>
-<li>pytest: tests.test_v2_backend::test_live_queued_controls_and_cancellation_keep_cancelled_status — 1.16s</li>
-<li>pytest: tests.test_voice_ws::test_capture_wall_clock_limit — 1.06s</li>
-<li>pytest: tests.contracts.test_cross_framing::test_yes_keeps_human_safety_barrier[Cr\xe9er un compte ?] — 1.01s</li>
-<li>pytest: tests.test_logistics_sweep::test_success — 1.00s</li>
-<li>pytest: tests.test_logistics_sweep::test_filtering — 1.00s</li>
-<li>pytest: tests.test_logistics_sweep::test_not_provided — 1.00s</li>
-<li>pytest: tests.test_logistics_sweep::test_real_sdk_task_shapes_and_partial_failure[The query did not yield any result] — 1.00s</li>
+<li>pytest: tests.e2e.test_demo_journey::test_optional_pdf — 9.50s</li>
+<li>pytest: tests.redteam.test_mission_abuse::test_ten_concurrent_missions_and_replay — 2.79s</li>
+<li>pytest: tests.test_mission_store::test_completed_demo_survives_restart_with_journey_exports_and_event_replay — 1.50s</li>
+<li>pytest: tests.test_audit2_missions::test_store_background_flush_writes_latest_document_off_loop[asyncio] — 1.37s</li>
+<li>pytest: tests.test_v2_backend::test_live_queued_controls_and_cancellation_keep_cancelled_status — 1.25s</li>
+<li>pytest: tests.test_voice_ws::test_replay_streams_trace_without_live_calls — 1.03s</li>
+<li>pytest: tests.test_logistics_sweep::test_real_sdk_task_shapes_and_partial_failure[Provider unavailable] — 1.00s</li>
+<li>pytest: tests.contracts.test_cross_framing::test_yes_keeps_human_safety_barrier[Cr\xe9er un compte ?] — 1.00s</li>
+<li>pytest: tests.contracts.test_cross_framing::test_yes_keeps_human_safety_barrier[Soumettre le formulaire ?] — 1.00s</li>
+<li>pytest: tests.test_human_questions::test_registry_uses_shared_guard_for_answers[send the form] — 1.00s</li>
 </ol><h2>Suite duration trends</h2>
-<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,10.60 11.13,10.11 17.26,15.39 23.39,23.88 29.52,8.28 35.65,11.84 41.77,9.91 47.90,9.06 54.03,9.20 60.16,10.14 66.29,18.86 72.42,23.27 78.55,24.19 84.68,10.52 90.81,10.63 96.94,17.69 103.06,18.37 109.19,5.00 115.32,21.05 121.45,8.64 127.58,5.32 133.71,7.37 139.84,16.06 145.97,26.32 152.10,26.28 158.23,32.65 164.35,33.77 170.48,26.31 176.61,25.62 182.74,30.70 188.87,32.97 195.00,34.01"/></svg></p>
-<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,29.70 11.13,31.71 17.26,32.04 23.39,33.75 29.52,29.85 35.65,27.90 41.77,27.82 47.90,27.07 54.03,27.67 60.16,28.39 66.29,33.24 72.42,32.58 78.55,33.78 84.68,27.67 90.81,27.85 96.94,32.49 103.06,10.05 109.19,6.26 115.32,13.54 121.45,8.55 127.58,5.00 133.71,7.73 139.84,10.06 145.97,6.64 152.10,6.72 158.23,14.12 164.35,12.18 170.48,8.78 176.61,7.63 182.74,8.97 188.87,11.88 195.00,14.90"/></svg></p>
-<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,14.22 11.13,15.37 17.26,17.52 23.39,26.31 29.52,13.28 35.65,13.32 41.77,11.93 47.90,11.50 54.03,12.66 60.16,12.55 66.29,19.36 72.42,24.65 78.55,5.00 84.68,11.81 90.81,9.74 96.94,15.20 103.06,17.20 109.19,7.28 115.32,19.00 121.45,9.73 127.58,7.70 133.71,8.18 139.84,15.29 145.97,17.82 152.10,21.00 158.23,30.77 164.35,31.74 170.48,23.90 176.61,17.86 182.74,29.17 188.87,30.13 195.00,30.28"/></svg></p>
+<p>node <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,10.60 10.94,10.11 16.88,15.39 22.81,23.88 28.75,8.28 34.69,11.84 40.62,9.91 46.56,9.06 52.50,9.20 58.44,10.14 64.38,18.86 70.31,23.27 76.25,24.19 82.19,10.52 88.12,10.63 94.06,17.69 100.00,18.37 105.94,5.00 111.88,21.05 117.81,8.64 123.75,5.32 129.69,7.37 135.62,16.06 141.56,26.32 147.50,26.28 153.44,32.65 159.38,33.77 165.31,26.31 171.25,25.62 177.19,30.70 183.12,32.97 189.06,34.01 195.00,31.20"/></svg></p>
+<p>pytest <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,29.70 10.94,31.71 16.88,32.04 22.81,33.75 28.75,29.85 34.69,27.90 40.62,27.82 46.56,27.07 52.50,27.67 58.44,28.39 64.38,33.24 70.31,32.58 76.25,33.78 82.19,27.67 88.12,27.85 94.06,32.49 100.00,10.05 105.94,6.26 111.88,13.54 117.81,8.55 123.75,5.00 129.69,7.73 135.62,10.06 141.56,6.64 147.50,6.72 153.44,14.12 159.38,12.18 165.31,8.78 171.25,7.63 177.19,8.97 183.12,11.88 189.06,14.90 195.00,10.78"/></svg></p>
+<p>ruff <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50" role="img" aria-label="Duration trend"><polyline fill="none" stroke="#8fcaff" stroke-width="2" points="5.00,14.22 10.94,15.37 16.88,17.52 22.81,26.31 28.75,13.28 34.69,13.32 40.62,11.93 46.56,11.50 52.50,12.66 58.44,12.55 64.38,19.36 70.31,24.65 76.25,5.00 82.19,11.81 88.12,9.74 94.06,15.20 100.00,17.20 105.94,7.28 111.88,19.00 117.81,9.73 123.75,7.70 129.69,8.18 135.62,15.29 141.56,17.82 147.50,21.00 153.44,30.77 159.38,31.74 165.31,23.90 171.25,17.86 177.19,29.17 183.12,30.13 189.06,30.28 195.00,28.58"/></svg></p>
 </body></html>
