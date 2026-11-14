@@ -2,7 +2,7 @@
 
 | Wave | Runs | Pass rate | Median duration | Regressions |
 | --- | --- | --- | --- | --- |
-|  | 42 | 45% | 149.53s | 11 |
+|  | 43 | 44% | 149.39s | 11 |
 
 ## Regressions and fixes
 - 20261108T095350Z-e4d56a2: Regressions: None; Fixes: None
@@ -47,6 +47,7 @@
 - 20261113T114622Z-bd0cc1b: Regressions: None; Fixes: None
 - 20261113T190039Z-bd0cc1b: Regressions: None; Fixes: None
 - 20261114T003555Z-bd0cc1b: Regressions: None; Fixes: None
+- 20261114T082342Z-bd0cc1b: Regressions: None; Fixes: None
 
 ## Flaky tests (last 10 runs)
 None
