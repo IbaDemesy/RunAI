@@ -2,7 +2,7 @@
 
 | Wave | Runs | Pass rate | Median duration | Regressions |
 | --- | --- | --- | --- | --- |
-|  | 58 | 33% | 155.49s | 12 |
+|  | 59 | 32% | 155.51s | 12 |
 
 ## Regressions and fixes
 - 20261108T095350Z-e4d56a2: Regressions: None; Fixes: None
@@ -63,6 +63,7 @@
 - 20261118T093309Z-bd0cc1b: Regressions: tests.test_mission_store::test_active_saves_are_coalesced_and_terminal_saves_flush_immediately[asyncio]; Fixes: None
 - 20261118T183153Z-bd0cc1b: Regressions: None; Fixes: None
 - 20261119T013549Z-bd0cc1b: Regressions: None; Fixes: tests.test_mission_store::test_active_saves_are_coalesced_and_terminal_saves_flush_immediately[asyncio]
+- 20261119T094158Z-bd0cc1b: Regressions: None; Fixes: None
 
 ## Flaky tests (last 10 runs)
 tests.test_mission_store::test_active_saves_are_coalesced_and_terminal_saves_flush_immediately[asyncio]
