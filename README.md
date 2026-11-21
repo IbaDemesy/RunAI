@@ -1,5 +1,7 @@
 # RunAI
 
+**Hackathon version:** Built at the Computer Use Agents Hackathon (H Company x 42AI, 7–8 November 2026). Development continues in [RunAI v2](https://github.com/IbaDemesy/runai-v2).
+
 **Say your race; RunAI prepares the registration, hotel and transport, stopping before payment.**
 
 Computer Use Agents Hackathon (H Company x 42AI), November 7-8, 2026.
